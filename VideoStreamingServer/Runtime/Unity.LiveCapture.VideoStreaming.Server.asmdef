@@ -1,0 +1,30 @@
+{
+    "name": "Unity.LiveCapture.VideoStreaming.Server",
+    "references": [
+        "Unity.Collections",
+        "Unity.RenderPipelines.HighDefinition.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.LiveCapture.Rendering"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "10.2.2",
+            "define": "HDRP_10_2_OR_NEWER"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "10.2.2",
+            "define": "URP_10_2_OR_NEWER"
+        }
+    ],
+    "noEngineReferences": false
+}

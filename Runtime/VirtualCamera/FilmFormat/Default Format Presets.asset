@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d6260993e1d34534b0dcc4ac733bae0, type: 3}
+  m_Name: Default Format Presets
+  m_EditorClassIdentifier: 
+  m_SensorPresets:
+  - name: 8mm
+    sensorSize: {x: 4.8, y: 3.5}
+  - name: Super 8mm
+    sensorSize: {x: 5.79, y: 4.01}
+  - name: 16mm
+    sensorSize: {x: 10.26, y: 7.49}
+  - name: Super 16mm
+    sensorSize: {x: 12.52, y: 7.41}
+  - name: 35mm 2-perf
+    sensorSize: {x: 21.95, y: 9.35}
+  - name: 35mm Academy
+    sensorSize: {x: 21, y: 15.2}
+  - name: Super-35
+    sensorSize: {x: 24.89, y: 18.66}
+  - name: Full-frame DSLR
+    sensorSize: {x: 36, y: 24}
+  - name: 65mm ALEXA
+    sensorSize: {x: 54.12, y: 25.59}
+  - name: 70mm
+    sensorSize: {x: 70, y: 51}
+  - name: 70mm IMAX
+    sensorSize: {x: 70.41, y: 52.63}
+  m_AspectRatioPresets:
+  - name: Television Standard (4:3)
+    aspectRatio: 1.3
+  - name: Academy Ratio
+    aspectRatio: 1.37
+  - name: IMAX
+    aspectRatio: 1.43
+  - name: Full Frame
+    aspectRatio: 1.5
+  - name: HDTV
+    aspectRatio: 1.78
+  - name: Widescreen
+    aspectRatio: 1.85
+  - name: Super Panavision 70
+    aspectRatio: 2.2
+  - name: Twenty-One by Nine
+    aspectRatio: 2.37
+  - name: Cinemascope
+    aspectRatio: 2.39
+  - name: Ultra Panavision
+    aspectRatio: 2.76

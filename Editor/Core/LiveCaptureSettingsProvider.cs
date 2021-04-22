@@ -1,0 +1,98 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UIElements;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
+namespace Unity.LiveCapture
+{
+    class LiveCaptureSettingsProvider : SettingsProvider
+    {
+        const string k_SettingsMenuPath = "Project/Live Capture";
+
+        static class Contents
+        {
+            public static readonly GUIContent settingMenuIcon = EditorGUIUtility.IconContent("_Popup");
+            public static readonly GUIContent takeNameFormatLabel = EditorGUIUtility.TrTextContent("Take Name Format", "The format of the file name of the output take.");
+            public static readonly GUIContent assetNameFormatLabel = EditorGUIUtility.TrTextContent("Asset Name Format", "The format of the file name of the generated assets.");
+            public static readonly GUIContent resetLabel = EditorGUIUtility.TrTextContent("Reset", "Reset to default.");
+        }
+
+        SerializedObject m_SerializedObject;
+        SerializedProperty m_TakeNameFormatProp;
+        SerializedProperty m_AssetNameFormatProp;
+
+        /// <summary>
+        /// Open the settings in the Project Settings.
+        /// </summary>
+        public static void Open()
+        {
+            SettingsService.OpenProjectSettings(k_SettingsMenuPath);
+        }
+
+        public LiveCaptureSettingsProvider(string path, SettingsScope scopes, IEnumerable<string> keywords = null)
+            : base(path, scopes, keywords) {}
+
+        public override void OnActivate(string searchContext, VisualElement rootElement)
+        {
+            m_SerializedObject = new SerializedObject(LiveCaptureSettings.instance);
+            m_TakeNameFormatProp = m_SerializedObject.FindProperty("m_TakeNameFormat");
+            m_AssetNameFormatProp = m_SerializedObject.FindProperty("m_AssetNameFormat");
+        }
+
+        public override void OnDeactivate()
+        {
+        }
+
+        public override void OnTitleBarGUI()
+        {
+            if (EditorGUILayout.DropdownButton(Contents.settingMenuIcon, FocusType.Passive, EditorStyles.label))
+            {
+                var menu = new GenericMenu();
+                menu.AddItem(Contents.resetLabel, false, reset =>
+                {
+                    LiveCaptureSettings.instance.Reset();
+                    LiveCaptureSettings.Save();
+                }, null);
+                menu.ShowAsContext();
+            }
+        }
+
+        public override void OnGUI(string searchContext)
+        {
+            m_SerializedObject.Update();
+
+            using (var change = new EditorGUI.ChangeCheckScope())
+            using (new SettingsWindowGUIScope())
+            {
+                EditorGUILayout.PropertyField(m_TakeNameFormatProp, Contents.takeNameFormatLabel);
+                EditorGUILayout.PropertyField(m_AssetNameFormatProp, Contents.assetNameFormatLabel);
+
+                if (change.changed)
+                {
+                    m_SerializedObject.ApplyModifiedPropertiesWithoutUndo();
+                    LiveCaptureSettings.Save();
+                }
+            }
+        }
+
+        public override void OnFooterBarGUI()
+        {
+        }
+
+        public override void OnInspectorUpdate()
+        {
+        }
+
+        [SettingsProvider]
+        public static SettingsProvider CreateSettingsProvider()
+        {
+            return new LiveCaptureSettingsProvider(
+                k_SettingsMenuPath,
+                SettingsScope.Project,
+                GetSearchKeywordsFromSerializedObject(new SerializedObject(LiveCaptureSettings.instance))
+            );
+        }
+    }
+}

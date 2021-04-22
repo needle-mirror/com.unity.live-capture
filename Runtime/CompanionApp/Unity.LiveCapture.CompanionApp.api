@@ -1,0 +1,195 @@
+// This file is generated. Do not modify by hand.
+// XML documentation file not found. To check if public methods have XML comments,
+// make sure the XML doc file is present and located next to the scraped dll
+namespace Unity.LiveCapture.CompanionApp
+{
+    [System.AttributeUsage(4, Inherited = false)] public class ClientAttribute : System.Attribute
+    {
+        public string type { get; }
+        public ClientAttribute(string type) {}
+    }
+
+    public class ClientInitialization
+    {
+        public string id;
+        public string name;
+        public UnityEngine.Vector2Int screenResolution;
+        public string type;
+        public ClientInitialization() {}
+    }
+
+    public abstract class CompanionAppClient : Unity.LiveCapture.CompanionApp.ICompanionAppClient
+    {
+        protected readonly Unity.LiveCapture.Networking.Protocols.Protocol m_Protocol;
+        public event System.Action pausePlayer;
+        public event System.Action<Unity.LiveCapture.CompanionApp.DeviceMode> setDeviceMode;
+        public event System.Action<double> setPlayerTime;
+        public event System.Action<Unity.LiveCapture.CompanionApp.SerializableGuid> setSelectedTake;
+        public event System.Action startPlayer;
+        public event System.Action startRecording;
+        public event System.Action stopPlayer;
+        public event System.Action stopRecording;
+        public virtual System.Guid id { get; }
+        public virtual string name { get; }
+        public virtual UnityEngine.Vector2Int screenResolution { get; }
+        protected CompanionAppClient(Unity.LiveCapture.Networking.NetworkBase network, Unity.LiveCapture.Networking.Remote remote, Unity.LiveCapture.CompanionApp.ClientInitialization data) {}
+        public virtual void Initialize();
+        public virtual void SendDeviceMode(Unity.LiveCapture.CompanionApp.DeviceMode deviceMode);
+        public virtual void SendPlayerState(Unity.LiveCapture.CompanionApp.PlayerState state);
+        public virtual void SendRecordingState(bool isRecording);
+        public virtual void SendSlateDescriptor(Unity.LiveCapture.CompanionApp.SlateDescriptor descriptor);
+    }
+
+    public abstract class CompanionAppDevice<TClient> : Unity.LiveCapture.LiveCaptureDevice, Unity.LiveCapture.CompanionApp.ICompanionAppDevice where TClient : class, Unity.LiveCapture.CompanionApp.ICompanionAppClient
+    {
+        protected CompanionAppDevice() {}
+        public virtual void ClearClient();
+        public TClient GetClient();
+        public virtual bool IsLive();
+        public virtual bool IsRecording();
+        protected virtual void OnClientAssigned();
+        protected virtual void OnClientUnassigned();
+        protected virtual void OnDestroy();
+        protected virtual void OnDisable();
+        protected virtual void OnEnable();
+        protected virtual void OnLiveModeChanged();
+        protected virtual void OnRecordingChanged();
+        public void SetClient(TClient client, bool rememberAssignment);
+        public virtual void SetLive(bool value);
+        public virtual void StartRecording();
+        public virtual void StopRecording();
+        public virtual void UpdateClient();
+    }
+
+    public abstract class CompanionAppHost
+    {
+        protected readonly Unity.LiveCapture.Networking.Protocols.Protocol m_Protocol;
+        public event System.Action<Unity.LiveCapture.CompanionApp.PlayerState> playerStateReceived;
+        public event System.Action<Unity.LiveCapture.CompanionApp.ServerState> serverStateReceived;
+        public event System.Action<Unity.LiveCapture.CompanionApp.SlateDescriptor> slateDescriptorReceived;
+        protected CompanionAppHost(Unity.LiveCapture.Networking.NetworkBase network, Unity.LiveCapture.Networking.Remote remote, System.IO.Stream stream) {}
+        protected virtual void Initialize();
+        public void PausePlayer();
+        public void SetPlayerTime(double time);
+        public void SetSelectedTake(Unity.LiveCapture.CompanionApp.SerializableGuid guid);
+        public void SetServerMode(Unity.LiveCapture.CompanionApp.ServerMode mode);
+        public void StartPlayer();
+        public void StartRecording();
+        public void StopPlayer();
+        public void StopRecording();
+    }
+
+    [Unity.LiveCapture.CreateServerMenuItem(@"Companion App Server", 0)] public class CompanionAppServer : Unity.LiveCapture.Server
+    {
+        public static event System.Action<Unity.LiveCapture.CompanionApp.ICompanionAppClient> clientConnected;
+        public static event System.Action<Unity.LiveCapture.CompanionApp.ICompanionAppClient> clientDisconnected;
+        public bool autoStartOnPlay { get; set; }
+        public int clientCount { get; }
+        public bool isRunning { get; }
+        public int port { get; set; }
+        public CompanionAppServer() {}
+        public static void DeregisterClientConnectHandler(System.Func<Unity.LiveCapture.CompanionApp.ICompanionAppClient, bool> handler);
+        public System.Collections.Generic.IEnumerable<Unity.LiveCapture.CompanionApp.ICompanionAppClient> GetClients();
+        public virtual string GetName();
+        protected virtual void OnDisable();
+        protected virtual void OnEnable();
+        public virtual void OnUpdate();
+        public static void RegisterClientConnectHandler(System.Func<Unity.LiveCapture.CompanionApp.ICompanionAppClient, bool> handler, string name, System.DateTime time);
+        public void StartServer();
+        public void StopServer();
+    }
+
+    public enum DeviceMode
+    {
+        public const Unity.LiveCapture.CompanionApp.DeviceMode LiveStream = 1;
+        public const Unity.LiveCapture.CompanionApp.DeviceMode Playback = 0;
+        public int value__;
+    }
+
+    public interface ICompanionAppClient
+    {
+        public event System.Action pausePlayer;
+        public event System.Action<Unity.LiveCapture.CompanionApp.DeviceMode> setDeviceMode;
+        public event System.Action<double> setPlayerTime;
+        public event System.Action<Unity.LiveCapture.CompanionApp.SerializableGuid> setSelectedTake;
+        public event System.Action startPlayer;
+        public event System.Action startRecording;
+        public event System.Action stopPlayer;
+        public event System.Action stopRecording;
+        public abstract System.Guid id { get; }
+        public abstract string name { get; }
+        public abstract UnityEngine.Vector2Int screenResolution { get; }
+        public abstract void Initialize();
+        public abstract void SendDeviceMode(Unity.LiveCapture.CompanionApp.DeviceMode deviceMode);
+        public abstract void SendPlayerState(Unity.LiveCapture.CompanionApp.PlayerState state);
+        public abstract void SendRecordingState(bool isRecording);
+        public abstract void SendSlateDescriptor(Unity.LiveCapture.CompanionApp.SlateDescriptor descriptor);
+    }
+
+    public interface ICompanionAppDevice
+    {
+        public abstract void ClearClient();
+    }
+
+    public interface ISample
+    {
+        public abstract float timestamp { get; }
+    }
+
+    public struct PlayerState : System.IEquatable<Unity.LiveCapture.CompanionApp.PlayerState>
+    {
+        public static readonly Unity.LiveCapture.CompanionApp.PlayerState defaultState;
+        public double duration;
+        public bool hasTimeline;
+        public bool playing;
+        public double time;
+        public virtual bool Equals(object obj);
+        public virtual bool Equals(Unity.LiveCapture.CompanionApp.PlayerState other);
+        public virtual int GetHashCode();
+        public static bool operator ==(Unity.LiveCapture.CompanionApp.PlayerState left, Unity.LiveCapture.CompanionApp.PlayerState right);
+        public static bool operator !=(Unity.LiveCapture.CompanionApp.PlayerState left, Unity.LiveCapture.CompanionApp.PlayerState right);
+        public virtual string ToString();
+    }
+
+    public struct SerializableGuid : System.IEquatable<Unity.LiveCapture.CompanionApp.SerializableGuid>
+    {
+        public virtual bool Equals(Unity.LiveCapture.CompanionApp.SerializableGuid other);
+        public static Unity.LiveCapture.CompanionApp.SerializableGuid FromString(string guid);
+        public virtual string ToString();
+    }
+
+    public enum ServerMode
+    {
+        public const Unity.LiveCapture.CompanionApp.ServerMode LiveStream = 2;
+        public const Unity.LiveCapture.CompanionApp.ServerMode None = 0;
+        public const Unity.LiveCapture.CompanionApp.ServerMode Playback = 1;
+        public byte value__;
+    }
+
+    public struct ServerState : System.IEquatable<Unity.LiveCapture.CompanionApp.ServerState>
+    {
+        public static readonly Unity.LiveCapture.CompanionApp.ServerState defaultState;
+        public Unity.LiveCapture.CompanionApp.ServerMode mode;
+        public bool recording;
+        public virtual bool Equals(object obj);
+        public virtual bool Equals(Unity.LiveCapture.CompanionApp.ServerState other);
+        public virtual int GetHashCode();
+        public static bool operator ==(Unity.LiveCapture.CompanionApp.ServerState a, Unity.LiveCapture.CompanionApp.ServerState b);
+        public static bool operator !=(Unity.LiveCapture.CompanionApp.ServerState a, Unity.LiveCapture.CompanionApp.ServerState b);
+        public virtual string ToString();
+    }
+
+    public class SlateDescriptor
+    {
+        public int selectedTake;
+        public Unity.LiveCapture.CompanionApp.TakeDescriptor[] takes;
+        public SlateDescriptor() {}
+    }
+
+    public class TakeDescriptor
+    {
+        public Unity.LiveCapture.CompanionApp.SerializableGuid guid;
+        public string name;
+        public TakeDescriptor() {}
+    }
+}

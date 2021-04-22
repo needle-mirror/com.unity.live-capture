@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+<<<<<<< HEAD:Packages/com.unity.virtual-production.tests/Tests/NSubstitute.meta
+guid: a6a658298641c423da4d5d9daf3e0b30
+=======
+guid: ae4e61340d715cd42b77f10c60babcfb
+>>>>>>> develop:Packages/com.unity.virtual-production/Runtime/Scripts/LiveLink.meta
+folderAsset: yes
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

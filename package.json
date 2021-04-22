@@ -1,0 +1,41 @@
+{
+  "name": "com.unity.live-capture",
+  "displayName": "Live Capture",
+  "nextVersion": "1.0.0-pre.1",
+  "version": "1.0.0-exp.235",
+  "unity": "2020.2",
+  "description": "Use the Live Capture package to connect your Unity Editor with mocap devices and record live performances.",
+  "keywords": [
+    "virtual production",
+    "virtual camera",
+    "live capture",
+    "vcam"
+  ],
+  "category": "Unity",
+  "dependencies": {
+    "com.unity.ugui": "1.0.0",
+    "com.unity.modules.physics": "1.0.0",
+    "com.unity.timeline": "1.4.7",
+    "com.unity.modules.jsonserialize": "1.0.0"
+  },
+  "samples": [
+    {
+      "displayName": "HDRP Face Sample",
+      "description": "A simple face for demonstrating face mocap from ARKit in HDRP.",
+      "path": "Samples~/HDRP Face Sample"
+    },
+    {
+      "displayName": "URP Face Sample",
+      "description": "A simple face for demonstrating face mocap from ARKit in URP.",
+      "path": "Samples~/URP Face Sample"
+    }
+  ],
+  "upmCi": {
+    "footprint": "003f1a6838e4d50035c4d8c425dc0f864945b5aa"
+  },
+  "repository": {
+    "url": "https://github.com/Unity-Technologies/VirtualProduction.git",
+    "type": "git",
+    "revision": "4b1c0964f04d11d427811224b8370bdb83f8a80d"
+  }
+}

@@ -1,0 +1,9 @@
+# Known limitations
+## Feature limitations
+
+* Cinemachine does not support physical camera settings when using URP.
+* Cinemachine damping only works in play mode.
+* Spatial Focus Mode does not account for skinned mesh blend shapes.
+
+## Performance
+* The solution works in both Edit Mode and Play Mode, but there can be performance issues in Edit Mode, particularly when using Depth of Field for focus.

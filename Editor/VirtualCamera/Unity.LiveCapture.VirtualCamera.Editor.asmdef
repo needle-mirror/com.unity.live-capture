@@ -1,0 +1,51 @@
+{
+    "name": "Unity.LiveCapture.VirtualCamera.Editor",
+    "rootNamespace": "Unity.LiveCapture.VirtualCamera",
+    "references": [
+        "Unity.LiveCapture",
+        "Unity.LiveCapture.Networking",
+        "Unity.LiveCapture.CompanionApp",
+        "Unity.LiveCapture.VirtualCamera",
+        "Unity.LiveCapture.Rendering",
+        "Unity.LiveCapture.VideoStreaming.Server",
+        "Unity.LiveCapture.Editor",
+        "Unity.LiveCapture.CompanionApp.Editor",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.HighDefinition.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Cinemachine",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "10.2.2",
+            "define": "HDRP_10_2_OR_NEWER"
+        },
+        {
+            "name": "com.unity.cinemachine",
+            "expression": "2.4.0-preview.6",
+            "define": "VP_CINEMACHINE_2_4_0"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "10.2.2",
+            "define": "URP_10_2_OR_NEWER"
+        },
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "1.0.2",
+            "define": "INPUTSYSTEM_1_0_2_OR_NEWER"
+        }
+    ],
+    "noEngineReferences": false
+}

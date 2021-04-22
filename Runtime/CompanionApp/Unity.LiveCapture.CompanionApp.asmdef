@@ -1,0 +1,17 @@
+{
+    "name": "Unity.LiveCapture.CompanionApp",
+    "rootNamespace": "Unity.LiveCapture.CompanionApp",
+    "references": [
+        "Unity.LiveCapture",
+        "Unity.LiveCapture.Networking"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,310 @@
+// This file is generated. Do not modify by hand.
+// XML documentation file not found. To check if public methods have XML comments,
+// make sure the XML doc file is present and located next to the scraped dll
+namespace Unity.LiveCapture.Networking
+{
+    public class BufferPool
+    {
+        public BufferPool(int minBufferSize = 1024) {}
+        public void Clear();
+        public byte[] Get(int capacity);
+        public void Release(byte[] buffer);
+    }
+
+    public enum ChannelType
+    {
+        public const Unity.LiveCapture.Networking.ChannelType ReliableOrdered = 0;
+        public const Unity.LiveCapture.Networking.ChannelType UnreliableUnordered = 32;
+        public byte value__;
+    }
+
+    public enum DisconnectStatus
+    {
+        public const Unity.LiveCapture.Networking.DisconnectStatus Error = 2;
+        public const Unity.LiveCapture.Networking.DisconnectStatus Graceful = 0;
+        public const Unity.LiveCapture.Networking.DisconnectStatus Reconnected = 3;
+        public const Unity.LiveCapture.Networking.DisconnectStatus Timeout = 1;
+        public int value__;
+    }
+
+    [System.Runtime.CompilerServices.Extension] public static class EnumExtensions
+    {
+        [System.Runtime.CompilerServices.Extension] public static bool Contains<T>(T a, T b) where T : System.Enum;
+        [System.Runtime.CompilerServices.Extension] public static bool Intersects<T>(T a, T b) where T : System.Enum;
+    }
+
+    public class Message : System.IDisposable
+    {
+        public Unity.LiveCapture.Networking.ChannelType channelType { get; }
+        public System.IO.MemoryStream data { get; }
+        public Unity.LiveCapture.Networking.Remote remote { get; }
+        public virtual void Dispose();
+        public static Unity.LiveCapture.Networking.Message Get(Unity.LiveCapture.Networking.Remote remote, Unity.LiveCapture.Networking.ChannelType channelType, int dataCapacity = 0);
+    }
+
+    public abstract class NetworkBase
+    {
+        protected System.Boolean modreq(System.Runtime.CompilerServices.IsVolatile) m_IsRunning;
+        public event System.Action<Unity.LiveCapture.Networking.Remote> remoteConnected;
+        public event System.Action<Unity.LiveCapture.Networking.Remote, Unity.LiveCapture.Networking.DisconnectStatus> remoteDisconnected;
+        public event System.Action started;
+        public event System.Action stopped;
+        public System.Guid id { get; }
+        public bool isRunning { get; }
+        public System.Version protocolVersion { get; }
+        public int remoteCount { get; }
+        public System.Collections.Generic.List<Unity.LiveCapture.Networking.Remote> remotes { get; }
+        public Unity.LiveCapture.Networking.ChannelType[] supportedChannels { get; }
+        protected NetworkBase() {}
+        public bool DeregisterMessageHandler(Unity.LiveCapture.Networking.Remote remote);
+        protected void DoHandshake(Unity.LiveCapture.Networking.NetworkSocket tcp, Unity.LiveCapture.Networking.NetworkSocket udp);
+        public bool IsConnected(Unity.LiveCapture.Networking.Remote remote);
+        protected void RaiseStartedEvent();
+        public bool RegisterMessageHandler(Unity.LiveCapture.Networking.Remote remote, System.Action<Unity.LiveCapture.Networking.Message> messageHandler, bool handleBufferedMessages = True);
+        public bool SendMessage(Unity.LiveCapture.Networking.Message message);
+        public virtual void Stop(bool graceful = True);
+        public virtual string ToString();
+        public void Update();
+    }
+
+    public class NetworkClient : Unity.LiveCapture.Networking.NetworkBase
+    {
+        public int connectAttemptTimeout { get; set; }
+        public bool isConnecting { get; }
+        public System.Net.IPEndPoint localEndPoint { get; }
+        public System.Net.IPEndPoint serverEndPoint { get; }
+        public NetworkClient() {}
+        public bool ConnectToServer(string serverIP, int serverPort, int localPort = 0);
+        public virtual void Stop(bool graceful = True);
+    }
+
+    public class NetworkServer : Unity.LiveCapture.Networking.NetworkBase
+    {
+        public System.Collections.Generic.IReadOnlyList<System.Net.IPEndPoint> endPoints { get; }
+        public int port { get; }
+        public NetworkServer() {}
+        public void Disconnect(Unity.LiveCapture.Networking.Remote remote, bool graceful = True);
+        public bool StartServer(int port);
+        public virtual void Stop(bool graceful = True);
+    }
+
+    public class NetworkSocket : System.IDisposable
+    {
+        public bool isDisposed { get; }
+        public virtual void Dispose();
+    }
+
+    public static class NetworkUtilities
+    {
+        public static int CompareIPAddresses(System.Net.IPAddress a, System.Net.IPAddress b);
+        public static System.Net.Sockets.Socket CreateSocket(System.Net.Sockets.ProtocolType protocol);
+        public static void DisposeSocket(System.Net.Sockets.Socket socket, int timeout = 1);
+        [return: System.Runtime.CompilerServices.TupleElementNames(Mono.Cecil.CustomAttributeArgument[])] public static System.ValueTuple<System.Net.IPAddress, System.Net.IPEndPoint> FindClosestAddresses(params System.Net.IPEndPoint[] remoteEndPoints);
+        public static System.UInt32 GetAddressBits(System.Net.IPAddress address);
+        public static System.Net.IPAddress[] GetIPAddresses(bool includeLoopback);
+        public static System.Net.NetworkInformation.PhysicalAddress GetPhysicalAddress(System.Net.IPAddress address);
+        public static bool IsPortAvailable(int port);
+        public static bool IsPortAvailable(System.Net.Sockets.ProtocolType protocol, int port);
+        public static bool IsPortAvailable(System.Net.Sockets.ProtocolType protocol, System.Net.IPAddress address, int port);
+        public static bool IsPortValid(int port, out string message);
+    }
+
+    public class Remote : System.IEquatable<Unity.LiveCapture.Networking.Remote>
+    {
+        public static Unity.LiveCapture.Networking.Remote all { get; }
+        public System.Guid id { get; }
+        public System.Net.IPEndPoint tcpEndPoint { get; }
+        public System.Net.IPEndPoint udpEndPoint { get; }
+        public virtual bool Equals(object obj);
+        public virtual bool Equals(Unity.LiveCapture.Networking.Remote other);
+        public virtual int GetHashCode();
+        public static bool operator ==(Unity.LiveCapture.Networking.Remote a, Unity.LiveCapture.Networking.Remote b);
+        public static bool operator !=(Unity.LiveCapture.Networking.Remote a, Unity.LiveCapture.Networking.Remote b);
+        public virtual string ToString();
+    }
+}
+
+namespace Unity.LiveCapture.Networking.Discovery
+{
+    public static class Constants
+    {
+        public static readonly System.UInt16 k_DefaultPort;
+        public const int k_StringMaxLength = 32;
+    }
+
+    public abstract class DiscoveryBase
+    {
+        public bool isRunning { get; }
+        public int port { get; set; }
+        protected DiscoveryBase() {}
+        protected void Broadcast(byte[] packet, bool synchronous);
+        protected byte[] CreatePacket(Unity.LiveCapture.Networking.Discovery.DiscoveryBase.PacketType type, int size, out int offset);
+        protected abstract System.Net.IPAddress[] GetSendAddresses();
+        protected virtual void OnDataReceived(byte[] packet, Unity.LiveCapture.Networking.Discovery.DiscoveryBase.PacketHeader header, int dataSize, int dataOffset);
+        protected virtual void OnStop();
+        protected virtual void OnUpdate(System.DateTime now);
+        protected bool StartInternal();
+        public void Stop();
+        public void Update();
+        protected struct PacketHeader
+        {
+            public Unity.LiveCapture.Networking.Discovery.DiscoveryBase.PacketType type;
+        }
+        protected enum PacketType
+        {
+            public const Unity.LiveCapture.Networking.Discovery.DiscoveryBase.PacketType Discovery = 30;
+            public const Unity.LiveCapture.Networking.Discovery.DiscoveryBase.PacketType Request = 10;
+            public const Unity.LiveCapture.Networking.Discovery.DiscoveryBase.PacketType Shutdown = 20;
+            public byte value__;
+        }
+    }
+
+    public class DiscoveryClient : Unity.LiveCapture.Networking.Discovery.DiscoveryBase
+    {
+        public System.Action<Unity.LiveCapture.Networking.Discovery.DiscoveryInfo> ServerFound;
+        public System.Action<Unity.LiveCapture.Networking.Discovery.DiscoveryInfo> ServerLost;
+        public DiscoveryClient() {}
+        protected virtual System.Net.IPAddress[] GetSendAddresses();
+        protected virtual void OnDataReceived(byte[] packet, Unity.LiveCapture.Networking.Discovery.DiscoveryBase.PacketHeader header, int dataSize, int dataOffset);
+        protected virtual void OnStop();
+        protected virtual void OnUpdate(System.DateTime now);
+        public void Refresh();
+        public bool Start(string productName, bool discoverLocal = False);
+    }
+
+    public struct DiscoveryInfo : System.IEquatable<Unity.LiveCapture.Networking.Discovery.DiscoveryInfo>
+    {
+        public System.Net.IPEndPoint[] endPoints { get; }
+        public Unity.LiveCapture.Networking.Discovery.ServerData serverInfo { get; }
+        public DiscoveryInfo(Unity.LiveCapture.Networking.Discovery.ServerData serverInfo, System.Net.IPEndPoint[] endPoints) {}
+        public virtual bool Equals(object obj);
+        public virtual bool Equals(Unity.LiveCapture.Networking.Discovery.DiscoveryInfo other);
+        public virtual int GetHashCode();
+        public virtual string ToString();
+    }
+
+    public class DiscoveryServer : Unity.LiveCapture.Networking.Discovery.DiscoveryBase
+    {
+        public DiscoveryServer() {}
+        protected virtual System.Net.IPAddress[] GetSendAddresses();
+        protected virtual void OnDataReceived(byte[] packet, Unity.LiveCapture.Networking.Discovery.DiscoveryBase.PacketHeader header, int dataSize, int dataOffset);
+        protected virtual void OnStop();
+        protected virtual void OnUpdate(System.DateTime now);
+        public bool Start(Unity.LiveCapture.Networking.Discovery.ServerData serverConfiguration, System.Net.IPEndPoint[] endPoints);
+    }
+
+    public struct ServerData : System.IEquatable<Unity.LiveCapture.Networking.Discovery.ServerData>
+    {
+        public System.Guid id { get; }
+        public string instanceName { get; }
+        public string productName { get; }
+        public ServerData(string productName, string instanceName, System.Guid id, System.Version version) {}
+        public virtual bool Equals(object obj);
+        public virtual bool Equals(Unity.LiveCapture.Networking.Discovery.ServerData other);
+        public virtual int GetHashCode();
+        public System.Version GetVersion();
+        public virtual string ToString();
+    }
+}
+
+namespace Unity.LiveCapture.Networking.Protocols
+{
+    public sealed class BinaryReceiver<T> : Unity.LiveCapture.Networking.Protocols.DataReceiver<T> where T : System.ValueType, new()
+    {
+        public BinaryReceiver(string id, Unity.LiveCapture.Networking.ChannelType channel = 0, Unity.LiveCapture.Networking.Protocols.DataOptions options = 1) {}
+        public static Unity.LiveCapture.Networking.Protocols.BinaryReceiver<T> Get(Unity.LiveCapture.Networking.Protocols.Protocol protocol, string id);
+        protected virtual T OnRead(System.IO.MemoryStream stream);
+    }
+
+    public sealed class BinarySender<T> : Unity.LiveCapture.Networking.Protocols.DataSender<T> where T : System.ValueType, new()
+    {
+        public BinarySender(string id, Unity.LiveCapture.Networking.ChannelType channel = 0, Unity.LiveCapture.Networking.Protocols.DataOptions options = 1) {}
+        public static Unity.LiveCapture.Networking.Protocols.BinarySender<T> Get(Unity.LiveCapture.Networking.Protocols.Protocol protocol, string id);
+        protected virtual void OnWrite(System.IO.MemoryStream stream, ref T data);
+    }
+
+    [System.Flags] public enum DataOptions
+    {
+        public const Unity.LiveCapture.Networking.Protocols.DataOptions Default = 1;
+        public const Unity.LiveCapture.Networking.Protocols.DataOptions None = 0;
+        public const Unity.LiveCapture.Networking.Protocols.DataOptions OnlySendChangedValues = 1;
+        public int value__;
+    }
+
+    public abstract class DataReceiver<T> : Unity.LiveCapture.Networking.Protocols.MessageBase, Unity.LiveCapture.Networking.Protocols.IDataReceiver
+    {
+        protected readonly Unity.LiveCapture.Networking.Protocols.DataOptions m_Options;
+        protected DataReceiver(System.IO.Stream stream) {}
+        protected DataReceiver(string id, Unity.LiveCapture.Networking.ChannelType channel, Unity.LiveCapture.Networking.Protocols.DataOptions options) {}
+        public void AddHandler(System.Action<T> callback);
+        protected abstract T OnRead(System.IO.MemoryStream stream);
+        public bool RemoveHandler(System.Action<T> callback);
+    }
+
+    public abstract class DataSender<T> : Unity.LiveCapture.Networking.Protocols.MessageBase, Unity.LiveCapture.Networking.Protocols.IDataSender
+    {
+        protected readonly Unity.LiveCapture.Networking.Protocols.DataOptions m_Options;
+        protected DataSender(System.IO.Stream stream) {}
+        protected DataSender(string id, Unity.LiveCapture.Networking.ChannelType channel, Unity.LiveCapture.Networking.Protocols.DataOptions options) {}
+        protected abstract void OnWrite(System.IO.MemoryStream stream, ref T data);
+        public void Send(T data);
+    }
+
+    public sealed class EventReceiver : Unity.LiveCapture.Networking.Protocols.MessageBase, Unity.LiveCapture.Networking.Protocols.IDataReceiver
+    {
+        public EventReceiver(string id) {}
+        public void AddHandler(System.Action callback);
+        public static Unity.LiveCapture.Networking.Protocols.EventReceiver Get(Unity.LiveCapture.Networking.Protocols.Protocol protocol, string id);
+        public bool RemoveHandler(System.Action callback);
+    }
+
+    public sealed class EventSender : Unity.LiveCapture.Networking.Protocols.MessageBase
+    {
+        public EventSender(string id) {}
+        public static Unity.LiveCapture.Networking.Protocols.EventSender Get(Unity.LiveCapture.Networking.Protocols.Protocol protocol, string id);
+        public void Send();
+    }
+
+    public sealed class JsonReceiver<T> : Unity.LiveCapture.Networking.Protocols.DataReceiver<T>
+    {
+        public JsonReceiver(string id, Unity.LiveCapture.Networking.ChannelType channel = 0, Unity.LiveCapture.Networking.Protocols.DataOptions options = 1) {}
+        public static Unity.LiveCapture.Networking.Protocols.JsonReceiver<T> Get(Unity.LiveCapture.Networking.Protocols.Protocol protocol, string id);
+        protected virtual T OnRead(System.IO.MemoryStream stream);
+    }
+
+    public sealed class JsonSender<T> : Unity.LiveCapture.Networking.Protocols.DataSender<T>
+    {
+        public JsonSender(string id, Unity.LiveCapture.Networking.ChannelType channel = 0, Unity.LiveCapture.Networking.Protocols.DataOptions options = 1) {}
+        public static Unity.LiveCapture.Networking.Protocols.JsonSender<T> Get(Unity.LiveCapture.Networking.Protocols.Protocol protocol, string id);
+        protected virtual void OnWrite(System.IO.MemoryStream stream, ref T data);
+    }
+
+    public abstract class MessageBase
+    {
+        public Unity.LiveCapture.Networking.ChannelType channel { get; }
+        public string id { get; }
+        public Unity.LiveCapture.Networking.Protocols.Protocol protocol { get; }
+        protected MessageBase(System.IO.Stream stream) {}
+        protected MessageBase(string id, Unity.LiveCapture.Networking.ChannelType channel) {}
+        public virtual string ToString();
+    }
+
+    public class Protocol : System.Collections.Generic.IEnumerable<Unity.LiveCapture.Networking.Protocols.MessageBase>, System.Collections.IEnumerable
+    {
+        public bool isReadOnly { get; }
+        public string name { get; }
+        public Protocol(System.IO.Stream stream) {}
+        public Protocol(string name) {}
+        public T Add<T>(T message) where T : Unity.LiveCapture.Networking.Protocols.MessageBase;
+        public Unity.LiveCapture.Networking.Protocols.Protocol CreateInverse();
+        public TReceiver GetDataReceiver<T, TReceiver>(string id) where TReceiver : Unity.LiveCapture.Networking.Protocols.DataReceiver<T>;
+        public TSender GetDataSender<T, TSender>(string id) where TSender : Unity.LiveCapture.Networking.Protocols.DataSender<T>;
+        public virtual System.Collections.Generic.IEnumerator<Unity.LiveCapture.Networking.Protocols.MessageBase> GetEnumerator();
+        public Unity.LiveCapture.Networking.Protocols.EventReceiver GetEventReceiver(string id);
+        public Unity.LiveCapture.Networking.Protocols.EventSender GetEventSender(string id);
+        public void Reset();
+        public void Serialize(System.IO.Stream stream);
+        public void SetNetwork(Unity.LiveCapture.Networking.NetworkBase network, Unity.LiveCapture.Networking.Remote remote);
+        public virtual string ToString();
+    }
+}
