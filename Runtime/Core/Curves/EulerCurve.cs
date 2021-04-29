@@ -6,9 +6,20 @@ namespace Unity.LiveCapture
     /// <summary>
     /// A type of <see cref="ICurve"/> that stores keyframes of type <see cref="Quaternion"/> as Euler angles.
     /// </summary>
-    public class EulerCurve : ICurve<Quaternion>
+    public class EulerCurve : ICurve<Quaternion>, IReduceableCurve
     {
-        readonly ICurve<float>[] m_Curves;
+        Vector3Sampler m_Sampler = new Vector3Sampler();
+        Vector3TangentUpdater m_TangentUpdater = new Vector3TangentUpdater();
+        EulerKeyframeReducer m_Reducer = new EulerKeyframeReducer();
+        AnimationCurve[] m_Curves;
+        Vector3? m_EulerAngles;
+
+        /// <inheritdoc/>
+        public float MaxError
+        {
+            get => m_Reducer.MaxError;
+            set => m_Reducer.MaxError = value;
+        }
 
         /// <inheritdoc/>
         public string RelativePath { get; }
@@ -22,18 +33,9 @@ namespace Unity.LiveCapture
         /// <inheritdoc/>
         public FrameRate FrameRate
         {
-            get => m_Curves[0].FrameRate;
-            set
-            {
-                foreach (var curve in m_Curves)
-                {
-                    curve.FrameRate = value;
-                }
-            }
+            get => m_Sampler.FrameRate;
+            set => m_Sampler.FrameRate = value;
         }
-
-        bool m_First = true;
-        Vector3 m_LastEuler;
 
         /// <summary>
         /// Creates a new <see cref="EulerCurve"/> instance.
@@ -48,57 +50,108 @@ namespace Unity.LiveCapture
             PropertyName = propertyName;
             BindingType = bindingType;
 
-            m_Curves = new[]
-            {
-                new FloatCurve(relativePath, $"{propertyName}.x", bindingType),
-                new FloatCurve(relativePath, $"{propertyName}.y", bindingType),
-                new FloatCurve(relativePath, $"{propertyName}.z", bindingType),
-            };
+            Reset();
         }
 
         /// <inheritdoc/>
         public void AddKey(double time, Quaternion value)
         {
-            var euler = value.eulerAngles;
+            if (m_EulerAngles.HasValue)
+                m_EulerAngles = MathUtility.ClosestEuler(value, m_EulerAngles.Value);
+            else
+                m_EulerAngles = value.eulerAngles;
 
-            if (m_First)
-            {
-                m_LastEuler = euler;
-                m_First = false;
-            }
+            m_Sampler.Add((float)time, m_EulerAngles.Value);
 
-            euler = MathUtility.ClosestEuler(value, m_LastEuler);
-            m_LastEuler = euler;
-
-            for (var i = 0; i < m_Curves.Length; ++i)
-            {
-                m_Curves[i].AddKey(time, euler[i]);
-            }
+            Sample();
         }
 
         /// <inheritdoc/>
         public bool IsEmpty()
         {
-            return m_Curves[0].IsEmpty();
+            return m_Sampler.IsEmpty()
+                && m_TangentUpdater.IsEmpty()
+                && m_Reducer.IsEmpty()
+                && m_Curves[0].length == 0;
         }
 
         /// <inheritdoc/>
         public void Clear()
         {
-            m_First = true;
-
-            foreach (var curve in m_Curves)
-            {
-                curve.Clear();
-            }
+            Reset();
         }
 
         /// <inheritdoc/>
         public void SetToAnimationClip(AnimationClip clip)
         {
-            foreach (var curve in m_Curves)
+            Flush();
+
+            if (m_Curves[0].length > 0)
+                clip.SetCurve(RelativePath, BindingType, $"{PropertyName}.x", m_Curves[0]);
+            if (m_Curves[1].length > 0)
+                clip.SetCurve(RelativePath, BindingType, $"{PropertyName}.y", m_Curves[1]);
+            if (m_Curves[2].length > 0)
+                clip.SetCurve(RelativePath, BindingType, $"{PropertyName}.z", m_Curves[2]);
+        }
+
+        void Reset()
+        {
+            m_EulerAngles = null;
+            m_Sampler.Reset();
+            m_TangentUpdater.Reset();
+            m_Reducer.Reset();
+            m_Curves = new[]
             {
-                curve.SetToAnimationClip(clip);
+                new AnimationCurve(),
+                new AnimationCurve(),
+                new AnimationCurve()
+            };
+        }
+
+        void Flush()
+        {
+            m_Sampler.Flush();
+            m_TangentUpdater.Flush();
+            m_Reducer.Flush();
+
+            Sample();
+        }
+
+        void Sample()
+        {
+            while (m_Sampler.MoveNext())
+            {
+                var sample = m_Sampler.Current;
+
+                m_TangentUpdater.Add(new Keyframe<Vector3>()
+                {
+                    Time = sample.Time,
+                    Value = sample.Value
+                });
+            }
+
+            while (m_TangentUpdater.MoveNext())
+            {
+                m_Reducer.Add(m_TangentUpdater.Current);
+            }
+
+            while (m_Reducer.MoveNext())
+            {
+                AddKey(m_Reducer.Current);
+            }
+        }
+
+        void AddKey(Keyframe<Vector3> keyframe)
+        {
+            for (var i = 0; i < 3; ++i)
+            {
+                m_Curves[i].AddKey(new Keyframe()
+                {
+                    time = keyframe.Time,
+                    value = keyframe.Value[i],
+                    inTangent = keyframe.InTangent[i],
+                    outTangent = keyframe.OutTangent[i]
+                });
             }
         }
     }

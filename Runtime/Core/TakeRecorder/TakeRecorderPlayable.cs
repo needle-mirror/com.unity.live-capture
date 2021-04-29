@@ -1,107 +1,131 @@
 using UnityEngine;
 using UnityEngine.Playables;
+using Unity.LiveCapture.Internal;
 
 namespace Unity.LiveCapture
 {
-    class TakeRecorderPlayable : PlayableBehaviour
+    class TakeRecorderPlayer : PlayableBehaviour
     {
+        PlayableGraph m_Graph;
         Playable m_Playable;
 
         public TakeRecorder TakeRecorder { get; set; }
-        public bool Playing { get; private set; }
+        public bool IsPlaying { get; private set; }
+        public PlayableGraph Graph => m_Graph;
 
-        public void Play()
+        public void Play(double time, double duration)
         {
-            var slate = TakeRecorder.GetActiveSlate();
-
-            if (!Playing && slate != null)
+            if (!IsPlaying)
             {
-                Playing = true;
+                IsPlaying = true;
 
-                SetDuration(m_Playable);
+                SetTimeAndDuration(time, duration);
 
-                var duration = slate.Duration;
+                PlayableDirectorInternal.ResetFrameTiming();
 
-                if (duration == 0)
-                {
-                    m_Playable.SetTime(0d);
-                }
-                else
-                {
-                    m_Playable.SetTime(TakeRecorder.GetPreviewTime());
-                }
-
-                var graph = m_Playable.GetGraph();
-
-                graph.Play();
-                graph.Evaluate();
+                m_Graph.Play();
+                m_Graph.Evaluate();
             }
         }
 
         public void Stop()
         {
-            if (Playing)
+            Pause();
+
+            TakeRecorder.SetPreviewTimeInternal(0d);
+        }
+
+        public void Pause()
+        {
+            if (IsPlaying)
             {
-                Playing = false;
+                IsPlaying = false;
 
-                var graph = m_Playable.GetGraph();
-
-                graph.Stop();
+                m_Graph.Stop();
 
                 TakeRecorder.OnPreviewEnded();
             }
         }
 
-        public void SetTime(double time)
+        public void SetTime(double time, double duration)
         {
-            Stop();
+            Pause();
 
-            m_Playable.SetTime(time);
-            m_Playable.GetGraph().Evaluate();
+            time = MathUtility.Clamp(time, 0d, duration);
+
+            SetTimeAndDuration(time, duration);
+
+            m_Graph.Evaluate();
         }
 
         public override void OnPlayableCreate(Playable playable)
         {
+            m_Graph = playable.GetGraph();
             m_Playable = playable;
         }
 
         public override void PrepareFrame(Playable playable, FrameData info)
         {
-            if (!Playing)
-            {
-                SetDuration(playable);
-            }
-
-            var time = playable.GetTime();
-
             if (playable.IsDone())
             {
-                TakeRecorder.SetPreviewTimeInternal(0d);
                 Stop();
             }
             else
             {
+                var time = playable.GetTime();
+
                 TakeRecorder.SetPreviewTimeInternal(time);
             }
         }
 
-        void SetDuration(Playable playable)
+        void SetTimeAndDuration(double time, double duration)
         {
-            var slate = TakeRecorder.GetActiveSlate();
-            var duration = 0d;
+            if (duration <= 0d)
+                duration = double.PositiveInfinity;
 
-            if (slate != null)
+            if (duration == double.PositiveInfinity
+                || time < 0d
+                || time > duration)
             {
-                duration = slate.Duration;
+                time = 0d;
             }
 
-            if (duration == 0)
+            m_Playable.SetDuration(duration);
+            m_Playable.SetTime(time);
+        }
+
+        public static TakeRecorderPlayer Create(TakeRecorder takeRecorder)
+        {
+            var graph = PlayableGraph.Create("TakeRecorderPlayer");
+            var playable = ScriptPlayable<TakeRecorderPlayer>.Create(graph);
+            var player = playable.GetBehaviour();
+            var output = ScriptPlayableOutput.Create(graph, "TakeRecorderPlayerOutput");
+
+            graph.SetTimeUpdateMode(GetUpdateMode());
+            player.TakeRecorder = takeRecorder;
+            output.SetSourcePlayable(playable);
+
+            return player;
+        }
+
+        static DirectorUpdateMode GetUpdateMode()
+        {
+            return Application.isPlaying ? DirectorUpdateMode.GameTime : DirectorUpdateMode.UnscaledGameTime;
+        }
+    }
+
+    static class TakeRecorderPlayerExtensions
+    {
+        public static bool IsValid(this TakeRecorderPlayer player)
+        {
+            return player != null && player.Graph.IsValid();
+        }
+
+        public static void Destroy(this TakeRecorderPlayer player)
+        {
+            if (player != null && player.IsValid())
             {
-                playable.SetDuration(double.PositiveInfinity);
-            }
-            else
-            {
-                playable.SetDuration(duration);
+                player.Graph.Destroy();
             }
         }
     }

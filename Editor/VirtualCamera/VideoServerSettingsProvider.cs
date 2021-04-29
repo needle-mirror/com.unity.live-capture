@@ -45,23 +45,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {
-            m_SerializedObject = new SerializedObject(VideoServerSettings.Instance);
-            m_Encoder = m_SerializedObject.FindProperty("m_Encoder");
-            m_ResolutionScale = m_SerializedObject.FindProperty("m_ResolutionScale");
-            m_FrameRateProp = m_SerializedObject.FindProperty("m_FrameRate");
-            m_QualityProp = m_SerializedObject.FindProperty("m_Quality");
-            m_PrioritizeLatencyProp = m_SerializedObject.FindProperty("m_PrioritizeLatency");
-
-            m_EncodersSupportedOnPlatform = Enum.GetValues(typeof(VideoEncoder))
-                .Cast<VideoEncoder>()
-                .Where(e => EncoderUtilities.IsSupported(e) != EncoderSupport.NotSupportedOnPlatform)
-                .ToArray();
-
-            m_EncoderOptions = m_EncodersSupportedOnPlatform
-                .Select(e => new GUIContent(e.GetDisplayName()))
-                .ToArray();
-
-            m_EncoderSupport = EncoderUtilities.IsSupported((VideoEncoder)m_Encoder.intValue);
+            InitializeWithCurrentSettings();
         }
 
         public override void OnDeactivate()
@@ -70,8 +54,6 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         public override void OnTitleBarGUI()
         {
-            m_SerializedObject.Update();
-
             if (Help.HasHelpForObject(VideoServerSettings.Instance))
             {
                 if (EditorGUILayout.DropdownButton(Contents.HelpMenuIcon, FocusType.Passive, EditorStyles.label))
@@ -94,7 +76,14 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         public override void OnGUI(string searchContext)
         {
-            m_SerializedObject.Update();
+            if (m_SerializedObject == null)
+            {
+                InitializeWithCurrentSettings();
+            }
+            else
+            {
+                m_SerializedObject.Update();
+            }
 
             using (var change = new EditorGUI.ChangeCheckScope())
             using (new SettingsWindowGUIScope())
@@ -129,6 +118,30 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
                 SettingsScope.User,
                 GetSearchKeywordsFromSerializedObject(new SerializedObject(VideoServerSettings.Instance))
             );
+        }
+
+        /// <summary>
+        /// Grab the <see cref="VideoServerSettings"/> instance and set it up for editing.
+        /// </summary>
+        void InitializeWithCurrentSettings()
+        {
+            m_SerializedObject = new SerializedObject(VideoServerSettings.Instance);
+            m_Encoder = m_SerializedObject.FindProperty("m_Encoder");
+            m_ResolutionScale = m_SerializedObject.FindProperty("m_ResolutionScale");
+            m_FrameRateProp = m_SerializedObject.FindProperty("m_FrameRate");
+            m_QualityProp = m_SerializedObject.FindProperty("m_Quality");
+            m_PrioritizeLatencyProp = m_SerializedObject.FindProperty("m_PrioritizeLatency");
+
+            m_EncodersSupportedOnPlatform = Enum.GetValues(typeof(VideoEncoder))
+                .Cast<VideoEncoder>()
+                .Where(e => EncoderUtilities.IsSupported(e) != EncoderSupport.NotSupportedOnPlatform)
+                .ToArray();
+
+            m_EncoderOptions = m_EncodersSupportedOnPlatform
+                .Select(e => new GUIContent(e.GetDisplayName()))
+                .ToArray();
+
+            m_EncoderSupport = EncoderUtilities.IsSupported((VideoEncoder)m_Encoder.intValue);
         }
 
         void DoEncoderGUI()

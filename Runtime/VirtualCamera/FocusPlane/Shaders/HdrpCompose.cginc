@@ -24,11 +24,11 @@ Varyings Vert(Attributes input)
     return output;
 }
 
-TEXTURE2D_X(_InputTexture);
+TEXTURE2D(_InputTexture);
 
 float4 Frag(Varyings input) : SV_Target
 {
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     float2 uv = input.texcoord;
-    return LOAD_TEXTURE2D_X(_InputTexture, uv * _ScreenSize.xy);
+    return LOAD_TEXTURE2D(_InputTexture, uv * _ScreenSize.xy);
 }

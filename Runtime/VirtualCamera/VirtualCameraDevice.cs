@@ -79,6 +79,9 @@ namespace Unity.LiveCapture.VirtualCamera
         [SerializeField]
         Settings m_Settings = Settings.DefaultData;
 
+        [SerializeField]
+        VirtualCameraRecorder m_Recorder = new VirtualCameraRecorder();
+
         // Obsolete. Use m_SnapshotLibrary instead.
         [SerializeField, NonReorderable]
         internal List<Snapshot> m_Snapshots = new List<Snapshot>();
@@ -95,14 +98,13 @@ namespace Unity.LiveCapture.VirtualCamera
         [SerializeField, HideInInspector]
         int m_BufferSize = k_MinBufferSize;
 
-        float m_LastPoseTimeStamp;
-
-        float m_LastJoysticksTimeStamp;
+        double m_LastPoseTimeStamp;
+        double m_LastJoysticksTimeStamp;
+        double m_LastGamepadTimeStamp;
         bool m_PoseRigNeedsInitialize;
         IRaycaster m_Raycaster;
         ICameraDriver m_Driver;
         FocusPlaneRenderer m_FocusPlaneRenderer;
-        VirtualCameraRecorder m_Recorder = new VirtualCameraRecorder();
         TimestampTracker m_TimestampTracker = new TimestampTracker();
         MeshIntersectionTracker m_MeshIntersectionTracker = new MeshIntersectionTracker();
         Lens m_LensMetadata;
@@ -329,6 +331,7 @@ namespace Unity.LiveCapture.VirtualCamera
             ValidateLensIntrinsics();
 
             m_Settings.Validate();
+            m_Recorder.Validate();
             m_CameraBody.Validate();
             m_Rig.Refresh(GetRigSettings());
             UpdateOverlaysIfNeeded(m_Settings);
@@ -348,8 +351,23 @@ namespace Unity.LiveCapture.VirtualCamera
             }
         }
 
-        double GetSynchronizerTime() =>
-            Synchronizer != null ? Synchronizer.CurrentTimecode.ToSeconds(Synchronizer.FrameRate) : default;
+        double GetSynchronizerTime()
+        {
+            if (Synchronizer == null)
+            {
+                return default;
+            }
+
+            var frameRate = Synchronizer.FrameRate;
+            var timecode = Synchronizer.CurrentTimecode;
+
+            if (frameRate == null || timecode == null)
+            {
+                return default;
+            }
+
+            return timecode.Value.ToSeconds(frameRate.Value);
+        }
 
         void ValidateActor()
         {
@@ -362,6 +380,8 @@ namespace Unity.LiveCapture.VirtualCamera
 
                 UpdateRigOriginFromActor();
             }
+
+            RegisterLiveProperties();
         }
 
         void UpdateOverlaysIfNeeded(Settings settings)
@@ -403,12 +423,29 @@ namespace Unity.LiveCapture.VirtualCamera
             m_LensIntrinsicsDirty = m_LensIntrinsics != oldIntrinsics;
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// The device calls this method when the slate has changed.
+        /// </summary>
+        /// <param name="slate">The <see cref="ISlate"/> that changed.</param>
         protected override void OnSlateChanged(ISlate slate)
         {
             if (TryGetInternalClient(out var client))
             {
                 client.SendVirtualCameraTrackMetadataListDescriptor(VcamTrackMetadataListDescriptor.Create(slate));
+            }
+        }
+
+        /// <summary>
+        /// The device calls this method when a live performance starts and properties are about to change.
+        /// </summary>
+        /// <param name="previewer">The <see cref="IPropertyPreviewer"/> to use to register live properties.</param>
+        protected override void OnRegisterLiveProperties(IPropertyPreviewer previewer)
+        {
+            Debug.Assert(m_Actor != null);
+
+            foreach (var previewable in m_Actor.GetComponents<IPreviewable>())
+            {
+                previewable.Register(previewer);
             }
         }
 
@@ -554,7 +591,9 @@ namespace Unity.LiveCapture.VirtualCamera
             m_FocusPlaneRenderer = GetComponent<FocusPlaneRenderer>();
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// This function is called when the object becomes enabled and active.
+        /// </summary>
         protected override void OnEnable()
         {
             base.OnEnable();
@@ -573,7 +612,13 @@ namespace Unity.LiveCapture.VirtualCamera
             m_ClientTimeEstimator.Reset();
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// This function is called when the behaviour becomes disabled.
+        /// </summary>
+        /// <remaks>
+        /// This is also called when the object is destroyed and can be used for any cleanup code.
+        ///  When scripts are reloaded after compilation has finished, OnDisable will be called, followed by an OnEnable after the script has been loaded.
+        /// </remaks>
         protected override void OnDisable()
         {
             s_Instances.Remove(this);
@@ -588,7 +633,12 @@ namespace Unity.LiveCapture.VirtualCamera
             Refresh();
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Indicates whether a device is ready for recording.
+        /// </summary>
+        /// <returns>
+        /// true if ready for recording; otherwise, false.
+        /// </returns>
         public override bool IsReady()
         {
             return base.IsReady() && m_Actor != null;
@@ -647,9 +697,9 @@ namespace Unity.LiveCapture.VirtualCamera
             m_Rig.Refresh(GetRigSettings());
         }
 
-        internal void SetLocalPose(Pose pose)
+        internal void SetARPose(Pose pose)
         {
-            m_Rig.LocalPose = pose;
+            m_Rig.ARPose = pose;
             m_Rig.Refresh(GetRigSettings());
         }
 
@@ -681,7 +731,9 @@ namespace Unity.LiveCapture.VirtualCamera
             SendSettings();
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Called to send the device state to the client.
+        /// </summary>
         public override void UpdateClient()
         {
             base.UpdateClient();
@@ -757,7 +809,7 @@ namespace Unity.LiveCapture.VirtualCamera
                     maybeLensSample = sample.lens;
                     if (IsRecording())
                     {
-                        m_TimestampTracker.SetTimestamp((float)sample.time);
+                        m_TimestampTracker.SetTimestamp(sample.time);
                         Recorder.Time = m_TimestampTracker.LocalTime;
                         m_Recorder.RecordAperture(sample.lens.Aperture);
                         m_Recorder.RecordFocusDistance(sample.lens.FocusDistance);
@@ -855,7 +907,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         void UpdateRecorder()
         {
-            var time = (float)GetTakeRecorder().GetPreviewTime();
+            var time = GetTakeRecorder().GetPreviewTime();
 
             m_Recorder.Channels = m_Channels;
             m_Recorder.Time = time;
@@ -870,27 +922,34 @@ namespace Unity.LiveCapture.VirtualCamera
 
         void UpdateTimestampTracker()
         {
-            m_TimestampTracker.Time = (float)GetTakeRecorder().GetPreviewTime();
+            m_TimestampTracker.Time = GetTakeRecorder().GetPreviewTime();
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Gets the name used for the take asset name.
+        /// </summary>
+        /// <returns>The name of the asset.</returns>
         protected override string GetAssetName()
         {
             return m_Actor != null ? m_Actor.name : name;
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// The device calls this method when a new client is assigned.
+        /// </summary>
         protected override void OnClientAssigned()
         {
             Register();
 
             m_LastLensAsset = null;
-
             m_PoseRigNeedsInitialize = true;
+
             StartVideoServer();
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// The device calls this method when the client is unassigned.
+        /// </summary>
         protected override void OnClientUnassigned()
         {
             Unregister();
@@ -920,6 +979,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 client.MotionScaleReceived += OnMotionScaleReceived;
                 client.JoystickSensitivityReceived += OnJoystickSensitivityReceived;
                 client.PedestalSpaceReceived += OnPedestalSpaceReceived;
+                client.MotionSpaceReceived += OnMotionSpaceReceived;
                 client.FocusModeReceived += OnFocusModeReceived;
                 client.FocusReticlePositionReceived += OnFocusReticlePositionReceived;
                 client.FocusDistanceOffsetReceived += OnFocusDistanceOffsetReceived;
@@ -936,6 +996,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 client.LoadSnapshot += OnLoadSnapshot;
                 client.DeleteSnapshot += OnDeleteSnapshot;
                 client.JoysticksSampleReceived += OnJoysticksSampleReceived;
+                client.GamepadSampleReceived += OnGamepadSampleReceived;
             }
         }
 
@@ -962,6 +1023,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 client.MotionScaleReceived -= OnMotionScaleReceived;
                 client.JoystickSensitivityReceived -= OnJoystickSensitivityReceived;
                 client.PedestalSpaceReceived -= OnPedestalSpaceReceived;
+                client.MotionSpaceReceived -= OnMotionSpaceReceived;
                 client.FocusModeReceived -= OnFocusModeReceived;
                 client.FocusReticlePositionReceived -= OnFocusReticlePositionReceived;
                 client.FocusDistanceOffsetReceived -= OnFocusDistanceOffsetReceived;
@@ -978,10 +1040,13 @@ namespace Unity.LiveCapture.VirtualCamera
                 client.LoadSnapshot -= OnLoadSnapshot;
                 client.DeleteSnapshot -= OnDeleteSnapshot;
                 client.JoysticksSampleReceived -= OnJoysticksSampleReceived;
+                client.GamepadSampleReceived -= OnGamepadSampleReceived;
             }
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// The device calls this method when the recording state has changed.
+        /// </summary>
         protected override void OnRecordingChanged()
         {
             if (IsRecording())
@@ -994,7 +1059,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 m_FirstSampleTimecode = null;
 
                 m_Recorder.FrameRate = frameRate;
-                m_Recorder.Clear();
+                m_Recorder.Prepare();
 
                 UpdateTimestampTracker();
 
@@ -1020,13 +1085,13 @@ namespace Unity.LiveCapture.VirtualCamera
 
         void OnJoysticksSampleReceived(JoysticksSample sample)
         {
-            float timestamp = (float)sample.Time;
+            var timestamp = sample.Time;
             m_TimestampTracker.SetTimestamp(timestamp);
 
             var settings = GetRigSettings();
             var frameInterval = 0d;
             var takeRecorder = GetTakeRecorder();
-            var deltaTime = Mathf.Max(0f, timestamp - m_LastJoysticksTimeStamp);
+            var deltaTime = Math.Max(0.0, timestamp - m_LastJoysticksTimeStamp);
 
             if (takeRecorder != null)
             {
@@ -1035,10 +1100,10 @@ namespace Unity.LiveCapture.VirtualCamera
 
             if (deltaTime > frameInterval * 4d)
             {
-                deltaTime = (float)frameInterval;
+                deltaTime = frameInterval;
             }
 
-            m_Rig.Translate(sample.Joysticks, deltaTime, m_Settings.JoystickSensitivity, m_Settings.PedestalSpace, settings);
+            m_Rig.Translate(sample.Joysticks, (float)deltaTime, m_Settings.JoystickSensitivity, m_Settings.PedestalSpace, m_Settings.MotionSpace, settings);
 
             if (IsRecording())
             {
@@ -1052,9 +1117,44 @@ namespace Unity.LiveCapture.VirtualCamera
             Refresh();
         }
 
+        void OnGamepadSampleReceived(GamepadSample sample)
+        {
+            var timestamp = sample.Time;
+            m_TimestampTracker.SetTimestamp(timestamp);
+
+            var settings = GetRigSettings();
+            var frameInterval = 0d;
+            var takeRecorder = GetTakeRecorder();
+            var deltaTime = Math.Max(0.0, timestamp - m_LastGamepadTimeStamp);
+
+            if (takeRecorder != null)
+            {
+                frameInterval = takeRecorder.FrameRate.FrameInterval;
+            }
+
+            if (deltaTime > frameInterval * 4d)
+            {
+                deltaTime = frameInterval;
+            }
+
+            m_Rig.Rotate(sample.UnityLook, (float)deltaTime, Vector3.one, settings);
+            m_Rig.Translate(sample.Move, (float)deltaTime, Vector3.one, m_Settings.PedestalSpace, m_Settings.MotionSpace, settings);
+
+            if (IsRecording())
+            {
+                m_Recorder.Time = m_TimestampTracker.LocalTime;
+                m_Recorder.RecordPosition(m_Rig.Pose.position);
+                m_Recorder.RecordRotation(m_Rig.Pose.rotation);
+            }
+
+            m_LastGamepadTimeStamp = timestamp;
+
+            Refresh();
+        }
+
         void OnPoseSampleReceived(PoseSample sample)
         {
-            float timestamp = (float)sample.Time;
+            var timestamp = sample.Time;
             m_TimestampTracker.SetTimestamp(timestamp);
             var deltaTime = timestamp - m_LastPoseTimeStamp;
 
@@ -1062,14 +1162,14 @@ namespace Unity.LiveCapture.VirtualCamera
             if (m_PoseRigNeedsInitialize)
             {
                 m_Rig.LastInput = sample.Pose;
-                m_Rig.RebaseOffset = Quaternion.Euler(0f, sample.Pose.rotation.eulerAngles.y - m_Rig.LocalPose.rotation.eulerAngles.y, 0f);
+                m_Rig.RebaseOffset = Quaternion.Euler(0f, sample.Pose.rotation.eulerAngles.y - m_Rig.ARPose.rotation.eulerAngles.y, 0f);
                 m_PoseRigNeedsInitialize = false;
             }
 
             var settings = GetRigSettings();
 
             if (!(m_Driver is ICustomDamping))
-                sample.Pose = VirtualCameraDamping.Calculate(m_Rig.LastInput, sample.Pose, m_Settings.Damping, deltaTime);
+                sample.Pose = VirtualCameraDamping.Calculate(m_Rig.LastInput, sample.Pose, m_Settings.Damping, (float)deltaTime);
 
             m_Rig.Update(sample.Pose, settings);
 
@@ -1077,11 +1177,7 @@ namespace Unity.LiveCapture.VirtualCamera
             {
                 if (IsSynchronized)
                 {
-                    if (m_FirstSampleTimecode == null)
-                    {
-                        m_FirstSampleTimecode = sample.Time;
-                    }
-
+                    m_FirstSampleTimecode ??= sample.Time;
                     m_Recorder.Time = sample.Time - m_FirstSampleTimecode.Value;
                 }
                 else
@@ -1113,9 +1209,10 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             m_Lens.FocalLength = sample.FocalLength;
             m_Lens.Validate(m_LensIntrinsics);
-            if (m_FirstSampleTimecode == null)
+
+            if (IsSynchronized)
             {
-                m_FirstSampleTimecode = sample.Time;
+                m_FirstSampleTimecode ??= sample.Time;
             }
 
             m_LensPostProcessor.AddFocalLengthKeyframe(sample.Time, sample.FocalLength);
@@ -1126,11 +1223,10 @@ namespace Unity.LiveCapture.VirtualCamera
             m_Lens.FocusDistance = sample.FocusDistance;
             m_Lens.Validate(m_LensIntrinsics);
 
-            if (m_FirstSampleTimecode == null)
+            if (IsSynchronized)
             {
-                m_FirstSampleTimecode = sample.Time;
+                m_FirstSampleTimecode ??= sample.Time;
             }
-
 
             m_LensPostProcessor.AddFocusDistanceKeyframe(sample.Time, m_Lens.FocusDistance);
         }
@@ -1139,9 +1235,10 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             m_Lens.Aperture = sample.Aperture;
             m_Lens.Validate(m_LensIntrinsics);
-            if (m_FirstSampleTimecode == null)
+
+            if (IsSynchronized)
             {
-                m_FirstSampleTimecode = sample.Time;
+                m_FirstSampleTimecode ??= sample.Time;
             }
 
             m_LensPostProcessor.AddApertureKeyframe(sample.Time, sample.Aperture);
@@ -1242,6 +1339,13 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             var settings = Settings;
             settings.PedestalSpace = space;
+            Settings = settings;
+        }
+
+        void OnMotionSpaceReceived(Space space)
+        {
+            var settings = Settings;
+            settings.MotionSpace = space;
             Settings = settings;
         }
 
@@ -1372,7 +1476,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         bool UpdateAutoFocusDistance(ref float distance, bool reticlePositionChanged)
         {
-            bool distanceUpdated = false;
+            var distanceUpdated = false;
             switch (m_Settings.FocusMode)
             {
                 case FocusMode.Manual:
@@ -1595,13 +1699,16 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
         /// <inheritdoc/>
-        public ISynchronizer Synchronizer { get; set; }
-
-        /// <inheritdoc/>
         public string Id => m_Guid;
 
         /// <inheritdoc/>
         string IRegistrable.FriendlyName => name;
+
+        /// <inheritdoc/>
+        public ISynchronizer Synchronizer { get; set; }
+
+        /// <inheritdoc/>
+        public FrameRate FrameRate => m_PoseBuffer.FrameRate;
 
         /// <inheritdoc/>
         public int BufferSize
@@ -1621,12 +1728,17 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         public int? MinBufferSize => k_MinBufferSize;
 
-
         /// <inheritdoc/>
         public FrameTime PresentationOffset
         {
             get => m_SyncPresentationOffset;
             set => m_SyncPresentationOffset = value;
+        }
+
+        /// <inheritdoc />
+        public bool TryGetBufferRange(out FrameTime oldestSample, out FrameTime newestSample)
+        {
+            return m_PoseBuffer.TryGetBufferRange(out oldestSample, out newestSample);
         }
 
         /// <inheritdoc/>
@@ -1652,7 +1764,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 // we could potentially generate more than one sample per update.
                 if (IsRecording() && m_FirstSampleTimecode is {} firstSampleTime)
                 {
-                    m_Recorder.Time = (float)(time - firstSampleTime);
+                    m_Recorder.Time = time - firstSampleTime;
                     m_Recorder.RecordAperture(lens.Aperture);
                     m_Recorder.RecordFocalLength(lens.FocalLength);
                     m_Recorder.RecordFocusDistance(lens.FocusDistance);

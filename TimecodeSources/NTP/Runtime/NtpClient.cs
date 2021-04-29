@@ -64,8 +64,7 @@ namespace Unity.LiveCapture.Ntp
             // if the host name has changed we need to reconnect the socket
             if (m_ConnectedAddress == null || hostOrAddress != m_ConnectedAddress)
             {
-                // we can resume on any thread, provided we don't use any Unity API
-                await ConnectAsync(hostOrAddress).ConfigureAwait(false);
+                Connect(hostOrAddress);
             }
 
             // check that the connection is valid
@@ -134,7 +133,7 @@ namespace Unity.LiveCapture.Ntp
             return destinationTimestamp + TimeSpan.FromTicks(correctionOffset);
         }
 
-        async Task ConnectAsync(string hostOrAddress)
+        void Connect(string hostOrAddress)
         {
             // close the previous socket
             Disconnect();
@@ -160,11 +159,10 @@ namespace Unity.LiveCapture.Ntp
                     ReceiveTimeout = k_Timeout,
                 };
 
-                // Connect to the host asynchronously. UDP is connectionless, but this avoid blocking when a host name
+                // Connect to the host asynchronously. UDP is connectionless, but this avoids blocking when a host name
                 // is used instead of an IP which requires a DNS lookup. It is also required to call connect before using
                 // certain send or receive methods.
-                var connectTask = m_Socket.ConnectAsync(trimmedHost, NtpConstants.Port);
-                await connectTask.ConfigureAwait(false);
+                m_Socket.Connect(trimmedHost, NtpConstants.Port);
 
                 // store the hostname of the connected server
                 m_ConnectedAddress = hostOrAddress;

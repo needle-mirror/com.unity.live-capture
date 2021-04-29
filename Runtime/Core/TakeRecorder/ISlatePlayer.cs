@@ -1,12 +1,17 @@
+using System;
+using UnityEngine;
+
 namespace Unity.LiveCapture
 {
-    interface ISlatePlayer
+    interface ITakeRecorderContext : IEquatable<ITakeRecorderContext>
     {
-        int GetSlateCount();
-        ISlate GetSlate(int index);
-        ISlate GetActiveSlate();
+        IExposedPropertyTable GetResolver();
+        ISlate GetSlate();
+        double GetTimeOffset();
         double GetTime();
         void SetTime(double value);
-        void SetTime(ISlate slate, double value);
+        void Prepare(bool isRecording);
+        double GetDuration();
+        bool IsValid();
     }
 }

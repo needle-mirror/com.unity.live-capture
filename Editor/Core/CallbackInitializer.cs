@@ -1,4 +1,3 @@
-using UnityEngine.Playables;
 using UnityEditor;
 using UnityEditor.Timeline;
 
@@ -15,20 +14,12 @@ namespace Unity.LiveCapture.Editor
 
         static void OnUpdate()
         {
-            UpdateServers();
+            ConnectionManager.Instance.Update();
         }
 
-        static void UpdateServers()
+        static void SeekOccurred()
         {
-            foreach (var server in ServerManager.Instance.Servers)
-            {
-                server.OnUpdate();
-            }
-        }
-
-        static void SeekOccurred(ISlate slate, PlayableDirector director)
-        {
-            if (TimelineEditor.inspectedDirector == director)
+            if (TimelineEditor.inspectedDirector != null)
             {
                 TimelineEditor.Refresh(RefreshReason.WindowNeedsRedraw);
             }

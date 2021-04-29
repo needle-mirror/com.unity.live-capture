@@ -110,7 +110,7 @@ namespace Unity.LiveCapture
 #endif
         }
 
-        void Update()
+        internal virtual void Update()
         {
             Validate();
         }

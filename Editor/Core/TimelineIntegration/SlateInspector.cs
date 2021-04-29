@@ -33,6 +33,7 @@ namespace Unity.LiveCapture.Editor
             public static GUIStyle TextAreaStyle = new GUIStyle(EditorStyles.textArea) { wordWrap = true };
         }
 
+        PlayableDirector m_Director;
         List<Take> m_Takes;
         CompactList m_TakeList;
         ISlate m_Slate;
@@ -58,13 +59,10 @@ namespace Unity.LiveCapture.Editor
             RefreshCache();
         }
 
-        public void OnGUI(ISlate slate)
-        {
-            OnGUI(slate, null);
-        }
-
         public void OnGUI(ISlate slate, PlayableDirector director)
         {
+            m_Director = director;
+
             if (m_Slate != slate)
             {
                 m_Slate = slate;
@@ -214,11 +212,7 @@ namespace Unity.LiveCapture.Editor
                 {
                     if (GUILayout.Button(Contents.ClearBaseLabel, Contents.ButtonMid))
                     {
-                        Undo.RegisterCompleteObjectUndo(m_Slate.UnityObject, Contents.ClearBaseUndo);
-
-                        m_Slate.IterationBase = null;
-
-                        EditorUtility.SetDirty(m_Slate.UnityObject);
+                        SetIterationBase(null, Contents.ClearBaseUndo);
                     }
                 }
             }
@@ -333,15 +327,11 @@ namespace Unity.LiveCapture.Editor
             m_TakeList.OnSelectCallback += OnSelectCallback;
         }
 
-        void DoSetBaseButtonGUI(Rect rect, Take selectedTake)
+        void DoSetBaseButtonGUI(Rect rect, Take take)
         {
             if (GUI.Button(rect, Contents.SetBaseIcon))
             {
-                Undo.RegisterCompleteObjectUndo(m_Slate.UnityObject, Contents.SetBaseUndo);
-
-                m_Slate.IterationBase = selectedTake;
-
-                EditorUtility.SetDirty(m_Slate.UnityObject);
+                SetIterationBase(take, Contents.SetBaseUndo);
             }
         }
 
@@ -355,19 +345,41 @@ namespace Unity.LiveCapture.Editor
 
         void OnSelectCallback()
         {
-            var take = m_Takes[m_TakeList.Index];
+            Debug.Assert(m_Slate != null);
 
-            if (m_Slate.Take != take)
+            var currentTake = m_Slate.Take;
+            var newTake = m_Takes[m_TakeList.Index];
+
+            RegisterDirectorUndo();
+            ClearSceneBindings();
+
+            if (currentTake != newTake)
             {
                 Undo.RegisterCompleteObjectUndo(m_Slate.UnityObject, Undo.GetCurrentGroupName());
 
-                m_Take = take;
-                m_Slate.Take = take;
+                m_Take = newTake;
+                m_Slate.Take = newTake;
 
                 GUI.changed = true;
 
                 EditorUtility.SetDirty(m_Slate.UnityObject);
             }
+
+            SetSceneBindings();
+        }
+
+        void SetIterationBase(Take iterationBase, string undoMessage)
+        {
+            RegisterDirectorUndo();
+            ClearSceneBindings();
+
+            Undo.RegisterCompleteObjectUndo(m_Slate.UnityObject, undoMessage);
+
+            m_Slate.IterationBase = iterationBase;
+
+            EditorUtility.SetDirty(m_Slate.UnityObject);
+
+            SetSceneBindings();
         }
 
         void HandleSlateChangedExternally()
@@ -394,11 +406,49 @@ namespace Unity.LiveCapture.Editor
                 EditorGUILayout.ObjectField(Contents.Take, m_Take, typeof(Take), false);
             }
 
-            if (director != null && m_Take != null)
+            if (director == null || m_Take == null)
             {
-                Editor.CreateCachedEditorWithContext(m_Take, director, m_EditorType, ref m_Editor);
+                return;
+            }
 
+            Editor.CreateCachedEditorWithContext(m_Take, director, m_EditorType, ref m_Editor);
+            
+            using (var change = new EditorGUI.ChangeCheckScope())
+            {
                 m_Editor.OnInspectorGUI();
+
+                if (change.changed)
+                {
+                    m_Slate.SetSceneBindings(director);
+                }
+            }
+        }
+
+        void RegisterDirectorUndo()
+        {
+            if (m_Director != null)
+            {
+                Undo.RegisterCompleteObjectUndo(m_Director, Undo.GetCurrentGroupName());
+            }
+        }
+
+        void ClearSceneBindings()
+        {
+            if (m_Director != null && m_Slate != null)
+            {
+                m_Slate.ClearSceneBindings(m_Director);
+
+                EditorUtility.SetDirty(m_Director);
+            }
+        }
+
+        void SetSceneBindings()
+        {
+            if (m_Director != null && m_Slate != null)
+            {
+                m_Slate.SetSceneBindings(m_Director);
+
+                EditorUtility.SetDirty(m_Director);
             }
         }
     }

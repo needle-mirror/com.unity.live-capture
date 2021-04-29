@@ -15,7 +15,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     public abstract class FaceMapper : ScriptableObject
     {
         /// <summary>
-        /// Creates a mapper state cache for the given actor.
+        /// Creates a mapper state cache for the specified actor.
         /// </summary>
         /// <param name="actor">The face rig to create the cache for.</param>
         /// <returns>The new cache instance, or null if no cache is needed by the mapper.</returns>
@@ -28,7 +28,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// Called by <see cref="FaceActor"/> to update a face rig to show a face pose.
         /// </summary>
         /// <param name="actor">The face rig the pose is applied to.</param>
-        /// <param name="cache">The mapper state cache for the given actor.</param>
+        /// <param name="cache">The mapper state cache for the specified actor.</param>
         /// <param name="pose">The face pose to map from.</param>
         /// <param name="continuous">When true, the new pose follows the current pose and they
         /// can be smoothed between, while false corresponds to a seek in the animation where the
@@ -44,7 +44,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// Called by <see cref="FaceActor"/> to update the head position of the character rig.
         /// </summary>
         /// <param name="actor">The face rig the pose is applied to.</param>
-        /// <param name="cache">The mapper state cache for the given actor.</param>
+        /// <param name="cache">The mapper state cache for the specified actor.</param>
         /// <param name="headPosition">The head position to map from.</param>
         /// <param name="continuous">When true, the new pose follows the current pose and they
         /// can be smoothed between, while false corresponds to a seek in the animation where the
@@ -60,7 +60,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// Called by <see cref="FaceActor"/> to update the head rotation of the character rig.
         /// </summary>
         /// <param name="actor">The face rig the pose is applied to.</param>
-        /// <param name="cache">The mapper state cache for the given actor.</param>
+        /// <param name="cache">The mapper state cache for the specified actor.</param>
         /// <param name="headOrientation">The head pose to map from.</param>
         /// <param name="continuous">When true, the new pose follows the current pose and they
         /// can be smoothed between, while false corresponds to a seek in the animation where the
@@ -76,7 +76,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// Called by <see cref="FaceActor"/> to update the eye rotations of the face rig.
         /// </summary>
         /// <param name="actor">The face rig the pose is applied to.</param>
-        /// <param name="cache">The mapper state cache for the given actor.</param>
+        /// <param name="cache">The mapper state cache for the specified actor.</param>
         /// <param name="pose">The face blend shapes to map from.</param>
         /// <param name="leftEyeRotation">The left eye rotation to map from.</param>
         /// <param name="rightEyeRotation">The right eye rotation to map from.</param>
@@ -91,5 +91,18 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             ref Quaternion rightEyeRotation,
             bool continuous
         );
+
+        /// <summary>
+        /// The preview system calls this method before playing animations.
+        /// Use the specified <see cref="IPropertyPreviewer"/> to register animated properties.
+        /// </summary>
+        /// <param name="actor">The face rig the pose is applied to.</param>
+        /// <param name="cache">The mapper state cache for the specified actor.</param>
+        /// <param name="previewer">The <see cref="IPropertyPreviewer"/> to register animated properties to.</param>
+        public virtual void RegisterPreviewableProperties(
+            FaceActor actor,
+            FaceMapperCache cache,
+            IPropertyPreviewer previewer
+        ) {}
     }
 }

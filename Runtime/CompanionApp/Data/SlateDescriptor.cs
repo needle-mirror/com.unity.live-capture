@@ -60,7 +60,6 @@ namespace Unity.LiveCapture.CompanionApp
                 descriptor.ShotName = slate.ShotName;
                 descriptor.TakeNumber = slate.TakeNumber;
                 descriptor.Description = slate.Description;
-                descriptor.Duration = slate.Duration;
                 descriptor.SelectedTake = takes.IndexOf(slate.Take);
                 descriptor.IterationBase = takes.IndexOf(slate.IterationBase);
                 descriptor.Takes = takes.Select(take => TakeDescriptor.Create(take)).ToArray();

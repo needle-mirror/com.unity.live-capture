@@ -27,6 +27,7 @@ namespace Unity.LiveCapture.CompanionApp
         readonly SlateChangeTracker m_SlateChangeTracker = new SlateChangeTracker();
         readonly TakeNameFormatter m_TakeNameFormatter = new TakeNameFormatter();
         string m_LastAssetName;
+        PropertyPreviewer m_Previewer;
 
         bool TryGetInternalClient(out ICompanionAppClientInternal client)
         {
@@ -151,7 +152,7 @@ namespace Unity.LiveCapture.CompanionApp
 
         void RegisterClient()
         {
-            if (!isActiveAndEnabled ||  m_ClientRegistered)
+            if (!isActiveAndEnabled || m_ClientRegistered)
             {
                 return;
             }
@@ -176,13 +177,14 @@ namespace Unity.LiveCapture.CompanionApp
                 client.ClearIterationBase += ClientClearIterationBase;
                 client.TexturePreviewRequested += OnTexturePreviewRequested;
 
+                RegisterLiveProperties();
                 OnClientAssigned();
 
                 client.SendInitialize();
 
                 UpdateClient();
 
-                 m_ClientRegistered = true;
+                m_ClientRegistered = true;
             }
             else
             {
@@ -201,6 +203,7 @@ namespace Unity.LiveCapture.CompanionApp
             if (TryGetInternalClient(out var client))
             {
                 OnClientUnassigned();
+                RestoreLiveProperties();
 
                 client.SendEndSession();
                 client.SetDeviceMode -= ClientSetDeviceMode;
@@ -251,7 +254,7 @@ namespace Unity.LiveCapture.CompanionApp
                 {
                     client.SendFrameRate(takeRecorder.IsLive() || take == null ? takeRecorder.FrameRate : take.FrameRate);
                     client.SendHasSlate(hasSlate);
-                    client.SendSlateDuration(hasSlate ? slate.Duration : 0d);
+                    client.SendSlateDuration(takeRecorder.GetPreviewDuration());
                     client.SendSlateIsPreviewing(takeRecorder.IsPreviewPlaying());
                     client.SendSlatePreviewTime(takeRecorder.GetPreviewTime());
 
@@ -300,7 +303,51 @@ namespace Unity.LiveCapture.CompanionApp
         /// <summary>
         /// The device calls this method when the slate has changed.
         /// </summary>
+        /// <param name="slate">The <see cref="ISlate"/> that changed.</param>
         protected virtual void OnSlateChanged(ISlate slate) {}
+
+        /// <summary>
+        /// The device calls this method when a live performance starts and properties are about to change.
+        /// </summary>
+        /// <param name="previewer">The <see cref="IPropertyPreviewer"/> to use to register live properties.</param>
+        protected virtual void OnRegisterLiveProperties(IPropertyPreviewer previewer) {}
+
+        /// <summary>
+        /// Registers properties before a live performance to allow to restore their original values later.
+        /// </summary>
+        protected void RegisterLiveProperties()
+        {
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
+            
+            RestoreLiveProperties();
+
+            if (IsReady())
+            {
+                if (m_Previewer == null)
+                    m_Previewer = new PropertyPreviewer(this);
+
+                RegisterLiveProperties(m_Previewer);
+            }
+        }
+
+        internal void RegisterLiveProperties(IPropertyPreviewer previewer)
+        {
+            OnRegisterLiveProperties(previewer);
+        }
+
+        /// <summary>
+        /// Restores properties that changed during a live performance.
+        /// </summary>
+        protected void RestoreLiveProperties()
+        {
+            if (m_Previewer != null)
+            {
+                m_Previewer.Restore();
+            }
+        }
 
         void ClientStartRecording()
         {

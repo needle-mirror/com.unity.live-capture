@@ -2,7 +2,7 @@
 
 Use this component in any GameObject of your current Scene to enable timecode synchronization between compatible Live Capture devices connected to the Unity Editor.
 
-To get a functional Timecode Synchronizer, you must must use this component along with another component according to the timecode source you need to use: [LTC Timecode Source](ref-component-ltc-timecode-source.md) or [System Clock Timecode Source](ref-component-system-clock-timecode-source.md).
+To get a functional Timecode Synchronizer, you must use this component along with another component according to the timecode source you need to use: [LTC Timecode Source](ref-component-ltc-timecode-source.md), [NTP Timecode Source](ref-component-ntp-timecode-source.md), or [System Clock Timecode Source](ref-component-system-clock-timecode-source.md).
 
 ![](images/ref-component-timecode-synchronizer.png)
 
@@ -11,7 +11,7 @@ To get a functional Timecode Synchronizer, you must must use this component alon
 | Property | Function |
 |:---|:---|
 | **Display Timecode** | Displays the current timecode in the Game view.<br /><br />**Note:** This timecode display is burnt into the Game view. If you want to export the Game view, you might first need to disable this option. |
-| **Timecode Source** | The timecode source to use as the reference for synchronizing all your connected data sources.<br /><br />The selection list includes all timecode source components (namely, [LTC Timecode Source](ref-component-ltc-timecode-source.md) or [System Clock Timecode Source](ref-component-system-clock-timecode-source.md)) present in any GameObject of the current Scene. The mention in parentheses indicates the name of the GameObject that holds the component. |
+| **Timecode Source** | The timecode source to use as the reference for synchronizing all your connected data sources.<br /><br />The selection list includes all timecode source components present in any GameObject of the current Scene. The mention in parentheses indicates the name of the GameObject that holds the component. |
 | **Global Time Offset** | The offset (in frames) to apply to the global timecode used for synchronization updates. Use a negative value to add a delay and compensate for high-latency sources. |
 
 ## Timed data sources

@@ -1,7 +1,8 @@
-using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
+using UnityObject = UnityEngine.Object;
 
 namespace Unity.LiveCapture
 {
@@ -9,7 +10,6 @@ namespace Unity.LiveCapture
     /// Timeline track that you can use to play and record a <see cref="Take"/>.
     /// </summary>
     [TrackClipType(typeof(SlatePlayableAsset))]
-    [TrackBindingType(typeof(TakeRecorder))]
     [HelpURL(Documentation.baseURL + "take-system-setting-up-timeline" + Documentation.endURL)]
     class TakeRecorderTrack : TrackAsset
     {
@@ -21,35 +21,19 @@ namespace Unity.LiveCapture
         public override Playable CreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount)
         {
             var director = go.GetComponent<PlayableDirector>();
-            var takeRecorder = director.GetGenericBinding(this) as TakeRecorder;
+            var takeRecorder = TakeRecorder.Main;
 
-            if (takeRecorder == null)
-            {
-                return Playable.Create(graph, inputCount);
-            }
-
-            var takeRecorderDirector = takeRecorder.GetPlayableDirector();
-
-            if (takeRecorderDirector == director)
+            if (takeRecorder != null && takeRecorder.GetComponent<PlayableDirector>() == director)
             {
                 Debug.LogWarning($"{nameof(TakeRecorderTrack)} ({name}) is referencing the same {nameof(TakeRecorder)} component as the one in which it is playing.");
 
                 return Playable.Create(graph, inputCount);
             }
 
-            foreach (var clip in GetClips())
-            {
-                var slatePlayableAsset = clip.asset as SlatePlayableAsset;
-
-                slatePlayableAsset.Clip = clip;
-                slatePlayableAsset.Director = takeRecorderDirector;
-            }
-
             var mixerPlayable = ScriptPlayable<TakeRecorderTrackMixer>.Create(graph, inputCount);
             var mixer = mixerPlayable.GetBehaviour();
 
-            mixer.Director = director;
-            mixer.TakeRecorder = takeRecorder;
+            mixer.Construct(director, takeRecorder, GetClips());
 
             return mixerPlayable;
         }
@@ -65,22 +49,68 @@ namespace Unity.LiveCapture
 
             m_GatheringProperties = true;
 
-            var takeRecorder = director.GetGenericBinding(this) as TakeRecorder;
+            var sceneReferences = new HashSet<UnityObject>();
 
-            if (takeRecorder != null)
+            foreach (var clip in GetClips())
             {
-                var takePlayerDirector = takeRecorder.GetComponent<PlayableDirector>();
-                var timeline = takePlayerDirector.playableAsset as TimelineAsset;
+                var slateAsset = clip.asset as SlatePlayableAsset;
+                var take = slateAsset.Take;
+                var iterationBase = slateAsset.IterationBase;
 
-                if (timeline != null)
+                if (take != null)
                 {
-                    timeline.GatherProperties(takePlayerDirector, driver);
+                    take.Timeline.GatherProperties(director, driver);
+
+                    GatherSceneReferences(director, take, sceneReferences);
                 }
+
+                if (iterationBase != null)
+                {
+                    iterationBase.Timeline.GatherProperties(director, driver);
+
+                    GatherSceneReferences(director, iterationBase, sceneReferences);
+                }
+            }
+
+            var previewer = new TimelinePropertyPreviewer(driver);
+            var previewables = new List<IPreviewable>();
+
+            foreach (var obj in sceneReferences)
+            {
+                if (obj is GameObject go)
+                {
+                    previewables.AddRange(go.GetComponents<IPreviewable>());
+                }
+                else if (obj is Component component)
+                {
+                    previewables.AddRange(component.GetComponents<IPreviewable>());
+                }
+            }
+
+            foreach (var previewable in previewables)
+            {
+                previewable.Register(previewer);
             }
 
             m_GatheringProperties = false;
         }
 
+        static void GatherSceneReferences(PlayableDirector director, Take take, HashSet<UnityObject> sceneReferences)
+        {
+            Debug.Assert(director != null);
+            Debug.Assert(take != null);
+            Debug.Assert(sceneReferences != null);
+
+            foreach (var entry in take.BindingEntries)
+            {
+                var value = director.GetGenericBinding(entry.Track);
+
+                if (value != null)
+                {
+                    sceneReferences.Add(value);
+                }
+            }
+        }
 #endif
     }
 }

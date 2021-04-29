@@ -15,7 +15,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     }
 
     /// <inheritdoc cref="IFaceClient"/>
-    interface IFaceClientInternal : IFaceClient
+    interface IFaceClientInternal : IFaceClient, ICompanionAppClientInternal
     {
         /// <summary>
         /// An event invoked when a face pose sample is received.

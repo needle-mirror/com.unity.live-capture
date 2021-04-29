@@ -15,6 +15,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         SerializedProperty m_MotionScale;
         SerializedProperty m_JoystickSensitivity;
         SerializedProperty m_PedestalSpace;
+        SerializedProperty m_MotionSpace;
         SerializedProperty m_AspectRatio;
         SerializedProperty m_FocusMode;
         SerializedProperty m_ReticlePosition;
@@ -57,6 +58,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
                 m_MotionScale = property.FindPropertyRelative("MotionScale");
                 m_JoystickSensitivity = property.FindPropertyRelative("JoystickSensitivity");
                 m_PedestalSpace = property.FindPropertyRelative("PedestalSpace");
+                m_MotionSpace = property.FindPropertyRelative("MotionSpace");
                 m_AspectRatio = property.FindPropertyRelative("AspectRatio");
                 m_FocusMode = property.FindPropertyRelative("FocusMode");
                 m_ReticlePosition = property.FindPropertyRelative("ReticlePosition");
@@ -84,6 +86,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
                 PropertyField(ref position, m_MotionScale, true);
                 PropertyField(ref position, m_JoystickSensitivity, true);
                 PropertyField(ref position, m_PedestalSpace, true);
+                PropertyField(ref position, m_MotionSpace, true);
                 PropertyField(ref position, m_AspectRatio, true);
                 PropertyField(ref position, m_FocusMode, true);
                 PropertyField(ref position, m_ReticlePosition);

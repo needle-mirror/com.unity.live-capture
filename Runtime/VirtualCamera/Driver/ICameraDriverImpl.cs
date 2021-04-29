@@ -2,12 +2,16 @@ namespace Unity.LiveCapture.VirtualCamera
 {
     interface ICameraDriverImpl
     {
-        /// <inheritdoc cref="ICameraDriver.EnableDepthOfField"/>
+        /// <summary>
+        /// Activates the depth of field effect.
+        /// </summary>
+        /// <param name="value">The active state to set.</param>
         void EnableDepthOfField(bool value);
 
         /// <summary>
-        /// Set focus distance.
+        /// Sets the focus distance.
         /// </summary>
+        /// <param name="focusDistance">The focus distance in world units.</param>
         /// <remarks>
         /// Depth Of Field needs to be active for focus distance to take effect, <see cref="EnableDepthOfField"/>
         /// </remarks>

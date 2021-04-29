@@ -53,3 +53,7 @@ The Unity Virtual Camera and Unity Face Capture apps are currently available on 
 * Your **firewall** must allow your Unity Editor program to get **inbound connections** from external apps of your local network.
 
 [Get more information on how to meet those network requirements in Windows](setup-network.md).
+
+## Known issues and limitations
+
+See the list of current [known issues and limitations](known-issues-limitations.md) that you might experience with the Live Capture package and companion apps, along with some workarounds.

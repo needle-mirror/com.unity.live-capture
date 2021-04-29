@@ -11,7 +11,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     [ExecuteAlways]
     [RequireComponent(typeof(Animator))]
     [HelpURL(Documentation.baseURL + "ref-component-arkit-face-actor" + Documentation.endURL)]
-    public sealed class FaceActor : MonoBehaviour
+    public sealed class FaceActor : MonoBehaviour, IPreviewable
     {
         internal static class PropertyNames
         {
@@ -239,6 +239,37 @@ namespace Unity.LiveCapture.ARKitFaceCapture
                 }
 
                 m_LastChannels = channels;
+            }
+        }
+
+        /// <inheritdoc/>
+        public void Register(IPropertyPreviewer previewer)
+        {
+            if (m_Mapper != null)
+            {
+                m_Mapper.RegisterPreviewableProperties(this, m_Cache, previewer);
+            }
+
+            previewer.Register(this, "m_HeadPosition.x");
+            previewer.Register(this, "m_HeadPosition.y");
+            previewer.Register(this, "m_HeadPosition.z");
+            previewer.Register(this, "m_HeadOrientation.x");
+            previewer.Register(this, "m_HeadOrientation.y");
+            previewer.Register(this, "m_HeadOrientation.z");
+            previewer.Register(this, "m_LeftEyeOrientation.x");
+            previewer.Register(this, "m_LeftEyeOrientation.y");
+            previewer.Register(this, "m_LeftEyeOrientation.z");
+            previewer.Register(this, "m_RightEyeOrientation.x");
+            previewer.Register(this, "m_RightEyeOrientation.y");
+            previewer.Register(this, "m_RightEyeOrientation.z");
+            previewer.Register(this, "m_BlendShapesEnabled");
+            previewer.Register(this, "m_HeadPositionEnabled");
+            previewer.Register(this, "m_HeadOrientationEnabled");
+            previewer.Register(this, "m_EyeOrientationEnabled");
+
+            foreach (var shape in FaceBlendShapePose.Shapes)
+            {
+                previewer.Register(this, $"m_BlendShapes.{shape}");
             }
         }
     }

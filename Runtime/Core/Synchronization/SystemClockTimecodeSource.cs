@@ -8,6 +8,7 @@ namespace Unity.LiveCapture
     /// A component that generates timecodes using the system clock.
     /// </summary>
     [ExecuteAlways]
+    [CreateTimecodeSourceMenuItemAttribute("System Clock Timecode Source")]
     [AddComponentMenu("Live Capture/Timecode/System Clock Timecode Source")]
     [HelpURL(Documentation.baseURL + "ref-component-system-clock-timecode-source" + Documentation.endURL)]
     public class SystemClockTimecodeSource : MonoBehaviour, ITimecodeSource
@@ -89,10 +90,7 @@ namespace Unity.LiveCapture
                     Now = Timecode.FromSeconds(FrameRate, Time.timeAsDouble);
                     break;
                 case ClockType.SystemClock:
-                    // This timecode rolls over at midnight
-                    var now = DateTime.Now;
-                    var today = new DateTime(now.Year, now.Month, now.Day);
-                    Now = Timecode.FromSeconds(FrameRate, (now - today).TotalSeconds);
+                    Now = Timecode.FromSeconds(FrameRate, DateTime.Now.TimeOfDay.TotalSeconds);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(Type));

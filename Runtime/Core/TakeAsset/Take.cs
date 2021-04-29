@@ -26,11 +26,13 @@ namespace Unity.LiveCapture
         [SerializeField, OnlyStandardFrameRates]
         FrameRate m_FrameRate;
         [SerializeField]
+        double m_Duration;
+        [SerializeField]
         Timecode m_StartTimecode;
         [SerializeField]
-        Texture2D m_Screenshot;
+        LazyLoadReference<Texture2D> m_Screenshot;
         [SerializeField]
-        TimelineAsset m_Timeline;
+        LazyLoadReference<TimelineAsset> m_Timeline;
         [SerializeField]
         List<TrackBindingEntry> m_Entries = new List<TrackBindingEntry>();
         [SerializeField]
@@ -109,12 +111,33 @@ namespace Unity.LiveCapture
         }
 
         /// <summary>
+        /// The length of the take in seconds.
+        /// </summary>
+        public double Duration
+        {
+            get => m_Duration;
+            internal set => m_Duration = value;
+        }
+
+        /// <summary>
         /// The screenshot at the beginning of the take.
         /// </summary>
         public Texture2D Screenshot
         {
-            get => m_Screenshot;
+            get => m_Screenshot.asset;
             internal set => m_Screenshot = value;
+        }
+
+        /// <summary>
+        /// Gets the object instanceID referenced by Screenshot.
+        /// This doesn't load the texture asset and can be passed to a number
+        /// of AssetDatabase functions.
+        /// </summary>
+        /// <returns>False if the Screenshot reference isn't set.</returns>
+        internal bool TryGetScreenshotInstanceID(out int instanceID)
+        {
+            instanceID = m_Screenshot.instanceID;
+            return m_Screenshot.isSet;
         }
 
         /// <summary>
@@ -122,7 +145,7 @@ namespace Unity.LiveCapture
         /// </summary>
         public TimelineAsset Timeline
         {
-            get => m_Timeline;
+            get => m_Timeline.asset;
             internal set => m_Timeline = value;
         }
 

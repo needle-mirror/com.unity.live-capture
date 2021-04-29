@@ -59,4 +59,16 @@ namespace Unity.LiveCapture
         /// <param name="value">The keyframe value.</param>
         void AddKey(double time, T value);
     }
+
+    /// <summary>
+    /// Represents an animation curve that can reduce the number of stored keyframes
+    /// by tolerating certain amount of error. 
+    /// </summary>
+    interface IReduceableCurve : ICurve
+    {
+        /// <summary>
+        /// The tolerance allowed when simplifying the curve.
+        /// </summary>
+        float MaxError { get; set; }
+    }
 }

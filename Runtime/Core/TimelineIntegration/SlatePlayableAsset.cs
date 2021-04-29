@@ -1,3 +1,7 @@
+#if UNITY_EDITOR
+using UnityEditor;
+using System.ComponentModel;
+#endif
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
@@ -7,15 +11,23 @@ namespace Unity.LiveCapture
     /// <summary>
     /// Playable Asset class for <see cref="TakeRecorderTrack"/>
     /// </summary>
+#if UNITY_EDITOR
+    [DisplayName("Slate")]
+#endif
     class SlatePlayableAsset : PlayableAsset, ITimelineClipAsset, ISlate
     {
-        const double k_Tick = 0.016666666d;
+        const int k_Version = 1;
         const string k_DefaultDirectory = "Assets/Takes";
+        const string k_DefaultShotName = "New Shot";
 
         [SerializeField]
-        TimelineClip m_Clip;
+        int m_Version = k_Version;
+        [SerializeField]
+        bool m_AutoClipName = true;
         [SerializeField]
         int m_SceneNumber = 1;
+        [SerializeField]
+        string m_ShotName = k_DefaultShotName;
         [SerializeField]
         int m_TakeNumber = 1;
         [SerializeField]
@@ -27,17 +39,10 @@ namespace Unity.LiveCapture
         [SerializeField]
         Take m_IterationBase;
 
-        internal TimelineClip Clip
+        public bool AutoClipName
         {
-            get => m_Clip;
-            set => m_Clip = value;
-        }
-
-        internal PlayableDirector Director { get; set; }
-
-        internal double Start
-        {
-            get => m_Clip.start;
+            get => m_AutoClipName;
+            set => m_AutoClipName = value;
         }
 
         public Object UnityObject => this;
@@ -50,8 +55,8 @@ namespace Unity.LiveCapture
 
         public string ShotName
         {
-            get => m_Clip.displayName;
-            set => m_Clip.displayName = value;
+            get => m_ShotName;
+            set => m_ShotName = value;
         }
 
         public int TakeNumber
@@ -84,12 +89,31 @@ namespace Unity.LiveCapture
             set => m_IterationBase = value;
         }
 
-        public double Duration => m_Clip.duration - k_Tick;
+        internal void Migrate(string clipName)
+        {
+            if (m_Version == 0)
+            {
+                m_ShotName = clipName;
+
+                ++m_Version;
+#if UNITY_EDITOR
+                EditorUtility.SetDirty(this);
+                AssetDatabase.SaveAssetIfDirty(this);
+#endif
+            }
+
+            m_Version = k_Version;
+        }
 
         /// <summary>
         /// Describes the timeline features supported by a clip.
         /// </summary>
-        ClipCaps ITimelineClipAsset.clipCaps => ClipCaps.Extrapolation;
+        ClipCaps ITimelineClipAsset.clipCaps => ClipCaps.Extrapolation | ClipCaps.ClipIn;
+
+        /// <summary>
+        /// The playback duration of the instantiated Playable, in seconds.
+        /// </summary>
+        public override double duration => GetTakeDuration(m_Take, base.duration);
 
         /// <summary>
         /// Injects SlatePlayables into the given graph.
@@ -101,22 +125,17 @@ namespace Unity.LiveCapture
         /// </returns>
         public override Playable CreatePlayable(PlayableGraph graph, GameObject owner)
         {
-            if (Director != null)
+            return ScriptPlayable<NestedTimelinePlayable>.Create(graph);
+        }
+
+        static double GetTakeDuration(Take take, double defaultDuration)
+        {
+            if (take == null)
             {
-                var directorControlPlayable = DirectorControlPlayable.Create(graph, Director);
-                var playable = ScriptPlayable<SlatePlayable>.Create(graph);
-                var slatePlayable = playable.GetBehaviour();
-
-                slatePlayable.Asset = this;
-                directorControlPlayable.SetDuration(Duration);
-
-                playable.AddInput(directorControlPlayable, 0, 1f);
-                playable.SetPropagateSetTime(true);
-
-                return playable;
+                return defaultDuration;
             }
 
-            return Playable.Null;
+            return take.Timeline.duration;
         }
     }
 }

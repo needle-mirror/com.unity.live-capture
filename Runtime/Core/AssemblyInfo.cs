@@ -9,11 +9,14 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.LiveCapture.Ntp")]
 [assembly: InternalsVisibleTo("Unity.VirtualCameraClient.Runtime")]
 [assembly: InternalsVisibleTo("Unity.FaceCaptureClient.Runtime")]
+[assembly: InternalsVisibleTo("Unity.LiveCapture.Mocap")]
+[assembly: InternalsVisibleTo("Unity.LiveCapture.TransformCapture")]
 
 // Internal access needed for editor scripts
 [assembly: InternalsVisibleTo("Unity.LiveCapture.Editor")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.ARKitFaceCapture.Editor")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.VirtualCamera.Editor")]
+[assembly: InternalsVisibleTo("Unity.LiveCapture.Mocap.Editor")]
 
 // Internal access needed for testing
 [assembly: InternalsVisibleTo("Unity.LiveCapture.Tests.Editor")]

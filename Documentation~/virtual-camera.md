@@ -20,7 +20,7 @@ Review the detailed requirements and perform the necessary installations and env
 
 * How to get started with a [basic setup](virtual-camera-getting-started.md) in your current Unity project to try out the Unity Virtual Camera functionality.
 
-* Overview of the [Unity Virtual Camera app interface](virtual-camera-app-controls.md) (controls and settings).
+* Overview of the Unity Virtual Camera [app interface](virtual-camera-app-ui.md).
 
 * General guidelines to achieve some basic [workflow tasks](virtual-camera-workflow.md) with Unity Virtual Camera.
 

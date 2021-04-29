@@ -11,16 +11,6 @@ namespace Unity.LiveCapture
     public class TimedDataBuffer<T> : CircularBuffer<(FrameTime frameTime, T value)>
     {
         /// <summary>
-        /// Defines the size of a "valid" readable boundary around the beginning and end of the buffer,
-        /// in frames.
-        /// </summary>
-        /// <remarks>
-        /// When attempting to retrieve a sample outside of this boundary, <see cref="TryGetSample"/>
-        /// will return <see cref="TimedSampleStatus.DataMissing"/>.
-        /// </remarks>
-        public int Boundary { get; set; } = 30;
-
-        /// <summary>
         /// Gets the nominal frame rate of the buffered samples.
         /// </summary>
         public FrameRate FrameRate { get; }
@@ -36,19 +26,71 @@ namespace Unity.LiveCapture
         }
 
         /// <summary>
-        /// Retrieve a sample from the buffer at the time, if available.
+        /// Gets the frame time of the oldest sample in the buffer.
+        /// </summary>
+        /// <param name="frameRate">The frame rate to use for the returned frame time.</param>
+        /// <returns>The frame time of the oldest sample or <see langword="null"/> if there are no samples in the buffer.</returns>
+        public FrameTime? GetOldestSampleTime(FrameRate frameRate)
+        {
+            if (Count == 0)
+            {
+                return default;
+            }
+
+            return FrameTime.Remap(Front().frameTime, FrameRate, frameRate);
+        }
+
+        /// <summary>
+        /// Gets the frame time of the newest sample in the buffer.
+        /// </summary>
+        /// <param name="frameRate">The frame rate to use for the returned frame time.</param>
+        /// <returns>The frame time of the newest sample or <see langword="null"/> if there are no samples in the buffer.</returns>
+        public FrameTime? GetNewestSampleTime(FrameRate frameRate)
+        {
+            if (Count == 0)
+            {
+                return default;
+            }
+
+            return FrameTime.Remap(Back().frameTime, FrameRate, frameRate);
+        }
+
+        /// <summary>
+        /// Gets the frame time of the newest and oldest samples in the buffer.
+        /// </summary>
+        /// <param name="oldestSample">The frame time of the oldest sample in the buffer, or <see langword="default"/> if there are no samples in the buffer.</param>
+        /// <param name="newestSample">The frame time of the newest sample in the buffer, or <see langword="default"/> if there are no samples in the buffer.</param>
+        /// <returns><see langword="true"/> if there are any samples in the buffer; otherwise, <see langword="false"/>.</returns>
+        public bool TryGetBufferRange(out FrameTime oldestSample, out FrameTime newestSample)
+        {
+            if (Count == 0)
+            {
+                oldestSample = default;
+                newestSample = default;
+                return false;
+            }
+
+            oldestSample = Front().frameTime;
+            newestSample = Back().frameTime;
+            return true;
+        }
+
+        /// <summary>
+        /// Retrieves a sample from the buffer at the specified time, if available.
         /// </summary>
         /// <param name="timecode">The time to retrieve the sample data for, expressed relative to the given <paramref name="frameRate"/>.</param>
-        /// <param name="frameRate">The framerate of the timecode source. Could be different from the framerate of the data in the buffer.</param>
+        /// <param name="frameRate">The framerate of the timecode source. It might be different from the framerate of the data in the buffer.</param>
         /// <param name="sampleValue">The retrieved sample, if successful.</param>
         /// <remarks>
-        /// If a sample with the requested time could not be found, this method will perform the following:
+        /// If there isn't a sample at the specified time, the following occurs:
+        /// <para>
         /// a) if the time is bounded by the oldest and newest samples contained in the buffer,
-        /// set <paramref name="sampleValue"/> to the nearest sample and return <see cref="TimedSampleStatus.Ok"/>.
-        /// b) if the time is outside of the buffer and is within the valid region as defined by <see cref="Boundary"/>,
-        /// set <paramref name="sampleValue"/> to the newest or oldest (whichever is closer) sample in the buffer,
-        /// and return <see cref="TimedSampleStatus.Behind"/> or <see cref="TimedSampleStatus.Ahead"/> respectively.
-        /// c) else the return <see cref="TimedSampleStatus.DataMissing"/> and <paramref name="sampleValue"/> is set to its default.
+        /// <paramref name="sampleValue"/> is set to the nearest sample and returns <see cref="TimedSampleStatus.Ok"/>.<br/>
+        /// b) if the time is outside of the buffer but there is at least one buffered sample,
+        /// <paramref name="sampleValue"/> is set to the newest or oldest buffered sample (whichever is closer)
+        /// and returns <see cref="TimedSampleStatus.Behind"/> or <see cref="TimedSampleStatus.Ahead"/> respectively.<br/>
+        /// c) otherwise, returns <see cref="TimedSampleStatus.DataMissing"/> and sets <paramref name="sampleValue"/> to <see langword="default"/>.
+        /// </para>
         /// </remarks>
         /// <returns>The status of the retrieved sample. See remarks.</returns>
         public TimedSampleStatus TryGetSample(Timecode timecode, FrameRate frameRate, out T sampleValue)
@@ -58,18 +100,20 @@ namespace Unity.LiveCapture
         }
 
         /// <summary>
-        /// Retrieve a sample from the buffer at the requested time, if available.
+        /// Retrieves a sample from the buffer at the specified time, if available.
         /// </summary>
-        /// <param name="frame">The time to retrieve the sample data for, expressed relative to the nominal <see cref="FrameRate"/>.</param>
+        /// <param name="frame">The time to retrieve the sample data for, expressed relative to the <see cref="FrameRate"/>.</param>
         /// <param name="sampleValue">The retrieved sample, if successful.</param>
         /// <remarks>
-        /// If a sample with the requested time could not be found, this method will perform the following:
+        /// If there isn't a sample at the specified time, the following occurs:
+        /// <para>
         /// a) if the time is bounded by the oldest and newest samples contained in the buffer,
-        /// set <paramref name="sampleValue"/> to the nearest sample and return <see cref="TimedSampleStatus.Ok"/>.
-        /// b) if the time is outside of the buffer and is within the valid region as defined by <see cref="Boundary"/>,
-        /// set <paramref name="sampleValue"/> to the newest or oldest (whichever is closer) sample in the buffer,
-        /// and return <see cref="TimedSampleStatus.Behind"/> or <see cref="TimedSampleStatus.Ahead"/> respectively.
-        /// c) else the return <see cref="TimedSampleStatus.DataMissing"/> and <paramref name="sampleValue"/> is set to its default.
+        /// <paramref name="sampleValue"/> is set to the nearest sample and returns <see cref="TimedSampleStatus.Ok"/>.<br/>
+        /// b) if the time is outside of the buffer but there is at least one buffered sample,
+        /// <paramref name="sampleValue"/> is set to the newest or oldest buffered sample (whichever is closer)
+        /// and returns <see cref="TimedSampleStatus.Behind"/> or <see cref="TimedSampleStatus.Ahead"/> respectively.<br/>
+        /// c) otherwise, returns <see cref="TimedSampleStatus.DataMissing"/> and sets <paramref name="sampleValue"/> to <see langword="default"/>.
+        /// </para>
         /// </remarks>
         /// <returns>The status of the retrieved sample. See remarks.</returns>
         public TimedSampleStatus TryGetSample(FrameTime frame, out T sampleValue)
@@ -83,15 +127,6 @@ namespace Unity.LiveCapture
 
             var(oldestFrameTime, oldestSample) = Front();
             var(newestFrameTime, newestSample) = Back();
-
-            var boundaryDelta = new FrameTime(Boundary);
-            var frontBoundary = oldestFrameTime - boundaryDelta;
-            var backBoundary = newestFrameTime + boundaryDelta;
-
-            if (frame < frontBoundary || frame > backBoundary)
-            {
-                return TimedSampleStatus.DataMissing;
-            }
 
             if (frame < oldestFrameTime)
             {

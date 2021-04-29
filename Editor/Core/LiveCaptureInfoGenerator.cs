@@ -69,7 +69,8 @@ namespace {typeof(LiveCaptureSettings).Namespace}
         /// </summary>
         public const string DocsVersion = ""{version.Major}.{version.Minor}"";
     }}
-}}";
+}}
+";
 
             // change to Unix line endings to avoid warning in Unity
             var generatedContents = str.Replace("\r\n", "\n");

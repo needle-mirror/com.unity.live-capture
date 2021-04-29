@@ -354,7 +354,8 @@ namespace Unity.LiveCapture.CompanionApp
             {
                 ClearIterationBase?.Invoke();
             });
-            m_Protocol.Add(new BinaryReceiver<SerializableGuid>(CompanionAppMessages.ToServer.RequestTexturePreview)).AddHandler((guid) =>
+            m_Protocol.Add(new BinaryReceiver<SerializableGuid>(CompanionAppMessages.ToServer.RequestTexturePreview,
+                ChannelType.UnreliableUnordered, DataOptions.None)).AddHandler((guid) =>
             {
                 TexturePreviewRequested?.Invoke(guid);
             });

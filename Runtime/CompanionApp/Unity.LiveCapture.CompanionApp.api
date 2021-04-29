@@ -17,7 +17,10 @@ namespace Unity.LiveCapture.CompanionApp
         protected virtual void OnDisable();
         protected virtual void OnEnable();
         protected virtual void OnRecordingChanged();
+        protected virtual void OnRegisterLiveProperties(Unity.LiveCapture.IPropertyPreviewer previewer);
         protected virtual void OnSlateChanged(Unity.LiveCapture.ISlate slate);
+        protected void RegisterLiveProperties();
+        protected void RestoreLiveProperties();
         public void SetClient(TClient client, bool rememberAssignment);
         public virtual void StartRecording();
         public virtual void StopRecording();

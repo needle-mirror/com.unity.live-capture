@@ -14,7 +14,7 @@ namespace Unity.LiveCapture
         /// This method checks if another animation track is using the same binding.
         /// In that case, the new track becomes an override of the existing one.
         /// You can optionally pass in a <paramref name="startTime"/>, which will be used for alignment by
-        /// <see cref="AlignTracksByStartTimes"/>. If <paramref name="startTime"/> is <c>null</c>, the clip will by
+        /// <see cref="Unity.LiveCapture.TakeBuilder.AlignTracksByStartTimes"/>. If <paramref name="startTime"/> is <c>null</c>, the clip will by
         /// aligned to the start of the track.
         /// </remarks>
         /// <param name="name">The name of the track.</param>

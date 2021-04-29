@@ -20,7 +20,7 @@ Review the detailed requirements and perform the necessary installations and env
 
 * How to [get started](face-capture-getting-started.md) with Unity Face Capture.
 
-* Overview of the [Unity Virtual Camera app interface](face-capture-app-controls.md) (controls and settings).
+* Overview of the [Unity Virtual Camera app interface](face-capture-app-ui.md) (controls and settings).
 
 * UI reference about the Face Capture functional elements used in the Unity Editor: [components](face-capture-components.md) and [assets/presets](face-capture-presets.md).
 

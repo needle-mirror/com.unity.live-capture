@@ -6,7 +6,7 @@ namespace Unity.LiveCapture.Editor
 {
     class TakeBindingsEditor : UnityEditor.Editor
     {
-        static class Contents
+        internal static class Contents
         {
             public const string UndoSetBinding = "Inspector";
             public static readonly GUIContent BindingsLabel = EditorGUIUtility.TrTextContent("Bindings", "The list of scene objects referenced by the Take.");
@@ -26,7 +26,7 @@ namespace Unity.LiveCapture.Editor
         {
             serializedObject.Update();
 
-            var resolver = GetResolver();
+            var resolver = serializedObject.context as IExposedPropertyTable;
 
             if (resolver != null)
             {
@@ -45,10 +45,18 @@ namespace Unity.LiveCapture.Editor
 
         void DoBindingWarning(IExposedPropertyTable resolver)
         {
+            if (ContainsNullBindings(m_Take, resolver))
+            {
+                EditorGUILayout.HelpBox(Contents.NullBindingsMsg, MessageType.Warning, true);
+            }
+        }
+
+        internal static bool ContainsNullBindings(Take take, IExposedPropertyTable resolver)
+        {
             Debug.Assert(resolver != null);
 
             var containsNull = false;
-            var entries = m_Take.BindingEntries;
+            var entries = take.BindingEntries;
 
             foreach (var entry in entries)
             {
@@ -62,10 +70,7 @@ namespace Unity.LiveCapture.Editor
                 }
             }
 
-            if (containsNull)
-            {
-                EditorGUILayout.HelpBox(Contents.NullBindingsMsg, MessageType.Warning, true);
-            }
+            return containsNull;
         }
 
         void DoBindingsGUI(IExposedPropertyTable resolver)
@@ -103,22 +108,14 @@ namespace Unity.LiveCapture.Editor
 
                     if (change.changed)
                     {
-                        var undoObject = resolver as UnityEngine.Object;
-
-                        Undo.RecordObject(undoObject, Contents.UndoSetBinding);
+                        Undo.RecordObject(serializedObject.context, Contents.UndoSetBinding);
+                        
                         binding.SetValue(newValue, resolver);
 
-                        EditorUtility.SetDirty(undoObject);
-
-                        TakePlayer.SetSceneBindings(resolver as PlayableDirector, entries);
+                        EditorUtility.SetDirty(serializedObject.context);
                     }
                 }
             }
-        }
-
-        IExposedPropertyTable GetResolver()
-        {
-            return serializedObject.context as IExposedPropertyTable;
         }
     }
 }

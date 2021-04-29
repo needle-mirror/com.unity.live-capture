@@ -10,7 +10,6 @@ namespace Unity.LiveCapture.CompanionApp
         string m_ShotName;
         int m_TakeNumber;
         string m_Description;
-        double m_Duration;
         Take m_Take;
         Take m_IterationBase;
 
@@ -24,7 +23,6 @@ namespace Unity.LiveCapture.CompanionApp
             m_ShotName = string.Empty;
             m_TakeNumber = 0;
             m_Description = string.Empty;
-            m_Duration = 0d;
             m_Take = null;
             m_IterationBase = null;
         }
@@ -43,7 +41,6 @@ namespace Unity.LiveCapture.CompanionApp
                 changed |= m_ShotName != slate.ShotName;
                 changed |= m_TakeNumber != slate.TakeNumber;
                 changed |= m_Description != slate.Description;
-                changed |= m_Duration != slate.Duration;
                 changed |= m_Take != slate.Take;
                 changed |= m_IterationBase != slate.IterationBase;
 
@@ -52,7 +49,6 @@ namespace Unity.LiveCapture.CompanionApp
                 m_ShotName = slate.ShotName;
                 m_TakeNumber = slate.TakeNumber;
                 m_Description = slate.Description;
-                m_Duration = slate.Duration;
                 m_Take = slate.Take;
                 m_IterationBase = slate.IterationBase;
             }

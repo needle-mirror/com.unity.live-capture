@@ -9,7 +9,8 @@ namespace Unity.LiveCapture.Ntp
     /// A component that gets timecode from an network time protocol (NTP) server.
     /// </summary>
     [ExecuteAlways]
-    [AddComponentMenu("Live Capture/Timecode/Ntp Timecode Source")]
+    [CreateTimecodeSourceMenuItemAttribute("NTP Timecode Source")]
+    [AddComponentMenu("Live Capture/Timecode/NTP Timecode Source")]
     [HelpURL(Documentation.baseURL + "ref-component-ntp-timecode-source" + Documentation.endURL)]
     public class NtpTimecodeSource : MonoBehaviour, ITimecodeSource
     {
@@ -18,7 +19,7 @@ namespace Unity.LiveCapture.Ntp
         }
 
         [SerializeField, HideInInspector]
-        SerializableGuid m_Guid;
+        string m_Guid;
 
         [SerializeField, Tooltip("The frame rate of the timecodes.")]
         [OnlyStandardFrameRates]
@@ -34,7 +35,7 @@ namespace Unity.LiveCapture.Ntp
         Task m_UpdateReferenceTimeTask;
 
         /// <inheritdoc />
-        public string Id => m_Guid.ToString();
+        public string Id => m_Guid;
 
         /// <inheritdoc/>
         public string FriendlyName => $"NTP ({name})";
@@ -45,16 +46,9 @@ namespace Unity.LiveCapture.Ntp
         /// <inheritdoc />
         public FrameRate FrameRate => m_FrameRate;
 
-        void Reset()
-        {
-            if (m_Guid.Equals(default(Guid)))
-            {
-                m_Guid = Guid.NewGuid();
-            }
-        }
-
         void OnEnable()
         {
+            TimecodeSourceManager.Instance.EnsureIdIsValid(ref m_Guid);
             TimecodeSourceManager.Instance.Register(this);
             PlayerLoopExtensions.RegisterUpdate<PreUpdate, NtpUpdate>(UpdateTimecode);
 
@@ -124,8 +118,7 @@ namespace Unity.LiveCapture.Ntp
                 return;
             }
 
-            var dayStart = new DateTime(time.Value.Year, time.Value.Month, time.Value.Day);
-            Now = Timecode.FromSeconds(m_FrameRate, (time.Value - dayStart).TotalSeconds);
+            Now = Timecode.FromSeconds(m_FrameRate, time.Value.TimeOfDay.TotalSeconds);
         }
 
         DateTime? GetCurrentTime(DateTime localTime)

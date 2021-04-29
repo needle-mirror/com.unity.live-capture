@@ -26,12 +26,16 @@ namespace Unity.LiveCapture
             m_Reference = new RegisteredRef<ITimecodeSource>(source, Manager.Registry);
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Receives a callback before Unity serializes your object.
+        /// </summary>
         void ISerializationCallbackReceiver.OnBeforeSerialize()
         {
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Receives a callback after Unity deserializes your object.
+        /// </summary>
         void ISerializationCallbackReceiver.OnAfterDeserialize()
         {
             // if the serialized registry doesn't exist, reset the reference

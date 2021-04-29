@@ -15,6 +15,7 @@ namespace Unity.LiveCapture.VirtualCamera
     {
         readonly BinarySender<VirtualCameraChannelFlags> m_ChannelFlagsSender;
         readonly BinarySender<JoysticksSampleV0> m_JoysticksSender;
+        readonly BinarySender<GamepadSampleV0> m_GamepadSender;
         readonly BoolSender m_DampingEnabledSender;
         readonly BinarySender<Vector3> m_BodyDampingSender;
         readonly BinarySender<float> m_AimDampingSender;
@@ -29,6 +30,7 @@ namespace Unity.LiveCapture.VirtualCamera
         readonly BinarySender<Vector3> m_MotionScaleSender;
         readonly BinarySender<Vector3> m_JoystickSensitivitySender;
         readonly BinarySender<Space> m_PedestalSpaceSender;
+        readonly BinarySender<Space> m_MotionSpaceSender;
         readonly BinarySender<FocusMode> m_FocusModeSender;
         readonly BinarySender<Vector2> m_FocusReticlePositionSender;
         readonly BinarySender<float> m_FocusDistanceOffsetSender;
@@ -66,6 +68,7 @@ namespace Unity.LiveCapture.VirtualCamera
         public event Action<Vector3> MotionScaleReceived;
         public event Action<Vector3> JoystickSensitivityReceived;
         public event Action<Space> PedestalSpaceReceived;
+        public event Action<Space> MotionSpaceReceived;
         public event Action<FocusMode> FocusModeReceived;
         public event Action<Vector2> FocusReticlePositionReceived;
         public event Action<float> FocusDistanceOffsetReceived;
@@ -92,6 +95,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             BinarySender<VirtualCameraChannelFlags>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.ChannelFlags, out m_ChannelFlagsSender);
             BinarySender<JoysticksSampleV0>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.JoysticksSample_V0, out m_JoysticksSender);
+            BinarySender<GamepadSampleV0>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.GamepadSample_V0, out m_GamepadSender);
 
             // Pick the right data format based on the server's protocols. We strive to support older server versions (up to a point)
             // This seems repetitive. We should come up with a generic way to instantiate the right sender type from the protocol (may require reflection)
@@ -145,6 +149,7 @@ namespace Unity.LiveCapture.VirtualCamera
             BinarySender<Vector3>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.MotionScale, out m_MotionScaleSender);
             BinarySender<Vector3>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.JoystickSensitivity, out m_JoystickSensitivitySender);
             BinarySender<Space>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.PedestalSpace, out m_PedestalSpaceSender);
+            BinarySender<Space>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.MotionSpace, out m_MotionSpaceSender);
             BinarySender<FocusMode>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.FocusMode, out m_FocusModeSender);
             BinarySender<Vector2>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.FocusReticlePosition, out m_FocusReticlePositionSender);
             BinarySender<float>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.FocusDistanceOffset, out m_FocusDistanceOffsetSender);
@@ -307,6 +312,13 @@ namespace Unity.LiveCapture.VirtualCamera
                     PedestalSpaceReceived?.Invoke(space);
                 });
             }
+            if (BinaryReceiver<Space>.TryGet(m_Protocol, VirtualCameraMessages.ToClient.MotionSpace, out var motionSpaceChanged))
+            {
+                motionSpaceChanged.AddHandler(space =>
+                {
+                    MotionSpaceReceived?.Invoke(space);
+                });
+            }
             if (BinaryReceiver<FocusMode>.TryGet(m_Protocol, VirtualCameraMessages.ToClient.FocusMode, out var focusModeChanged))
             {
                 focusModeChanged.AddHandler(focusMode =>
@@ -419,10 +431,19 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// Sends a joystick sample to the server.
         /// </summary>
-        /// <param name="sample">The joystick sample.</param>
+        /// <param name="sample">The joysticks sample.</param>
         public void SendJoysticks(JoysticksSample sample)
         {
             m_JoysticksSender?.Send((JoysticksSampleV0)sample);
+        }
+
+        /// <summary>
+        /// Sends a gamepad sample to the server.
+        /// </summary>
+        /// <param name="sample">The gamepad sample.</param>
+        public void SendGamepad(GamepadSample sample)
+        {
+            m_GamepadSender?.Send((GamepadSampleV0)sample);
         }
 
         /// <summary>
@@ -529,6 +550,11 @@ namespace Unity.LiveCapture.VirtualCamera
         public void SendPedestalSpace(Space value)
         {
             m_PedestalSpaceSender?.Send(value);
+        }
+
+        public void SendMotionSpace(Space value)
+        {
+            m_MotionSpaceSender?.Send(value);
         }
 
         public void SendFocusMode(FocusMode value)

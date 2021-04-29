@@ -1,31 +1,34 @@
-using System.Collections;
-
 namespace Unity.LiveCapture
 {
     /// <summary>
-    /// Manages a collection of <see cref="ITimedDataSource"/>s for the purpose of
+    /// Manages a collection of <see cref="ITimedDataSource"/> instances for the purpose of
     /// coordinating their respective data to be presented in a temporally
     /// coherent manner.
     /// </summary>
     public interface ISynchronizer
     {
         /// <summary>
-        /// The offset in frames applied to the timecode used for synchronization updates.
+        /// The source of the timecode to synchronize to.
+        /// </summary>
+        ITimecodeSource TimecodeSource { get; set; }
+
+        /// <summary>
+        /// The frequency of synchronized updates.
         /// </summary>
         /// <remarks>
-        /// Set this to be negative (i.e. a delay) to compensate for high-latency sources.
+        /// This is controlled by the assigned <see cref="TimecodeSource"/>.
+        /// If no <see cref="TimecodeSource"/> is set, the value is <see langword="null"/>.
         /// </remarks>
-        FrameTime GlobalTimeOffset { get; set; }
+        FrameRate? FrameRate { get; }
 
         /// <summary>
-        /// Get the frequency of synchronized frames.
+        /// The timecode for the current frame to synchronize to.
         /// </summary>
-        FrameRate FrameRate { get; }
-
-        /// <summary>
-        /// The timecode used for the most recent synchronized update.
-        /// </summary>
-        Timecode CurrentTimecode { get; }
+        /// <remarks>
+        /// This is controlled by the assigned <see cref="TimecodeSource"/>.
+        /// If no <see cref="TimecodeSource"/> is set, the value is <see langword="null"/>.
+        /// </remarks>
+        Timecode? CurrentTimecode { get; }
 
         /// <summary>
         /// Get the number of timed data sources in the synchronization group.
@@ -39,9 +42,6 @@ namespace Unity.LiveCapture
         /// <returns>
         /// <c>true</c> if added successfully; <c>false</c> if data source is already in the group.
         /// </returns>
-        /// <remarks>
-        /// <c>source</c> must derive from <see cref="UnityEngine.Object"/>.
-        /// </remarks>
         bool AddDataSource(ITimedDataSource source);
 
         /// <summary>
@@ -58,22 +58,8 @@ namespace Unity.LiveCapture
         ITimedDataSource GetDataSource(int index);
 
         /// <summary>
-        /// Get the sample status of the data source as of the last synchronization update.
-        /// </summary>
-        /// <param name="dataSourceIndex">The index of the timed data source.</param>
-        /// <returns>The sample status; <c>null</c> if no status is available or no source exists at the index.</returns>
-        TimedSampleStatus? GetCurrentDataStatus(int dataSourceIndex);
-
-        /// <summary>
         /// Perform synchronized update on synchronized group.
         /// </summary>
         void Update();
-
-        /// <summary>
-        /// Find the best synchronization parameters for the current source latencies.
-        /// </summary>
-        /// <param name="calibrator">The calibration method used for finding the optimal settings.</param>
-        /// <returns>The current status of the calibration.</returns>
-        IEnumerator CalibrationWith(ISynchronizationCalibrator calibrator);
     }
 }

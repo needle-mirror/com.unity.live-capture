@@ -1,15 +1,14 @@
 using System;
-using UnityEngine.Playables;
 
 namespace Unity.LiveCapture
 {
     static class Callbacks
     {
-        public static event Action<ISlate, PlayableDirector> SeekOccurred = delegate {};
+        public static event Action SeekOccurred = delegate {};
 
-        internal static void InvokeSeekOccurred(ISlate slate, PlayableDirector director)
+        internal static void InvokeSeekOccurred()
         {
-            SeekOccurred.Invoke(slate, director);
+            SeekOccurred.Invoke();
         }
     }
 }

@@ -75,7 +75,7 @@ namespace Unity.LiveCapture.Ntp
         /// <summary>
         /// The number of ticks per second used by <see cref="DateTime"/>.
         /// </summary>
-        static readonly ulong k_TicksPerSecond = 1000UL * TimeSpan.TicksPerMillisecond;
+        const ulong k_TicksPerSecond = 1000UL * TimeSpan.TicksPerMillisecond;
 
         /// <summary>
         /// The size of the packet buffer in bytes.
@@ -103,7 +103,7 @@ namespace Unity.LiveCapture.Ntp
         /// The protocol version.
         /// </summary>
         /// <remarks>
-        /// The default value is <see cref="k_CurrentVersion"/>.
+        /// The default value is <see cref="NtpConstants.CurrentVersion"/>.
         /// </remarks>
         public int Version
         {
@@ -277,7 +277,7 @@ namespace Unity.LiveCapture.Ntp
         {
             var seconds = (ulong)(uint)GetInt32(index);
             var fraction = (ulong)(uint)GetInt32(index + sizeof(uint));
-            var ticks = (seconds * k_TicksPerSecond) + ((fraction * k_TicksPerSecond) / (1UL << 32));
+            var ticks = (seconds * k_TicksPerSecond) + ((fraction * k_TicksPerSecond) >> 32);
             return new DateTime(k_Epoch.Ticks + (long)ticks);
         }
 
@@ -285,7 +285,7 @@ namespace Unity.LiveCapture.Ntp
         {
             var ticks = (ulong)(value.Ticks - k_Epoch.Ticks);
             var seconds = (uint)(ticks / k_TicksPerSecond);
-            var fraction = (uint)((ticks % k_TicksPerSecond) * (1UL << 32));
+            var fraction = (uint)(((ticks % k_TicksPerSecond) << 32) / k_TicksPerSecond);
             SetInt32(index, (int)seconds);
             SetInt32(index + sizeof(uint), (int)fraction);
         }

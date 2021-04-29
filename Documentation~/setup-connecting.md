@@ -4,7 +4,7 @@
 
 1. In the editor, open the **Connections** window by selecting `Menu > Window > Connections`
 
-2. Press the **Create Server** button and choose `Companion App Server`
+2. Press the **Create Connection** button and choose `Companion App Server`
 
 3. Set the **Port** if desired but note that:
     - Only one Unity project using Live Capture can use a given port at a time

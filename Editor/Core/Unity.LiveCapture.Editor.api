@@ -3,6 +3,21 @@
 // make sure the XML doc file is present and located next to the scraped dll
 namespace Unity.LiveCapture.Editor
 {
+    [UnityEditor.CustomEditor(typeof(Unity.LiveCapture.Connection), true)] public class ConnectionEditor : UnityEditor.Editor
+    {
+        public ConnectionEditor() {}
+        protected void DoToolbarMenu();
+        protected virtual void OnEnable();
+        public virtual void OnInspectorGUI();
+        public virtual void OnToolbarGUI();
+    }
+
+    public class ConnectionWindow : UnityEditor.EditorWindow
+    {
+        public ConnectionWindow() {}
+        [UnityEditor.MenuItem(@"Window/Live Capture/Connections")] public static void ShowWindow();
+    }
+
     [UnityEditor.CustomEditor(typeof(Unity.LiveCapture.LiveCaptureDevice), true)] public class LiveCaptureDeviceEditor : UnityEditor.Editor
     {
         public LiveCaptureDeviceEditor() {}
@@ -11,12 +26,15 @@ namespace Unity.LiveCapture.Editor
         public virtual void OnInspectorGUI();
     }
 
-    [UnityEditor.CustomEditor(typeof(Unity.LiveCapture.Server), true)] public class ServerEditor : UnityEditor.Editor
+    public class SynchronizationWindow : UnityEditor.EditorWindow
     {
-        public ServerEditor() {}
-        protected void DoToolbarMenu();
-        protected virtual void OnEnable();
-        public virtual void OnInspectorGUI();
-        public virtual void OnToolbarGUI();
+        public SynchronizationWindow() {}
+        [UnityEditor.MenuItem(@"Window/Live Capture/Synchronization")] public static void ShowWindow();
+    }
+
+    public class TimedDataSourceViewerWindow : UnityEditor.EditorWindow
+    {
+        public TimedDataSourceViewerWindow() {}
+        [UnityEditor.MenuItem(@"Window/Live Capture/Timed Data Source Details")] public static void ShowWindow();
     }
 }

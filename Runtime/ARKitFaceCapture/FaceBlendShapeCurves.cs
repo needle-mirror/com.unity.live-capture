@@ -7,9 +7,22 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     /// <summary>
     /// A class used to bake <see cref="FaceBlendShapePose"/> keyframes into a take.
     /// </summary>
-    class FaceBlendShapeCurves : ICurve<FaceBlendShapePose>
+    class FaceBlendShapeCurves : ICurve<FaceBlendShapePose>, IReduceableCurve
     {
-        readonly ICurve<float>[] m_Curves;
+        readonly FloatCurve[] m_Curves;
+
+        /// <inheritdoc/>
+        public float MaxError
+        {
+            get => m_Curves[0].MaxError;
+            set
+            {
+                foreach (var curve in m_Curves)
+                {
+                    curve.MaxError = value;
+                }
+            }
+        }
 
         /// <inheritdoc/>
         public string RelativePath { get; }

@@ -33,13 +33,6 @@ namespace Unity.LiveCapture.VirtualCamera
 
             base.Dispose();
         }
-        // These 2 methods are only used with the Legacy Render Pipeline so far.
-
-        /// <inheritdoc/>
-        public void SetCamera(Camera camera) {}
-
-        /// <inheritdoc/>
-        public void Update() {}
     }
 }
 #endif

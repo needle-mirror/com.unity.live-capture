@@ -16,8 +16,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
     /// </remarks>
     [CreateAssetMenu(fileName = "NewFaceMapper", menuName = "Live Capture/ARKit Face Capture/Mapper")]
     [HelpURL(Documentation.baseURL + "ref-component-arkit-default-face-mapper" + Documentation.endURL)]
-    [DisallowMultipleComponent]
-    class DefaultFaceMapper : FaceMapper
+    public class DefaultFaceMapper : FaceMapper
     {
         internal enum EyeMovementDriverType
         {
@@ -199,7 +198,10 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             }
         }
 
-        void OnValidate()
+        /// <summary>
+        /// Editor-only function that Unity calls when the script is loaded or a value changes in the Inspector.
+        /// </summary>
+        protected virtual void OnValidate()
         {
             var usedPaths = new HashSet<string>();
 
@@ -397,6 +399,65 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                         rightEye.localRotation = targetRotation;
                         break;
                     }
+                }
+            }
+        }
+
+        /// <inheritdoc />
+        public override void RegisterPreviewableProperties(
+            FaceActor actor,
+            FaceMapperCache cache,
+            IPropertyPreviewer previewer
+        )
+        {
+            var c = cache as Cache;
+
+            if (c.TryGetBone(actor, m_HeadPosition, out var headPosition))
+            {
+                previewer.Register(headPosition, "m_LocalPosition.x");
+                previewer.Register(headPosition, "m_LocalPosition.y");
+                previewer.Register(headPosition, "m_LocalPosition.z");
+            }
+
+            if (c.TryGetBone(actor, m_HeadRotation, out var headRotation))
+            {
+                previewer.Register(headRotation, "m_LocalRotation.x");
+                previewer.Register(headRotation, "m_LocalRotation.y");
+                previewer.Register(headRotation, "m_LocalRotation.z");
+                previewer.Register(headRotation, "m_LocalRotation.w");
+                previewer.Register(headRotation, "m_LocalEulerAnglesHint.x");
+                previewer.Register(headRotation, "m_LocalEulerAnglesHint.y");
+                previewer.Register(headRotation, "m_LocalEulerAnglesHint.z");
+            }
+
+            if (c.TryGetBone(actor, m_LeftEye, out var leftEye))
+            {
+                previewer.Register(leftEye, "m_LocalRotation.x");
+                previewer.Register(leftEye, "m_LocalRotation.y");
+                previewer.Register(leftEye, "m_LocalRotation.z");
+                previewer.Register(leftEye, "m_LocalRotation.w");
+                previewer.Register(leftEye, "m_LocalEulerAnglesHint.x");
+                previewer.Register(leftEye, "m_LocalEulerAnglesHint.y");
+                previewer.Register(leftEye, "m_LocalEulerAnglesHint.z");
+            }
+
+            if (c.TryGetBone(actor, m_RightEye, out var rightEye))
+            {
+                previewer.Register(rightEye, "m_LocalRotation.x");
+                previewer.Register(rightEye, "m_LocalRotation.y");
+                previewer.Register(rightEye, "m_LocalRotation.z");
+                previewer.Register(rightEye, "m_LocalRotation.w");
+                previewer.Register(rightEye, "m_LocalEulerAnglesHint.x");
+                previewer.Register(rightEye, "m_LocalEulerAnglesHint.y");
+                previewer.Register(rightEye, "m_LocalEulerAnglesHint.z");
+            }
+
+            foreach (var data in c.Renderers)
+            {
+                for (var i = 0; i < data.BlendShapeData.Length; i++)
+                {
+                    if (data.BlendShapeData[i].UseCount > 0)
+                        previewer.Register(data.Renderer, $"m_BlendShapeWeights.Array.data[{i}]");
                 }
             }
         }

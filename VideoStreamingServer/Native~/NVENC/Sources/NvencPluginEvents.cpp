@@ -108,8 +108,6 @@ namespace NvencPlugin
         else if (eventType == kUnityGfxDeviceEventShutdown)
         {
             s_Initialized = false;
-            s_UnityInterfaces = nullptr;
-            s_UnityGraphics = nullptr;
             s_UnityGraphicsD3D11 = nullptr;
             s_UnityGraphicsD3D12 = nullptr;
             s_GraphicsDevice = nullptr;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.PlayerLoop;
@@ -24,6 +25,18 @@ namespace Unity.LiveCapture
     [HelpURL(Documentation.baseURL + "ref-component-timecode-synchronizer" + Documentation.endURL)]
     public class SynchronizerComponent : MonoBehaviour
     {
+        static readonly List<SynchronizerComponent> s_SynchronizerComponents = new List<SynchronizerComponent>();
+
+        /// <summary>
+        /// The currently enabled synchronizer instances.
+        /// </summary>
+        internal static IReadOnlyList<SynchronizerComponent> Synchronizers => s_SynchronizerComponents;
+
+        /// <summary>
+        /// An event invoked when the <see cref="Synchronizers"/> list has changed.
+        /// </summary>
+        internal static event Action SynchronizersChanged;
+
         [SerializeField]
         bool m_DisplayTimecode;
 
@@ -59,13 +72,20 @@ namespace Unity.LiveCapture
             ScriptPlayableOutput.Create(m_DummyPlayableGraph, "output");
             m_DummyPlayableGraph.Play();
 #endif
+
+            s_SynchronizerComponents.Add(this);
+            SynchronizersChanged?.Invoke();
         }
 
         void OnDisable()
         {
+            s_SynchronizerComponents.Remove(this);
+            SynchronizersChanged?.Invoke();
+
             StopCalibration();
             Impl.Pause();
             PlayerLoopExtensions.DeregisterUpdate<SynchronizerUpdate>(OnSynchronizerUpdate);
+
 #if UNITY_EDITOR
             if (m_DummyPlayableGraph.IsValid())
             {

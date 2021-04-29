@@ -19,6 +19,7 @@ namespace Unity.LiveCapture
         string m_ContentsDirectory;
         Take m_Take;
         readonly Dictionary<TrackAsset, double> m_TrackStartTimes = new Dictionary<TrackAsset, double>();
+        double m_TimeOffset;
 
         public Take Take => m_Take;
 
@@ -50,6 +51,7 @@ namespace Unity.LiveCapture
         }
 
         public TakeBuilder(
+            double timeOffset,
             double duration,
             int sceneNumber,
             string shotName,
@@ -76,6 +78,7 @@ namespace Unity.LiveCapture
             }
 
             m_Resolver = resolver;
+            m_TimeOffset = timeOffset;
 
             var assetName = GetAssetName(m_Formatter, sceneNumber, shotName, takeNumber);
             var assetPath = $"{directory}/{assetName}.asset";
@@ -130,7 +133,7 @@ namespace Unity.LiveCapture
                 if (duration > 0d)
                 {
                     timeline.durationMode = TimelineAsset.DurationMode.FixedLength;
-                    timeline.fixedDuration = duration;
+                    timeline.fixedDuration = duration + timeOffset;
                 }
                 else
                 {
@@ -204,6 +207,8 @@ namespace Unity.LiveCapture
 
             playableAsset.removeStartOffset = false;
 
+            clip.start = m_TimeOffset;
+
             if (parent != null)
             {
                 var parentClip = parent.GetClips().FirstOrDefault();
@@ -234,9 +239,10 @@ namespace Unity.LiveCapture
         /// this method aligns those clips with t=0 corresponding to the earliest sample.
         /// Tracks without start times have their clips aligned at t=0.
         /// </remarks>
-        public void AlignTracksByStartTimes()
+        /// <param name="defaultStartTime">The start time to use for the take if none of the tracks had a start time.</param>
+        public void AlignTracksByStartTimes(double defaultStartTime)
         {
-            var takeStartTime = m_TrackStartTimes.Any() ? m_TrackStartTimes.Values.Min() : 0;
+            var takeStartTime = m_TrackStartTimes.Any() ? m_TrackStartTimes.Values.Min() : defaultStartTime;
             m_Take.StartTimecode = Timecode.FromSeconds(m_Take.FrameRate, takeStartTime);
 
             // Shortcut: If we have no start times specified or if we only have the start time for
@@ -248,7 +254,7 @@ namespace Unity.LiveCapture
                 if (m_TrackStartTimes.TryGetValue(track, out var startTime))
                 {
                     // We can guarantee that trackStartTime >= 0
-                    var trackStartTime = startTime - takeStartTime;
+                    var trackStartTime = startTime - takeStartTime + m_TimeOffset;
                     foreach (var clip in track.GetClips())
                     {
                         clip.start = trackStartTime;

@@ -208,7 +208,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
             {
                 Dispose();
                 Setup(settings, m_SettingsID.encoderFormat);
-            }   
+            }
         }
 
         /// <inheritdoc/>

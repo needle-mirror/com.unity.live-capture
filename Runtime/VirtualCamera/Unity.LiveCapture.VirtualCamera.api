@@ -9,7 +9,7 @@ namespace Unity.LiveCapture.VirtualCamera
         public string Name { get; set; }
     }
 
-    [UnityEngine.CreateAssetMenu(fileName = @"Aspect Ratio Presets", menuName = @"Live Capture/Virtual Camera/Aspect Ratio Presets", order = 1)] [UnityEngine.ExcludeFromPreset] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@2.0/manual/ref-asset-aspect-ratio-presets.html")] public class AspectRatioPresets : UnityEngine.ScriptableObject
+    [UnityEngine.CreateAssetMenu(fileName = @"Aspect Ratio Presets", menuName = @"Live Capture/Virtual Camera/Aspect Ratio Presets", order = 1)] [UnityEngine.ExcludeFromPreset] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-asset-aspect-ratio-presets.html")] public class AspectRatioPresets : UnityEngine.ScriptableObject
     {
         public Unity.LiveCapture.VirtualCamera.AspectRatioPreset[] AspectRatios { get; }
         public AspectRatioPresets() {}
@@ -29,14 +29,14 @@ namespace Unity.LiveCapture.VirtualCamera
         public static bool operator !=(Unity.LiveCapture.VirtualCamera.CameraBody a, Unity.LiveCapture.VirtualCamera.CameraBody b);
     }
 
-    [UnityEngine.AddComponentMenu(@"Live Capture/Virtual Camera/Focus Plane Renderer")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@2.0/manual/ref-component-focus-plane-renderer.html")] public class FocusPlaneRenderer : UnityEngine.MonoBehaviour
+    [UnityEngine.AddComponentMenu(@"Live Capture/Virtual Camera/Focus Plane Renderer")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-component-focus-plane-renderer.html")] public class FocusPlaneRenderer : UnityEngine.MonoBehaviour
     {
         public FocusPlaneRenderer() {}
         public void SetCamera(UnityEngine.Camera camera);
         public void SetFocusDistance(float value);
     }
 
-    [UnityEngine.AddComponentMenu(@"Live Capture/Virtual Camera/Frame Lines")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@2.0/manual/ref-component-frame-lines.html")] [UnityEngine.RequireComponent(typeof(UnityEngine.Camera))] public class FrameLines : UnityEngine.MonoBehaviour
+    [UnityEngine.AddComponentMenu(@"Live Capture/Virtual Camera/Frame Lines")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-component-frame-lines.html")] [UnityEngine.RequireComponent(typeof(UnityEngine.Camera))] public class FrameLines : UnityEngine.MonoBehaviour
     {
         public bool AspectRatioEnabled { get; set; }
         public bool CenterMarkerEnabled { get; set; }
@@ -97,7 +97,7 @@ namespace Unity.LiveCapture.VirtualCamera
         public static bool operator !=(Unity.LiveCapture.VirtualCamera.LensIntrinsics a, Unity.LiveCapture.VirtualCamera.LensIntrinsics b);
     }
 
-    [UnityEngine.CreateAssetMenu(menuName = @"Live Capture/Virtual Camera/Lens Kit", order = 2)] [UnityEngine.ExcludeFromPreset] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@2.0/manual/ref-asset-lens-kit.html")] public class LensKit : UnityEngine.ScriptableObject
+    [UnityEngine.CreateAssetMenu(menuName = @"Live Capture/Virtual Camera/Lens Kit", order = 2)] [UnityEngine.ExcludeFromPreset] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-asset-lens-kit.html")] public class LensKit : UnityEngine.ScriptableObject
     {
         public Unity.LiveCapture.VirtualCamera.LensAsset[] Lenses { get; }
         public LensKit() {}
@@ -114,13 +114,13 @@ namespace Unity.LiveCapture.VirtualCamera
         public static bool operator !=(Unity.LiveCapture.VirtualCamera.SensorPreset left, Unity.LiveCapture.VirtualCamera.SensorPreset right);
     }
 
-    [UnityEngine.CreateAssetMenu(fileName = @"Sensor Presets", menuName = @"Live Capture/Virtual Camera/Sensor Presets", order = 1)] [UnityEngine.ExcludeFromPreset] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@2.0/manual/ref-asset-sensor-presets.html")] public class SensorPresets : UnityEngine.ScriptableObject
+    [UnityEngine.CreateAssetMenu(fileName = @"Sensor Presets", menuName = @"Live Capture/Virtual Camera/Sensor Presets", order = 1)] [UnityEngine.ExcludeFromPreset] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-asset-sensor-presets.html")] public class SensorPresets : UnityEngine.ScriptableObject
     {
         public Unity.LiveCapture.VirtualCamera.SensorPreset[] Sensors { get; }
         public SensorPresets() {}
     }
 
-    [UnityEngine.AddComponentMenu(@"Live Capture/Virtual Camera/Virtual Camera Actor")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@2.0/manual/ref-component-virtual-camera-actor.html")] [UnityEngine.RequireComponent(typeof(UnityEngine.Animator))] public class VirtualCameraActor : UnityEngine.MonoBehaviour
+    [UnityEngine.AddComponentMenu(@"Live Capture/Virtual Camera/Virtual Camera Actor")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-component-virtual-camera-actor.html")] [UnityEngine.RequireComponent(typeof(UnityEngine.Animator))] public class VirtualCameraActor : UnityEngine.MonoBehaviour, Unity.LiveCapture.IPreviewable
     {
         public UnityEngine.Animator Animator { get; }
         public Unity.LiveCapture.VirtualCamera.CameraBody CameraBody { get; set; }
@@ -129,13 +129,15 @@ namespace Unity.LiveCapture.VirtualCamera
         public Unity.LiveCapture.VirtualCamera.Lens Lens { get; set; }
         public Unity.LiveCapture.VirtualCamera.LensIntrinsics LensIntrinsics { get; set; }
         public VirtualCameraActor() {}
+        public virtual void Register(Unity.LiveCapture.IPropertyPreviewer previewer);
     }
 
-    [Unity.LiveCapture.CreateDeviceMenuItem(@"Virtual Camera Device", 0)] [UnityEngine.AddComponentMenu(@"")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@2.0/manual/ref-component-virtual-camera-device.html")] [UnityEngine.RequireComponent(typeof(Unity.LiveCapture.VirtualCamera.FocusPlaneRenderer))] public class VirtualCameraDevice : Unity.LiveCapture.CompanionApp.CompanionAppDevice<Unity.LiveCapture.VirtualCamera.IVirtualCameraClient>, Unity.LiveCapture.IRegistrable, Unity.LiveCapture.ITimedDataSource
+    [Unity.LiveCapture.CreateDeviceMenuItem(@"Virtual Camera Device", 0)] [UnityEngine.AddComponentMenu(@"")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-component-virtual-camera-device.html")] [UnityEngine.RequireComponent(typeof(Unity.LiveCapture.VirtualCamera.FocusPlaneRenderer))] public class VirtualCameraDevice : Unity.LiveCapture.CompanionApp.CompanionAppDevice<Unity.LiveCapture.VirtualCamera.IVirtualCameraClient>, Unity.LiveCapture.IRegistrable, Unity.LiveCapture.ITimedDataSource
     {
         public Unity.LiveCapture.VirtualCamera.VirtualCameraActor Actor { get; set; }
         public virtual int BufferSize { get; set; }
         public Unity.LiveCapture.VirtualCamera.CameraBody CameraBody { get; }
+        public virtual Unity.LiveCapture.FrameRate FrameRate { get; }
         public virtual string Id { get; }
         public virtual bool IsSynchronized { get; set; }
         public Unity.LiveCapture.VirtualCamera.Lens Lens { get; set; }
@@ -156,9 +158,11 @@ namespace Unity.LiveCapture.VirtualCamera
         protected virtual void OnDisable();
         protected virtual void OnEnable();
         protected virtual void OnRecordingChanged();
+        protected virtual void OnRegisterLiveProperties(Unity.LiveCapture.IPropertyPreviewer previewer);
         protected virtual void OnSlateChanged(Unity.LiveCapture.ISlate slate);
         protected virtual void OnValidate();
         public virtual Unity.LiveCapture.TimedSampleStatus PresentAt(Unity.LiveCapture.Timecode timecode, Unity.LiveCapture.FrameRate frameRate);
+        public virtual bool TryGetBufferRange(Unity.LiveCapture.FrameRate frameRate, out Unity.LiveCapture.FrameTime oldestSample, out Unity.LiveCapture.FrameTime newestSample);
         public virtual void UpdateClient();
         public virtual void UpdateDevice();
         public virtual void Write(Unity.LiveCapture.ITakeBuilder takeBuilder);

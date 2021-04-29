@@ -10,11 +10,12 @@ using Unity.LiveCapture.Editor;
 
 namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
 {
-    [CustomEditor(typeof(DefaultFaceMapper))]
-    class DefaultFaceMapperEditor : UnityEditor.Editor
+    /// <summary>
+    /// The inspector used by <see cref="DefaultFaceMapper"/> assets.
+    /// </summary>
+    [CustomEditor(typeof(DefaultFaceMapper), true)]
+    public class DefaultFaceMapperEditor : UnityEditor.Editor
     {
-        const string k_DefaultGlobalEvaluatorPath = "Packages/com.unity.live-capture/Runtime/ARKitFaceCapture/DefaultMapper/Default Evaluator.asset";
-
         static class Contents
         {
             public static readonly GUILayoutOption[] ButtonOptions =
@@ -47,6 +48,9 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
 
         static ReorderableList.Defaults s_ListDefaults;
 
+        [SerializeField]
+        internal EvaluatorPreset m_DefaultGlobalEvaluator;
+
         readonly Dictionary<string, MappingList> m_MappingLists = new Dictionary<string, MappingList>();
 
         SerializedProperty m_RigPrefab;
@@ -69,7 +73,10 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
 
         MappingDirection m_MappingDirection;
 
-        void OnEnable()
+        /// <summary>
+        /// This function is called when the object is loaded.
+        /// </summary>
+        protected virtual void OnEnable()
         {
             m_RigPrefab = serializedObject.FindProperty("m_RigPrefab");
             m_ShapeMatchTolerance = serializedObject.FindProperty("m_ShapeMatchTolerance");
@@ -96,7 +103,10 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
             Undo.undoRedoPerformed += OnUndoRedoPerformed;
         }
 
-        void OnDisable()
+        /// <summary>
+        /// This function is called when the scriptable object goes out of scope.
+        /// </summary>
+        protected virtual void OnDisable()
         {
             Undo.undoRedoPerformed -= OnUndoRedoPerformed;
         }
@@ -106,45 +116,45 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
             m_MappingLists.Clear();
         }
 
+        /// <summary>
+        ///   <para>Implement this function to make a custom inspector.</para>
+        /// </summary>
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
-            EditorGUILayout.PropertyField(m_RigPrefab);
+            using var changeCheck = new EditorGUI.ChangeCheckScope();
 
+            EditorGUILayout.PropertyField(m_RigPrefab);
             var prefab = m_RigPrefab.objectReferenceValue as GameObject;
-            var mappingChanged = false;
 
             // only allow configuring the mapping once a valid rig prefab is assigned
             if (CheckPrefabValid(prefab, true))
             {
                 var actor = prefab.GetComponentInChildren<FaceActor>(true);
 
-                using (var changeCheck = new EditorGUI.ChangeCheckScope())
-                {
-                    EditorGUILayout.Space();
-                    EditorGUILayout.LabelField(Contents.EyesHeader, EditorStyles.boldLabel);
+                DoExtrasGUI(actor);
 
-                    DoEyeGUI(actor);
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField(Contents.EyesHeader, EditorStyles.boldLabel);
 
-                    EditorGUILayout.Space();
-                    EditorGUILayout.LabelField(Contents.HeadHeader, EditorStyles.boldLabel);
+                DoEyeGUI(actor);
 
-                    DoHeadGUI(actor);
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField(Contents.HeadHeader, EditorStyles.boldLabel);
 
-                    EditorGUILayout.Space();
-                    EditorGUILayout.LabelField(Contents.BlendShapesMappingHeader, EditorStyles.boldLabel);
+                DoHeadGUI(actor);
 
-                    DoRenderersGUI(actor);
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField(Contents.BlendShapesMappingHeader, EditorStyles.boldLabel);
 
-                    mappingChanged |= changeCheck.changed;
-                }
+                DoRenderersGUI(actor);
             }
 
             serializedObject.ApplyModifiedProperties();
 
             // when the configuration has changed, any cached data for this mapping must be invalidated
-            if (mappingChanged)
+            if (changeCheck.changed)
             {
                 foreach (var actor in FindObjectsOfType<FaceActor>())
                 {
@@ -152,6 +162,14 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
                         actor.ClearCache();
                 }
             }
+        }
+
+        /// <summary>
+        /// Override this to add custom GUI to the mapper.
+        /// </summary>
+        /// <param name="actor">The face rig prefab.</param>
+        protected virtual void DoExtrasGUI(FaceActor actor)
+        {
         }
 
         void DoRenderersGUI(FaceActor actor)
@@ -181,7 +199,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
 
                 if (m_DefaultEvaluator.objectReferenceValue == null)
                 {
-                    m_DefaultEvaluator.objectReferenceValue = AssetDatabase.LoadAssetAtPath(k_DefaultGlobalEvaluatorPath, typeof(EvaluatorPreset));
+                    m_DefaultEvaluator.objectReferenceValue = m_DefaultGlobalEvaluator;
                 }
 
                 EditorGUILayout.PropertyField(m_BlendShapeSmoothing);

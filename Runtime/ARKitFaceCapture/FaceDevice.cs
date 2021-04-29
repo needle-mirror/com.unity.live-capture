@@ -1,4 +1,3 @@
-using System;
 using Unity.LiveCapture.CompanionApp;
 using UnityEngine;
 
@@ -38,9 +37,11 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         [SerializeField, HideInInspector]
         int m_BufferSize = 1;
 
-        readonly FaceDeviceRecorder m_Recorder = new FaceDeviceRecorder();
-        double? m_FirstSampleTimecode;
+        [SerializeField]
+        FaceDeviceRecorder m_Recorder = new FaceDeviceRecorder();
+
         readonly TimestampTracker m_TimestampTracker = new TimestampTracker();
+        double? m_FirstSampleTimecode;
 
         /// <summary>
         /// The nominal frame rate used for doing frame number conversions in the synchronization buffer.
@@ -60,7 +61,14 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         public FaceActor Actor
         {
             get => m_Actor;
-            set => m_Actor = value;
+            set
+            {
+                if (m_Actor != value)
+                {
+                    m_Actor = value;
+                    RegisterLiveProperties();
+                }
+            }
         }
 
         /// <inheritdoc/>
@@ -71,6 +79,9 @@ namespace Unity.LiveCapture.ARKitFaceCapture
 
         /// <inheritdoc/>
         public ISynchronizer Synchronizer { get; set; }
+
+        /// <inheritdoc/>
+        public FrameRate FrameRate => m_SyncBuffer.FrameRate;
 
         /// <inheritdoc/>
         public int BufferSize
@@ -103,6 +114,12 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             set => m_IsSynchronized = value;
         }
 
+        /// <inheritdoc />
+        public bool TryGetBufferRange(out FrameTime oldestSample, out FrameTime newestSample)
+        {
+            return m_SyncBuffer.TryGetBufferRange(out oldestSample, out newestSample);
+        }
+
         bool TryGetInternalClient(out IFaceClientInternal client)
         {
             client = GetClient() as IFaceClientInternal;
@@ -110,7 +127,9 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             return client != null;
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// This function is called when the object becomes enabled and active.
+        /// </summary>
         protected override void OnEnable()
         {
             base.OnEnable();
@@ -121,7 +140,13 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             m_SyncBuffer = new TimedDataBuffer<FacePose>(k_SyncBufferNominalFrameRate, m_BufferSize);
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// This function is called when the behaviour becomes disabled.
+        /// </summary>
+        /// <remaks>
+        /// This is also called when the object is destroyed and can be used for any cleanup code.
+        ///  When scripts are reloaded after compilation has finished, OnDisable will be called, followed by an OnEnable after the script has been loaded.
+        /// </remaks>
         protected override void OnDisable()
         {
             base.OnDisable();
@@ -129,33 +154,50 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             TimedDataSourceManager.Instance.Unregister(this);
         }
 
-        /// <inheritdoc/>
+        void OnValidate()
+        {
+            m_Recorder.Validate();
+        }
+
+        /// <summary>
+        /// Indicates whether a device is ready for recording.
+        /// </summary>
+        /// <returns>
+        /// true if ready for recording; otherwise, false.
+        /// </returns>
         public override bool IsReady()
         {
             return base.IsReady() && m_Actor != null;
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// The device calls this method when the recording state has changed.
+        /// </summary>
         protected override void OnRecordingChanged()
         {
             if (IsRecording())
             {
                 m_TimestampTracker.Reset();
                 m_Recorder.FrameRate = GetTakeRecorder().FrameRate;
-                m_Recorder.Clear();
+                m_Recorder.Prepare();
                 m_FirstSampleTimecode = null;
 
                 UpdateTimestampTracker();
             }
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Gets the name used for the take asset name.
+        /// </summary>
+        /// <returns>The name of the asset.</returns>
         protected override string GetAssetName()
         {
             return m_Actor != null ? m_Actor.name : name;
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// The device calls this method when a new client is assigned.
+        /// </summary>
         protected override void OnClientAssigned()
         {
             if (TryGetInternalClient(out var client))
@@ -164,12 +206,28 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             }
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// The device calls this method when the client is unassigned.
+        /// </summary>
         protected override void OnClientUnassigned()
         {
             if (TryGetInternalClient(out var client))
             {
                 client.FacePoseSampleReceived -= OnFacePoseSampleReceived;
+            }
+        }
+
+        /// <summary>
+        /// The device calls this method when a live performance starts and properties are about to change.
+        /// </summary>
+        /// <param name="previewer">The <see cref="IPropertyPreviewer"/> to use to register live properties.</param>
+        protected override void OnRegisterLiveProperties(IPropertyPreviewer previewer)
+        {
+            Debug.Assert(m_Actor != null);
+
+            foreach (var previewable in m_Actor.GetComponents<IPreviewable>())
+            {
+                previewable.Register(previewer);
             }
         }
 
@@ -247,8 +305,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
                     // at t=0 (the start of the clip).
                     // This is necessary for the TakeBuilder to do proper clip alignment.
                     var sampleTime = presentationTime.ToSeconds(m_SyncBuffer.FrameRate);
-                    if (m_FirstSampleTimecode == null)
-                        m_FirstSampleTimecode = sampleTime;
+                    m_FirstSampleTimecode ??= sampleTime;
                     var delta = sampleTime - m_FirstSampleTimecode.Value;
                     m_Recorder.Time = delta;
                     m_Recorder.Channels = m_Channels;
@@ -272,13 +329,12 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             }
             else
             {
-                var timecode = Timecode.FromSeconds(k_SyncBufferNominalFrameRate, sample.Time);
-                m_SyncBuffer.Add(timecode, k_SyncBufferNominalFrameRate, sample.FacePose);
+                m_SyncBuffer.Add(sample.Time, sample.FacePose);
             }
 
             if (IsRecording() && !IsSynchronized)
             {
-                m_TimestampTracker.SetTimestamp((float)sample.Time);
+                m_TimestampTracker.SetTimestamp(sample.Time);
                 m_Recorder.Time = m_TimestampTracker.LocalTime;
                 m_Recorder.Channels = m_Channels;
                 m_Recorder.Record(ref m_Pose);
@@ -287,7 +343,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
 
         void UpdateTimestampTracker()
         {
-            var time = (float)GetTakeRecorder().GetPreviewTime();
+            var time = GetTakeRecorder().GetPreviewTime();
 
             m_TimestampTracker.Time = time;
         }

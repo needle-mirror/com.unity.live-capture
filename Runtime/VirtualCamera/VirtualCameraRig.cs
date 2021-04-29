@@ -65,10 +65,13 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         {
             Pose = Pose.identity,
             Origin = Pose.identity,
+            ARPose = Pose.identity,
             LocalPose = Pose.identity,
             LastInput = Pose.identity,
             RebaseOffset = Quaternion.identity,
             ErgonomicTilt = 0,
+            JoystickPosition = Vector3.zero,
+            JoystickAngles = Vector3.zero
         };
 
         /// <summary>
@@ -84,9 +87,15 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         public Pose Origin;
 
         /// <summary>
-        /// The calculated local <see cref="UnityEngine.Pose"/> of the camera.
+        /// The <see cref="UnityEngine.Pose"/> of the camera in the AR room space.
         /// </summary>
-        [Tooltip("The pose relative to the origin.")]
+        [Tooltip("The pose of the camera in the AR room space.")]
+        public Pose ARPose;
+
+        /// <summary>
+        /// The calculated <see cref="UnityEngine.Pose"/> relative to the origin.
+        /// </summary>
+        [Tooltip("The calculated pose relative to the origin.")]
         public Pose LocalPose;
 
         /// <summary>
@@ -106,6 +115,18 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         /// </summary>
         [HideInInspector]
         public float ErgonomicTilt;
+
+        /// <summary>
+        /// The translation accumulated by joystick/gamepad input.
+        /// </summary>
+        [HideInInspector]
+        public Vector3 JoystickPosition;
+
+        /// <summary>
+        /// The rotation accumulated by joystick/gamepad input, in euler angles (degrees).
+        /// </summary>
+        [HideInInspector]
+        public Vector3 JoystickAngles;
     }
 
     /// <summary>
@@ -140,7 +161,7 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
 
                 // Compensate for rebase offset and ergonomic tilt
                 var targetEuler = (Quaternion.Inverse(state.RebaseOffset) * input.rotation).eulerAngles;
-                var currentEuler = (state.LocalPose.rotation * Quaternion.Inverse(lastErgonomicTilt)).eulerAngles;
+                var currentEuler = (state.ARPose.rotation * Quaternion.Inverse(lastErgonomicTilt)).eulerAngles;
 
                 // Use the current euler value if the rotation axis is locked
                 axis = (Axis)settings.RotationLock;
@@ -158,14 +179,16 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
                     targetEuler.z = settings.ZeroDutch ? 0f : currentEuler.z;
 
                 var targetRotation = Quaternion.Euler(targetEuler);
-                state.LocalPose.rotation = targetRotation * ergonomicTilt;
-                state.LocalPose.position += targetRotation * deltaPosition;
+
+                // Take the joystick Y rotation into account when applying the AR translation
+                var joystickRotationY = Quaternion.Euler(0f, state.JoystickAngles.y, 0f);
+
+                state.ARPose.rotation = targetRotation * ergonomicTilt;
+                state.ARPose.position += joystickRotationY * targetRotation * deltaPosition;
                 state.ErgonomicTilt = settings.ErgonomicTilt;
             }
 
-            state.Pose = new Pose(
-                state.Origin.position + state.Origin.rotation * state.LocalPose.position,
-                state.Origin.rotation * state.LocalPose.rotation);
+            state.ComputePose(settings);
             state.LastInput = input;
         }
 
@@ -176,8 +199,11 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         /// <param name="input">The input to rebase</param>
         public static void Rebase(this ref VirtualCameraRigState state, Pose input)
         {
-            var localRotationY = Quaternion.Euler(0f, state.LocalPose.rotation.eulerAngles.y, 0f);
-            var inputRotationY = Quaternion.Euler(0f, input.rotation.eulerAngles.y, 0f);
+            var ergonomicTilt = Quaternion.Euler(state.ErgonomicTilt, 0f, 0f);
+            var ergonomicInput = input.rotation * ergonomicTilt;
+
+            var localRotationY = Quaternion.Euler(0f, state.ARPose.rotation.eulerAngles.y, 0f);
+            var inputRotationY = Quaternion.Euler(0f, ergonomicInput.eulerAngles.y, 0f);
             state.RebaseOffset = Quaternion.Inverse(localRotationY) * inputRotationY;
         }
 
@@ -190,12 +216,12 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         {
             var lastErgonomicTilt = Quaternion.Euler(state.ErgonomicTilt, 0f, 0f);
             var ergonomicTilt = Quaternion.Euler(settings.ErgonomicTilt, 0f, 0f);
-            state.LocalPose.rotation *= ergonomicTilt * Quaternion.Inverse(lastErgonomicTilt);
-            // updating the pose relative to the origin and the localPose
-            var pose = new Pose(
-                state.Origin.position + state.Origin.rotation * state.LocalPose.position,
-                state.Origin.rotation * state.LocalPose.rotation);
-            state.Pose = pose;
+            var ergonomicTiltDelta = ergonomicTilt * Quaternion.Inverse(lastErgonomicTilt);
+
+            state.ARPose.rotation *= ergonomicTiltDelta;
+            state.JoystickAngles += ergonomicTiltDelta.eulerAngles;
+            state.ComputePose(settings);
+
             state.ErgonomicTilt = settings.ErgonomicTilt;
         }
 
@@ -207,8 +233,12 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         {
             var originRotation = state.Origin.rotation;
             var originInv = Matrix4x4.TRS(state.Origin.position, originRotation, Vector3.one).inverse;
-            state.LocalPose.position = originInv.MultiplyPoint3x4(worldCoordinates.position);
-            state.LocalPose.rotation = Quaternion.Inverse(originRotation) * worldCoordinates.rotation;
+            state.JoystickPosition = Vector3.zero;
+            state.JoystickAngles = Vector3.zero;
+            state.ARPose.position = originInv.MultiplyPoint3x4(worldCoordinates.position);
+            state.ARPose.rotation = Quaternion.Inverse(originRotation) * worldCoordinates.rotation;
+            state.LocalPose.position = state.ARPose.position;
+            state.LocalPose.rotation = state.ARPose.rotation;
             state.Pose.position = worldCoordinates.position;
             state.Pose.rotation = worldCoordinates.rotation;
         }
@@ -218,9 +248,14 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         /// </summary>
         public static void Reset(this ref VirtualCameraRigState state)
         {
-            state.LocalPose.position = Vector3.zero;
-            state.LocalPose.rotation = Quaternion.identity;
-            state.RebaseOffset = Quaternion.Euler(0f, state.LastInput.rotation.eulerAngles.y, 0f);
+            state.JoystickPosition = Vector3.zero;
+            state.JoystickAngles = Vector3.zero;
+            state.ARPose.position = Vector3.zero;
+            state.ARPose.rotation = Quaternion.identity;
+
+            var ergonomicTilt = Quaternion.Euler(state.ErgonomicTilt, 0f, 0f);
+            var ergonomicInput = state.LastInput.rotation * ergonomicTilt;
+            state.RebaseOffset = Quaternion.Euler(0f, ergonomicInput.eulerAngles.y, 0f);
         }
 
         /// <summary>
@@ -230,21 +265,102 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         /// <param name="deltaTime">The time step in seconds</param>
         /// <param name="speed">Scaled speed along x, y and z directions</param>
         /// <param name="pedestalSpace">Should the translation on the Y axis happen relative to world or local space</param>
+        /// <param name="motionSpace">Should the translation on the X and Z axes happen relative to world or local space</param>
         /// <param name = "settings" > The settings that will be applied while translating the state</param>
-        public static void Translate(this ref VirtualCameraRigState state, Vector3 vector, float deltaTime, Vector3 speed, Space pedestalSpace, VirtualCameraRigSettings settings)
+        public static void Translate(this ref VirtualCameraRigState state, Vector3 vector, float deltaTime, Vector3 speed, Space pedestalSpace, Space motionSpace, VirtualCameraRigSettings settings)
         {
             deltaTime = Mathf.Max(0f, deltaTime);
-
             var deltaSpeed = speed * deltaTime;
 
-            // Transpose the Vector and the Speed to local space
-            var up = (pedestalSpace == Space.Self) ? state.LocalPose.up : state.Origin.up;
-            state.LocalPose.position +=
-                state.LocalPose.forward * vector.z * deltaSpeed.z +
-                state.LocalPose.right * vector.x * deltaSpeed.x +
-                up * vector.y * deltaSpeed.y;
+            if (pedestalSpace == Space.Self)
+            {
+                state.JoystickPosition += state.LocalPose.up * vector.y * deltaSpeed.y;
+            }
+            else
+            {
+                state.JoystickPosition += Vector3.up * vector.y * deltaSpeed.y;
+            }
+
+            if (motionSpace == Space.Self)
+            {
+                state.JoystickPosition += state.LocalPose.forward * vector.z * deltaSpeed.z;
+                state.JoystickPosition += state.LocalPose.right * vector.x * deltaSpeed.x;
+
+            }
+            else
+            {
+                Vector3 forward;
+
+                if (settings.Rebasing)
+                {
+                    var heading = state.JoystickAngles.y + state.ARPose.rotation.eulerAngles.y;
+                    forward = Quaternion.AngleAxis(heading, Vector3.up) * Vector3.forward;
+                }
+                else
+                {
+                    forward = Vector3.ProjectOnPlane(state.LocalPose.forward, Vector3.up);
+                    var scaleTowardsZero = Mathf.InverseLerp(0.01f, 0.04f, forward.magnitude);
+                    forward = forward.normalized * scaleTowardsZero;
+                }
+
+                var right = new Vector3(forward.z, forward.y, -forward.x);
+
+                state.JoystickPosition += forward * vector.z * deltaSpeed.z;
+                state.JoystickPosition += right * vector.x * deltaSpeed.x;
+            }
 
             state.Refresh(settings);
+        }
+
+        /// <summary>
+        /// Rotate the pose without taking into account the constraints.
+        /// </summary>
+        /// <param name="vector">The strength of the rotation around each axis.</param>
+        /// <param name="deltaTime">The time step in seconds</param>
+        /// <param name="strength">Scaled strength around x, y and z axis</param>
+        /// <param name = "settings" > The settings that will be applied while rotating the state</param>
+        public static void Rotate(this ref VirtualCameraRigState state, Vector3 vector, float deltaTime, Vector3 strength, VirtualCameraRigSettings settings)
+        {
+            deltaTime = Mathf.Max(0f, deltaTime);
+            var deltaStrength = strength * deltaTime;
+            var anglesToAdd = Vector3.Scale(vector, deltaStrength);
+
+            state.JoystickAngles += anglesToAdd;
+
+            state.Refresh(settings);
+        }
+
+        static void ComputePose(this ref VirtualCameraRigState state, VirtualCameraRigSettings settings)
+        {
+            state.LocalPose.position = state.ARPose.position + state.JoystickPosition;
+
+            if (settings.Rebasing)
+            {
+                var AREuler = state.ARPose.rotation.eulerAngles;
+                if (Mathf.Abs(state.ARPose.forward.y) > 0.99f)
+                {
+                    // Hack to simulate worldX,worldY,localZ rotation order at singularities while still using the default worldZ,worldX,worldY rotation order
+                    AREuler.y -= AREuler.z;
+                    AREuler.z = 0f;
+                }
+
+                state.LocalPose.rotation.eulerAngles = state.JoystickAngles + AREuler;
+            }
+            else
+            {
+                // Clear & disable X and Z joystick rotation while AR is enabled
+                state.JoystickAngles.x = state.JoystickAngles.z = 0f;
+
+                // Apply only the joystick Y rotation while AR is enabled
+                var joystickRotationY = Quaternion.Euler(0f, state.JoystickAngles.y, 0f);
+
+                state.LocalPose.rotation = joystickRotationY * state.ARPose.rotation;
+            }
+
+            var pose = new Pose(
+                state.Origin.position + state.Origin.rotation * state.LocalPose.position,
+                state.Origin.rotation * state.LocalPose.rotation);
+            state.Pose = pose;
         }
 
         static Vector3 Mask(Vector3 vector, bool x, bool y, bool z)

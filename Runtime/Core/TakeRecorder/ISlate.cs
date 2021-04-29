@@ -57,10 +57,5 @@ namespace Unity.LiveCapture
         /// The take to iterate from in the next recording.
         /// </summary>
         Take IterationBase { get; set; }
-
-        /// <summary>
-        /// The duration of the slate in seconds.
-        /// </summary>
-        double Duration { get; }
     }
 }

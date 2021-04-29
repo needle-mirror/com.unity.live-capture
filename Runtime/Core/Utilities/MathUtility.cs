@@ -307,12 +307,178 @@ namespace Unity.LiveCapture
 
         static Vector3 ClosestEuler(Quaternion quaternion, Vector3 eulerHint, RotationOrder rotationOrder)
         {
-            return ClosestEuler(new Vector4(quaternion.x, quaternion.y, quaternion.z, quaternion.w), new Vector3(eulerHint.x, eulerHint.y, eulerHint.z), rotationOrder);
+            return ClosestEuler(new Vector4(quaternion.x, quaternion.y, quaternion.z, quaternion.w), eulerHint, rotationOrder);
         }
 
         public static Vector3 ClosestEuler(Quaternion quaternion, Vector3 eulerHint)
         {
             return ClosestEuler(quaternion, eulerHint, RotationOrder.OrderZXY);
+        }
+
+        public static double Clamp(double value, double min, double max)
+        {
+            return Math.Max(Math.Min(value, max), min);
+        }
+
+        public static Quaternion Add(this in Quaternion a, in Quaternion b)
+        {
+            return new Quaternion(
+                a.x + b.x,
+                a.y + b.y,
+                a.z + b.z,
+                a.w + b.w
+            );
+        }
+
+        public static Quaternion Sub(this in Quaternion a, in Quaternion b)
+        {
+            return new Quaternion(
+                a.x - b.x,
+                a.y - b.y,
+                a.z - b.z,
+                a.w - b.w
+            );
+        }
+
+        public static Quaternion Mul(this in Quaternion a, float s)
+        {
+            return new Quaternion(
+                a.x * s,
+                a.y * s,
+                a.z * s,
+                a.w * s
+            );
+        }
+
+        public static Quaternion Div(this in Quaternion a, float s)
+        {
+            return new Quaternion(
+                a.x / s,
+                a.y / s,
+                a.z / s,
+                a.w / s
+            );
+        }
+
+        public static Vector2 SafeDivide(this Vector2 y, float x, float threshold = 0f)
+        {
+            if (Mathf.Abs(x) > threshold)
+                return y / x;
+            else
+                return default;
+        }
+
+        public static Vector3 SafeDivide(this Vector3 y, float x, float threshold = 0f)
+        {
+            if (Mathf.Abs(x) > threshold)
+                return y / x;
+            else
+                return default;
+        }
+
+        public static Vector4 SafeDivide(this Vector4 y, float x, float threshold = 0f)
+        {
+            if (Mathf.Abs(x) > threshold)
+                return y / x;
+            else
+                return default;
+        }
+
+        public static Quaternion SafeDivide(this Quaternion y, float x, float threshold = 0f)
+        {
+            if (Mathf.Abs(x) > threshold)
+                return Div(y, x);
+            else
+                return default;
+        }
+
+        public static float Magnitude(this Quaternion q)
+        {
+            return Mathf.Sqrt(Quaternion.Dot(q,q));
+        }
+
+        public static bool CompareApproximately(float f0, float f1, float epsilon = 0.000001F)
+        {
+            var dist = (f0 - f1);
+            dist = Mathf.Abs(dist);
+            return dist <= epsilon;
+        }
+
+        public static float Hermite(float t, float p0, float m0, float m1, float p1)
+        {
+            var t2 = t * t;
+            var t3 = t2 * t;
+            var a = 2.0F * t3 - 3.0F * t2 + 1.0F;
+            var b = t3 - 2.0F * t2 + t;
+            var c = t3 - t2;
+            var d = -2.0F * t3 + 3.0F * t2;
+
+            return a * p0 + b * m0 + c * m1 + d * p1;
+        }
+
+        public static Vector2 Hermite(float t, in Vector2 p0, in Vector2 m0, in Vector2 m1, in Vector2 p1)
+        {
+            var t2 = t * t;
+            var t3 = t2 * t;
+            var a = 2.0F * t3 - 3.0F * t2 + 1.0F;
+            var b = t3 - 2.0F * t2 + t;
+            var c = t3 - t2;
+            var d = -2.0F * t3 + 3.0F * t2;
+
+            return new Vector2(
+                a * p0.x + b * m0.x + c * m1.x + d * p1.x,
+                a * p0.y + b * m0.y + c * m1.y + d * p1.y
+            );
+        }
+
+        public static Vector3 Hermite(float t, in Vector3 p0, in Vector3 m0, in Vector3 m1, in Vector3 p1)
+        {
+            var t2 = t * t;
+            var t3 = t2 * t;
+            var a = 2.0F * t3 - 3.0F * t2 + 1.0F;
+            var b = t3 - 2.0F * t2 + t;
+            var c = t3 - t2;
+            var d = -2.0F * t3 + 3.0F * t2;
+
+            return new Vector3(
+                a * p0.x + b * m0.x + c * m1.x + d * p1.x,
+                a * p0.y + b * m0.y + c * m1.y + d * p1.y,
+                a * p0.z + b * m0.z + c * m1.z + d * p1.z
+            );
+        }
+
+        public static Vector4 Hermite(float t, in Vector4 p0, in Vector4 m0, in Vector4 m1, in Vector4 p1)
+        {
+            var t2 = t * t;
+            var t3 = t2 * t;
+            var a = 2.0F * t3 - 3.0F * t2 + 1.0F;
+            var b = t3 - 2.0F * t2 + t;
+            var c = t3 - t2;
+            var d = -2.0F * t3 + 3.0F * t2;
+
+            return new Vector4(
+                a * p0.x + b * m0.x + c * m1.x + d * p1.x,
+                a * p0.y + b * m0.y + c * m1.y + d * p1.y,
+                a * p0.z + b * m0.z + c * m1.z + d * p1.z,
+                a * p0.w + b * m0.w + c * m1.w + d * p1.w
+            );
+        }
+
+        public static Quaternion Hermite(float t, in Quaternion p0, in Quaternion m0, in Quaternion m1, in Quaternion p1)
+        {
+            var t2 = t * t;
+            var t3 = t2 * t;
+            var a = 2.0F * t3 - 3.0F * t2 + 1.0F;
+            var b = t3 - 2.0F * t2 + t;
+            var c = t3 - t2;
+            var d = -2.0F * t3 + 3.0F * t2;
+
+            return new Quaternion(
+                a * p0.x + b * m0.x + c * m1.x + d * p1.x,
+                a * p0.y + b * m0.y + c * m1.y + d * p1.y,
+                a * p0.z + b * m0.z + c * m1.z + d * p1.z,
+                a * p0.w + b * m0.w + c * m1.w + d * p1.w
+            );
         }
     }
 }

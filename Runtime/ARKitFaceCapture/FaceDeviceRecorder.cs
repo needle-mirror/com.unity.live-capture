@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Unity.LiveCapture.ARKitFaceCapture
@@ -5,6 +6,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     /// <summary>
     /// A class that records <see cref="FacePose"/> samples.
     /// </summary>
+    [Serializable]
     class FaceDeviceRecorder
     {
         ICurve[] m_Curves =
@@ -19,6 +21,36 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             new BooleanCurve(string.Empty, FaceActor.PropertyNames.HeadOrientationEnabled, typeof(FaceActor)),
             new BooleanCurve(string.Empty, FaceActor.PropertyNames.EyeOrientationEnabled, typeof(FaceActor)),
         };
+
+        [SerializeField]
+        [Tooltip("The relative tolerance, in percent, for reducing position keyframes")]
+        float m_PositionError = 0.5f;
+
+        [SerializeField]
+        [Tooltip("The tolerance, in degrees, for reducing rotation keyframes")]
+        float m_RotationError = 0.5f;
+
+        [SerializeField]
+        [Tooltip("The relative tolerance, in percent, for reducing blend shape keyframes")]
+        float m_BlendShapeError = 0.5f;
+
+        public float PositionError
+        {
+            get => m_PositionError;
+            set => m_PositionError = value;
+        }
+
+        public float RotationError
+        {
+            get => m_RotationError;
+            set => m_RotationError = value;
+        }
+
+        public float BlendShapeError
+        {
+            get => m_BlendShapeError;
+            set => m_BlendShapeError = value;
+        }
 
         /// <summary>
         /// The time used by the recorder in seconds.
@@ -43,6 +75,16 @@ namespace Unity.LiveCapture.ARKitFaceCapture
                     curve.FrameRate = value;
                 }
             }
+        }
+
+        /// <summary>
+        /// Sets all the keyframe reduction parameters within their valid bounds.
+        /// </summary>
+        public void Validate()
+        {
+            m_PositionError = Mathf.Clamp(m_PositionError, 0f, 100f);
+            m_RotationError = Mathf.Clamp(m_RotationError, 0f, 10f);
+            m_BlendShapeError = Mathf.Clamp(m_BlendShapeError, 0f, 100f);
         }
 
         /// <summary>
@@ -73,6 +115,20 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             {
                 curve.Clear();
             }
+        }
+
+        /// <summary>
+        /// Initializes the recorder parameters for a new recording session.
+        /// </summary>
+        public void Prepare()
+        {
+            Clear();
+
+            GetReduceable(0).MaxError = BlendShapeError / 100f;
+            GetReduceable(1).MaxError = PositionError / 100f;;
+            GetReduceable(2).MaxError = RotationError;
+            GetReduceable(3).MaxError = RotationError;
+            GetReduceable(4).MaxError = RotationError;
         }
 
         /// <summary>
@@ -126,6 +182,11 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         ICurve<T> GetCurve<T>(int index)
         {
             return m_Curves[index] as ICurve<T>;
+        }
+
+        IReduceableCurve GetReduceable(int index)
+        {
+            return m_Curves[index] as IReduceableCurve;
         }
     }
 }

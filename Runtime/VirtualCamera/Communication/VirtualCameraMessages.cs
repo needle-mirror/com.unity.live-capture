@@ -30,6 +30,7 @@ namespace Unity.LiveCapture.VirtualCamera
             public const string MotionScale = k_Base + "MotionScale";
             public const string JoystickSensitivity = k_Base + "JoystickSensitivity";
             public const string PedestalSpace = k_Base + "PedestalSpace";
+            public const string MotionSpace = k_Base + "MotionSpace";
             public const string FocusMode = k_Base + "FocusMode";
             public const string FocusReticlePosition = k_Base + "FocusReticlePosition";
             public const string FocusDistanceOffset = k_Base + "FocusDistanceOffset";
@@ -53,6 +54,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
             public const string ChannelFlags = k_Base + "ChannelFlags";
             public const string JoysticksSample_V0 = k_Base + "JoysticksSample_V0";
+            public const string GamepadSample_V0 = k_Base + "GamepadSample_V0";
             public const string PoseSample_V0 = k_Base + "PoseSample_V0";
             public const string PoseSample_V1 = k_Base + "PoseSample_V1";
             public const string FocalLengthSample_V0 = k_Base + "FocalLengthSample_V0";
@@ -75,6 +77,7 @@ namespace Unity.LiveCapture.VirtualCamera
             public const string MotionScale = k_Base + "MotionScale";
             public const string JoystickSensitivity = k_Base + "JoystickSensitivity";
             public const string PedestalSpace = k_Base + "PedestalSpace";
+            public const string MotionSpace = k_Base + "MotionSpace";
             public const string FocusMode = k_Base + "FocusMode";
             public const string FocusReticlePosition = k_Base + "FocusReticlePosition";
             public const string FocusDistanceOffset = k_Base + "FocusDistanceOffset";

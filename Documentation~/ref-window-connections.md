@@ -1,8 +1,8 @@
 # Connections window
 
-The Connections window allows you to manage local network and server settings in order to allow you to connect client apps with the Unity Editor.
+The Connections window allows you to manage local network and connection settings to allow you to connect client apps with the Unity Editor.
 
-To open this window, from the Unity Editor main menu, select Windows
+To open this window, from the Unity Editor main menu, select **Window** > **Connections**.
 
 ![](images/ref-window-connections.png)
 
@@ -35,8 +35,8 @@ The Available Interfaces section displays the list of all available IP addresses
 
 The Connected Clients section displays the list of all client apps that are currently connected to the server.
 
-### Create server
+### Create Connection
 
-Use the **Create Server** button and select **Companion App Server** to create a server if the Connections window doesn't display any server properties.
+Use the **Create Connection** button and select **Companion App Server** to create a server if the Connections window doesn't display any server properties.
 
 >**Note:** You cannot create several Companion App Servers.

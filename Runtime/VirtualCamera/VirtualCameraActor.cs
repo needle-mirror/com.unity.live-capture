@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Unity.LiveCapture.VirtualCamera
@@ -13,7 +11,7 @@ namespace Unity.LiveCapture.VirtualCamera
     [ExecuteAlways]
     [RequireComponent(typeof(Animator))]
     [HelpURL(Documentation.baseURL + "ref-component-virtual-camera-actor" + Documentation.endURL)]
-    public class VirtualCameraActor : MonoBehaviour
+    public class VirtualCameraActor : MonoBehaviour, IPreviewable
     {
         [SerializeField]
         Lens m_Lens = Lens.DefaultParams;
@@ -157,6 +155,36 @@ namespace Unity.LiveCapture.VirtualCamera
             m_LensIntrinsics.Validate();
             m_Lens.Validate(m_LensIntrinsics);
             m_CameraBody.Validate();
+        }
+
+        /// <inheritdoc/>
+        public virtual void Register(IPropertyPreviewer previewer)
+        {
+            previewer.Register(this, "m_Lens.m_FocalLength");
+            previewer.Register(this, "m_Lens.m_FocusDistance");
+            previewer.Register(this, "m_Lens.m_Aperture");
+            previewer.Register(this, "m_LensIntrinsics.m_FocalLengthRange.x");
+            previewer.Register(this, "m_LensIntrinsics.m_FocalLengthRange.y");
+            previewer.Register(this, "m_LensIntrinsics.m_CloseFocusDistance");
+            previewer.Register(this, "m_LensIntrinsics.m_ApertureRange.x");
+            previewer.Register(this, "m_LensIntrinsics.m_ApertureRange.y");
+            previewer.Register(this, "m_LensIntrinsics.m_LensShift.x");
+            previewer.Register(this, "m_LensIntrinsics.m_LensShift.y");
+            previewer.Register(this, "m_LensIntrinsics.m_BladeCount");
+            previewer.Register(this, "m_LensIntrinsics.m_Curvature.x");
+            previewer.Register(this, "m_LensIntrinsics.m_Curvature.y");
+            previewer.Register(this, "m_LensIntrinsics.m_BarrelClipping");
+            previewer.Register(this, "m_LensIntrinsics.m_Anamorphism");
+            previewer.Register(this, "m_DepthOfField");
+            previewer.Register(this, "m_CropAspect");
+            previewer.Register(this, "m_LocalPosition.x");
+            previewer.Register(this, "m_LocalPosition.y");
+            previewer.Register(this, "m_LocalPosition.z");
+            previewer.Register(this, "m_LocalEulerAngles.x");
+            previewer.Register(this, "m_LocalEulerAngles.y");
+            previewer.Register(this, "m_LocalEulerAngles.z");
+            previewer.Register(this, "m_LocalPositionEnabled");
+            previewer.Register(this, "m_LocalEulerAnglesEnabled");
         }
     }
 }

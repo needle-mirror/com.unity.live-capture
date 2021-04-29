@@ -51,6 +51,18 @@ namespace Unity.LiveCapture
         }
 
         /// <summary>
+        /// Retrieves the GUID of an asset given its instanceID.
+        /// </summary>
+        /// <param name="instanceID">The instanceID of the asset to retrieve the GUID from.</param>
+        /// <returns>The string representation of the GUID of the asset.</returns>
+        public static string GetAssetGUID(int instanceID)
+        {
+            var path = AssetDatabase.GetAssetPath(instanceID);
+
+            return AssetDatabase.AssetPathToGUID(path);
+        }
+
+        /// <summary>
         /// Returns the asset associated with a given GUID.
         /// </summary>
         /// <typeparam name="T">Type of the asset to load.</typeparam>

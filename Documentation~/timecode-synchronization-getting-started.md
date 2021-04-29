@@ -47,7 +47,7 @@ In addition, this scenario specifically requires:
 
    a. In the companion app, select the gear icon at the top left.
 
-   b. In **Settings**, set the **Timecode Source** to **Tentacle Sync**.
+   b. In **Settings**, under **Timecode**, set the **Source** to **Tentacle Sync**.
 
 
 ## Synchronize the data sources

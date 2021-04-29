@@ -21,6 +21,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             public static GUIContent LensAssetLabel = EditorGUIUtility.TrTextContent("Lens Asset", "The asset that provides the lens intrinsics.");
             public static GUIContent CameraBody = EditorGUIUtility.TrTextContent("Camera Body", "The parameters of the camera's body.");
             public static GUIContent Settings = EditorGUIUtility.TrTextContent("Settings", "The settings of the device.");
+            public static GUIContent Recorder = EditorGUIUtility.TrTextContent("Keyframe Reduction", "Parameters to reduce redundant keyframes in the recorded animations. Higher values reduce the file size but might affect the curve accuracy.");
             public static string VideoNotCompatible = L10n.Tr("Video streaming not supported on Apple silicon.");
             public static GUIContent VideoSettingsButton = EditorGUIUtility.TrTextContent("Open Video Settings", "Open the settings of the video server.");
             public static string Deleted = L10n.Tr("(deleted)");
@@ -41,8 +42,8 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             public static string MissingActorText = L10n.Tr("The device requires a Virtual Camera Actor target.");
             public static string MissingClientText = L10n.Tr("The device requires a connected Client.");
             public static string ReadMoreText = L10n.Tr("read more");
-            public static string ConnectClientURL = "https://docs.unity3d.com/Packages/com.unity.live-capture@1.0/manual/setup-connecting.html";
-            public static string SetupActorURL = "https://docs.unity3d.com/Packages/com.unity.live-capture@1.0/manual/virtual-camera-workflow.html";
+            public static string ConnectClientURL = Documentation.baseURL + "setup-connecting" + Documentation.endURL;
+            public static string SetupActorURL = Documentation.baseURL + "virtual-camera-workflow" + Documentation.endURL;
 
             static GUIStyle s_CenteredLabel;
             public static GUIStyle CenteredLabel
@@ -100,6 +101,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         SerializedProperty m_LensIntrinsics;
         SerializedProperty m_CameraBody;
         SerializedProperty m_Settings;
+        SerializedProperty m_Recorder;
         SerializedProperty m_Snapshots;
         SerializedProperty m_SnapshotLibrary;
 
@@ -119,6 +121,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             m_LensIntrinsics = serializedObject.FindProperty("m_LensIntrinsics");
             m_CameraBody = serializedObject.FindProperty("m_CameraBody");
             m_Settings = serializedObject.FindProperty("m_Settings");
+            m_Recorder = serializedObject.FindProperty("m_Recorder");
             m_Snapshots = serializedObject.FindProperty("m_Snapshots");
             m_SnapshotLibrary = serializedObject.FindProperty("m_SnapshotLibrary");
 
@@ -174,6 +177,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
             EditorGUILayout.PropertyField(m_CameraBody, Contents.CameraBody);
             EditorGUILayout.PropertyField(m_Settings, Contents.Settings);
+            EditorGUILayout.PropertyField(m_Recorder, Contents.Recorder);
 
             var controlRect = EditorGUILayout.GetControlRect();
             var snapshotsFoldoutLabel = EditorGUI.BeginProperty(controlRect, Contents.Snapshots, m_SnapshotLibrary);

@@ -15,7 +15,7 @@ namespace Unity.LiveCapture.VirtualCamera
     [DisallowMultipleComponent]
     [RequireComponent(typeof(VirtualCameraActor))]
     [ExecuteAlways]
-    abstract class BaseCameraDriver : MonoBehaviour, ICameraDriver
+    abstract class BaseCameraDriver : MonoBehaviour, ICameraDriver, IPreviewable
     {
         VirtualCameraActor m_VirtualCameraActor;
 
@@ -65,12 +65,12 @@ namespace Unity.LiveCapture.VirtualCamera
 
                 if (m_VirtualCameraActor.LocalPositionEnabled)
                 {
-                    m_VirtualCameraActor.transform.localPosition = m_VirtualCameraActor.LocalPosition;
+                    transform.localPosition = m_VirtualCameraActor.LocalPosition;
                 }
 
                 if (m_VirtualCameraActor.LocalEulerAnglesEnabled)
                 {
-                    m_VirtualCameraActor.transform.localEulerAngles = m_VirtualCameraActor.LocalEulerAngles;
+                    transform.localEulerAngles = m_VirtualCameraActor.LocalEulerAngles;
                 }
 
                 lens.Validate(lensIntrinsics);
@@ -106,6 +106,21 @@ namespace Unity.LiveCapture.VirtualCamera
                     Gizmos.DrawLine(position, position + cameraTransform.forward * m_CachedFocusDistance);
                 }
             }
+        }
+
+        /// <inheritdoc/>
+        public virtual void Register(IPropertyPreviewer previewer)
+        {
+            previewer.Register(transform, "m_LocalPosition.x");
+            previewer.Register(transform, "m_LocalPosition.y");
+            previewer.Register(transform, "m_LocalPosition.z");
+            previewer.Register(transform, "m_LocalRotation.x");
+            previewer.Register(transform, "m_LocalRotation.y");
+            previewer.Register(transform, "m_LocalRotation.z");
+            previewer.Register(transform, "m_LocalRotation.w");
+            previewer.Register(transform, "m_LocalEulerAnglesHint.x");
+            previewer.Register(transform, "m_LocalEulerAnglesHint.y");
+            previewer.Register(transform, "m_LocalEulerAnglesHint.z");
         }
     }
 }

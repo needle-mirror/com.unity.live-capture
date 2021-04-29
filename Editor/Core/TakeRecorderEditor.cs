@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Playables;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEditor.Timeline;
@@ -10,7 +12,7 @@ namespace Unity.LiveCapture.Editor
     using Editor = UnityEditor.Editor;
 
     [CustomEditor(typeof(TakeRecorder))]
-    class TakeRecorderEditor : UnityEditor.Editor
+    class TakeRecorderEditor : Editor
     {
         static class Contents
         {
@@ -18,10 +20,13 @@ namespace Unity.LiveCapture.Editor
             public static readonly GUIContent LiveButtonContent = EditorGUIUtility.TrTextContent("Live", "Set to live mode for previewing and recording takes.");
             public static readonly GUIContent PreviewButtonContent = EditorGUIUtility.TrTextContent("Playback", "Set to playback mode for reviewing takes.");
             public static readonly GUIContent StartRecordingLabel = EditorGUIUtility.TrTextContentWithIcon("Start Recording", "Start recording a new Take.", "Animation.Record");
+            public static readonly GUIContent CreateTrackLabel = EditorGUIUtility.TrTextContent("Create Track", "Create a Take Recorder Track in the current inspected Timeline.");
+            public static readonly string LockButtonTooltip = L10n.Tr("Lock the Clip currently in context to keep it active in the Take Recorder regardless of the Timeline playhead position.");
             public static readonly string NoDevicesMessage = L10n.Tr("Recording requires at least a capture device.");
             public static readonly string NoDeviceReadyMessage = L10n.Tr("Recording requires an enabled and configured capture device.");
+            public static readonly string CreateTrackMessage = L10n.Tr("Create a TakeRecorderTrack to start recording in Timeline");
             public static readonly string ReadMoreText = L10n.Tr("read more");
-            public static readonly string CreateDeviceURL = "https://docs.unity3d.com/Packages/com.unity.live-capture@1.0/manual/ref-component-take-recorder.html";
+            public static readonly string CreateDeviceURL = Documentation.baseURL + "ref-component-take-recorder" + Documentation.endURL;
             public static readonly GUIContent StopRecordingLabel = EditorGUIUtility.TrTextContentWithIcon("Stop Recording", "Stop the ongoing recording.", "Animation.Record");
             public static readonly GUIContent PlayPreviewLabel = EditorGUIUtility.TrTextContentWithIcon("Start Preview", "Start previewing the selected Take.", "PlayButton");
             public static readonly GUIContent StopPreviewLabel = EditorGUIUtility.TrTextContentWithIcon("Stop Preview", "Stop the ongoing playback.", "PauseButton");
@@ -30,12 +35,12 @@ namespace Unity.LiveCapture.Editor
             public static readonly string ExternalSlateMsg = L10n.Tr("Slate data provided externally using a Timeline track.");
             public static readonly GUIContent DeviceReadyIcon = EditorGUIUtility.TrIconContent("winbtn_mac_max");
             public static readonly GUIContent DeviceNotReadyIcon = EditorGUIUtility.TrIconContent("winbtn_mac_close");
-            public static readonly GUIContent WarningIcon = EditorGUIUtility.TrIconContent("console.warnicon");
             public static readonly GUIStyle ButtonToggleStyle = "Button";
+            public static readonly GUIStyle LockStyle = "IN LockButton";
             public static readonly string UndoSetLive = L10n.Tr("Toggle Live Mode");
             public static readonly string UndoEnableDevice = L10n.Tr("Set Enabled");
             public static readonly string UndoCreateDevice = L10n.Tr("Create Capture Device");
-            public static readonly GUILayoutOption[] RecordButtonOptions =
+            public static readonly GUILayoutOption[] LargeButtonOptions =
             {
                 GUILayout.Height(30f)
             };
@@ -67,6 +72,7 @@ namespace Unity.LiveCapture.Editor
 
         SlateInspector m_SlateInspector;
         TakeRecorder m_TakeRecorder;
+        PlayableDirector m_Director;
         SerializedProperty m_FrameRateProp;
         SerializedProperty m_Take;
         SerializedProperty m_DevicesProp;
@@ -80,9 +86,11 @@ namespace Unity.LiveCapture.Editor
             m_DevicesProp = serializedObject.FindProperty("m_Devices");
 
             m_TakeRecorder = target as TakeRecorder;
+            m_Director = m_TakeRecorder.GetComponent<PlayableDirector>();
 
             CreateDeviceList();
 
+            TakeRecorder.PlaybackStateChanged += OnPlaybackStateChanged;
             Undo.undoRedoPerformed += UndoRedoPerformed;
 
             s_Editors.AddUnique(this);
@@ -91,10 +99,19 @@ namespace Unity.LiveCapture.Editor
         void OnDisable()
         {
             Undo.undoRedoPerformed -= UndoRedoPerformed;
+            TakeRecorder.PlaybackStateChanged -= OnPlaybackStateChanged;
 
             m_SlateInspector.Dispose();
 
             s_Editors.Remove(this);
+        }
+
+        void OnPlaybackStateChanged(TakeRecorder takeRecorder)
+        {
+            if (m_TakeRecorder == takeRecorder)
+            {
+                Repaint();
+            }
         }
 
         void UndoRedoPerformed()
@@ -155,7 +172,28 @@ namespace Unity.LiveCapture.Editor
             {
                 if (s_CreateDeviceMenuItems == null)
                 {
-                    s_CreateDeviceMenuItems = AttributeUtility.GetAllTypes<CreateDeviceMenuItemAttribute>();
+                    var allTypes = AttributeUtility.GetAllTypes<CreateDeviceMenuItemAttribute>();
+                    var assemblyName = "Unity.LiveCapture.Mocap";
+                    var mocapGroupTypeName = "Unity.LiveCapture.Mocap.MocapGroup";
+                    var mocapDeviceTypeName = "Unity.LiveCapture.Mocap.IMocapDevice";
+                    var mocapGroupType = Type.GetType($"{mocapGroupTypeName}, {assemblyName}");
+                    var mocapDeviceType = Type.GetType($"{mocapDeviceTypeName}, {assemblyName}");
+
+                    Debug.Assert(mocapGroupType != null);
+                    Debug.Assert(mocapDeviceType != null);
+
+                    var hasMocapDevices = allTypes
+                        .Where(t => mocapDeviceType.IsAssignableFrom(t.type))
+                        .Any();
+
+                    if (hasMocapDevices)
+                    {
+                        s_CreateDeviceMenuItems = allTypes;
+                    }
+                    else
+                    {
+                        s_CreateDeviceMenuItems = allTypes.Where(t => t.type != mocapGroupType);
+                    }
                 }
 
                 var menu = MenuUtility.CreateMenu(s_CreateDeviceMenuItems, (t) => true, (type, attribute) =>
@@ -196,23 +234,22 @@ namespace Unity.LiveCapture.Editor
         public override void OnInspectorGUI()
         {
             DoRecordGUI();
-            DoExternalPrevewMsg();
-            DoSlateInspector();
 
-            EditorGUILayout.Space();
+            var disable = m_TakeRecorder.IsPreviewPlaying();
 
-            DoDevicesGUI();
-
-            EditorGUILayout.Space();
-
-            DoSettingsLinkGUI();
-        }
-
-        void DoExternalPrevewMsg()
-        {
-            if (m_TakeRecorder.IsExternalSlatePlayer())
+            using (new EditorGUI.DisabledScope(disable))
             {
-                EditorGUILayout.HelpBox(Contents.ExternalSlateMsg, MessageType.None, true);
+                DoCreateTrackButton();
+                DoTimelineInspector();
+                DoSlateInspector();
+
+                EditorGUILayout.Space();
+
+                DoDevicesGUI();
+
+                EditorGUILayout.Space();
+
+                DoSettingsLinkGUI();
             }
         }
 
@@ -280,15 +317,25 @@ namespace Unity.LiveCapture.Editor
 
         void DoSlateInspector()
         {
-            var slate = m_TakeRecorder.GetActiveSlate();
+            var context = m_TakeRecorder.GetContext();
+
+            if (context == null)
+            {
+                return;
+            }
 
             using (var change = new EditorGUI.ChangeCheckScope())
             {
-                m_SlateInspector.OnGUI(slate, m_TakeRecorder.GetPlayableDirector());
+                var slate = context.GetSlate();
+                var director = context.GetResolver() as PlayableDirector;
+
+                Debug.Assert(director != null);
+
+                m_SlateInspector.OnGUI(slate, director);
 
                 if (change.changed)
                 {
-                    TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved);
+                    context.Prepare(false);
                 }
             }
         }
@@ -318,7 +365,7 @@ namespace Unity.LiveCapture.Editor
             using (var change = new EditorGUI.ChangeCheckScope())
             {
                 GUILayout.Toggle(m_TakeRecorder.IsRecording(),
-                    GetRecordButtonContent(), Contents.ButtonToggleStyle, Contents.RecordButtonOptions);
+                    GetRecordButtonContent(), Contents.ButtonToggleStyle, Contents.LargeButtonOptions);
 
                 if (change.changed)
                 {
@@ -347,7 +394,7 @@ namespace Unity.LiveCapture.Editor
             using (var change = new EditorGUI.ChangeCheckScope())
             {
                 GUILayout.Toggle(m_TakeRecorder.IsPreviewPlaying(),
-                    GetPreviewButtonContent(), Contents.ButtonToggleStyle, Contents.RecordButtonOptions);
+                    GetPreviewButtonContent(), Contents.ButtonToggleStyle, Contents.LargeButtonOptions);
 
                 if (change.changed)
                 {
@@ -385,6 +432,101 @@ namespace Unity.LiveCapture.Editor
             {
                 return Contents.PlayPreviewLabel;
             }
+        }
+
+        void DoCreateTrackButton()
+        {
+            if (!Timeline.IsActive()
+                || m_TakeRecorder.IsLocked()
+                || m_TakeRecorder.HasExternalContextProvider()
+                || m_Director == Timeline.InspectedDirector)
+            {
+                return;
+            }
+
+            EditorGUILayout.HelpBox(Contents.CreateTrackMessage, MessageType.None, true);
+
+            if (GUILayout.Button(Contents.CreateTrackLabel, Contents.LargeButtonOptions))
+            {
+                var director = Timeline.InspectedDirector;
+                var timeline = Timeline.InspectedAsset;
+                var track = timeline.CreateTrack<TakeRecorderTrack>();
+                var clip = track.CreateClip<SlatePlayableAsset>();
+
+                clip.displayName = "New Shot";
+
+                if (TimelineHierarchy.TryGetParentContext(director, out var parentDirector, out var parentClip))
+                {
+                    clip.duration = parentClip.duration;
+                }
+                else if (timeline.duration > 0d)
+                {
+                    clip.duration = timeline.duration;
+                }
+
+                TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved);
+            }
+        }
+
+        void DoTimelineInspector()
+        {
+            var context = m_TakeRecorder.GetContext();
+            var isLocked = m_TakeRecorder.IsLocked();
+            var isPlaying = m_TakeRecorder.IsPreviewPlaying();
+
+            if (context == null || !isLocked && !m_TakeRecorder.HasExternalContextProvider())
+            {
+                return;
+            }
+
+            EditorGUILayout.HelpBox(context.ToString(), MessageType.None, true);
+
+            var slate = context.GetSlate();
+            var content = new GUIContent(slate.ShotName, Contents.LockButtonTooltip);
+
+            using (new EditorGUI.DisabledScope(m_TakeRecorder.IsPreviewPlaying()))
+            using (var change = new EditorGUI.ChangeCheckScope())
+            {
+                var value = DoLockToggle(content, isLocked || isPlaying,
+                    Contents.ButtonToggleStyle, Contents.LargeButtonOptions);
+
+                if (change.changed)
+                {
+                    if (value)
+                    {
+                        m_TakeRecorder.LockContext();
+                    }
+                    else
+                    {
+                        m_TakeRecorder.UnlockContext();
+                    }
+
+                    TimelineEditor.Refresh(RefreshReason.WindowNeedsRedraw);
+                }
+            }
+        }
+
+        static bool DoLockToggle(GUIContent content, bool isLocked, GUIStyle style, params GUILayoutOption[] options)
+        {
+            var rect = EditorGUILayout.GetControlRect(options);
+            var value = GUI.Toggle(rect, isLocked, content, style);
+
+            if (Event.current.type == EventType.Repaint)
+            {
+                var lockStyle = Contents.LockStyle;
+                var textSize = Contents.ButtonToggleStyle.CalcSize(content);
+                var position = new Rect(
+                    rect.x + (rect.width - textSize.x) * 0.5f - lockStyle.fixedWidth,
+                    rect.y + (rect.height - lockStyle.fixedHeight) * 0.5f,
+                    lockStyle.fixedWidth, lockStyle.fixedHeight);
+
+                if (position.x > rect.x)
+                {
+                    lockStyle.Draw(position, false, GUI.enabled, isLocked, false);
+                }
+            }
+
+            return value;
         }
     }
 }

@@ -79,6 +79,12 @@ namespace Unity.LiveCapture
         /// </summary>
         /// <param name="time">The current time in seconds.</param>
         void SetPreviewTime(double time);
+
+        /// <summary>
+        /// Returns the current playback duration of the selected take.
+        /// </summary>
+        /// <returns>The current duration in seconds.</returns>
+        double GetPreviewDuration();
     }
 
     interface ITakeRecorderInternal : ITakeRecorder

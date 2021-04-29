@@ -4,13 +4,63 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.0.1] - 2022-02-28
+## [3.0.0-pre.5] - 2021-04-29
+
+### Added
+- New Synchronization window to manage synchronizers and timecode sources.
+- New Timed Data Source Details window to view and adjust synchronization buffers.
+- Expose the default face mapper implementation in the public API to allow to extend it.
+- Users can now undo/redo the addition and removal of connections they perform through the Connections window.
+- Expose networking utilities in the public API to allow implementing custom connections to external devices.
 
 ### Changed
-  - Disable video streaming on Apple silicon.
+- Rename "Server" to "Connection" in the Connections window UI and public API.
 
-### Fixed
-  - Make sure the Virtual Camera recordings always include the initial lens values.
+### Fix
+- Remove an unnecessary component referring to a missing script in Face Capture sample.
+- The rendering of Takes using the Recorder package now works in combination with the Take Recorder playback features.
+
+## [3.0.0-pre.4] - 2021-04-13
+
+### Added
+- Mocap Core library to provide a foundation for vendor specific mocap packages.
+- New Transform Capture Device component to record transform hierarchies.
+
+### Fix
+- Prevent an error from occurring when stopping the recording while a Live Capture settings window is open.
+- Read the fractional part of the current second from NTP packets correctly.
+- Prevent NTP Timecode Source from failing to initialize networking.
+
+## [3.0.0-pre.3] - 2021-04-08
+
+### Added
+- Scene bindings are now stored in the PlayableDirector that contains the TakeRecorderTrack.
+- Show a warning in clips that can't play due to missing bindings.
+- Playing Takes in Timeline through the TakeRecorderTrack doesn't require a TakeRecorder reference anymore.
+- Reusing Animator references across AnimationTrack and TakeRecorderTrack in the same Timeline.
+- New "Auto Clip Name" option in the clip Inspector, which the user can disable to manually set the clip name in the TakeRecorderTrack.
+- Implement IPreviewable in a component to set properties into an animation preview system, and restore them at the end of the animation preview session.
+- Users can lock a specific Clip of the Take Recorder Track to keep it active in the Take Recorder when the Timeline playhead is not on it.
+- Automatically restore the animated properties of Actors to their original values after a live session.
+- New API to register and restore property values.
+- Using keyframe reduction to decrease the size of the recorded animation clips.
+- New keyframe reduction settings in Virtual Camera Device and ARKit Face Device components.
+- Clips in the Take Recorder Track now support "clip-in" time.
+
+### Changed
+- The TakeRecorderTrack doesn't require a reference to the TakeRecorder anymore.
+- Disabled video streaming on Apple silicon.
+
+### Fix
+- Improved performance of take directory loading.
+- Fixed actors not able to move using the transform handles when the TakeRecorder is enabled.
+- Context menu of the TakeRecorderTrack.
+- Drag and drop a Take into the TakeRecorderTrack.
+- Playing Takes using the TakeRecorderTrack no longer marks the Scene or Prefabs as modified.
+- Truncate the machine name used for server discovery if it is too long, to prevent the console from throwing an exception.
+- Make sure the Virtual Camera recordings always include the initial lens values.
+- Make sure takes properly play back after adding them in the TakeRecorderTrack using drag and drop.
+- Prevent Unity from crashing when loading RenderDoc in a project that includes the Live Capture package.
 
 ## [2.0.0-pre.3] - 2021-10-26
 
@@ -26,7 +76,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Removed
   -  LiveCaptureDevice IsLive/SetLive API.
 
-### Fixed
+### Fix
   - Creating actors in Prefab mode doesn't work.  
   - Bug where the camera actor can be left in an indeterminate state if lens postprocessor is reset.
 

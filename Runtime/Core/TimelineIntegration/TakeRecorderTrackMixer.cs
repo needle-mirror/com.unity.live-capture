@@ -1,146 +1,182 @@
-using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.Timeline;
 
 namespace Unity.LiveCapture
 {
-    class TakeRecorderTrackMixer : PlayableBehaviour, ISlatePlayer
+    class TakeRecorderTrackMixer : PlayableBehaviour, ITakeRecorderContextProvider
     {
+        bool m_Initialized;
         Playable m_Playable;
-
-        public PlayableDirector Director { get; set; }
-        public TakeRecorder TakeRecorder { get; set; }
-
-        public int GetSlateCount()
-        {
-            return m_Playable.GetInputCount();
-        }
-
-        public ISlate GetSlate(int index)
-        {
-            if (index < 0 || index >= GetSlateCount())
-            {
-                throw new ArgumentOutOfRangeException(nameof(index));
-            }
-
-            var playable = (ScriptPlayable<SlatePlayable>)m_Playable.GetInput(index);
-            var slatePlayable = playable.GetBehaviour();
-
-            return slatePlayable.Asset;
-        }
-
-        Playable GetActivePlayable()
-        {
-            var active = default(Playable);
-
-            for (var i = 0; i < GetSlateCount(); ++i)
-            {
-                if (m_Playable.GetInputWeight(i) == 1f)
-                {
-                    active = m_Playable.GetInput(i);
-                }
-            }
-
-            return active;
-        }
-
-        public ISlate GetActiveSlate()
-        {
-            var slatePlayableAsset = default(SlatePlayableAsset);
-            var playable = (ScriptPlayable<SlatePlayable>)GetActivePlayable();
-
-            if (playable.IsValid())
-            {
-                slatePlayableAsset = playable.GetBehaviour().Asset;
-            }
-
-            return slatePlayableAsset;
-        }
-
-        public double GetTime()
-        {
-            var playable = GetActivePlayable();
-
-            if (playable.IsValid())
-            {
-                return playable.GetTime();
-            }
-
-            return Director.time;
-        }
-
-        public void SetTime(double value)
-        {
-            SetTime(GetActiveSlate(), value);
-        }
-
-        public void SetTime(ISlate slate, double time)
-        {
-            var start = 0d;
-
-            if (Contains(slate))
-            {
-                var slatePlayableAsset = slate as SlatePlayableAsset;
-                var duration = slatePlayableAsset.Duration;
-
-                start = slatePlayableAsset.Start;
-
-                if (time < 0d)
-                {
-                    time = 0d;
-                }
-                else if (time > duration)
-                {
-                    time = duration;
-                }
-            }
-
-            if (Director != null)
-            {
-                Director.Pause();
-                Director.time = start + time;
-                Director.DeferredEvaluate();
-
-                Callbacks.InvokeSeekOccurred(slate, Director);
-            }
-        }
-
-        bool Contains(ISlate slate)
-        {
-            if (slate == null)
-            {
-                return false;
-            }
-
-            for (var i = 0; i < GetSlateCount(); ++i)
-            {
-                if (slate == GetSlate(i))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
+        PlayableDirector m_Director;
+        TakeRecorder m_TakeRecorder;
+        List<PlayableAssetContext> m_Contexts = new List<PlayableAssetContext>();
+        Dictionary<Playable, float> m_Weights = new Dictionary<Playable, float>();
 
         public override void OnPlayableCreate(Playable playable)
         {
             m_Playable = playable;
         }
 
+        public override void OnGraphStart(Playable playable)
+        {
+            if (!m_Initialized)
+            {
+                m_Initialized = true;
+
+                Initialize();
+
+                if (m_TakeRecorder != null)
+                {
+                    m_TakeRecorder.AddContextProvider(this);
+                }
+            }
+        }
+
         public override void OnPlayableDestroy(Playable playable)
         {
-            TakeRecorder.RemoveSlatePlayer(this);
+            if (m_TakeRecorder != null)
+            {
+                m_TakeRecorder.RemoveContextProvider(this);
+            }
         }
 
-        public override void OnBehaviourPlay(Playable playable, FrameData info)
+        public override void ProcessFrame(Playable playable, FrameData info, object playerData)
         {
-            TakeRecorder.SetSlatePlayer(this);
+            for (var i = 0; i < m_Playable.GetInputCount(); ++i)
+            {
+                var slatePlayable = m_Playable.GetInput(i);
+                var weight = m_Playable.GetInputWeight(i);
+
+                if (slatePlayable.IsValid() && slatePlayable.GetInputCount() > 0)
+                {
+                    m_Weights[slatePlayable.GetInput(0)] = weight;
+                }
+            }
+
+            var graph = playable.GetGraph();
+            var rootPlayable = graph.GetRootPlayable(0);
+            var outputCount = graph.GetOutputCount();
+
+            for (var i = 0; i < outputCount; ++i)
+            {
+                var output = graph.GetOutput(i);
+                var sourcePlayable = output.GetSourcePlayable();
+
+                if (m_Weights.TryGetValue(sourcePlayable, out var weight))
+                {
+                    output.SetWeight(weight);
+                    sourcePlayable.SetDone(rootPlayable.IsDone());
+                }
+            }
         }
 
-        public override void PrepareFrame(Playable playable, FrameData info)
+        void Initialize()
         {
-            TakeRecorder.Prepare(this);
+            Debug.Assert(m_Contexts.Count == m_Playable.GetInputCount());
+
+            var isRecording = false;
+            var activeContext = default(ITakeRecorderContext);
+            
+            if (m_TakeRecorder != null)
+            {
+                isRecording = m_TakeRecorder.IsRecording();
+                activeContext = m_TakeRecorder.GetContext();
+            }
+
+            for (var i = 0; i < m_Playable.GetInputCount(); ++i)
+            {
+                var context = m_Contexts[i];
+                var clip = context.GetClip();
+                var slateAsset = clip.asset as SlatePlayableAsset;
+
+                slateAsset.Migrate(clip.displayName);
+
+                if (slateAsset.AutoClipName)
+                {
+                    clip.displayName = slateAsset.ShotName;
+                }
+
+                var inputPlayable = (ScriptPlayable<NestedTimelinePlayable>)m_Playable.GetInput(i);
+                var nestedTimeline = inputPlayable.GetBehaviour();
+                var isContextRecording = isRecording && context.Equals(activeContext);
+                var take = isContextRecording ? slateAsset.IterationBase : slateAsset.Take;
+                
+                if (take != null)
+                {
+                    SetTrackBindingsIfNeeded(take);
+
+                    nestedTimeline.SetTimeline(take.Timeline);
+                }
+            }
+
+            m_Director.RebindPlayableGraphOutputs();
+        }
+
+        public void Construct(PlayableDirector director,
+            TakeRecorder takeRecorder,
+            IEnumerable<TimelineClip> clips)
+        {
+            Debug.Assert(director != null);
+            Debug.Assert(clips != null);
+            Debug.Assert(m_Contexts.Count == 0);
+
+            m_Director = director;
+            m_TakeRecorder = takeRecorder;
+
+            var hierarchyContext = TimelineHierarchyContextUtility.FromContext(new TimelineContext(director));
+
+            foreach (var clip in clips)
+            {
+                m_Contexts.Add(new PlayableAssetContext(clip, hierarchyContext));
+            }
+        }
+
+        public ITakeRecorderContext GetActiveContext()
+        {
+            Debug.Assert(m_Playable.GetInputCount() == m_Contexts.Count);
+
+            for (var i = 0; i < m_Playable.GetInputCount(); ++i)
+            {
+                if (m_Playable.GetInputWeight(i) == 1f)
+                {
+                    return m_Contexts[i];
+                }
+            }
+
+            return null;
+        }
+
+        void SetTrackBindingsIfNeeded(Take take)
+        {
+            Debug.Assert(take != null);
+
+            var requiresLoadingTrackBindings = false;
+
+            foreach (var entry in take.BindingEntries)
+            {
+                var track = entry.Track;
+                var binding = entry.Binding;
+                
+                if (track == null)
+                    continue;
+
+                var exposedProperty = binding.GetValue(m_Director);
+                var value = m_Director.GetGenericBinding(track);
+
+                if (exposedProperty != null && value == null)
+                {
+                    requiresLoadingTrackBindings = true;
+
+                    break;
+                }
+            }
+
+            if (requiresLoadingTrackBindings)
+            {
+                m_Director.SetSceneBindings(take.BindingEntries);
+            }
         }
     }
 }

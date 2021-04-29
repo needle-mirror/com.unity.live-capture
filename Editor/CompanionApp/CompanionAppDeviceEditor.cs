@@ -124,7 +124,7 @@ namespace Unity.LiveCapture.CompanionApp.Editor
 
         static TClient[] GetClients()
         {
-            if (ServerManager.Instance.TryGetServer<CompanionAppServer>(out var server))
+            if (ConnectionManager.Instance.TryGetConnection<CompanionAppServer>(out var server))
             {
                 return server
                     .GetClients()

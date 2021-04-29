@@ -36,7 +36,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         public static string AsString(float value, float closeFocus, string unit = "")
         {
-            return AsString(value,  closeFocus, out _, unit = "");
+            return AsString(value,  closeFocus, out _, unit);
         }
 
         // Normalizes a focus distance value belonging to the [min, max] range.

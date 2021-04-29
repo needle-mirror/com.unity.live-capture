@@ -6,7 +6,7 @@ using UnityEngine.Playables;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-using Unity.LiveCapture.Internal;
+using UnityObject = UnityEngine.Object;
 
 namespace Unity.LiveCapture
 {
@@ -22,14 +22,21 @@ namespace Unity.LiveCapture
     [HelpURL(Documentation.baseURL + "ref-component-take-recorder" + Documentation.endURL)]
     public class TakeRecorder : MonoBehaviour, ITakeRecorderInternal
     {
-        [SerializeField, HideInInspector]
-        PlayableAsset m_NullPlayableAsset = null;
+        static List<TakeRecorder> s_Instances = new List<TakeRecorder>();
+        internal static TakeRecorder Main => s_Instances.FirstOrDefault();
 
-        [SerializeField]
-        PlayableDirectorSlate m_DefaultSlatePlayer = new PlayableDirectorSlate();
+        /// <summary>
+        /// TakeRecorder executes this event when recording has started or stopped.
+        /// </summary>
+        public static event Action<TakeRecorder> RecordingStateChanged;
 
+        /// <summary>
+        /// TakeRecorder executes this event when playback has started or stopped.
+        /// </summary>
+        public static event Action<TakeRecorder> PlaybackStateChanged;
+        
         [SerializeField]
-        TakePlayer m_TakePlayer = new TakePlayer();
+        PlayableDirectorContext m_DefaultContext = new PlayableDirectorContext();
 
         [SerializeField, OnlyStandardFrameRates]
         FrameRate m_FrameRate = StandardFrameRate.FPS_30_00;
@@ -40,12 +47,15 @@ namespace Unity.LiveCapture
         [SerializeField]
         bool m_Live = true;
 
-        PlayableDirector m_Director;
         List<LiveCaptureDevice> m_RecordingDevices = new List<LiveCaptureDevice>();
         bool m_Recording;
-        PlayableGraph m_PreviewGraph;
-        TakeRecorderPlayable m_Playable;
-        ISlatePlayer m_ExternalSlatePlayer;
+        bool m_PreviewEnded;
+        double? m_RequestedPreviewTime;
+        double m_RecordingStartTime;
+        TakeRecorderPlayer m_Player;
+        List<ITakeRecorderContextProvider> m_ContextProviders = new List<ITakeRecorderContextProvider>();
+        ITakeRecorderContext m_LockedContext;
+        ITakeRecorderContext m_PlaybackContext;
         Texture2D m_Screenshot;
 
         /// <inheritdoc/>
@@ -64,47 +74,38 @@ namespace Unity.LiveCapture
         /// <inheritdoc/>
         public ISlate GetActiveSlate()
         {
-            return GetEffectiveSlatePlayer().GetActiveSlate();
+            if (TryGetContext(out var context))
+            {
+                return context.GetSlate();
+            }
+
+            return null;
         }
 
         /// <inheritdoc/>
         void ITakeRecorderInternal.SetPreviewTime(ISlate slate, double time)
         {
-            GetEffectiveSlatePlayer().SetTime(slate, time);
+            
         }
 
         /// <inheritdoc/>
         bool ITakeRecorderInternal.IsEnabled => isActiveAndEnabled;
 
-        internal int GetSlateCount()
-        {
-            return GetEffectiveSlatePlayer().GetSlateCount();
-        }
-
-        internal ISlate GetSlate(int index)
-        {
-            return GetEffectiveSlatePlayer().GetSlate(index);
-        }
-
-        internal PlayableDirector GetPlayableDirector()
-        {
-            if (m_Director == null)
-            {
-                SetupComponents();
-            }
-
-            return m_Director;
-        }
-
         void OnEnable()
         {
+            s_Instances.Add(this);
+
             TakeRecorderUpdateManager.Instance.Register(this);
         }
 
         void OnDisable()
         {
-            StopRecordingInternal();
-            DestroyPreviewGraph();
+            s_Instances.Remove(this);
+
+            StopRecording();
+            PausePreview();
+            HandlePreviewEnded();
+            m_Player.Destroy();
             DisposeScreenshot();
 
             TakeRecorderUpdateManager.Instance.Unregister(this);
@@ -113,81 +114,24 @@ namespace Unity.LiveCapture
         void OnValidate()
         {
             m_Devices.RemoveAll(device => !IsDeviceValid(device));
+
+            m_DefaultContext.Director = GetComponent<PlayableDirector>();
+            m_DefaultContext.UnityObject = this;
         }
 
         void Awake()
         {
-            SetupComponents();
+            OnValidate();
         }
 
         void Reset()
         {
-            SetupComponents();
+            OnValidate();
 
             var devices = GetComponentsInChildren<LiveCaptureDevice>(true)
-                .Where(d => d.transform.parent == transform);
+                .Where(d => IsDeviceValid(d));
 
             m_Devices.AddRange(devices);
-        }
-
-        void SetupComponents()
-        {
-            if (m_Director == null)
-            {
-                m_Director = GetComponent<PlayableDirector>();
-            }
-
-            m_DefaultSlatePlayer.Director = m_Director;
-            m_DefaultSlatePlayer.UnityObject = this;
-
-            m_TakePlayer.Director = m_Director;
-            m_TakePlayer.FallbackPlayableAsset = m_NullPlayableAsset;
-        }
-
-        internal void SetSlatePlayer(ISlatePlayer slatePlayer)
-        {
-            m_ExternalSlatePlayer = slatePlayer;
-        }
-
-        internal void RemoveSlatePlayer(ISlatePlayer slatePlayer)
-        {
-            if (m_ExternalSlatePlayer == slatePlayer)
-            {
-                m_ExternalSlatePlayer = null;
-            }
-        }
-
-        ISlatePlayer GetEffectiveSlatePlayer()
-        {
-            if (m_ExternalSlatePlayer != null)
-            {
-                return m_ExternalSlatePlayer;
-            }
-            else
-            {
-                return m_DefaultSlatePlayer;
-            }
-        }
-
-        internal bool IsExternalSlatePlayer()
-        {
-            return m_ExternalSlatePlayer != null;
-        }
-
-        internal void Prepare(ISlatePlayer slatePlayer)
-        {
-            if (m_ExternalSlatePlayer == slatePlayer)
-            {
-                var take = default(Take);
-                var slate = slatePlayer.GetActiveSlate();
-
-                if (slate != null)
-                {
-                    take = slate.Take;
-                }
-
-                m_TakePlayer.Take = take;
-            }
         }
 
         internal void AddDevice(LiveCaptureDevice device)
@@ -207,7 +151,7 @@ namespace Unity.LiveCapture
 
         internal PlayableGraph GetPreviewGraph()
         {
-            return m_PreviewGraph;
+            return m_Player.Graph;
         }
 
         internal void LiveUpdate()
@@ -220,7 +164,14 @@ namespace Unity.LiveCapture
                         && device.isActiveAndEnabled
                         && device.IsReady())
                     {
-                        device.LiveUpdate();
+                        try
+                        {
+                            device.LiveUpdate();
+                        }
+                        catch (Exception exception)
+                        {
+                            Debug.LogException(exception);
+                        }
                     }
                 }
             }
@@ -261,23 +212,21 @@ namespace Unity.LiveCapture
         /// <inheritdoc/>
         public void StartRecording()
         {
-            var slate = GetEffectiveSlatePlayer().GetActiveSlate();
-
             if (isActiveAndEnabled
-                && slate != null
                 && IsLive()
                 && !IsRecording()
-                && CanStartRecording())
+                && CanStartRecording()
+                && TryGetContext(out var context))
             {
-                TakeScreenshot();
-
                 m_Recording = true;
 
-                Debug.Assert(slate != null);
+                TakeScreenshot();
 
-                slate.Take = slate.IterationBase;
+                context.Prepare(true);
 
                 PlayPreview();
+
+                m_RecordingStartTime = DateTime.Now.TimeOfDay.TotalSeconds;
 
                 m_RecordingDevices.Clear();
 
@@ -289,6 +238,8 @@ namespace Unity.LiveCapture
                         device.StartRecording();
                     }
                 }
+
+                NotifyRecordingStateChange();
             }
         }
 
@@ -304,10 +255,8 @@ namespace Unity.LiveCapture
             {
                 SetPreviewTime(0d);
             }
-            else
-            {
-                StopRecordingInternal();
-            }
+
+            StopRecordingInternal();
         }
 
         void StopRecordingInternal()
@@ -324,30 +273,24 @@ namespace Unity.LiveCapture
                     }
                 }
 
-                var slate = GetEffectiveSlatePlayer().GetActiveSlate();
-
-                if (slate != null && m_RecordingDevices.Count > 0)
+                if (TryGetContext(out var context))
                 {
-                    slate.Take = ProduceTake();
-                    slate.TakeNumber++;
-#if UNITY_EDITOR
-                    if (slate.UnityObject != null)
-                    {
-                        EditorUtility.SetDirty(slate.UnityObject);
-                    }
-#endif
+                    ProduceTake(context);
+
+                    context.Prepare(false);
                 }
 
                 DisposeScreenshot();
+                NotifyRecordingStateChange();
             }
         }
 
         /// <inheritdoc/>
         public bool IsPreviewPlaying()
         {
-            if (m_Playable != null)
+            if (m_Player.IsValid())
             {
-                return m_Playable.Playing;
+                return m_Player.IsPlaying;
             }
 
             return false;
@@ -356,13 +299,17 @@ namespace Unity.LiveCapture
         /// <inheritdoc/>
         public void PlayPreview()
         {
-            if (isActiveAndEnabled)
+            if (isActiveAndEnabled && TryGetContext(out m_PlaybackContext))
             {
-                CreatePreviewGraphIfNeeded();
+                CreatePlayerIfNeeded();
 
-                PlayableDirectorInternal.ResetFrameTiming();
+                var time = GetPreviewTime();
+                var duration = GetPreviewDuration();
 
-                m_Playable.Play();
+                m_Player.Play(time, duration);
+
+                HandlePreviewTimeRequest();
+                NotifyPlaybackStateChange();
             }
         }
 
@@ -371,16 +318,35 @@ namespace Unity.LiveCapture
         {
             if (isActiveAndEnabled)
             {
-                CreatePreviewGraphIfNeeded();
+                CreatePlayerIfNeeded();
 
-                m_Playable.Stop();
+                m_Player.Pause();
+
+                HandlePreviewTimeRequest();
+                HandlePreviewEnded();
             }
+        }
+
+        /// <inheritdoc/>
+        public double GetPreviewDuration()
+        {
+            if (TryGetContext(out var context))
+            {   
+                return context.GetDuration();
+            }
+
+            return 0d;
         }
 
         /// <inheritdoc/>
         public double GetPreviewTime()
         {
-            return GetEffectiveSlatePlayer().GetTime();
+            if (TryGetContext(out var context))
+            {
+                return context.GetTime();
+            }
+
+            return 0d;
         }
 
         /// <inheritdoc/>
@@ -388,52 +354,71 @@ namespace Unity.LiveCapture
         {
             if (isActiveAndEnabled)
             {
-                var slate = GetEffectiveSlatePlayer().GetActiveSlate();
+                CreatePlayerIfNeeded();
 
-                if (slate != null)
-                {
-                    CreatePreviewGraphIfNeeded();
+                m_Player.SetTime(time, GetPreviewDuration());
 
-                    if (time < 0d)
-                    {
-                        time = 0d;
-                    }
-                    else if (time > slate.Duration)
-                    {
-                        time = slate.Duration;
-                    }
-
-                    m_Playable.SetTime(time);
-                }
+                HandlePreviewTimeRequest();
             }
         }
 
         internal void SetPreviewTimeInternal(double time)
         {
-            GetEffectiveSlatePlayer().SetTime(time);
+            m_RequestedPreviewTime = time;
         }
 
         internal void OnPreviewEnded()
         {
-            StopRecordingInternal();
-
-            // In Edit mode we need to force a refresh of the Editor next frame.
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                EditorApplication.delayCall += () => EditorApplication.QueuePlayerLoopUpdate();
-            }
-#endif
+            // We can't call StopRecordingInternal here as it would trigger:
+            // "A PlayableGraph is being directly or indirectly evaluated recursively."
+            // Calling it in the next update instead.
+            m_PreviewEnded = true;
         }
 
-        Take ProduceTake()
+        internal void HandlePreviewTimeRequest()
         {
-            var slate = GetEffectiveSlatePlayer().GetActiveSlate();
+            if (!m_RequestedPreviewTime.HasValue)
+                return;
+
+            var time = m_RequestedPreviewTime.Value;
+
+            if (TryGetContext(out var context))
+            {
+                context.SetTime(time);
+
+                Callbacks.InvokeSeekOccurred();
+            }
+
+            m_RequestedPreviewTime = null;
+        }
+
+        void HandlePreviewEnded()
+        {
+            if (!m_PreviewEnded)
+                return;
+
+            m_PreviewEnded = false;
+            m_PlaybackContext = null;
+
+            StopRecordingInternal();
+            NotifyPlaybackStateChange();
+        }
+
+        void ProduceTake(ITakeRecorderContext context)
+        {
+            Debug.Assert(context != null);
+
+            var timeOffset = context.GetTimeOffset();
+            var duration = context.GetDuration();
+            var slate = context.GetSlate();
+            var resolver = context.GetResolver();
 
             Debug.Assert(slate != null);
+            Debug.Assert(resolver != null);
 
             using var takeBuilder = new TakeBuilder(
-                slate.Duration,
+                timeOffset,
+                duration,
                 slate.SceneNumber,
                 slate.ShotName,
                 slate.TakeNumber,
@@ -443,15 +428,42 @@ namespace Unity.LiveCapture
                 slate.IterationBase,
                 FrameRate,
                 m_Screenshot,
-                m_Director);
+                resolver);
 
-            TimelineUndoUtility.SetUndoEnabled(false);
+            using (TimelineDisableUndoScope.Create())
+            {
+                ProduceTake(takeBuilder);
+            }
 
-            ProduceTake(takeBuilder);
+            var timeline = takeBuilder.Take.Timeline;
+            if (timeline != null)
+            {
+                takeBuilder.Take.Duration = timeline.duration;
+            }
 
-            TimelineUndoUtility.SetUndoEnabled(true);
+            var director = resolver as PlayableDirector;
 
-            return takeBuilder.Take;
+            if (director != null)
+                slate.ClearSceneBindings(director);
+
+            slate.TakeNumber++;
+            slate.Take = takeBuilder.Take;
+
+            if (director != null)
+                slate.SetSceneBindings(director);
+
+            SetDirty(director);
+            SetDirty(slate.UnityObject);
+        }
+
+        void SetDirty(UnityObject obj)
+        {
+#if UNITY_EDITOR
+            if (obj != null)
+            {
+                EditorUtility.SetDirty(obj);
+            }
+#endif
         }
 
         void ProduceTake(TakeBuilder takeBuilder)
@@ -470,23 +482,26 @@ namespace Unity.LiveCapture
                     }
                 }
             }
-            takeBuilder.AlignTracksByStartTimes();
+            takeBuilder.AlignTracksByStartTimes(m_RecordingStartTime);
         }
 
         void Update()
         {
-            if (m_ExternalSlatePlayer == null)
-            {
-                m_TakePlayer.Take = m_DefaultSlatePlayer.Take;
-            }
-
-            m_TakePlayer.Update();
+            HandlePreviewTimeRequest();
+            HandlePreviewEnded();
 
             foreach (var device in m_Devices)
             {
                 if (IsDeviceValid(device) && device.isActiveAndEnabled)
                 {
-                    device.UpdateDevice();
+                    try
+                    {
+                        device.UpdateDevice();
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogException(e);
+                    }
                 }
             }
 
@@ -524,31 +539,14 @@ namespace Unity.LiveCapture
             return AreDevicesReadyForRecording(m_Devices);
         }
 
-        void CreatePreviewGraphIfNeeded()
+        void CreatePlayerIfNeeded()
         {
-            if (m_PreviewGraph.IsValid())
+            if (m_Player.IsValid())
             {
                 return;
             }
 
-            m_PreviewGraph = PlayableGraph.Create("Recording Graph");
-            m_PreviewGraph.SetTimeUpdateMode(DirectorUpdateMode.UnscaledGameTime);
-
-            var playable = ScriptPlayable<TakeRecorderPlayable>.Create(m_PreviewGraph);
-            var output = ScriptPlayableOutput.Create(m_PreviewGraph, "Recording Output");
-
-            output.SetSourcePlayable(playable);
-
-            m_Playable = playable.GetBehaviour();
-            m_Playable.TakeRecorder = this;
-        }
-
-        void DestroyPreviewGraph()
-        {
-            if (m_PreviewGraph.IsValid())
-            {
-                m_PreviewGraph.Destroy();
-            }
+            m_Player = TakeRecorderPlayer.Create(this);
         }
 
         void TakeScreenshot()
@@ -575,6 +573,118 @@ namespace Unity.LiveCapture
                 {
                     DestroyImmediate(m_Screenshot);
                 }
+            }
+        }
+
+        internal void AddContextProvider(ITakeRecorderContextProvider contextProvider)
+        {
+            m_ContextProviders.AddUnique(contextProvider);
+        }
+
+        internal void RemoveContextProvider(ITakeRecorderContextProvider contextProvider)
+        {
+            m_ContextProviders.Remove(contextProvider);
+        }
+
+        internal bool HasExternalContextProvider()
+        {
+            return m_ContextProviders.Count > 0;
+        }
+
+        internal ITakeRecorderContext GetContext()
+        {
+            if (TryGetContext(out var context))
+            {
+                return context;
+            }
+
+            return null;
+        }
+
+        internal void LockContext()
+        {
+            if (TryGetContext(out var context))
+            {
+                LockContext(context);
+            }
+        }
+
+        internal void LockContext(ITakeRecorderContext context)
+        {
+            m_LockedContext = context;
+        }
+
+        internal void UnlockContext()
+        {
+            m_LockedContext = null;
+        }
+
+        internal bool IsLocked()
+        {
+            return m_LockedContext != null && m_LockedContext.IsValid();
+        }
+
+        bool TryGetContext(out ITakeRecorderContext context)
+        {
+            context = default(ITakeRecorderContext);
+
+            if (m_PlaybackContext != null && m_PlaybackContext.IsValid())
+            {
+                context = m_PlaybackContext;
+
+                return true;
+            }
+
+            if (m_LockedContext != null && m_LockedContext.IsValid())
+            {
+                context = m_LockedContext;
+
+                return true;
+            }
+
+            foreach (var contextProvider in m_ContextProviders)
+            {
+                var activeContext = contextProvider.GetActiveContext();
+
+                if (activeContext != null)
+                {
+                    context = activeContext;
+
+                    return true;
+                }
+            }
+
+            if (m_ContextProviders.Count == 0)
+            {
+                context = m_DefaultContext;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        void NotifyRecordingStateChange()
+        {
+            try
+            {
+                RecordingStateChanged?.Invoke(this);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+        }
+
+        void NotifyPlaybackStateChange()
+        {
+            try
+            {
+                PlaybackStateChanged?.Invoke(this);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
             }
         }
     }

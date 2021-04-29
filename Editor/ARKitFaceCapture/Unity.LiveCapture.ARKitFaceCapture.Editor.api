@@ -1,3 +1,14 @@
 // This file is generated. Do not modify by hand.
 // XML documentation file not found. To check if public methods have XML comments,
 // make sure the XML doc file is present and located next to the scraped dll
+namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
+{
+    [UnityEditor.CustomEditor(typeof(Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.DefaultFaceMapper), true)] public class DefaultFaceMapperEditor : UnityEditor.Editor
+    {
+        public DefaultFaceMapperEditor() {}
+        protected virtual void DoExtrasGUI(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor);
+        protected virtual void OnDisable();
+        protected virtual void OnEnable();
+        public virtual void OnInspectorGUI();
+    }
+}

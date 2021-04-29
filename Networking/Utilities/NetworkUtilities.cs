@@ -12,7 +12,7 @@ namespace Unity.LiveCapture.Networking
     /// <summary>
     /// A class containing methods for common networking related operations.
     /// </summary>
-    static class NetworkUtilities
+    public static class NetworkUtilities
     {
         static readonly ConcurrentDictionary<IPAddress, uint> s_AddressBits = new ConcurrentDictionary<IPAddress, uint>();
 
@@ -123,11 +123,19 @@ namespace Unity.LiveCapture.Networking
         /// IPAddress.Any and null if no suitable pair was found.</returns>
         public static (IPAddress localAddress, IPEndPoint remoteEndPoint) FindClosestAddresses(params IPEndPoint[] remoteEndPoints)
         {
-            var bestMatchLength = -1;
+            // only match local host exactly
+            foreach (var remoteEndPoint in remoteEndPoints)
+            {
+                if (remoteEndPoint.Equals(IPAddress.Loopback))
+                    return (IPAddress.Loopback, remoteEndPoint);
+            }
+
+            // find the most similar non-loopback interface address
+            var bestMatchLength = 0;
             var bestLocalIP = IPAddress.Any;
             var bestRemote = default(IPEndPoint);
 
-            foreach (var localIP in GetIPAddresses(true))
+            foreach (var localIP in GetIPAddresses(false))
             {
                 foreach (var remoteEndPoint in remoteEndPoints)
                 {

@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEditorInternal;
+using Object = UnityEngine.Object;
 
 namespace Unity.LiveCapture.Editor
 {
@@ -11,27 +13,36 @@ namespace Unity.LiveCapture.Editor
     {
         static class Contents
         {
-            public static readonly string FieldUndo = "Inspector";
-            public static readonly string AddDataSource = "Add data source to synchronizer";
-            public static readonly string RemoveDataSource = "Remove data source from synchronizer";
+            public static readonly string AddDataSource = "Add Data Source";
+            public static readonly string RemoveDataSource = "Remove Data Source";
             public static readonly GUIContent DisplayTimecodeLabel = EditorGUIUtility.TrTextContent(
                 "Display Timecode",
                 "Display the current timecode in the Game View (as a burn-in).");
             public static readonly GUIContent TimecodeSourceLabel = EditorGUIUtility.TrTextContent(
                 "Timecode Source",
                 "The timecode source that corresponds to the primary clock, giving the global time.");
+            public static readonly GUIContent AddIcon = EditorGUIUtility.IconContent("Toolbar Plus More@2x");
             public static readonly GUIContent GlobalTimeOffsetLabel = EditorGUIUtility.TrTextContent(
                 "Global Time Offset",
-                "The offset (in frames) applied to the global time used for synchronization updates.\n\n" +
-                "Use a negative value to add a delay and compensate for high-latency sources.");
+                "The time offset in frames applied to the synchronization timecode. " +
+                "Use a negative value (i.e. a delay) to compensate for high-latency sources.");
             public static readonly GUIContent DataSourcesLabel = EditorGUIUtility.TrTextContent("Timed data sources");
             public static readonly GUIContent StatusLabel = EditorGUIUtility.TrTextContent("Status");
             public static readonly GUIContent BufferSizeLabel = EditorGUIUtility.TrTextContent("Buffer", "Buffer size in frames");
             public static readonly GUIContent LocalOffsetLabel = EditorGUIUtility.TrTextContent("Offset", "Local time offset in frames");
+            public static readonly GUIContent FrameRateLabel = EditorGUIUtility.TrTextContent("Rate", "The frame rate of the source");
             public static readonly GUIContent CalibrateLabel = EditorGUIUtility.TrTextContent("Calibrate");
             public static readonly GUIContent StopCalibrateLabel = EditorGUIUtility.TrTextContent("Stop Calibration");
+            public static readonly GUIContent OpenSyncWindowLabel = EditorGUIUtility.TrTextContent(
+                "Open Synchronization",
+                "Open a dedicated window to control and monitor timecode synchronization.");
+            public static readonly GUIContent OpenTimedDataSourceDetailsLabel = EditorGUIUtility.TrTextContent(
+                "Open Timed Data Source Details",
+                "Open a dedicated window to control and monitor timecode synchronization of all data sources in detail.");
             public static readonly Vector2 OptionDropdownSize = new Vector2(300f, 250f);
         }
+
+        static IEnumerable<(Type, CreateTimecodeSourceMenuItemAttribute[])> s_CreateTimecodeSourceMenuItems;
 
         SynchronizerComponent m_Synchronizer;
 
@@ -66,27 +77,34 @@ namespace Unity.LiveCapture.Editor
             {
                 drawHeaderCallback = rect =>
                 {
-                    var left = rect;
-
-                    rect.width -= SourceAndStatusBundlePropertyDrawer.Contents.HandleSize;
-                    rect.x += SourceAndStatusBundlePropertyDrawer.Contents.HandleSize;
+                    rect.xMin += SourceAndStatusBundlePropertyDrawer.Contents.HandleSize;
 
                     var right = rect;
-                    right.width = SourceAndStatusBundlePropertyDrawer.Contents.RightSectionWidth;
-                    right.x = rect.width - right.width + rect.x;
+                    right.xMin = right.xMax - SourceAndStatusBundlePropertyDrawer.Contents.RightSectionWidth;
+
+                    var name = rect;
+                    name.xMax = right.xMin;
+
                     var status = right;
                     status.width = SourceAndStatusBundlePropertyDrawer.Contents.StatusColumnWidth;
 
-                    left.width -= right.width;
-                    EditorGUI.LabelField(left, Contents.DataSourcesLabel);                    EditorGUI.LabelField(status, Contents.StatusLabel);
+                    var rate = right;
+                    rate.xMin = status.xMax;
+                    rate.width = SourceAndStatusBundlePropertyDrawer.Contents.FrameRateWidth;
 
-                    right.x += status.width;
-                    var intColumn = right;
-                    intColumn.width = SourceAndStatusBundlePropertyDrawer.Contents.IntColumnWidth;
-                    EditorGUI.LabelField(intColumn, Contents.BufferSizeLabel);
+                    var buffer = right;
+                    buffer.xMin = rate.xMax;
+                    buffer.width = SourceAndStatusBundlePropertyDrawer.Contents.IntColumnWidth;
 
-                    intColumn.x += SourceAndStatusBundlePropertyDrawer.Contents.IntColumnWidth;
-                    EditorGUI.LabelField(intColumn, Contents.LocalOffsetLabel);
+                    var offset = right;
+                    offset.xMin = buffer.xMax;
+                    offset.width = SourceAndStatusBundlePropertyDrawer.Contents.IntColumnWidth;
+
+                    EditorGUI.LabelField(name, Contents.DataSourcesLabel);
+                    EditorGUI.LabelField(status, Contents.StatusLabel);
+                    EditorGUI.LabelField(rate, Contents.FrameRateLabel);
+                    EditorGUI.LabelField(buffer, Contents.BufferSizeLabel);
+                    EditorGUI.LabelField(offset, Contents.LocalOffsetLabel);
                 },
                 drawElementCallback = (rect, index, active, focused) =>
                 {
@@ -101,7 +119,7 @@ namespace Unity.LiveCapture.Editor
                 onRemoveCallback = list =>
                 {
                     Undo.RegisterCompleteObjectUndo(m_Synchronizer, Contents.RemoveDataSource);
-                    m_Synchronizer.Impl.RemoveDataSource(m_Synchronizer.Impl.GetDataSource(list.index));
+                    m_Synchronizer.Impl.RemoveDataSource(list.index);
                     EditorUtility.SetDirty(m_Synchronizer);
                 }
             };
@@ -126,7 +144,7 @@ namespace Unity.LiveCapture.Editor
 
                 if (source is Object sourceObject)
                 {
-                    Undo.RecordObject(sourceObject, Contents.FieldUndo);
+                    Undo.RecordObject(sourceObject, Contents.AddDataSource);
                 }
 
                 // Find out if the data source is already part of another synchronization group
@@ -141,7 +159,7 @@ namespace Unity.LiveCapture.Editor
 
                         if (oldSyncObject.Impl == oldSynchronizer)
                         {
-                            Undo.RecordObject(oldSyncObject, Contents.FieldUndo);
+                            Undo.RecordObject(oldSyncObject, Contents.AddDataSource);
                             break;
                         }
                     }
@@ -151,11 +169,9 @@ namespace Unity.LiveCapture.Editor
                 }
 
                 // Add the source to this synchronizer
-                Undo.RecordObject(m_Synchronizer, Contents.FieldUndo);
+                Undo.RecordObject(m_Synchronizer, Contents.AddDataSource);
                 m_Synchronizer.Impl.AddDataSource(source);
-
-                // FIXME: Can't get this name to show up for Redo.
-                Undo.SetCurrentGroupName(Contents.AddDataSource);
+                EditorUtility.SetDirty(m_Synchronizer);
             });
         }
 
@@ -166,19 +182,73 @@ namespace Unity.LiveCapture.Editor
 
         public override void OnInspectorGUI()
         {
+            DoSyncGUI();
+
+            EditorGUILayout.Space();
+
+            if (GUILayout.Button(Contents.OpenSyncWindowLabel))
+            {
+                SynchronizationWindow.ShowWindow();
+            }
+            if (GUILayout.Button(Contents.OpenTimedDataSourceDetailsLabel))
+            {
+                TimedDataSourceViewerWindow.ShowWindow();
+            }
+        }
+
+        public void DoSyncGUI()
+        {
             serializedObject.Update();
 
             EditorGUILayout.PropertyField(m_DisplayTimecodeProperty, Contents.DisplayTimecodeLabel);
-            EditorGUILayout.PropertyField(m_TimecodeSourceProperty, Contents.TimecodeSourceLabel, true);
+            DoTimecodeSourceGUI();
             EditorGUILayout.PropertyField(m_GlobalTimeOffsetProperty, Contents.GlobalTimeOffsetLabel);
 
             EditorGUILayout.Space();
 
-            m_DataSourceList.DoLayoutList();
+            var listRect = EditorGUILayout.GetControlRect(false, m_DataSourceList.GetHeight());
+            m_DataSourceList.DoList(listRect);
 
             serializedObject.ApplyModifiedProperties();
 
+            DoCalibrationGUI();
+        }
+
+        void DoTimecodeSourceGUI()
+        {
+            var timecodeSourceRect = EditorGUILayout.GetControlRect();
+            var addSourceRect = new Rect(timecodeSourceRect)
+            {
+                xMin = timecodeSourceRect.xMax - 20f,
+            };
+            timecodeSourceRect.xMax = addSourceRect.xMin;
+
+            EditorGUI.PropertyField(timecodeSourceRect, m_TimecodeSourceProperty, Contents.TimecodeSourceLabel, true);
+
+            if (GUI.Button(addSourceRect, GUIContent.none))
+            {
+                if (s_CreateTimecodeSourceMenuItems == null)
+                {
+                    s_CreateTimecodeSourceMenuItems = AttributeUtility.GetAllTypes<CreateTimecodeSourceMenuItemAttribute>()
+                        .Where(t => typeof(Component).IsAssignableFrom(t.type));
+                }
+
+                var menu = MenuUtility.CreateMenu(s_CreateTimecodeSourceMenuItems, t => true, (type, attribute) =>
+                {
+                    var timecodeSource = Undo.AddComponent(m_Synchronizer.gameObject, type);
+                    m_Synchronizer.Synchronizer.TimecodeSource = timecodeSource as ITimecodeSource;
+                });
+
+                menu.ShowAsContext();
+            }
+
+            GUI.Label(addSourceRect, Contents.AddIcon);
+        }
+
+        void DoCalibrationGUI()
+        {
             var calibrationStatus = m_Synchronizer.Impl.CalibrationStatus;
+
             if (calibrationStatus != CalibrationStatus.InProgress)
             {
                 if (GUILayout.Button(Contents.CalibrateLabel))
@@ -191,6 +261,7 @@ namespace Unity.LiveCapture.Editor
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     EditorGUILayout.LabelField(calibrationStatus.ToString());
+
                     if (GUILayout.Button(Contents.StopCalibrateLabel))
                     {
                         m_Synchronizer.StopCalibration();

@@ -15,8 +15,8 @@ namespace Unity.LiveCapture.CompanionApp
     /// <summary>
     /// The server used to communicate with the companion apps.
     /// </summary>
-    [CreateServerMenuItem("Companion App Server")]
-    class CompanionAppServer : Server
+    [CreateConnectionMenuItem("Companion App Server")]
+    class CompanionAppServer : Connection
     {
         const int k_DefaultPort = 9000;
 
@@ -131,7 +131,7 @@ namespace Unity.LiveCapture.CompanionApp
                 if (m_Port != value)
                 {
                     m_Port = value;
-                    OnServerChanged(true);
+                    OnChanged(true);
                 }
             }
         }
@@ -147,7 +147,7 @@ namespace Unity.LiveCapture.CompanionApp
                 if (m_AutoStartOnPlay != value)
                 {
                     m_AutoStartOnPlay = value;
-                    OnServerChanged(true);
+                    OnChanged(true);
                 }
             }
         }
@@ -234,10 +234,12 @@ namespace Unity.LiveCapture.CompanionApp
 
             if (m_Server.StartServer(m_Port))
             {
+                var machineName = Environment.MachineName;
+
                 // start server discovery
                 var config = new ServerData(
                     "Live Capture",
-                    Environment.MachineName,
+                    machineName.Substring(0, Math.Min(machineName.Length, 32)),
                     m_Server.ID,
                     PackageUtility.GetVersion(LiveCaptureInfo.Version)
                 );
@@ -246,7 +248,7 @@ namespace Unity.LiveCapture.CompanionApp
                 m_Discovery.Start(config, endPoints);
             }
 
-            OnServerChanged(false);
+            OnChanged(false);
         }
 
         /// <summary>
@@ -257,7 +259,7 @@ namespace Unity.LiveCapture.CompanionApp
             m_Server.Stop();
             m_Discovery.Stop();
 
-            OnServerChanged(false);
+            OnChanged(false);
         }
 
         /// <inheritdoc/>
@@ -286,7 +288,7 @@ namespace Unity.LiveCapture.CompanionApp
                 }
 
                 m_RemoteToClient.Remove(remote);
-                OnServerChanged(false);
+                OnChanged(false);
             }
         }
 
@@ -328,7 +330,7 @@ namespace Unity.LiveCapture.CompanionApp
                 AssignOwner(client);
 
                 ClientConnected.Invoke(client);
-                OnServerChanged(false);
+                OnChanged(false);
             }
             catch (Exception e)
             {

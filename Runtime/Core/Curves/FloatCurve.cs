@@ -1,18 +1,24 @@
 using System;
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace Unity.LiveCapture
 {
     /// <summary>
     /// A type of <see cref="ICurve"/> that stores keyframes of type float.
     /// </summary>
-    public class FloatCurve : ICurve<float>
+    public class FloatCurve : ICurve<float>, IReduceableCurve
     {
-        Sampler m_Sampler = new Sampler();
+        FloatSampler m_Sampler = new FloatSampler();
+        FloatTangentUpdater m_TangentUpdater = new FloatTangentUpdater();
+        FloatKeyframeReducer m_Reducer = new FloatKeyframeReducer();
         AnimationCurve m_Curve = new AnimationCurve();
+
+        /// <inheritdoc/>
+        public float MaxError
+        {
+            get => m_Reducer.MaxError;
+            set => m_Reducer.MaxError = value;
+        }
 
         /// <inheritdoc/>
         public string RelativePath { get; }
@@ -51,7 +57,7 @@ namespace Unity.LiveCapture
         /// <inheritdoc/>
         public void AddKey(double time, float value)
         {
-            m_Sampler.Add(new Keyframe((float)time, value));
+            m_Sampler.Add((float)time, value);
 
             Sample();
         }
@@ -59,13 +65,17 @@ namespace Unity.LiveCapture
         /// <inheritdoc/>
         public bool IsEmpty()
         {
-            return m_Curve.length == 0;
+            return m_TangentUpdater.IsEmpty()
+                && m_Reducer.IsEmpty()
+                && m_Curve.length == 0;
         }
 
         /// <inheritdoc/>
         public void Clear()
         {
             m_Sampler.Reset();
+            m_TangentUpdater.Reset();
+            m_Reducer.Reset();
             m_Curve = new AnimationCurve();
         }
 
@@ -85,6 +95,8 @@ namespace Unity.LiveCapture
         void Flush()
         {
             m_Sampler.Flush();
+            m_TangentUpdater.Flush();
+            m_Reducer.Flush();
 
             Sample();
         }
@@ -93,28 +105,25 @@ namespace Unity.LiveCapture
         {
             while (m_Sampler.MoveNext())
             {
-                AddKey(m_Sampler.Current);
+                var sample = m_Sampler.Current;
+
+                m_TangentUpdater.Add(new Keyframe(sample.Time, sample.Value));
+            }
+
+            while (m_TangentUpdater.MoveNext())
+            {
+                m_Reducer.Add(m_TangentUpdater.Current);
+            }
+
+            while (m_Reducer.MoveNext())
+            {
+                AddKey(m_Curve, m_Reducer.Current);
             }
         }
 
-        void AddKey(Keyframe keyframe)
+        internal static void AddKey(AnimationCurve curve, Keyframe keyframe)
         {
-            m_Curve.AddKey(keyframe);
-
-            UpdateTangents();
-        }
-
-        void UpdateTangents()
-        {
-            var index = m_Curve.length - 1;
-
-#if UNITY_EDITOR
-            AnimationUtility.SetKeyLeftTangentMode(m_Curve, index, AnimationUtility.TangentMode.ClampedAuto);
-            AnimationUtility.SetKeyRightTangentMode(m_Curve, index, AnimationUtility.TangentMode.ClampedAuto);
-            AnimationUtility.SetKeyBroken(m_Curve, index, false);
-#endif
-            m_Curve.UpdateTangents(index - 1);
-            m_Curve.UpdateTangents(index);
+            curve.AddKey(keyframe);
         }
     }
 }

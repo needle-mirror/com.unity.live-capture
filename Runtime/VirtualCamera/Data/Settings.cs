@@ -73,6 +73,7 @@ namespace Unity.LiveCapture.VirtualCamera
             ErgonomicTilt = 0,
             JoystickSensitivity = Vector3.one,
             PedestalSpace = Space.World,
+            MotionSpace = Space.Self,
             AspectRatio = k_DefaultAspectRatio,
             GateFit = GateFit.Fill
         };
@@ -130,15 +131,26 @@ namespace Unity.LiveCapture.VirtualCamera
         public Vector3 JoystickSensitivity;
 
         /// <summary>
-        /// The space on which the joystick is moving.
+        /// The space of the rig's pedestal movement.
         /// World space will translate the rig pedestal relative to the world axis.
-        /// Self space will translate the rig relative to the camera's look direction.
+        /// Self space will translate the rig pedestal relative to the camera's look direction.
         /// </summary>
-        [Tooltip("The space on which the joystick is moving. \n" +
-            "World space will translate the rig pedestal relative to the world axis. \n" +
-            "Self space will translate the rig relative to the camera's look direction. \n")]
+        [Tooltip("The space of the rig's pedestal movement. \n" +
+             "World space will translate the rig pedestal relative to the world axis. \n" +
+             "Self space will translate the rig pedestal relative to the camera's look direction. \n")]
         [EnumButtonGroup(60f)]
         public Space PedestalSpace;
+
+        /// <summary>
+        /// The space of the rig's dolly and truck movement.
+        /// World space will move the rig relative to the world axis.
+        /// Self space will move the rig relative to the camera's look direction.
+        /// </summary>
+        [Tooltip("The space of the rig's dolly and truck movement. \n" +
+             "World space will move the rig relative to the world axis. \n" +
+             "Self space will move the rig relative to the camera's look direction. \n")]
+        [EnumButtonGroup(60f)]
+        public Space MotionSpace;
 
         /// <summary>
         /// The aspect ratio of the crop mask.
@@ -230,7 +242,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             return $"(damping {Damping}, rotationLock {RotationLock}, positionLock {PositionLock}, " +
                 $"ergonomicTilt {ErgonomicTilt}, rebasing {Rebasing}, motionScale {MotionScale}, " +
-                $"focusMode {FocusMode}, joystickSensitivity {JoystickSensitivity}, pedestalSpace {PedestalSpace}, " +
+                $"focusMode {FocusMode}, joystickSensitivity {JoystickSensitivity}, pedestalSpace {PedestalSpace}, motionSpace {MotionSpace}, " +
                 $"autoHorizon {AutoHorizon}, reticlePosition {ReticlePosition}, aspectRatio {AspectRatio}, focusDistanceOffset{FocusDistanceOffset}), " +
                 $"focusDistanceDamping {FocusDistanceDamping}, focalLengthDamping {FocalLengthDamping}, apertureDamping {ApertureDamping}, " +
                 $"gateMask {GateMask}, focusPlane {FocusPlane}, frameLines {AspectRatioLines}, centerMarker {CenterMarker}";
@@ -262,6 +274,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 && FocusMode == other.FocusMode
                 && JoystickSensitivity == other.JoystickSensitivity
                 && PedestalSpace == other.PedestalSpace
+                && MotionSpace == other.MotionSpace
                 && AutoHorizon == other.AutoHorizon
                 && ReticlePosition == other.ReticlePosition
                 && AspectRatio == other.AspectRatio
@@ -306,7 +319,8 @@ namespace Unity.LiveCapture.VirtualCamera
                 hashCode = (hashCode * 397) ^ MotionScale.GetHashCode();
                 hashCode = (hashCode * 397) ^ FocusMode.GetHashCode();
                 hashCode = (hashCode * 397) ^ JoystickSensitivity.GetHashCode();
-                hashCode = (hashCode * 397) ^ PedestalSpace.GetHashCode();
+                hashCode = (hashCode * 397) ^ (int)PedestalSpace;
+                hashCode = (hashCode * 397) ^ (int)MotionSpace;
                 hashCode = (hashCode * 397) ^ AutoHorizon.GetHashCode();
                 hashCode = (hashCode * 397) ^ ReticlePosition.GetHashCode();
                 hashCode = (hashCode * 397) ^ AspectRatio.GetHashCode();

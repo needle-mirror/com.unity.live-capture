@@ -1,0 +1,12 @@
+// This file is generated. Do not modify by hand.
+// XML documentation file not found. To check if public methods have XML comments,
+// make sure the XML doc file is present and located next to the scraped dll
+namespace Unity.LiveCapture.Mocap.Editor
+{
+    [UnityEditor.CustomEditor(typeof(Unity.LiveCapture.Mocap.MocapDevice<>), true)] public class MocapDeviceEditor : Unity.LiveCapture.Editor.LiveCaptureDeviceEditor
+    {
+        public MocapDeviceEditor() {}
+        protected virtual void OnDeviceGUI();
+        protected virtual void OnEnable();
+    }
+}

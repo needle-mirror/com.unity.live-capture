@@ -42,11 +42,15 @@ namespace Unity.LiveCapture
         /// Gets or sets the <see cref="ISynchronizer"/> controlling this source.
         /// </summary>
         /// <remarks>
-        /// In most cases you can simply implement this
-        /// as an auto-property. The default <see cref="Unity.LiveCapture.Synchronizer"/> will automatically
-        /// assign this property when you call <see cref="Unity.LiveCapture.Synchronizer.AddDataSource"/>.
+        /// In most cases you can simply implement this as an auto-property. The default synchronizer implementation
+        /// automatically assigns this property when you call <see cref="Unity.LiveCapture.ISynchronizer.AddDataSource"/>.
         /// </remarks>
         ISynchronizer Synchronizer { get; set; }
+
+        /// <summary>
+        /// The number of data samples per second.
+        /// </summary>
+        FrameRate FrameRate { get; }
 
         /// <summary>
         /// Gets or sets the current buffer size.
@@ -64,13 +68,16 @@ namespace Unity.LiveCapture
         int? MinBufferSize { get; }
 
         /// <summary>
-        /// Apply this constant frame offset when invoking <see cref="PresentAt"/>.
+        /// The offset in frames applied when invoking <see cref="PresentAt"/>.
         /// </summary>
         /// <remarks>
+        /// The frame duration corresponds to the <see cref="FrameRate"/> of this source.
+        /// <para>
         /// Set this to non-zero if the captured data's timecodes are "off" from the true values.
         /// For example, if you determined that the samples and timecodes as mismatched such that
         /// each sample lags its timecode by 2 frames, you would set this property to
         /// <c>new FrameTime(2)</c>.
+        /// </para>
         /// </remarks>
         FrameTime PresentationOffset { get; set; }
 
@@ -81,6 +88,18 @@ namespace Unity.LiveCapture
         /// When <c>true</c>, the data source should disable its own update mechanism.
         /// </remarks>
         bool IsSynchronized { get; set; }
+
+        /// <summary>
+        /// Gets the frame time of the newest and oldest samples buffered by the data source.
+        /// </summary>
+        /// <remarks>>
+        /// The frame duration corresponds to the <see cref="FrameRate"/> of this source.
+        /// The sample times are returned without the <see cref="PresentationOffset"/> applied.
+        /// </remarks>
+        /// <param name="oldestSample">The frame time of the oldest buffered sample, or <see langword="default"/> if there are no buffered samples.</param>
+        /// <param name="newestSample">The frame time of the newest buffered sample, or <see langword="default"/> if there are no buffered samples.</param>
+        /// <returns><see langword="true"/> if there are any buffered samples; otherwise, <see langword="false"/>.</returns>
+        bool TryGetBufferRange(out FrameTime oldestSample, out FrameTime newestSample);
 
         /// <summary>
         /// Set the currently active timecode for presentation.

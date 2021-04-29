@@ -8,12 +8,12 @@ namespace Unity.LiveCapture
     class TrackBindingEntry
     {
         [SerializeField]
-        TrackAsset m_Track;
+        LazyLoadReference<TrackAsset> m_Track;
 
         [SerializeReference]
         ITakeBinding m_Binding;
 
-        public TrackAsset Track => m_Track;
+        public TrackAsset Track => m_Track.asset;
         public ITakeBinding Binding => m_Binding;
 
         public TrackBindingEntry(TrackAsset track, ITakeBinding binding)

@@ -11,20 +11,26 @@ namespace Unity.LiveCapture.Editor
         {
             public static readonly string FieldUndo = "Inspector";
             public static readonly GUIContent EnableSyncToggleTooltip = EditorGUIUtility.TrTextContent("", "Turn on to enable device synchronization");
-            public static readonly GUIContent BufferSizeTooltip = EditorGUIUtility.TrTextContent("", "Buffer size in frames");
-            public static readonly GUIContent OffsetFramesTooltip = EditorGUIUtility.TrTextContent("", "Local time offset in frames");
+            public static readonly GUIContent BufferSizeTooltip = EditorGUIUtility.TrTextContent("",
+                "The number of data frames to buffer for this data source. " +
+                "Adjust the value to get a consistent overlap between the synchronized data sources.");
+            public static readonly GUIContent OffsetFramesTooltip = EditorGUIUtility.TrTextContent("",
+                "The time offset to apply to this data source timecode, in frames. " +
+                "This should typically match the time delay between timecode generation and data sampling for a single frame.");
+            public static readonly GUIContent SourceUnavailableText = EditorGUIUtility.TrTextContent("Source unavailable", "The data source is disabled or deleted.");
 
             public const float HandleSize = 18f;
             public const float ToggleSize = 16f;
             public const float ToggleColumnWidth = ToggleSize + 3f;
             public const float SyncMonitorSize = 8f;
             public const float StatusTextWidth = 56f;
+            public const float FrameRateWidth = 36f;
             public const float FieldPadding = 2f;
             public const float IntFieldWidth = 36f;
             public const float IntColumnWidth = IntFieldWidth + 4;
             public const float MonitorColumnWidth = SyncMonitorSize + 4;
-            public const float StatusColumnWidth = MonitorColumnWidth + StatusTextWidth + 12;
-            public const float RightSectionWidth = StatusColumnWidth + IntColumnWidth * 2;
+            public const float StatusColumnWidth = MonitorColumnWidth + StatusTextWidth;
+            public const float RightSectionWidth = StatusColumnWidth + FrameRateWidth + (2 * IntColumnWidth);
 
             public static readonly Dictionary<TimedSampleStatus, GUIContent> StatusNames = new Dictionary<TimedSampleStatus, GUIContent>
             {
@@ -44,16 +50,13 @@ namespace Unity.LiveCapture.Editor
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            var isSyncedProp = property.FindPropertyRelative("m_SynchronizationRequested");
-            var sourceProp = property.FindPropertyRelative("m_Source");
-            var statusProp = property.FindPropertyRelative("m_Status");
-
-            var sourceRef = sourceProp.GetValue<TimedDataSourceRef>();
-            var source = sourceRef.Resolve();
+            var sourceAndStatus = property.GetValue<Synchronizer.SourceAndStatusBundle>();
+            var source = sourceAndStatus.Source;
+            var synchronizerComponent = property.serializedObject.targetObject as SynchronizerComponent;
 
             if (source == null)
             {
-                EditorGUI.LabelField(position, "Source disabled");
+                EditorGUI.LabelField(position, Contents.SourceUnavailableText);
                 return;
             }
 
@@ -72,17 +75,15 @@ namespace Unity.LiveCapture.Editor
             sourceNameRect.x += Contents.ToggleColumnWidth;
             sourceNameRect.width = left.width - Contents.ToggleColumnWidth;
 
-            var monitorRect = right;
-            monitorRect.width = Contents.SyncMonitorSize;
-            monitorRect.height = Contents.SyncMonitorSize;
-            monitorRect.y += (position.height - monitorRect.height) / 2f;
-
             var statusRect = right;
-            statusRect.width = Contents.StatusTextWidth;
-            statusRect.x += Contents.MonitorColumnWidth;
+            statusRect.width = Contents.StatusColumnWidth;
 
-            var bufferFieldRect = statusRect;
-            bufferFieldRect.x = right.x + Contents.StatusColumnWidth;
+            var frameRateRect = right;
+            frameRateRect.xMin = statusRect.xMax;
+            frameRateRect.width = Contents.FrameRateWidth;
+
+            var bufferFieldRect = right;
+            bufferFieldRect.x = frameRateRect.xMax;
             bufferFieldRect.width = Contents.IntFieldWidth;
             bufferFieldRect.y += Contents.FieldPadding;
             bufferFieldRect.height -= Contents.FieldPadding * 2;
@@ -91,33 +92,92 @@ namespace Unity.LiveCapture.Editor
             offsetFieldRect.x += Contents.IntColumnWidth;
 
             // Draw property fields
-            EditorGUI.PropertyField(toggleRect, isSyncedProp, GUIContent.none);
-            EditorGUI.LabelField(sourceNameRect, source.FriendlyName);
-            EditorGUI.DrawRect(monitorRect, Contents.StatusColors[(TimedSampleStatus)statusProp.intValue]);
-            EditorGUI.LabelField(statusRect, Contents.StatusNames[(TimedSampleStatus)statusProp.intValue]);
+            DoStatusGUI(statusRect, sourceAndStatus);
+            DoIsSynchronizedGUI(toggleRect, synchronizerComponent, sourceAndStatus);
+            DoSourceNameGUI(sourceNameRect, source);
+            DoFrameRateGUI(frameRateRect, source);
+            DoBufferSizeGUI(bufferFieldRect, source);
+            DoPresentationOffsetGUI(offsetFieldRect, source);
+        }
 
-            // Handle numerical fields
+        public static void DoStatusGUI(Rect rect, Synchronizer.SourceAndStatusBundle sourceAndStatus)
+        {
+            var statusImgRect = rect;
+            statusImgRect.width = Contents.SyncMonitorSize;
+            statusImgRect.height = Contents.SyncMonitorSize;
+            statusImgRect.y += (rect.height - statusImgRect.height) / 2f;
+
+            var statusRect = rect;
+            statusRect.x += Contents.MonitorColumnWidth;
+            statusRect.width = Contents.StatusTextWidth;
+
+            EditorGUI.DrawRect(statusImgRect, Contents.StatusColors[sourceAndStatus.Status]);
+            EditorGUI.LabelField(statusRect, Contents.StatusNames[sourceAndStatus.Status]);
+        }
+
+        public static void DoIsSynchronizedGUI(Rect rect, SynchronizerComponent synchronizer, Synchronizer.SourceAndStatusBundle sourceAndStatus)
+        {
             using (var change = new EditorGUI.ChangeCheckScope())
             {
-                var sourceObject = source as Object;
-
-                var bufferSize = source.BufferSize;
-                var sourceOffset = source.PresentationOffset.FrameNumber;
-                var isSynced = source.IsSynchronized;
-
-                bufferSize = EditorGUI.IntField(bufferFieldRect, bufferSize);
-                sourceOffset = EditorGUI.IntField(offsetFieldRect, sourceOffset);
+                var isSynced = EditorGUI.Toggle(rect, sourceAndStatus.SynchronizationRequested);
 
                 if (change.changed)
                 {
+                    if (synchronizer != null)
+                    {
+                        Undo.RegisterCompleteObjectUndo(synchronizer, Contents.FieldUndo);
+                    }
+
+                    sourceAndStatus.SynchronizationRequested = isSynced;
+
+                    if (synchronizer != null)
+                    {
+                        EditorUtility.SetDirty(synchronizer);
+                    }
+                }
+            }
+
+            EditorGUI.LabelField(rect, Contents.EnableSyncToggleTooltip);
+        }
+
+        public static void DoSourceNameGUI(Rect rect, ITimedDataSource source)
+        {
+            EditorGUI.LabelField(rect, source.FriendlyName);
+        }
+
+        public static void DoFrameRateGUI(Rect rect, ITimedDataSource source)
+        {
+            EditorGUI.LabelField(rect, source.FrameRate.IsValid ? source.FrameRate.ToString() : "N/A");
+        }
+
+        public static void DoBufferSizeGUI(Rect rect, ITimedDataSource source)
+        {
+            using (var change = new EditorGUI.ChangeCheckScope())
+            {
+                int bufferSize;
+
+                var min = Mathf.Max(source.MinBufferSize ?? 1, 1);
+                var max = Mathf.Max(source.MaxBufferSize ?? int.MaxValue, min);
+
+                if (source.MinBufferSize.HasValue && source.MaxBufferSize.HasValue && rect.width > 120f)
+                {
+                    bufferSize = EditorGUI.IntSlider(rect, source.BufferSize, min, max);
+                }
+                else
+                {
+                    bufferSize = EditorGUI.IntField(rect, source.BufferSize);
+                }
+
+                if (change.changed)
+                {
+                    var sourceObject = source as Object;
+
                     if (sourceObject != null)
                     {
                         Undo.RegisterCompleteObjectUndo(sourceObject, Contents.FieldUndo);
                     }
 
-                    source.IsSynchronized = isSynced;
-                    source.BufferSize = bufferSize;
-                    source.PresentationOffset = new FrameTime(sourceOffset, source.PresentationOffset.Subframe);
+                    source.BufferSize = Mathf.Clamp(bufferSize, min, max);
 
                     if (sourceObject != null)
                     {
@@ -126,10 +186,34 @@ namespace Unity.LiveCapture.Editor
                 }
             }
 
-            // Dummy widgets to show tooltips for fields without labels
-            EditorGUI.LabelField(toggleRect, Contents.EnableSyncToggleTooltip);
-            EditorGUI.LabelField(bufferFieldRect, Contents.BufferSizeTooltip);
-            EditorGUI.LabelField(offsetFieldRect, Contents.OffsetFramesTooltip);
+            EditorGUI.LabelField(rect, Contents.BufferSizeTooltip);
+        }
+
+        public static void DoPresentationOffsetGUI(Rect rect, ITimedDataSource source)
+        {
+            using (var change = new EditorGUI.ChangeCheckScope())
+            {
+                var offset = EditorGUI.FloatField(rect, (float)source.PresentationOffset);
+
+                if (change.changed)
+                {
+                    var sourceObject = source as Object;
+
+                    if (sourceObject != null)
+                    {
+                        Undo.RegisterCompleteObjectUndo(sourceObject, Contents.FieldUndo);
+                    }
+
+                    source.PresentationOffset = FrameTime.FromFrameTime(offset);
+
+                    if (sourceObject != null)
+                    {
+                        EditorUtility.SetDirty(sourceObject);
+                    }
+                }
+            }
+
+            EditorGUI.LabelField(rect, Contents.OffsetFramesTooltip);
         }
     }
 }

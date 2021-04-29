@@ -36,9 +36,7 @@ namespace Unity.LiveCapture.Editor
 
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {
-            m_SerializedObject = new SerializedObject(LiveCaptureSettings.Instance);
-            m_TakeNameFormatProp = m_SerializedObject.FindProperty("m_TakeNameFormat");
-            m_AssetNameFormatProp = m_SerializedObject.FindProperty("m_AssetNameFormat");
+            InitializeWithCurrentSettings();
         }
 
         public override void OnDeactivate()
@@ -61,7 +59,14 @@ namespace Unity.LiveCapture.Editor
 
         public override void OnGUI(string searchContext)
         {
-            m_SerializedObject.Update();
+            if (m_SerializedObject == null)
+            {
+                InitializeWithCurrentSettings();
+            }
+            else
+            {
+                m_SerializedObject.Update();
+            }
 
             using (var change = new EditorGUI.ChangeCheckScope())
             using (new SettingsWindowGUIScope())
@@ -93,6 +98,16 @@ namespace Unity.LiveCapture.Editor
                 SettingsScope.Project,
                 GetSearchKeywordsFromSerializedObject(new SerializedObject(LiveCaptureSettings.Instance))
             );
+        }
+
+        /// <summary>
+        /// Grab the <see cref="LiveCaptureSettings"/> instance and set it up for editing.
+        /// </summary>
+        void InitializeWithCurrentSettings()
+        {
+            m_SerializedObject = new SerializedObject(LiveCaptureSettings.Instance);
+            m_TakeNameFormatProp = m_SerializedObject.FindProperty("m_TakeNameFormat");
+            m_AssetNameFormatProp = m_SerializedObject.FindProperty("m_AssetNameFormat");
         }
     }
 }

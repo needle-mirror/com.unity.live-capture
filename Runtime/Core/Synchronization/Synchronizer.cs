@@ -19,16 +19,19 @@ namespace Unity.LiveCapture
         [SerializeField]
         TimecodeSourceRef m_TimecodeSourceRef;
 
-        /// <summary>
-        /// The source of the timecode readings.
-        /// </summary>
+        /// <inheritdoc/>
         public ITimecodeSource TimecodeSource
         {
             get => m_TimecodeSourceRef.Resolve();
             set => m_TimecodeSourceRef = new TimecodeSourceRef(value);
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// The offset, in frames, applied to the timecode used for synchronization updates.
+        /// </summary>
+        /// <remarks>
+        /// Use a negative value (i.e. a delay) to compensate for high-latency sources.
+        /// </remarks>
         public FrameTime GlobalTimeOffset
         {
             get => m_GlobalTimeOffset;
@@ -37,17 +40,29 @@ namespace Unity.LiveCapture
 
         public CalibrationStatus CalibrationStatus { get; private set; } = CalibrationStatus.Complete;
 
-        /// <summary>
-        /// Get the frequency of synchronized frames.
-        /// </summary>
-        /// <remarks>
-        /// This is controlled by the current <see cref="TimecodeSource"/>.
-        /// If no <see cref="TimecodeSource"/> is set, the frame rate will be invalid.
-        /// </remarks>
-        public FrameRate FrameRate => TimecodeSource != null ? TimecodeSource.FrameRate : default;
+        /// <inheritdoc />
+        public FrameRate? FrameRate
+        {
+            get
+            {
+                if (TimecodeSource == null)
+                    return null;
+
+                return TimecodeSource.FrameRate;
+            }
+        }
 
         /// <inheritdoc />
-        public Timecode CurrentTimecode { get; private set; }
+        public Timecode? CurrentTimecode
+        {
+            get
+            {
+                if (TimecodeSource == null)
+                    return null;
+
+                return TimecodeSource.Now.AddFrames(TimecodeSource.FrameRate, GlobalTimeOffset);
+            }
+        }
 
         /// <inheritdoc />
         public int DataSourceCount => m_SourcesAndStatuses.Count;
@@ -93,45 +108,56 @@ namespace Unity.LiveCapture
             m_SourcesAndStatuses.Remove(new SourceAndStatusBundle(source));
         }
 
+        public void RemoveDataSource(int index)
+        {
+            if (GetDataSource(index) is { } source)
+            {
+                RemoveDataSource(source);
+            }
+            else
+            {
+                m_SourcesAndStatuses.RemoveAt(index);
+            }
+        }
+
         /// <inheritdoc />
         public ITimedDataSource GetDataSource(int index) =>
             index < DataSourceCount ? m_SourcesAndStatuses[index].Source : null;
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Get the sample status of the data source as of the last synchronization update.
+        /// </summary>
+        /// <param name="dataSourceIndex">The index of the timed data source.</param>
+        /// <returns>The sample status; <c>null</c> if no status is available or no source exists at the index.</returns>
         public TimedSampleStatus? GetCurrentDataStatus(int dataSourceIndex) =>
             dataSourceIndex < DataSourceCount
             ? m_SourcesAndStatuses[dataSourceIndex].Status
             : default;
+
+        internal SourceAndStatusBundle GetSourceAndStatus(int index) =>
+            index < DataSourceCount ? m_SourcesAndStatuses[index] : default;
 
         /// <inheritdoc />
         public void Update()
         {
             RepairReferences();
 
-            if (TimecodeSource == null || CalibrationStatus == CalibrationStatus.InProgress)
+            if (CalibrationStatus == CalibrationStatus.InProgress)
             {
                 return;
             }
 
-            CurrentTimecode = TimecodeSource.Now.AddFrames(FrameRate, GlobalTimeOffset);
+            var frameRate = FrameRate;
+            var timecode = CurrentTimecode;
 
-            foreach (var item in m_SourcesAndStatuses)
+            if (frameRate == null || timecode == null)
             {
-                item.PresentAt(CurrentTimecode, TimecodeSource.FrameRate);
+                return;
             }
-        }
 
-        void RepairReferences()
-        {
-            // Hacky workaround for the fact that we can't reliably (de)serialize the
-            // ITimedDataSource.Synchronizer property
             foreach (var item in m_SourcesAndStatuses)
             {
-                var source = item.Source;
-                if (source != null)
-                {
-                    source.Synchronizer = this;
-                }
+                item.PresentAt(timecode.Value, frameRate.Value);
             }
         }
 
@@ -151,7 +177,11 @@ namespace Unity.LiveCapture
             }
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Finds the best synchronization parameters for the current data sources.
+        /// </summary>
+        /// <param name="calibrator">The calibration method used for finding the optimal settings.</param>
+        /// <returns>The current status of the calibration.</returns>
         public IEnumerator CalibrationWith(ISynchronizationCalibrator calibrator)
         {
             if (calibrator == null)
@@ -163,7 +193,7 @@ namespace Unity.LiveCapture
             CalibrationStatus = CalibrationStatus.InProgress;
             var dataSources = Enumerable.Range(0, DataSourceCount)
                 .Select(GetDataSource)
-                .Where(source => source.IsSynchronized)
+                .Where(source => source != null && source.IsSynchronized)
                 .ToList();
 
             foreach (var result in calibrator.Execute(TimecodeSource, dataSources))
@@ -174,6 +204,20 @@ namespace Unity.LiveCapture
                 // The Synchronizer just needs to care about the GlobalOffset
                 GlobalTimeOffset = result.GlobalTimeOffset;
                 yield return null;
+            }
+        }
+
+        void RepairReferences()
+        {
+            // Hacky workaround for the fact that we can't reliably (de)serialize the
+            // ITimedDataSource.Synchronizer property
+            foreach (var item in m_SourcesAndStatuses)
+            {
+                var source = item.Source;
+                if (source != null)
+                {
+                    source.Synchronizer = this;
+                }
             }
         }
 
@@ -207,7 +251,14 @@ namespace Unity.LiveCapture
             public bool SynchronizationRequested
             {
                 get => m_SynchronizationRequested;
-                set => m_SynchronizationRequested = value;
+                set
+                {
+                    if (m_SynchronizationRequested != value)
+                    {
+                        m_SynchronizationRequested = value;
+                        m_Status = TimedSampleStatus.DataMissing;
+                    }
+                }
             }
 
             public SourceAndStatusBundle(ITimedDataSource source)

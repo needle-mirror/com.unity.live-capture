@@ -1,0 +1,51 @@
+// This file is generated. Do not modify by hand.
+// XML documentation file not found. To check if public methods have XML comments,
+// make sure the XML doc file is present and located next to the scraped dll
+namespace Unity.LiveCapture.Mocap
+{
+    [Unity.LiveCapture.CreateDeviceMenuItem(@"Mocap Group", 0)] [UnityEngine.AddComponentMenu(@"")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-component-mocap-group.html")] public class MocapDevice : Unity.LiveCapture.LiveCaptureDevice
+    {
+        public UnityEngine.Animator Animator { get; set; }
+        public MocapDevice() {}
+        public virtual bool IsReady();
+        public virtual bool IsRecording();
+        public virtual void LiveUpdate();
+        public virtual void StartRecording();
+        public virtual void StopRecording();
+        public virtual void UpdateDevice();
+        public virtual void Write(Unity.LiveCapture.ITakeBuilder takeBuilder);
+    }
+
+    public abstract class MocapDevice<T> : Unity.LiveCapture.LiveCaptureDevice, Unity.LiveCapture.IRegistrable, Unity.LiveCapture.ITimedDataSource, Unity.LiveCapture.Mocap.IMocapDevice
+    {
+        public virtual UnityEngine.Animator Animator { get; set; }
+        public virtual int BufferSize { get; set; }
+        public virtual Unity.LiveCapture.FrameRate FrameRate { get; }
+        public virtual string FriendlyName { get; protected set; }
+        public virtual string Id { get; }
+        public virtual bool IsSynchronized { get; set; }
+        public virtual System.Nullable<int> MaxBufferSize { get; }
+        public virtual System.Nullable<int> MinBufferSize { get; }
+        public virtual Unity.LiveCapture.FrameTime PresentationOffset { get; set; }
+        public virtual Unity.LiveCapture.ISynchronizer Synchronizer { get; set; }
+        protected MocapDevice() {}
+        protected void AddFrame(T frame, Unity.LiveCapture.Timecode timecode, Unity.LiveCapture.FrameRate frameRate);
+        public virtual bool IsRecording();
+        public virtual void LiveUpdate();
+        protected virtual void OnDestroy();
+        protected virtual void OnDisable();
+        protected virtual void OnEnable();
+        protected virtual void OnRecordingChanged();
+        public virtual void OnValidate();
+        protected void Present(UnityEngine.Transform transform, System.Nullable<UnityEngine.Vector3> position, System.Nullable<UnityEngine.Quaternion> rotation, System.Nullable<UnityEngine.Vector3> scale);
+        public virtual Unity.LiveCapture.TimedSampleStatus PresentAt(Unity.LiveCapture.Timecode timecode, Unity.LiveCapture.FrameRate frameRate);
+        protected abstract void ProcessFrame(T frame);
+        public virtual void RegisterLiveProperties();
+        protected void ResetSyncBuffer();
+        public virtual void RestoreLiveProperties();
+        public virtual void StartRecording();
+        public virtual void StopRecording();
+        public virtual bool TryGetBufferRange(Unity.LiveCapture.FrameRate frameRate, out Unity.LiveCapture.FrameTime oldestSample, out Unity.LiveCapture.FrameTime newestSample);
+        public virtual void Write(Unity.LiveCapture.ITakeBuilder takeBuilder);
+    }
+}

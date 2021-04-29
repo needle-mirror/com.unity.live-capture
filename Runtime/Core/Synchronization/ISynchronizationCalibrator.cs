@@ -13,15 +13,16 @@ namespace Unity.LiveCapture
         /// </summary>
         [InspectorName("In Progress")]
         InProgress,
+
         /// <summary>
         /// The calibrator completed successfully.
         /// </summary>
         [InspectorName("Complete")]
         Complete,
+
         /// <summary>
         /// The calibrator was cancelled before completion.
         /// </summary>
-
         [InspectorName("Incomplete")]
         Incomplete,
     }

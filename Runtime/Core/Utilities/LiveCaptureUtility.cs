@@ -72,5 +72,21 @@ namespace Unity.LiveCapture
         {
             return Camera.allCameras.OrderByDescending(c => c.depth).FirstOrDefault();
         }
+
+#if !NETSTANDARD2_1
+        public static bool TryPeek<T>(this Queue<T> queue, out T result)
+        {
+            result = default;
+
+            if (queue.Count > 0)
+            {
+                result = queue.Peek();
+
+                return true;
+            }
+
+            return false;
+        }
+#endif
     }
 }

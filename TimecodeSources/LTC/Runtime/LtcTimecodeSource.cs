@@ -8,6 +8,7 @@ namespace Unity.LiveCapture.Ltc
     /// A component that reads timecodes from an LTC audio stream.
     /// </summary>
     [ExecuteAlways]
+    [CreateTimecodeSourceMenuItemAttribute("LTC Timecode Source")]
     [AddComponentMenu("Live Capture/Timecode/LTC Timecode Source")]
     [HelpURL(Documentation.baseURL + "ref-component-ltc-timecode-source" + Documentation.endURL)]
     public class LtcTimecodeSource : MonoBehaviour, ITimecodeSource

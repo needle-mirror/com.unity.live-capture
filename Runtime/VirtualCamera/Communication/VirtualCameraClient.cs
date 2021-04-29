@@ -28,6 +28,11 @@ namespace Unity.LiveCapture.VirtualCamera
         event Action<JoysticksSample> JoysticksSampleReceived;
 
         /// <summary>
+        /// An event invoked when a gamepad sample is received.
+        /// </summary>
+        event Action<GamepadSample> GamepadSampleReceived;
+
+        /// <summary>
         /// An event invoked when a transform sample is received.
         /// </summary>
         event Action<PoseSample> PoseSampleReceived;
@@ -116,6 +121,11 @@ namespace Unity.LiveCapture.VirtualCamera
         /// An event invoked when the client sets the pedestal space.
         /// </summary>
         event Action<Space> PedestalSpaceReceived;
+
+        /// <summary>
+        /// An event invoked when the client sets the motion space.
+        /// </summary>
+        event Action<Space> MotionSpaceReceived;
 
         /// <summary>
         /// An event invoked when the client sets the focus mode of the camera.
@@ -277,6 +287,7 @@ namespace Unity.LiveCapture.VirtualCamera
         readonly BinarySender<Vector3> m_MotionScaleSender;
         readonly BinarySender<Vector3> m_JoystickSensitivitySender;
         readonly BinarySender<Space> m_PedestalSpaceSender;
+        readonly BinarySender<Space> m_MotionSpaceSender;
         readonly BinarySender<FocusMode> m_FocusModeSender;
         readonly BinarySender<Vector2> m_FocusReticlePositionSender;
         readonly BinarySender<float> m_FocusDistanceOffsetSender;
@@ -297,6 +308,8 @@ namespace Unity.LiveCapture.VirtualCamera
         public event Action<VirtualCameraChannelFlags> ChannelFlagsReceived;
         /// <inheritdoc />
         public event Action<JoysticksSample> JoysticksSampleReceived;
+        /// <inheritdoc />
+        public event Action<GamepadSample> GamepadSampleReceived;
         /// <inheritdoc />
         public event Action<PoseSample> PoseSampleReceived;
         /// <inheritdoc />
@@ -333,6 +346,8 @@ namespace Unity.LiveCapture.VirtualCamera
         public event Action<Vector3> JoystickSensitivityReceived;
         /// <inheritdoc />
         public event Action<Space> PedestalSpaceReceived;
+        /// <inheritdoc />
+        public event Action<Space> MotionSpaceReceived;
         /// <inheritdoc />
         public event Action<FocusMode> FocusModeReceived;
         /// <inheritdoc />
@@ -389,6 +404,7 @@ namespace Unity.LiveCapture.VirtualCamera
             m_MotionScaleSender = m_Protocol.Add(new BinarySender<Vector3>(VirtualCameraMessages.ToClient.MotionScale));
             m_JoystickSensitivitySender = m_Protocol.Add(new BinarySender<Vector3>(VirtualCameraMessages.ToClient.JoystickSensitivity));
             m_PedestalSpaceSender = m_Protocol.Add(new BinarySender<Space>(VirtualCameraMessages.ToClient.PedestalSpace));
+            m_MotionSpaceSender = m_Protocol.Add(new BinarySender<Space>(VirtualCameraMessages.ToClient.MotionSpace));
             m_FocusModeSender = m_Protocol.Add(new BinarySender<FocusMode>(VirtualCameraMessages.ToClient.FocusMode));
             m_FocusReticlePositionSender = m_Protocol.Add(new BinarySender<Vector2>(VirtualCameraMessages.ToClient.FocusReticlePosition));
             m_FocusDistanceOffsetSender = m_Protocol.Add(new BinarySender<float>(VirtualCameraMessages.ToClient.FocusDistanceOffset));
@@ -412,6 +428,10 @@ namespace Unity.LiveCapture.VirtualCamera
             m_Protocol.Add(new BinaryReceiver<JoysticksSampleV0>(VirtualCameraMessages.ToServer.JoysticksSample_V0, ChannelType.UnreliableUnordered)).AddHandler(joysticks =>
             {
                 JoysticksSampleReceived?.Invoke((JoysticksSample)joysticks);
+            });
+            m_Protocol.Add(new BinaryReceiver<GamepadSampleV0>(VirtualCameraMessages.ToServer.GamepadSample_V0, ChannelType.UnreliableUnordered)).AddHandler(joysticks =>
+            {
+                GamepadSampleReceived?.Invoke((GamepadSample)joysticks);
             });
             m_Protocol.Add(new BinaryReceiver<PoseSampleV1>(VirtualCameraMessages.ToServer.PoseSample_V1, ChannelType.UnreliableUnordered)).AddHandler(pose =>
             {
@@ -484,6 +504,10 @@ namespace Unity.LiveCapture.VirtualCamera
             m_Protocol.Add(new BinaryReceiver<Space>(VirtualCameraMessages.ToServer.PedestalSpace)).AddHandler(space =>
             {
                 PedestalSpaceReceived?.Invoke(space);
+            });
+            m_Protocol.Add(new BinaryReceiver<Space>(VirtualCameraMessages.ToServer.MotionSpace)).AddHandler(space =>
+            {
+                MotionSpaceReceived?.Invoke(space);
             });
             m_Protocol.Add(new BinaryReceiver<FocusMode>(VirtualCameraMessages.ToServer.FocusMode)).AddHandler(mode =>
             {
@@ -586,6 +610,7 @@ namespace Unity.LiveCapture.VirtualCamera
             m_MotionScaleSender.Send(state.MotionScale);
             m_JoystickSensitivitySender.Send(state.JoystickSensitivity);
             m_PedestalSpaceSender.Send(state.PedestalSpace);
+            m_MotionSpaceSender.Send(state.MotionSpace);
             m_FocusModeSender.Send(state.FocusMode);
             m_FocusReticlePositionSender.Send(state.ReticlePosition);
             m_FocusDistanceOffsetSender.Send(state.FocusDistanceOffset);

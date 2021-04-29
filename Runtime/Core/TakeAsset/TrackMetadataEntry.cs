@@ -8,12 +8,12 @@ namespace Unity.LiveCapture
     class TrackMetadataEntry
     {
         [SerializeField]
-        TrackAsset m_Track;
+        LazyLoadReference<TrackAsset> m_Track;
 
         [SerializeReference]
         ITrackMetadata m_Metadata;
 
-        public TrackAsset Track => m_Track;
+        public TrackAsset Track => m_Track.asset;
         public ITrackMetadata Metadata => m_Metadata;
 
         public TrackMetadataEntry(TrackAsset track, ITrackMetadata metadata)
