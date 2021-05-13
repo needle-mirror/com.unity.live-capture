@@ -6,9 +6,9 @@ using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Rendering.Editor
 {
-    internal static class URPUtility
+    static class URPUtility
     {
         static SerializedProperty GetRenderPasses()
         {

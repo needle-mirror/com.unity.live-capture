@@ -15,17 +15,17 @@ namespace Unity.LiveCapture
         /// <remarks>
         /// Used internally to support undo operations.
         /// </remarks>
-        UnityObject unityObject { get; }
+        UnityObject UnityObject { get; }
 
         /// <summary>
         /// The file path containing the recorded takes.
         /// </summary>
-        string directory { get; set; }
+        string Directory { get; set; }
 
         /// <summary>
         /// The number associated with the scene to record.
         /// </summary>
-        int sceneNumber { get; set; }
+        int SceneNumber { get; set; }
 
         /// <summary>
         /// The name of the shot stored in the slate.
@@ -33,7 +33,7 @@ namespace Unity.LiveCapture
         /// <remarks>
         /// The recorded takes automatically inherit from this name.
         /// </remarks>
-        string shotName { get; set; }
+        string ShotName { get; set; }
 
         /// <summary>
         /// The number associated with the take to record.
@@ -41,31 +41,26 @@ namespace Unity.LiveCapture
         /// <remarks>
         /// The number increments after recording a take.
         /// </remarks>
-        int takeNumber { get; set; }
+        int TakeNumber { get; set; }
 
         /// <summary>
         /// The description of the shot stored in the slate.
         /// </summary>
-        string description { get; set; }
+        string Description { get; set; }
 
         /// <summary>
         /// The selected take of the slate.
         /// </summary>
-        Take take { get; set; }
+        Take Take { get; set; }
 
         /// <summary>
         /// The take to iterate from in the next recording.
         /// </summary>
-        Take iterationBase { get; set; }
+        Take IterationBase { get; set; }
 
         /// <summary>
         /// The duration of the slate in seconds.
         /// </summary>
-        double duration { get; }
-
-        /// <summary>
-        /// The current evaluation time of the slate in seconds.
-        /// </summary>
-        double time { get; set; }
+        double Duration { get; }
     }
 }

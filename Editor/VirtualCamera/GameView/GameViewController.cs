@@ -1,287 +1,333 @@
 using System;
-using Unity.LiveCapture.VideoStreaming.Server;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Assertions;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-#if INPUTSYSTEM_1_0_2_OR_NEWER
-using UnityEngine.InputSystem;
+using UnityEngine.Assertions;
 
-#endif
-
-namespace Unity.LiveCapture.VirtualCamera
+namespace Unity.LiveCapture.VirtualCamera.Editor
 {
-    interface ILiveCaptureBridge
-    {
-        bool TryGetVirtualCameraDevice(out IVirtualCameraDeviceProxy proxy);
-    }
-
+    /// <summary>
+    /// A proxy to the VirtualCameraDevice, introduced for testability,
+    /// as well as decoupling from the VirtualCameraDevice API.
+    /// </summary>
     interface IVirtualCameraDeviceProxy
     {
         /// <summary>
-        /// Returns whether or not the current focus mode allows for the reticle to be visible.
+        /// Sets the reticle position.
         /// </summary>
-        /// <param name="normalizedPosition"></param>
-        /// <returns></returns>
+        /// <param name="normalizedPosition">Normalized position of the reticle.</param>
+        /// <returns>True if the reticle should be visible based on the current focus mode, false otherwise.</returns>
         bool SetReticlePosition(Vector2 normalizedPosition);
 
+        /// <summary>
+        /// Returns the video stream preview resolution.
+        /// </summary>
+        /// <returns>The preview resolution.</returns>
         Vector2 GetPreviewResolution();
     }
 
+    /// <summary>
+    /// Provides access to an IVirtualCameraDeviceProxy, introduced for testing purposes.
+    /// </summary>
+    interface ILiveCaptureBridge
+    {
+        /// <summary>
+        /// Provides access to a VirtualCameraDevice proxy, if a valid device exists.
+        /// A VirtualCameraDevice is considered valid if it is currently streaming video previewed in the GameView.
+        /// </summary>
+        /// <param name="proxy">Proxy providing a controlled access to the currently streaming VirtualCameraDevice.</param>
+        /// <returns>True if a valid proxy is available, false otherwise.</returns>
+        bool TryGetVirtualCameraDevice(out IVirtualCameraDeviceProxy proxy);
+    }
+
+    /// <summary>
+    /// Production implementation of IVirtualCameraDeviceProxy (as opposed to testing ones).
+    /// </summary>
     class VirtualCameraDeviceProxy : IVirtualCameraDeviceProxy
     {
-        public static VirtualCameraDeviceProxy instance { get; } = new VirtualCameraDeviceProxy();
+        // The VirtualCameraDevice accessed by this proxy.
+        public VirtualCameraDevice Device { get; set; }
 
-        public VirtualCameraDevice device { get; set; }
-
+        /// <inheritdoc />
         public bool SetReticlePosition(Vector2 normalizedPosition)
         {
-            device.SetReticlePosition(normalizedPosition);
-            return device.cameraState.focusMode != FocusMode.Disabled;
+            Device.SetReticlePosition(normalizedPosition);
+            return Device.Settings.FocusMode != FocusMode.Clear;
         }
 
+        /// <inheritdoc />
         public Vector2 GetPreviewResolution()
         {
-            return device.GetVideoServer().GetResolution();
+            return Device.GetVideoServer().GetResolution();
         }
     }
 
+    /// <summary>
+    /// Production implementation of ILiveCaptureBridge (as opposed to testing ones).
+    /// </summary>
     class LiveCaptureBridge : ILiveCaptureBridge
     {
         static readonly VirtualCameraDeviceProxy k_Proxy = new VirtualCameraDeviceProxy();
 
-        /// <summary>
-        /// Gives access to a `VirtualCameraDevice` proxy, if a valid device exists.
-        /// A `VirtualCameraDevice` is considered valid if it is currently streaming video previewed in the GameView.
-        /// </summary>
-        /// <param name="proxy">Proxy providing a controlled access to the currently streaming `VirtualCameraDevice`.</param>
-        /// <returns>Whether or not a valid proxy can be provided at this point.</returns>
+        /// <inheritdoc />
         public bool TryGetVirtualCameraDevice(out IVirtualCameraDeviceProxy proxy)
         {
-            proxy = null;
-
             // Look for the device corresponding to the currently streamed preview if any.
             foreach (var device in VirtualCameraDevice.instances)
             {
                 var videoServer = device.GetVideoServer();
-                var camera = videoServer.camera;
+                var camera = videoServer.Camera;
 
-                if (videoServer.isRunning && camera.isActiveAndEnabled)
+                if (videoServer.IsRunning && camera.isActiveAndEnabled)
                 {
-                    VirtualCameraDeviceProxy.instance.device = device;
-                    proxy = VirtualCameraDeviceProxy.instance;
+                    k_Proxy.Device = device;
+                    proxy = k_Proxy;
 
                     return true;
                 }
             }
 
+            proxy = null;
             return false;
         }
     }
 
-    class GameViewController : ScriptableSingleton<GameViewController>
+    /// <summary>
+    /// Component responsible for managing the reticle UI and its animation.
+    /// </summary>
+    [ExecuteAlways]
+    class ReticleManager : MonoBehaviour
     {
-        [ExecuteAlways]
-        internal class InGameBridge : MonoBehaviour
+        const string k_FocusReticlePrefabPath = "Packages/com.unity.live-capture/Runtime/VirtualCamera/FocusReticle/FocusReticle.prefab";
+
+        public event Action<Vector2> OnMouseDown = delegate {};
+
+        FocusReticle m_FocusReticle;
+        Coroutine m_Animation;
+        Canvas m_Canvas;
+        bool m_PendingMouseDown;
+        Vector2 m_MousePosition;
+
+        // Used for tests only
+        internal void SendMouseDown(Vector2 position)
         {
-            // Note that we do not provide access to the instance,
-            // to prevent a reference to it being cached.
-            static InGameBridge s_Instance;
+            m_MousePosition = position;
+            m_PendingMouseDown = true;
+        }
 
-            FocusReticle m_FocusReticle;
-            Coroutine m_Animation;
-            Canvas m_Canvas;
-
-            public static bool isInstanciated => s_Instance != null;
-
-            public static bool isInActiveScene => s_Instance == null ? false : s_Instance.gameObject.scene.isLoaded;
-
-            public static GameObject root => s_Instance == null ? null : s_Instance.gameObject;
-
-            public static void Dispose()
+        void OnGUI()
+        {
+            // Using IMGUI events saves us the hassle of dealing with multiple input systems.
+            if (Event.current.type == EventType.MouseDown)
             {
-                if (s_Instance != null)
-                {
-                    if (Application.isPlaying)
-                        Destroy(s_Instance.gameObject);
-                    else
-                        DestroyImmediate(s_Instance.gameObject);
-                }
-            }
+                m_PendingMouseDown = true;
+                m_MousePosition = Event.current.mousePosition;
 
-            public static void AnimateReticle(Vector2 position)
-            {
-                if (s_Instance != null)
-                    s_Instance.DoAnimateReticle(position);
-            }
-
-            void DoAnimateReticle(Vector2 position)
-            {
-                if (m_Animation != null)
-                    StopCoroutine(m_Animation);
-                m_Canvas.enabled = true;
-                m_FocusReticle.transform.transform.position = position;
-                m_Animation = StartCoroutine(m_FocusReticle.Animate(true));
-            }
-
-            void OnAnimationComplete()
-            {
-                m_Canvas.enabled = false;
-            }
-
-            void Awake()
-            {
-                if (s_Instance != null)
-                    throw new InvalidOperationException(
-                        $"Multiple instances of {nameof(InGameBridge)} detected.");
-
-                s_Instance = this;
-
-                // Build UI.
-                m_Canvas = gameObject.AddComponent<Canvas>();
-                m_Canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                m_Canvas.enabled = false;
-
-                var scaler = gameObject.AddComponent<CanvasScaler>();
-                scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPhysicalSize;
-
-                var prefab = Resources.Load<GameObject>(k_FocusReticlePrefabPath);
-                Assert.IsNotNull(prefab, $"Could not load Focus Reticle prefab form Resources at [{k_FocusReticlePrefabPath}]");
-
-                var reticle = Instantiate(prefab, gameObject.transform);
-                m_FocusReticle = reticle.GetComponent<FocusReticle>();
-                Assert.IsNotNull(m_FocusReticle, $"Could not fetch {nameof(FocusReticle)} component from prefab.");
-
-                m_FocusReticle.animationComplete += OnAnimationComplete;
-
-                // Must set flag on parent AND its children.
-                gameObject.hideFlags = HideFlags.HideAndDontSave;
-                foreach (var child in GetComponentsInChildren<Transform>(true))
-                    child.gameObject.hideFlags = HideFlags.HideAndDontSave;
-            }
-
-            void OnDestroy()
-            {
-                if (s_Instance != this)
-                    throw new InvalidOperationException(
-                        $"{nameof(InGameBridge)} current instance does not match static instance.");
-
-                s_Instance = null;
-
-                m_FocusReticle.animationComplete -= OnAnimationComplete;
-
-                if (m_Animation != null)
-                {
-                    StopCoroutine(m_Animation);
-                    m_Animation = null;
-                }
-            }
-
-            void Update()
-            {
-#if INPUTSYSTEM_1_0_2_OR_NEWER
-                var pointer = Mouse.current;
-                if (pointer != null && pointer.leftButton.wasPressedThisFrame)
-                    instance.OnMouseDown(pointer.position.ReadValue());
-#else
-                if (Input.GetMouseButtonDown(0))
-                    instance.OnMouseDown(Input.mousePosition);
-#endif
+                // Flip Y axis, IMGUI coords are zero at top.
+                m_MousePosition.y = Screen.height - m_MousePosition.y;
             }
         }
 
+        void Awake()
+        {
+            // Build UI.
+            m_Canvas = gameObject.AddComponent<Canvas>();
+            m_Canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            m_Canvas.enabled = false;
+
+            var scaler = gameObject.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPhysicalSize;
+
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(k_FocusReticlePrefabPath);
+            Assert.IsNotNull(prefab, $"Could not load Focus Reticle prefab at [{k_FocusReticlePrefabPath}]");
+
+            var reticle = Instantiate(prefab, gameObject.transform);
+
+            // Since we use constant physical size with default settings we apply scaling to the reticle.
+            reticle.transform.localScale = Vector3.one * .25f;
+            m_FocusReticle = reticle.GetComponent<FocusReticle>();
+            Assert.IsNotNull(m_FocusReticle, $"Could not fetch {nameof(FocusReticle)} component from prefab.");
+        }
+
+        void OnEnable()
+        {
+            m_FocusReticle.AnimationComplete += OnAnimationComplete;
+        }
+
+        void OnDisable()
+        {
+            m_FocusReticle.AnimationComplete -= OnAnimationComplete;
+
+            if (m_Animation != null)
+            {
+                StopCoroutine(m_Animation);
+                m_Animation = null;
+            }
+
+            OnAnimationComplete();
+        }
+
+        void Update()
+        {
+            if (m_PendingMouseDown)
+            {
+                OnMouseDown.Invoke(m_MousePosition);
+                m_PendingMouseDown = false;
+            }
+        }
+
+        public void AnimateReticle(Vector2 position)
+        {
+            if (m_Animation != null)
+            {
+                StopCoroutine(m_Animation);
+            }
+
+            m_Canvas.enabled = true;
+            m_FocusReticle.transform.transform.position = position;
+            m_Animation = StartCoroutine(m_FocusReticle.Animate(true));
+        }
+
+        void OnAnimationComplete()
+        {
+            m_Canvas.enabled = false;
+        }
+    }
+
+    /// <summary>
+    /// Singleton responsible for managing the GameView reticle.
+    /// Manages the injected scene UI and communication with the VirtualCameraDevice.
+    /// </summary>
+    class GameViewController : ScriptableSingleton<GameViewController>
+    {
         const string k_GameObjectName = "Live Capture In Game Components";
-        const string k_FocusReticlePrefabPath = "FocusReticle";
+        static readonly ILiveCaptureBridge k_DefaultBridge = new LiveCaptureBridge();
 
-        static readonly ILiveCaptureBridge s_DefaultBridge = new LiveCaptureBridge();
-
-        bool m_IsActive;
         [SerializeReference]
         ILiveCaptureBridge m_CurrentBridge;
 
-        public bool isActive => m_IsActive;
+        ReticleManager m_ReticleManager;
+        bool m_IsActive;
+
+        public bool IsActive => m_IsActive;
+
+        [InitializeOnLoadMethod]
+        static void RegisterCallbacks()
+        {
+            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        static void OnPlayModeStateChanged(PlayModeStateChange playModeStateChange)
+        {
+            switch (playModeStateChange)
+            {
+                // Disable on playmode changes to prevent the interruption of an animation
+                // leaving the reticle on the screen (OnDisable is not called due to HideFlags.HideAndDontSave being used)
+                case PlayModeStateChange.ExitingEditMode:
+                case PlayModeStateChange.ExitingPlayMode:
+                {
+                    instance.Disable();
+                }
+                break;
+            }
+        }
+
+        static void OnBeforeAssemblyReload()
+        {
+            instance.Disable();
+        }
 
         public void Enable()
         {
-            Enable(s_DefaultBridge);
+            Enable(k_DefaultBridge);
         }
 
         internal void Enable(ILiveCaptureBridge bridge)
         {
             if (m_IsActive)
+            {
                 return;
+            }
 
             m_IsActive = true;
             m_CurrentBridge = bridge;
+
+            InjectSceneUI();
         }
 
         public void Disable()
         {
             if (!m_IsActive)
+            {
                 return;
+            }
 
-            InGameBridge.Dispose();
+            DisposeSceneUI();
 
             m_CurrentBridge = null;
             m_IsActive = false;
         }
 
-        [InitializeOnLoadMethod]
-        static void RegisterCallbacks()
+        void InjectSceneUI()
         {
-            EditorApplication.update -= OnEditorUpdate;
-            EditorApplication.update += OnEditorUpdate;
+            Assert.IsNull(m_ReticleManager);
+            var go = new GameObject(k_GameObjectName, typeof(ReticleManager));
+            SetHideFlagsRecursively(go, HideFlags.HideAndDontSave);
+            m_ReticleManager = go.GetComponent<ReticleManager>();
+            m_ReticleManager.OnMouseDown += OnMouseDown;
         }
 
-        static void OnEditorUpdate()
+        void DisposeSceneUI()
         {
-            if (instance.m_IsActive)
-                instance.OnUpdate();
-        }
+            Assert.IsNotNull(m_ReticleManager);
 
-        void OnUpdate()
-        {
-            // Injected objects are marked [DontSave]. When switching scenes,
-            // those objects may find themselves not destroyed, but belonging to an unloaded scene.
-            if (!(InGameBridge.isInstanciated && InGameBridge.isInActiveScene))
+            m_ReticleManager.OnMouseDown -= OnMouseDown;
+
+            if (Application.isPlaying)
             {
-                if (InGameBridge.isInstanciated)
-                {
-                    var activeScene = SceneManager.GetActiveScene();
-                    Assert.IsTrue(activeScene.isLoaded, "No active scene loaded.");
-                    SceneManager.MoveGameObjectToScene(InGameBridge.root, activeScene);
-                }
-                else
-                {
-                    var go = new GameObject(k_GameObjectName);
-                    go.AddComponent<InGameBridge>();
-                }
+                Destroy(m_ReticleManager.gameObject);
             }
+            else
+            {
+                DestroyImmediate(m_ReticleManager.gameObject);
+            }
+
+            m_ReticleManager = null;
         }
 
         void OnMouseDown(Vector2 position)
         {
-            // Destruction of the injected gameObject is deferred on runtime.
-            if (!m_IsActive)
-                return;
+            Assert.IsTrue(m_IsActive);
 
             if (m_CurrentBridge.TryGetVirtualCameraDevice(out var cameraDeviceProxy))
             {
-                var screenSize = getScreenSize();
+                var screenSize = GetScreenSize();
                 var normalizedPosition = position / screenSize;
 
                 if (cameraDeviceProxy.SetReticlePosition(normalizedPosition))
                 {
-                    InGameBridge.AnimateReticle(position);
+                    if (cameraDeviceProxy.SetReticlePosition(normalizedPosition))
+                    {
+                        m_ReticleManager.AnimateReticle(position);
+                    }
                 }
             }
         }
 
         // Using Func to make our coordinate conversion code testable.
-        internal static Func<Vector2> getScreenSize = () =>
+        internal static Func<Vector2> GetScreenSize = () =>
         {
             return new Vector2(Screen.width, Screen.height);
         };
+
+        static void SetHideFlagsRecursively(GameObject gameObject, HideFlags hideFlags)
+        {
+            gameObject.hideFlags = hideFlags;
+            foreach (Transform child in gameObject.transform)
+            {
+                SetHideFlagsRecursively(child.gameObject, hideFlags);
+            }
+        }
     }
 }

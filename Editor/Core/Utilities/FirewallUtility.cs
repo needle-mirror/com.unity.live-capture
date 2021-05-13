@@ -7,7 +7,7 @@ using UnityEngine;
 
 using Debug = UnityEngine.Debug;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     /// <summary>
     /// A class that can checks for and add firewall rules.
@@ -17,7 +17,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// Can the firewall be modified on the editor platform.
         /// </summary>
-        public static bool isSupported
+        public static bool IsSupported
         {
             get
             {
@@ -35,7 +35,7 @@ namespace Unity.LiveCapture
         /// <returns>True if all the rules exist.</returns>
         public static bool IsConfigured()
         {
-            if (!isSupported)
+            if (!IsSupported)
             {
                 Debug.LogWarning("Automatic firewall configuration is not supported on this editor platform.");
                 return false;
@@ -93,7 +93,7 @@ namespace Unity.LiveCapture
         /// <returns>True if all the rules existed or were successfully added.</returns>
         public static bool ConfigureFirewall()
         {
-            if (!isSupported)
+            if (!IsSupported)
             {
                 Debug.LogWarning("Automatic firewall configuration is not supported on this editor platform.");
                 return false;

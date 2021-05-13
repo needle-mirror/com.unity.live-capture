@@ -74,7 +74,7 @@ namespace Unity.LiveCapture.VirtualCamera
             if (s_Instance == null)
             {
                 var gameObject = AdditionalCoreUtils.CreateEmptyGameObject();
-                gameObject.name = "Custom Pass Manager";
+                gameObject.name = "Virtual Camera Custom Pass Manager";
                 s_Instance = gameObject.AddComponent<CustomPassManager>();
             }
 
@@ -194,7 +194,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 var attr = type.GetCustomAttributes(typeof(CustomPassOrderAttribute), true)
                     .FirstOrDefault() as CustomPassOrderAttribute;
                 if (attr != null)
-                    return attr.orderHint;
+                    return attr.OrderHint;
                 return -1;
             }
 

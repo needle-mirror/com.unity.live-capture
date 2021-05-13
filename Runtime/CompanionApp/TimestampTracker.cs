@@ -1,6 +1,6 @@
 namespace Unity.LiveCapture.CompanionApp
 {
-    internal class TimestampTracker
+    class TimestampTracker
     {
         const float k_InvalidTime = -1f;
 
@@ -8,18 +8,23 @@ namespace Unity.LiveCapture.CompanionApp
         float m_InitialTime;
         float m_LocalTime;
 
-        public float time { get; set; }
-        public float localTime => m_LocalTime;
+        public float Time { get; set; }
+        public float LocalTime => m_LocalTime;
 
         public void SetTimestamp(float value)
         {
+            if (value < m_InitialTimestamp)
+            {
+                Reset();
+            }
+
             if (m_InitialTimestamp == k_InvalidTime)
             {
                 m_InitialTimestamp = value;
-                m_InitialTime = time;
+                m_InitialTime = Time;
             }
 
-            m_LocalTime = m_InitialTime + value - m_InitialTimestamp;;
+            m_LocalTime = m_InitialTime + value - m_InitialTimestamp;
         }
 
         public void Reset()

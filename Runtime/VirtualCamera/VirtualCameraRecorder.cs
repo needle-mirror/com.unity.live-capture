@@ -8,28 +8,37 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             new Vector3Curve(string.Empty, "m_LocalPosition", typeof(Transform)),
             new EulerCurve(string.Empty, "m_LocalEuler", typeof(Transform)),
-            new FloatCurve(string.Empty, "m_Lens.focalLength", typeof(VirtualCameraActor)),
-            new FloatCurve(string.Empty, "m_Lens.focusDistance", typeof(VirtualCameraActor)),
-            new FloatCurve(string.Empty, "m_Lens.aperture", typeof(VirtualCameraActor)),
-            new BooleanCurve(string.Empty, "m_DepthOfField", typeof(VirtualCameraActor))
+            new FloatCurve(string.Empty, "m_Lens.FocalLength", typeof(VirtualCameraActor)),
+            new FloatCurve(string.Empty, "m_Lens.FocusDistance", typeof(VirtualCameraActor)),
+            new FloatCurve(string.Empty, "m_Lens.Aperture", typeof(VirtualCameraActor)),
+            new BooleanCurve(string.Empty, "m_DepthOfField", typeof(VirtualCameraActor)),
+            new Vector2Curve(string.Empty, "m_LensIntrinsics.FocalLengthRange", typeof(VirtualCameraActor)),
+            new FloatCurve(string.Empty, "m_LensIntrinsics.CloseFocusDistance", typeof(VirtualCameraActor)),
+            new Vector2Curve(string.Empty, "m_LensIntrinsics.ApertureRange", typeof(VirtualCameraActor)),
+            new Vector2Curve(string.Empty, "m_LensIntrinsics.LensShift", typeof(VirtualCameraActor)),
+            new IntegerCurve(string.Empty, "m_LensIntrinsics.BladeCount", typeof(VirtualCameraActor)),
+            new Vector2Curve(string.Empty, "m_LensIntrinsics.Curvature", typeof(VirtualCameraActor)),
+            new FloatCurve(string.Empty, "m_LensIntrinsics.BarrelClipping", typeof(VirtualCameraActor)),
+            new FloatCurve(string.Empty, "m_LensIntrinsics.Anamorphism", typeof(VirtualCameraActor)),
+            new FloatCurve(string.Empty, "m_CropAspect", typeof(VirtualCameraActor)),
         };
 
         /// <summary>
         /// The time used by the recorder in seconds.
         /// </summary>
-        public float time { get; set; }
+        public float Time { get; set; }
 
         /// <summary>
         /// The frame rate to use for recording.
         /// </summary>
-        public FrameRate frameRate
+        public FrameRate FrameRate
         {
-            get => m_Curves[0].frameRate;
+            get => m_Curves[0].FrameRate;
             set
             {
                 foreach (var curve in m_Curves)
                 {
-                    curve.frameRate = value;
+                    curve.FrameRate = value;
                 }
             }
         }
@@ -37,7 +46,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// The data channels to record as enum flags.
         /// </summary>
-        public VirtualCameraChannelFlags channels { get; set; }
+        public VirtualCameraChannelFlags Channels { get; set; }
 
         /// <summary>
         /// Checks if the recording contains no recorded samples.
@@ -75,9 +84,9 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="sample">The position sample to record</param>
         public void RecordPosition(Vector3 sample)
         {
-            if (channels.HasFlag(VirtualCameraChannelFlags.Position))
+            if (Channels.HasFlag(VirtualCameraChannelFlags.Position))
             {
-                GetCurve<Vector3>(0).AddKey(time, sample);
+                GetCurve<Vector3>(0).AddKey(Time, sample);
             }
         }
 
@@ -87,9 +96,9 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="sample">The rotation sample to record</param>
         public void RecordRotation(Quaternion sample)
         {
-            if (channels.HasFlag(VirtualCameraChannelFlags.Rotation))
+            if (Channels.HasFlag(VirtualCameraChannelFlags.Rotation))
             {
-                GetCurve<Quaternion>(1).AddKey(time, sample);
+                GetCurve<Quaternion>(1).AddKey(Time, sample);
             }
         }
 
@@ -99,9 +108,9 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="sample">The focal length sample to record</param>
         public void RecordFocalLength(float sample)
         {
-            if (channels.HasFlag(VirtualCameraChannelFlags.FocalLength))
+            if (Channels.HasFlag(VirtualCameraChannelFlags.FocalLength))
             {
-                GetCurve<float>(2).AddKey(time, sample);
+                GetCurve<float>(2).AddKey(Time, sample);
             }
         }
 
@@ -111,9 +120,9 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="sample">The focus distance sample to record</param>
         public void RecordFocusDistance(float sample)
         {
-            if (channels.HasFlag(VirtualCameraChannelFlags.FocusDistance))
+            if (Channels.HasFlag(VirtualCameraChannelFlags.FocusDistance))
             {
-                GetCurve<float>(3).AddKey(time, sample);
+                GetCurve<float>(3).AddKey(Time, sample);
             }
         }
 
@@ -123,9 +132,9 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="sample">The aperture sample to record</param>
         public void RecordAperture(float sample)
         {
-            if (channels.HasFlag(VirtualCameraChannelFlags.Aperture))
+            if (Channels.HasFlag(VirtualCameraChannelFlags.Aperture))
             {
-                GetCurve<float>(4).AddKey(time, sample);
+                GetCurve<float>(4).AddKey(Time, sample);
             }
         }
 
@@ -135,10 +144,35 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="sample">The enabled state to record</param>
         public void RecordEnableDepthOfField(bool sample)
         {
-            if (channels.HasFlag(VirtualCameraChannelFlags.FocusDistance))
+            if (Channels.HasFlag(VirtualCameraChannelFlags.FocusDistance))
             {
-                GetCurve<bool>(5).AddKey(time, sample);
+                GetCurve<bool>(5).AddKey(Time, sample);
             }
+        }
+
+        /// <summary>
+        /// Records the aspect of the crop mask.
+        /// </summary>
+        /// <param name="sample">The crop aspect to record</param>
+        public void RecordCropAspect(float sample)
+        {
+            GetCurve<float>(14).AddKey(Time, sample);
+        }
+
+        /// <summary>
+        /// Records the <see cref="LensIntrinsics"/> of the camera.
+        /// </summary>
+        /// <param name="intrinsics">The lens intrinsic parameters to record</param>
+        public void RecordLensIntrinsics(LensIntrinsics intrinsics)
+        {
+            GetCurve<Vector2>(6).AddKey(Time, intrinsics.FocalLengthRange);
+            GetCurve<float>(7).AddKey(Time, intrinsics.CloseFocusDistance);
+            GetCurve<Vector2>(8).AddKey(Time, intrinsics.ApertureRange);
+            GetCurve<Vector2>(9).AddKey(Time, intrinsics.LensShift);
+            GetCurve<int>(10).AddKey(Time, intrinsics.BladeCount);
+            GetCurve<Vector2>(11).AddKey(Time, intrinsics.Curvature);
+            GetCurve<float>(12).AddKey(Time, intrinsics.BarrelClipping);
+            GetCurve<float>(13).AddKey(Time, intrinsics.Anamorphism);
         }
 
         /// <summary>

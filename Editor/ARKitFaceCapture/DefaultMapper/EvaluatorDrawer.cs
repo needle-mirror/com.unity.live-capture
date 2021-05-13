@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
+namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
 {
     [CustomPropertyDrawer(typeof(SimpleEvaluator.Impl))]
     [CustomPropertyDrawer(typeof(CurveEvaluator.Impl))]

@@ -8,17 +8,17 @@ namespace Unity.LiveCapture.VirtualCamera
     /// The payload sent over the network to transport a focus distance samples.
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct FocusDistanceSample : ISample
+    struct FocusDistanceSample : ISample
     {
         float m_Timestamp;
 
         /// <summary>
         /// The focus distance in meters.
         /// </summary>
-        public float focusDistance;
+        public float FocusDistance;
 
         /// <inheritdoc/>
-        public float timestamp
+        public float Timestamp
         {
             get => m_Timestamp;
             set => m_Timestamp = value;

@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     /// <summary>
     /// A property drawer for enums. Does not block the main thread.
@@ -21,10 +21,10 @@ namespace Unity.LiveCapture
             void LabelField(Rect position, GUIContent label);
             float GetSegmentWidth(PropertyDrawer drawer);
 
-            float singleLineHeight { get; }
-            float standardVerticalSpacing { get; }
-            float currentViewWidth { get; }
-            float labelWidth { get; }
+            float SingleLineHeight { get; }
+            float StandardVerticalSpacing { get; }
+            float CurrentViewWidth { get; }
+            float LabelWidth { get; }
         }
 
         class DefaultGUI : IGui
@@ -41,22 +41,22 @@ namespace Unity.LiveCapture
 
             public float GetSegmentWidth(PropertyDrawer drawer)
             {
-                return (drawer.attribute as EnumButtonGroupAttribute).segmentWidth;
+                return (drawer.attribute as EnumButtonGroupAttribute).SegmentWidth;
             }
 
-            public float singleLineHeight => EditorGUIUtility.singleLineHeight;
-            public float standardVerticalSpacing => EditorGUIUtility.standardVerticalSpacing;
-            public float currentViewWidth => EditorGUIUtility.currentViewWidth;
-            public float labelWidth => EditorGUIUtility.labelWidth;
+            public float SingleLineHeight => EditorGUIUtility.singleLineHeight;
+            public float StandardVerticalSpacing => EditorGUIUtility.standardVerticalSpacing;
+            public float CurrentViewWidth => EditorGUIUtility.currentViewWidth;
+            public float LabelWidth => EditorGUIUtility.labelWidth;
         }
 
         protected struct EnumValue
         {
-            public string name;
-            public string displayName;
-            public int index;
-            public bool selected;
-            public bool newSelected;
+            public string Name;
+            public string DisplayName;
+            public int Index;
+            public bool Selected;
+            public bool NewSelected;
         }
 
         // Bindings flags used to access field properties.
@@ -92,7 +92,7 @@ namespace Unity.LiveCapture
 
                 foreach (var description in memberInfos[0].GetCustomAttributes().OfType<DescriptionAttribute>())
                 {
-                    descriptions[enumValue.ToString()] = description.description;
+                    descriptions[enumValue.ToString()] = description.Description;
                 }
             }
         }
@@ -166,9 +166,9 @@ namespace Unity.LiveCapture
         IGui m_Gui = k_Gui;
 
         // Meant to allow tests to override the GUI API.
-        internal IGui gui
+        internal IGui Gui
         {
-            set { m_Gui = value; }
+            set => m_Gui = value;
         }
 
         // Returns the list of enum values visible in the UI.
@@ -191,10 +191,10 @@ namespace Unity.LiveCapture
 
                 k_TmpDisplayedEnumValues.Add(new EnumValue
                 {
-                    name = enumNames[i],
-                    displayName = displayName,
-                    index = i,
-                    selected = IsSelected(property.intValue, i)
+                    Name = enumNames[i],
+                    DisplayName = displayName,
+                    Index = i,
+                    Selected = IsSelected(property.intValue, i)
                 });
             }
 
@@ -216,14 +216,14 @@ namespace Unity.LiveCapture
         {
             var enumValues = GetDisplayedEnumValues(property);
             UpdateLayout(enumValues.Count, out _, out _, out var rows);
-            return rows * m_Gui.singleLineHeight + (rows - 1) * m_Gui.standardVerticalSpacing;
+            return rows * m_Gui.SingleLineHeight + (rows - 1) * m_Gui.StandardVerticalSpacing;
         }
 
         // Update layout values describing the grid of displayed enum values.
         void UpdateLayout(int entryCount, out float rowWidth, out int columns, out int rows)
         {
             var segmentWidth = m_Gui.GetSegmentWidth(this);
-            rowWidth = m_Gui.currentViewWidth - m_Gui.labelWidth - 40;
+            rowWidth = m_Gui.CurrentViewWidth - m_Gui.LabelWidth - 40;
             columns = Mathf.FloorToInt(rowWidth / segmentWidth);
             rows = Mathf.CeilToInt((float)entryCount / columns);
         }
@@ -242,13 +242,13 @@ namespace Unity.LiveCapture
             for (var i = 0; i != entryCount; ++i)
             {
                 var entry = enumValues[i];
-                if (entry.selected)
+                if (entry.Selected)
                 {
-                    selected = entry.index;
+                    selected = entry.Index;
                 }
-                else if (entry.newSelected)
+                else if (entry.NewSelected)
                 {
-                    newSelected = entry.index;
+                    newSelected = entry.Index;
                 }
             }
 
@@ -297,8 +297,8 @@ namespace Unity.LiveCapture
                 var entryRect = GetEntryRect(entryWidth, row, column);
                 entryRect.position += position.position;
 
-                k_TmpGUIContent.text = entry.displayName;
-                if (hasDescriptions && descriptions.TryGetValue(entry.name, out var tooltip))
+                k_TmpGUIContent.text = entry.DisplayName;
+                if (hasDescriptions && descriptions.TryGetValue(entry.Name, out var tooltip))
                 {
                     k_TmpGUIContent.tooltip = tooltip;
                 }
@@ -307,7 +307,7 @@ namespace Unity.LiveCapture
                     k_TmpGUIContent.tooltip = null;
                 }
 
-                entry.newSelected = m_Gui.Toggle(entryRect, entry.selected, k_TmpGUIContent);
+                entry.NewSelected = m_Gui.Toggle(entryRect, entry.Selected, k_TmpGUIContent);
                 enumValues[i] = entry;
             }
 
@@ -319,9 +319,9 @@ namespace Unity.LiveCapture
         {
             // Hardcoded 3px to fix right padding.
             return new Rect(
-                m_Gui.labelWidth + 3 + segmentWidth * column,
-                row * (m_Gui.singleLineHeight + m_Gui.standardVerticalSpacing),
-                segmentWidth, m_Gui.singleLineHeight);
+                m_Gui.LabelWidth + 3 + segmentWidth * column,
+                row * (m_Gui.SingleLineHeight + m_Gui.StandardVerticalSpacing),
+                segmentWidth, m_Gui.SingleLineHeight);
         }
     }
 }

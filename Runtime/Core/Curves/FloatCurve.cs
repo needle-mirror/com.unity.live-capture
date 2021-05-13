@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -16,25 +15,25 @@ namespace Unity.LiveCapture
         AnimationCurve m_Curve = new AnimationCurve();
 
         /// <inheritdoc/>
-        public string relativePath { get; }
+        public string RelativePath { get; }
 
         /// <inheritdoc/>
-        public string propertyName { get; }
+        public string PropertyName { get; }
 
         /// <inheritdoc/>
-        public Type bindingType { get; }
+        public Type BindingType { get; }
 
         /// <inheritdoc/>
-        public FrameRate frameRate
+        public FrameRate FrameRate
         {
-            get => m_Sampler.frameRate;
-            set => m_Sampler.frameRate = value;
+            get => m_Sampler.FrameRate;
+            set => m_Sampler.FrameRate = value;
         }
 
         /// <summary>
         /// The baked animation curve.
         /// </summary>
-        internal AnimationCurve animationCurve => m_Curve;
+        internal AnimationCurve AnimationCurve => m_Curve;
 
         /// <summary>
         /// Constructs an instance of FloatCurve.
@@ -44,9 +43,9 @@ namespace Unity.LiveCapture
         /// <param name="bindingType"> The class type of the component that is animated.</param>
         public FloatCurve(string relativePath, string propertyName, Type bindingType)
         {
-            this.relativePath = relativePath;
-            this.propertyName = propertyName;
-            this.bindingType = bindingType;
+            RelativePath = relativePath;
+            PropertyName = propertyName;
+            BindingType = bindingType;
         }
 
         /// <inheritdoc/>
@@ -80,7 +79,7 @@ namespace Unity.LiveCapture
                 return;
             }
 
-            clip.SetCurve(relativePath, bindingType, propertyName, m_Curve);
+            clip.SetCurve(RelativePath, BindingType, PropertyName, m_Curve);
         }
 
         void Flush()

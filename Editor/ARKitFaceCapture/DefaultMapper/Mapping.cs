@@ -1,29 +1,30 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.LiveCapture.Editor;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
+namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
 {
     abstract class Mapping : IDrawable
     {
         protected static class Contents
         {
-            public static readonly GUIContent faceShape = new GUIContent("Blend Shape", "The ARKit blend shape to influence this mesh blend shape with.");
-            public static readonly GUIContent meshShape = new GUIContent("Blend Shape", "The blend shape in the target mesh to influence.");
+            public static readonly GUIContent FaceShape = new GUIContent("Blend Shape", "The ARKit blend shape to influence this mesh blend shape with.");
+            public static readonly GUIContent MeshShape = new GUIContent("Blend Shape", "The blend shape in the target mesh to influence.");
 
-            public static readonly float locationWidth = 160f;
-            public static readonly float buttonWidth = 18f;
-            public static readonly float bindingSpacing = 6f * EditorGUIUtility.standardVerticalSpacing;
-            public static readonly float bindingSeparatorHeight = 2f;
-            public static readonly Vector2 optionDropdownSize = new Vector2(300f, 250f);
+            public static readonly float LocationWidth = 160f;
+            public static readonly float ButtonWidth = 18f;
+            public static readonly float BindingSpacing = 6f * EditorGUIUtility.standardVerticalSpacing;
+            public static readonly float BindingSeparatorHeight = 2f;
+            public static readonly Vector2 OptionDropdownSize = new Vector2(300f, 250f);
 
-            public static readonly Color configBackground1 = new Color(0f, 0f, 0f, 0.04f);
-            public static readonly Color configBackground2 = new Color(1f, 1f, 1f, 0.04f);
-            public static readonly Color separatorColor = new Color(0f, 0f, 0f, 0.1f);
-            public static readonly GUIContent iconToolbarPlus = EditorGUIUtility.TrIconContent("Toolbar Plus", "Add mapping.");
-            public static readonly GUIContent iconToolbarMinus = EditorGUIUtility.TrIconContent("Toolbar Minus", "Remove mapping.");
+            public static readonly Color ConfigBackground1 = new Color(0f, 0f, 0f, 0.04f);
+            public static readonly Color ConfigBackground2 = new Color(1f, 1f, 1f, 0.04f);
+            public static readonly Color SeparatorColor = new Color(0f, 0f, 0f, 0.1f);
+            public static readonly GUIContent IconToolbarPlus = EditorGUIUtility.TrIconContent("Toolbar Plus", "Add mapping.");
+            public static readonly GUIContent IconToolbarMinus = EditorGUIUtility.TrIconContent("Toolbar Minus", "Remove mapping.");
         }
 
         protected bool m_IsExpanded;
@@ -32,7 +33,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         /// <summary>
         /// The number of bindings under this mapping.
         /// </summary>
-        protected abstract int bindingCount { get; }
+        protected abstract int BindingCount { get; }
 
         protected Mapping(MappingList mappingList)
         {
@@ -58,10 +59,10 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
 
             if (m_IsExpanded)
             {
-                for (var i = 0; i < bindingCount; i++)
+                for (var i = 0; i < BindingCount; i++)
                 {
                     height += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
-                    height += GetConfig(i).GetHeight() + Contents.bindingSpacing;
+                    height += GetConfig(i).GetHeight() + Contents.BindingSpacing;
                 }
             }
 
@@ -78,12 +79,12 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
 
             var locationRect = new Rect(pos)
             {
-                width = Contents.locationWidth,
+                width = Contents.LocationWidth,
             };
             var foldoutRect = new Rect(pos)
             {
                 xMin = locationRect.xMax,
-                xMax = pos.xMax - Contents.buttonWidth,
+                xMax = pos.xMax - Contents.ButtonWidth,
             };
             var buttonRect = new Rect(pos)
             {
@@ -96,7 +97,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
 
             if (m_IsExpanded)
             {
-                for (var i = 0; i < bindingCount; i++)
+                for (var i = 0; i < BindingCount; i++)
                 {
                     var config = GetConfig(i);
 
@@ -106,14 +107,14 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                     {
                         xMin = pos.xMin,
                         xMax = pos.xMax,
-                        y = pos.y - Contents.bindingSeparatorHeight / 2f,
-                        height = Contents.bindingSeparatorHeight,
+                        y = pos.y - Contents.BindingSeparatorHeight / 2f,
+                        height = Contents.BindingSeparatorHeight,
                     };
                     var bindingRect = new Rect
                     {
                         xMin = pos.xMin,
                         xMax = pos.xMax - 20f,
-                        y = pos.y + (Contents.bindingSpacing / 2f),
+                        y = pos.y + (Contents.BindingSpacing / 2f),
                         height = EditorGUIUtility.singleLineHeight,
                     };
                     var configRect = new Rect
@@ -125,19 +126,19 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                     };
                     buttonRect.y = bindingRect.y;
 
-                    pos.yMax = configRect.yMax + (Contents.bindingSpacing / 2f);
+                    pos.yMax = configRect.yMax + (Contents.BindingSpacing / 2f);
 
                     // draw the shape config background with alternating colors
                     if (Event.current.type == EventType.Repaint)
                     {
-                        EditorGUI.DrawRect(pos, i % 2 == 0 ? Contents.configBackground1 : Contents.configBackground2);
-                        EditorGUI.DrawRect(separatorRect, Contents.separatorColor);
+                        EditorGUI.DrawRect(pos, i % 2 == 0 ? Contents.ConfigBackground1 : Contents.ConfigBackground2);
+                        EditorGUI.DrawRect(separatorRect, Contents.SeparatorColor);
                     }
 
                     OnBindingGUI(bindingRect, i);
                     config.OnGUI(configRect);
 
-                    if (GUI.Button(buttonRect, Contents.iconToolbarMinus, GUIStyle.none))
+                    if (GUI.Button(buttonRect, Contents.IconToolbarMinus, GUIStyle.none))
                     {
                         RemoveBinding(i);
                     }
@@ -148,22 +149,22 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         void OnFoldoutGUI(Rect rect)
         {
             string text;
-            switch (bindingCount)
+            switch (BindingCount)
             {
                 case 0:
                     text = string.Empty;
                     break;
                 case 1:
-                    text = $"{bindingCount} binding";
+                    text = $"{BindingCount} binding";
                     break;
                 default:
-                    text = $"{bindingCount} bindings";
+                    text = $"{BindingCount} bindings";
                     break;
             }
 
             var foldoutLabel = new GUIContent(text);
 
-            if (bindingCount == 0)
+            if (BindingCount == 0)
             {
                 EditorGUI.LabelField(rect, foldoutLabel);
             }
@@ -181,11 +182,11 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         {
             if (drawLabel)
             {
-                rect = EditorGUI.PrefixLabel(rect, Contents.faceShape);
+                rect = EditorGUI.PrefixLabel(rect, Contents.FaceShape);
             }
 
             var current = location.ToString();
-            var content = new GUIContent(current, Contents.faceShape.tooltip);
+            var content = new GUIContent(current, Contents.FaceShape.tooltip);
 
             if (GUI.Button(rect, content, EditorStyles.popup))
             {
@@ -193,7 +194,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                     .Select(l => new GUIContent(l.ToString()))
                     .ToArray();
 
-                OptionSelectWindow.SelectOption(rect, Contents.optionDropdownSize, options, (index, value) =>
+                OptionSelectWindow.SelectOption(rect, Contents.OptionDropdownSize, options, (index, value) =>
                 {
                     onSelect.Invoke(BlendShapeUtility.GetLocation(value));
                     m_MappingList.ApplyToProperties();
@@ -209,7 +210,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             {
                 using (var change = new EditorGUI.ChangeCheckScope())
                 {
-                    shapeIndex = EditorGUI.IntField(rect, drawLabel ? Contents.meshShape : GUIContent.none, shapeIndex);
+                    shapeIndex = EditorGUI.IntField(rect, drawLabel ? Contents.MeshShape : GUIContent.none, shapeIndex);
 
                     if (change.changed)
                         onSelect?.Invoke(shapeIndex);
@@ -219,16 +220,16 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             {
                 if (drawLabel)
                 {
-                    rect = EditorGUI.PrefixLabel(rect, Contents.meshShape);
+                    rect = EditorGUI.PrefixLabel(rect, Contents.MeshShape);
                 }
 
-                if (GUI.Button(rect, new GUIContent(content.text, Contents.meshShape.tooltip), EditorStyles.popup))
+                if (GUI.Button(rect, new GUIContent(content.text, Contents.MeshShape.tooltip), EditorStyles.popup))
                 {
                     var options = unusedShapeIndices
                         .Select(i => m_MappingList.GetShapeName(i))
                         .ToArray();
 
-                    OptionSelectWindow.SelectOption(rect, Contents.optionDropdownSize, options, (index, value) =>
+                    OptionSelectWindow.SelectOption(rect, Contents.OptionDropdownSize, options, (index, value) =>
                     {
                         onSelect.Invoke(m_MappingList.GetShapeIndex(value));
                         m_MappingList.ApplyToProperties();
@@ -253,18 +254,18 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
     {
         class ShapeIndexBinding
         {
-            public int shapeIndex;
-            public BindingConfig config;
+            public int ShapeIndex;
+            public BindingConfig Config;
         }
 
         FaceBlendShape m_Location;
         readonly List<ShapeIndexBinding> m_Bindings;
         readonly List<int> m_UnusedShapeIndices = new List<int>();
 
-        public FaceBlendShape location => m_Location;
+        public FaceBlendShape Location => m_Location;
 
         /// <inheritdoc />
-        protected override int bindingCount => m_Bindings.Count;
+        protected override int BindingCount => m_Bindings.Count;
 
         public LocationMapping(MappingList mappingList, FaceBlendShape location) : base(mappingList)
         {
@@ -280,10 +281,9 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             m_Location = location;
             m_Bindings = bindings.Select(binding => new ShapeIndexBinding
             {
-                shapeIndex = binding.shapeIndex,
-                config = binding.config,
-            })
-                .ToList();
+                ShapeIndex = binding.shapeIndex,
+                Config = binding.config,
+            }).ToList();
             m_IsExpanded = bindings.Any(binding => binding.isExpanded);
 
             RefreshUnusedShapeIndices();
@@ -293,14 +293,14 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         public override Binding[] GetBindings()
         {
             return m_Bindings
-                .Select(b => new Binding(m_Location, b.shapeIndex, b.config, m_IsExpanded))
+                .Select(b => new Binding(m_Location, b.ShapeIndex, b.Config, m_IsExpanded))
                 .ToArray();
         }
 
         /// <inheritdoc />
         protected override BindingConfig GetConfig(int index)
         {
-            return m_Bindings[index].config;
+            return m_Bindings[index].Config;
         }
 
         /// <inheritdoc />
@@ -313,7 +313,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         /// <inheritdoc />
         protected override void OnMappingValueGUI(Rect rect)
         {
-            DrawLocation(rect, false, m_Location, m_MappingList.unusedLocations, (value) =>
+            DrawLocation(rect, false, m_Location, m_MappingList.UnusedLocations, (value) =>
             {
                 m_Location = value;
                 m_MappingList.RefreshUnusedMappings();
@@ -325,14 +325,14 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         {
             using (new EditorGUI.DisabledScope(m_UnusedShapeIndices.Count == 0))
             {
-                if (GUI.Button(rect, Contents.iconToolbarPlus, GUIStyle.none))
+                if (GUI.Button(rect, Contents.IconToolbarPlus, GUIStyle.none))
                 {
                     var unusedShape = m_UnusedShapeIndices[0];
 
                     m_Bindings.Add(new ShapeIndexBinding
                     {
-                        shapeIndex = unusedShape,
-                        config = new BindingConfig(m_MappingList.defaultPreset),
+                        ShapeIndex = unusedShape,
+                        Config = new BindingConfig(m_MappingList.DefaultPreset),
                     });
 
                     RefreshUnusedShapeIndices();
@@ -345,9 +345,9 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         {
             var binding = m_Bindings[index];
 
-            DrawShapeIndex(rect, true, binding.shapeIndex, m_UnusedShapeIndices, (value) =>
+            DrawShapeIndex(rect, true, binding.ShapeIndex, m_UnusedShapeIndices, (value) =>
             {
-                binding.shapeIndex = value;
+                binding.ShapeIndex = value;
                 RefreshUnusedShapeIndices();
             });
         }
@@ -356,9 +356,9 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         {
             m_UnusedShapeIndices.Clear();
 
-            for (var i = 0; i < m_MappingList.meshBlendShapeCount; i++)
+            for (var i = 0; i < m_MappingList.MeshBlendShapeCount; i++)
             {
-                if (!m_Bindings.Any(b => b.shapeIndex == i))
+                if (!m_Bindings.Any(b => b.ShapeIndex == i))
                 {
                     m_UnusedShapeIndices.Add(i);
                 }
@@ -370,18 +370,18 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
     {
         class LocationBinding
         {
-            public FaceBlendShape location;
-            public BindingConfig config;
+            public FaceBlendShape Location;
+            public BindingConfig Config;
         }
 
         int m_ShapeIndex;
         readonly List<LocationBinding> m_Bindings;
         readonly List<FaceBlendShape> m_UnusedLocations = new List<FaceBlendShape>();
 
-        public int shapeIndex => m_ShapeIndex;
+        public int ShapeIndex => m_ShapeIndex;
 
         /// <inheritdoc />
-        protected override int bindingCount => m_Bindings.Count;
+        protected override int BindingCount => m_Bindings.Count;
 
         public ShapeIndexMapping(MappingList mappingList, int shapeIndex) : base(mappingList)
         {
@@ -397,10 +397,9 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             m_ShapeIndex = shapeIndex;
             m_Bindings = bindings.Select(binding => new LocationBinding
             {
-                location = binding.location,
-                config = binding.config,
-            })
-                .ToList();
+                Location = binding.location,
+                Config = binding.config,
+            }).ToList();
             m_IsExpanded = bindings.Any(binding => binding.isExpanded);
 
             RefreshUnusedLocations();
@@ -410,14 +409,14 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         public override Binding[] GetBindings()
         {
             return m_Bindings
-                .Select(b => new Binding(b.location, m_ShapeIndex, b.config, m_IsExpanded))
+                .Select(b => new Binding(b.Location, m_ShapeIndex, b.Config, m_IsExpanded))
                 .ToArray();
         }
 
         /// <inheritdoc />
         protected override BindingConfig GetConfig(int index)
         {
-            return m_Bindings[index].config;
+            return m_Bindings[index].Config;
         }
 
         /// <inheritdoc />
@@ -430,7 +429,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         /// <inheritdoc />
         protected override void OnMappingValueGUI(Rect rect)
         {
-            DrawShapeIndex(rect, false, m_ShapeIndex, m_MappingList.unusedShapeIndices, (value) =>
+            DrawShapeIndex(rect, false, m_ShapeIndex, m_MappingList.UnusedShapeIndices, (value) =>
             {
                 m_ShapeIndex = value;
                 m_MappingList.RefreshUnusedMappings();
@@ -442,14 +441,14 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         {
             using (new EditorGUI.DisabledScope(m_UnusedLocations.Count == 0))
             {
-                if (GUI.Button(rect, Contents.iconToolbarPlus, GUIStyle.none))
+                if (GUI.Button(rect, Contents.IconToolbarPlus, GUIStyle.none))
                 {
                     var unusedLocation = m_UnusedLocations[0];
 
                     m_Bindings.Add(new LocationBinding
                     {
-                        location = unusedLocation,
-                        config = new BindingConfig(m_MappingList.defaultPreset),
+                        Location = unusedLocation,
+                        Config = new BindingConfig(m_MappingList.DefaultPreset),
                     });
 
                     RefreshUnusedLocations();
@@ -462,9 +461,9 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         {
             var binding = m_Bindings[index];
 
-            DrawLocation(rect, true, binding.location, m_UnusedLocations, (value) =>
+            DrawLocation(rect, true, binding.Location, m_UnusedLocations, (value) =>
             {
-                binding.location = value;
+                binding.Location = value;
                 RefreshUnusedLocations();
             });
         }
@@ -473,9 +472,9 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         {
             m_UnusedLocations.Clear();
 
-            foreach (var location in FaceBlendShapePose.shapes)
+            foreach (var location in FaceBlendShapePose.Shapes)
             {
-                if (!m_Bindings.Any(b => b.location == location))
+                if (!m_Bindings.Any(b => b.Location == location))
                 {
                     m_UnusedLocations.Add(location);
                 }

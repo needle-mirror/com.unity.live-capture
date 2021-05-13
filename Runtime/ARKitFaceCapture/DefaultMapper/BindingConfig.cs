@@ -32,7 +32,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         /// <summary>
         /// The amount of smoothing to apply to the blend shape value, with a value in the range [0, 1].
         /// </summary>
-        public float smoothing => m_Smoothing;
+        public float Smoothing => m_Smoothing;
 
         /// <summary>
         /// Creates a new <see cref="BindingConfig"/> instance.
@@ -49,7 +49,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         public IEvaluator GetEvaluator()
         {
             if (m_EvaluatorPreset != null)
-                return m_EvaluatorPreset.evaluator;
+                return m_EvaluatorPreset.Evaluator;
 
             switch (m_Type)
             {
@@ -65,11 +65,11 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
 #if UNITY_EDITOR
         static class Contents
         {
-            public static readonly GUIContent smoothing = new GUIContent("Smoothing", "The amount of smoothing to apply to the blend shape value. " +
+            public static readonly GUIContent Smoothing = new GUIContent("Smoothing", "The amount of smoothing to apply to the blend shape value. " +
                 "It can help reduce jitter in the face capture, but it will also smooth out fast motions.");
-            public static readonly GUIContent evaluatorPreset = new GUIContent("Evaluator Preset", "A preset evaluation function to use. " +
+            public static readonly GUIContent EvaluatorPreset = new GUIContent("Evaluator Preset", "A preset evaluation function to use. " +
                 "If none is assigned, a new function must be configured for this blend shape.");
-            public static readonly GUIContent type = new GUIContent("Type", "The type of evaluation function to use when a preset is not assigned.");
+            public static readonly GUIContent Type = new GUIContent("Type", "The type of evaluation function to use when a preset is not assigned.");
         }
 
         /// <inheritdoc/>
@@ -92,15 +92,15 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             var line = rect;
             line.height = EditorGUIUtility.singleLineHeight;
 
-            m_Smoothing = EditorGUI.Slider(line, Contents.smoothing, m_Smoothing, 0f, 1f);
+            m_Smoothing = EditorGUI.Slider(line, Contents.Smoothing, m_Smoothing, 0f, 1f);
 
             GUIUtils.NextLine(ref line);
-            m_EvaluatorPreset = EditorGUI.ObjectField(line, Contents.evaluatorPreset, m_EvaluatorPreset, typeof(EvaluatorPreset), false) as EvaluatorPreset;
+            m_EvaluatorPreset = EditorGUI.ObjectField(line, Contents.EvaluatorPreset, m_EvaluatorPreset, typeof(EvaluatorPreset), false) as EvaluatorPreset;
 
             if (m_EvaluatorPreset == null)
             {
                 GUIUtils.NextLine(ref line);
-                m_Type = (Type)EditorGUI.EnumPopup(line, Contents.type, m_Type);
+                m_Type = (Type)EditorGUI.EnumPopup(line, Contents.Type, m_Type);
 
                 var evaluatorRect = rect;
                 evaluatorRect.yMin = line.yMax;

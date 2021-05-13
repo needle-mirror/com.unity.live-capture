@@ -1,12 +1,13 @@
 using System;
 using UnityEngine;
 using UnityEngine.Playables;
+
 using UnityObject = UnityEngine.Object;
 
 namespace Unity.LiveCapture
 {
     [Serializable]
-    class PlayableDirectorSlate : ISlate
+    class PlayableDirectorSlate : ISlatePlayer, ISlate
     {
         const string k_DefaultDirectory = "Assets/Takes";
         const string k_DefaultName = "New Shot";
@@ -30,61 +31,61 @@ namespace Unity.LiveCapture
         [SerializeField]
         PlayableDirector m_Director;
 
-        public UnityObject unityObject
+        public UnityObject UnityObject
         {
             get => m_UnityObject;
             set => m_UnityObject = value;
         }
 
-        public PlayableDirector director
+        public PlayableDirector Director
         {
             get => m_Director;
             set => m_Director = value;
         }
 
-        public string directory
+        public string Directory
         {
             get => m_Directory;
             set => m_Directory = value;
         }
 
-        public int sceneNumber
+        public int SceneNumber
         {
             get => m_SceneNumber;
             set => m_SceneNumber = value;
         }
 
-        public string shotName
+        public string ShotName
         {
             get => m_Name;
             set => m_Name = value;
         }
 
-        public int takeNumber
+        public int TakeNumber
         {
             get => m_TakeNumber;
             set => m_TakeNumber = value;
         }
 
-        public string description
+        public string Description
         {
             get => m_Description;
             set => m_Description = value;
         }
 
-        public Take take
+        public Take Take
         {
             get => m_Take;
             set => m_Take = value;
         }
 
-        public Take iterationBase
+        public Take IterationBase
         {
             get => m_IterationBase;
             set => m_IterationBase = value;
         }
 
-        public double duration
+        public double Duration
         {
             get
             {
@@ -97,27 +98,45 @@ namespace Unity.LiveCapture
             }
         }
 
-        public double time
+        public ISlate GetActiveSlate()
         {
-            get
-            {
-                if (m_Director != null)
-                {
-                    return m_Director.time;
-                }
+            return this;
+        }
 
-                return 0d;
+        public ISlate GetSlate(int index)
+        {
+            return this;
+        }
+
+        public int GetSlateCount()
+        {
+            return 1;
+        }
+
+        public double GetTime()
+        {
+            if (m_Director != null)
+            {
+                return m_Director.time;
             }
-            set
-            {
-                if (m_Director != null)
-                {
-                    m_Director.time = value;
-                    m_Director.Pause();
-                    m_Director.DeferredEvaluate();
 
-                    Callbacks.InvokeSeekOccurred(this, director);
-                }
+            return 0d;
+        }
+
+        public void SetTime(double time)
+        {
+            SetTime(GetActiveSlate(), time);
+        }
+
+        public void SetTime(ISlate slate, double time)
+        {
+            if (m_Director != null)
+            {
+                m_Director.time = time;
+                m_Director.Pause();
+                m_Director.DeferredEvaluate();
+
+                Callbacks.InvokeSeekOccurred(this, Director);
             }
         }
     }

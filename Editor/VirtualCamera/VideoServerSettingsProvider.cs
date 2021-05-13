@@ -1,9 +1,13 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.LiveCapture.Editor;
+using Unity.LiveCapture.VideoStreaming.Server;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Unity.LiveCapture.VirtualCamera
+namespace Unity.LiveCapture.VirtualCamera.Editor
 {
     class VideoServerSettingsProvider : SettingsProvider
     {
@@ -11,22 +15,28 @@ namespace Unity.LiveCapture.VirtualCamera
 
         static class Contents
         {
-            public static readonly GUIContent settingMenuIcon = EditorGUIUtility.IconContent("_Popup");
-            public static readonly GUIContent resetLabel = EditorGUIUtility.TrTextContent("Reset", "Reset to default.");
+            public static readonly GUIContent SettingMenuIcon = EditorGUIUtility.IconContent("_Popup");
+            public static readonly GUIContent ResetLabel = EditorGUIUtility.TrTextContent("Reset", "Reset to default.");
+            public static readonly GUIContent EncoderLabel = EditorGUIUtility.TrTextContent("Encoder", "The preferred encoder to use for video streaming.");
         }
 
         SerializedObject m_SerializedObject;
+        SerializedProperty m_Encoder;
         SerializedProperty m_ResolutionScale;
         SerializedProperty m_FrameRateProp;
         SerializedProperty m_QualityProp;
         SerializedProperty m_PrioritizeLatencyProp;
+
+        VideoEncoder[] m_EncodersSupportedOnPlatform;
+        GUIContent[] m_EncoderOptions;
+        EncoderSupport m_EncoderSupport;
 
         /// <summary>
         /// Open the settings in the User Preferences.
         /// </summary>
         public static void Open()
         {
-            SettingsService.OpenProjectSettings(k_SettingsMenuPath);
+            SettingsService.OpenUserPreferences(k_SettingsMenuPath);
         }
 
         public VideoServerSettingsProvider(string path, SettingsScope scopes, IEnumerable<string> keywords = null)
@@ -34,11 +44,23 @@ namespace Unity.LiveCapture.VirtualCamera
 
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {
-            m_SerializedObject = new SerializedObject(VideoServerSettings.instance);
+            m_SerializedObject = new SerializedObject(VideoServerSettings.Instance);
+            m_Encoder = m_SerializedObject.FindProperty("m_Encoder");
             m_ResolutionScale = m_SerializedObject.FindProperty("m_ResolutionScale");
             m_FrameRateProp = m_SerializedObject.FindProperty("m_FrameRate");
             m_QualityProp = m_SerializedObject.FindProperty("m_Quality");
             m_PrioritizeLatencyProp = m_SerializedObject.FindProperty("m_PrioritizeLatency");
+
+            m_EncodersSupportedOnPlatform = Enum.GetValues(typeof(VideoEncoder))
+                .Cast<VideoEncoder>()
+                .Where(e => EncoderUtilities.IsSupported(e) != EncoderSupport.NotSupportedOnPlatform)
+                .ToArray();
+
+            m_EncoderOptions = m_EncodersSupportedOnPlatform
+                .Select(e => new GUIContent(e.GetDisplayName()))
+                .ToArray();
+
+            m_EncoderSupport = EncoderUtilities.IsSupported((VideoEncoder)m_Encoder.intValue);
         }
 
         public override void OnDeactivate()
@@ -49,12 +71,12 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             m_SerializedObject.Update();
 
-            if (EditorGUILayout.DropdownButton(Contents.settingMenuIcon, FocusType.Passive, EditorStyles.label))
+            if (EditorGUILayout.DropdownButton(Contents.SettingMenuIcon, FocusType.Passive, EditorStyles.label))
             {
                 var menu = new GenericMenu();
-                menu.AddItem(Contents.resetLabel, false, reset =>
+                menu.AddItem(Contents.ResetLabel, false, reset =>
                 {
-                    VideoServerSettings.instance.Reset();
+                    VideoServerSettings.Instance.Reset();
                     VideoServerSettings.Save();
                 }, null);
                 menu.ShowAsContext();
@@ -68,6 +90,7 @@ namespace Unity.LiveCapture.VirtualCamera
             using (var change = new EditorGUI.ChangeCheckScope())
             using (new SettingsWindowGUIScope())
             {
+                DoEncoderGUI();
                 EditorGUILayout.PropertyField(m_ResolutionScale);
                 EditorGUILayout.PropertyField(m_FrameRateProp);
                 EditorGUILayout.PropertyField(m_QualityProp);
@@ -95,8 +118,46 @@ namespace Unity.LiveCapture.VirtualCamera
             return new VideoServerSettingsProvider(
                 k_SettingsMenuPath,
                 SettingsScope.User,
-                GetSearchKeywordsFromSerializedObject(new SerializedObject(VideoServerSettings.instance))
+                GetSearchKeywordsFromSerializedObject(new SerializedObject(VideoServerSettings.Instance))
             );
+        }
+
+        void DoEncoderGUI()
+        {
+            using (var change = new EditorGUI.ChangeCheckScope())
+            {
+                var currentIndex = Array.IndexOf(m_EncodersSupportedOnPlatform, (VideoEncoder)m_Encoder.intValue);
+
+                if (currentIndex == -1)
+                {
+                    currentIndex = Array.IndexOf(m_EncodersSupportedOnPlatform, EncoderUtilities.DefaultSupportedEncoder());
+                }
+
+                var newIndex = EditorGUILayout.Popup(Contents.EncoderLabel, currentIndex, m_EncoderOptions);
+
+                if (change.changed)
+                {
+                    var encoder = m_EncodersSupportedOnPlatform[newIndex];
+
+                    m_Encoder.intValue = (int)encoder;
+                    m_EncoderSupport = EncoderUtilities.IsSupported(encoder);
+                }
+
+                switch (m_EncoderSupport)
+                {
+                    case EncoderSupport.Supported:
+                        break;
+                    case EncoderSupport.NoDriver:
+                        EditorGUILayout.HelpBox("The driver required to use the selected encoder could not be found. Install the appropriate driver to resolve this issue.", MessageType.Error);
+                        break;
+                    case EncoderSupport.DriverVersionNotSupported:
+                        EditorGUILayout.HelpBox("The driver required by the selected encoder is too old. Update the driver to resolve this issue.", MessageType.Error);
+                        break;
+                    default:
+                        EditorGUILayout.HelpBox("The selected encoder is not available.", MessageType.Error);
+                        break;
+                }
+            }
         }
     }
 }

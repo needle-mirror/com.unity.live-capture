@@ -19,12 +19,12 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The frame rate fraction numerator.
         /// </summary>
-        public int numerator => (int)m_Numerator;
+        public int Numerator => (int)m_Numerator;
 
         /// <summary>
         /// The frame rate fraction denominator.
         /// </summary>
-        public int denominator => (int)m_Denominator;
+        public int Denominator => (int)m_Denominator;
 
         /// <summary>
         /// Should drop frame calculations be performed when converting between clock time and frame time using this frame rate.
@@ -32,22 +32,22 @@ namespace Unity.LiveCapture
         /// <remarks>
         /// This can only be <see langword="true"/> for NTSC frame rates.
         /// </remarks>
-        public bool isDropFrame => m_IsDropFrame && IsNtsc(m_Numerator, m_Denominator);
+        public bool IsDropFrame => m_IsDropFrame && IsNtsc(m_Numerator, m_Denominator);
 
         /// <summary>
         /// Is the frame rate valid.
         /// </summary>
-        public bool isValid => m_Denominator != 0;
+        public bool IsValid => m_Denominator != 0;
 
         /// <summary>
         /// Gets the reciprocal of the frame rate fraction.
         /// </summary>
-        public FrameRate reciprocal => new FrameRate(m_Denominator, m_Numerator, m_IsDropFrame);
+        public FrameRate Reciprocal => new FrameRate(m_Denominator, m_Numerator, m_IsDropFrame);
 
         /// <summary>
         /// Gets the length of time between frames in seconds.
         /// </summary>
-        public double frameInterval => (double)reciprocal;
+        public double FrameInterval => (double)Reciprocal;
 
         /// <summary>
         /// Creates a new <see cref="FrameRate"/> instance.
@@ -71,7 +71,7 @@ namespace Unity.LiveCapture
         /// <param name="denominator">The fraction denominator.</param>
         /// <param name="isDropFrame">Should drop frame calculations be performed when converting between
         /// clock time and frame time using this frame rate.</param>
-        /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="numerator"/> or <see cref="denominator"/> is negative.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="numerator"/> or <see cref="Denominator"/> is negative.</exception>
         public FrameRate(int numerator, int denominator, bool isDropFrame)
         {
             if (numerator < 0)
@@ -178,7 +178,7 @@ namespace Unity.LiveCapture
         public int CompareTo(FrameRate other)
         {
             GetComparableValues(ref this, ref other, out var a, out var b);
-            return a != b ? a.CompareTo(b) : isDropFrame.CompareTo(other.isDropFrame);
+            return a != b ? a.CompareTo(b) : IsDropFrame.CompareTo(other.IsDropFrame);
         }
 
         /// <summary>
@@ -207,7 +207,7 @@ namespace Unity.LiveCapture
         public bool Equals(FrameRate other)
         {
             GetComparableValues(ref this, ref other, out var a, out var b);
-            return a == b && isDropFrame == other.isDropFrame;
+            return a == b && IsDropFrame == other.IsDropFrame;
         }
 
         /// <summary>
@@ -231,7 +231,7 @@ namespace Unity.LiveCapture
             {
                 var hash = m_Numerator.GetHashCode();
                 hash = (hash * 397) ^ m_Denominator.GetHashCode();
-                hash = (hash * 397) ^ isDropFrame.GetHashCode();
+                hash = (hash * 397) ^ IsDropFrame.GetHashCode();
                 return hash;
             }
         }

@@ -37,83 +37,86 @@ namespace Unity.LiveCapture.VirtualCamera
     /// </summary>
     struct VirtualCameraLiveLinkJob : IAnimationJob
     {
-        public TransformStreamHandle transformHandle;
-        public PropertyStreamHandle focalLengthHandle;
-        public PropertyStreamHandle focalLengthRangeMinHandle;
-        public PropertyStreamHandle focalLengthRangeMaxHandle;
-        public PropertyStreamHandle focusDistanceHandle;
-        public PropertyStreamHandle focusDistanceRangeMinHandle;
-        public PropertyStreamHandle focusDistanceRangeMaxHandle;
-        public PropertyStreamHandle apertureHandle;
-        public PropertyStreamHandle apertureRangeMinHandle;
-        public PropertyStreamHandle apertureRangeMaxHandle;
-        public PropertyStreamHandle lensShiftXHandle;
-        public PropertyStreamHandle lensShiftYHandle;
-        public PropertyStreamHandle bladeCountHandle;
-        public PropertyStreamHandle curvatureXHandle;
-        public PropertyStreamHandle curvatureYHandle;
-        public PropertyStreamHandle barrelClippingHandle;
-        public PropertyStreamHandle anamorphismHandle;
-        public PropertyStreamHandle sensorSizeXHandle;
-        public PropertyStreamHandle sensorSizeYHandle;
-        public PropertyStreamHandle isoHandle;
-        public PropertyStreamHandle shutterSpeedHandle;
-        public PropertyStreamHandle depthOfFieldEnabledHandle;
-        public VirtualCameraChannelFlags channels;
-        public Vector3 position;
-        public Quaternion rotation;
-        public Lens lens;
-        public CameraBody cameraBody;
-        public bool depthOfFieldEnabled;
+        public TransformStreamHandle TransformHandle;
+        public PropertyStreamHandle FocalLengthHandle;
+        public PropertyStreamHandle FocalLengthRangeMinHandle;
+        public PropertyStreamHandle FocalLengthRangeMaxHandle;
+        public PropertyStreamHandle FocusDistanceHandle;
+        public PropertyStreamHandle CloseFocusDistanceHandle;
+        public PropertyStreamHandle ApertureHandle;
+        public PropertyStreamHandle ApertureRangeMinHandle;
+        public PropertyStreamHandle ApertureRangeMaxHandle;
+        public PropertyStreamHandle LensShiftXHandle;
+        public PropertyStreamHandle LensShiftYHandle;
+        public PropertyStreamHandle BladeCountHandle;
+        public PropertyStreamHandle CurvatureXHandle;
+        public PropertyStreamHandle CurvatureYHandle;
+        public PropertyStreamHandle BarrelClippingHandle;
+        public PropertyStreamHandle AnamorphismHandle;
+        public PropertyStreamHandle SensorSizeXHandle;
+        public PropertyStreamHandle SensorSizeYHandle;
+        public PropertyStreamHandle IsoHandle;
+        public PropertyStreamHandle ShutterSpeedHandle;
+        public PropertyStreamHandle DepthOfFieldEnabledHandle;
+        public PropertyStreamHandle CropAspectHandle;
+
+        public VirtualCameraChannelFlags Channels;
+        public Vector3 Position;
+        public Quaternion Rotation;
+        public Lens Lens;
+        public LensIntrinsics LensIntrinsics;
+        public CameraBody CameraBody;
+        public bool DepthOfFieldEnabled;
+        public float CropAspect;
 
         public void ProcessRootMotion(AnimationStream stream)
         {
-            if (channels.HasFlag(VirtualCameraChannelFlags.Position))
+            if (Channels.HasFlag(VirtualCameraChannelFlags.Position))
             {
-                transformHandle.SetLocalPosition(stream, position);
+                TransformHandle.SetLocalPosition(stream, Position);
             }
 
-            if (channels.HasFlag(VirtualCameraChannelFlags.Rotation))
+            if (Channels.HasFlag(VirtualCameraChannelFlags.Rotation))
             {
-                transformHandle.SetLocalRotation(stream, rotation);
+                TransformHandle.SetLocalRotation(stream, Rotation);
             }
         }
 
         public void ProcessAnimation(AnimationStream stream)
         {
-            if (channels.HasFlag(VirtualCameraChannelFlags.FocalLength))
+            if (Channels.HasFlag(VirtualCameraChannelFlags.FocalLength))
             {
-                focalLengthHandle.SetFloat(stream, lens.focalLength);
-                focalLengthRangeMinHandle.SetFloat(stream, lens.focalLengthRange.x);
-                focalLengthRangeMaxHandle.SetFloat(stream, lens.focalLengthRange.y);
+                FocalLengthHandle.SetFloat(stream, Lens.FocalLength);
+                FocalLengthRangeMinHandle.SetFloat(stream, LensIntrinsics.FocalLengthRange.x);
+                FocalLengthRangeMaxHandle.SetFloat(stream, LensIntrinsics.FocalLengthRange.y);
             }
 
-            if (channels.HasFlag(VirtualCameraChannelFlags.FocusDistance))
+            if (Channels.HasFlag(VirtualCameraChannelFlags.FocusDistance))
             {
-                depthOfFieldEnabledHandle.SetBool(stream, depthOfFieldEnabled);
-                focusDistanceHandle.SetFloat(stream, lens.focusDistance);
-                focusDistanceRangeMinHandle.SetFloat(stream, lens.focusDistanceRange.x);
-                focusDistanceRangeMaxHandle.SetFloat(stream, lens.focusDistanceRange.y);
+                DepthOfFieldEnabledHandle.SetBool(stream, DepthOfFieldEnabled);
+                FocusDistanceHandle.SetFloat(stream, Lens.FocusDistance);
+                CloseFocusDistanceHandle.SetFloat(stream, LensIntrinsics.CloseFocusDistance);
             }
 
-            if (channels.HasFlag(VirtualCameraChannelFlags.Aperture))
+            if (Channels.HasFlag(VirtualCameraChannelFlags.Aperture))
             {
-                apertureHandle.SetFloat(stream, lens.aperture);
-                apertureRangeMinHandle.SetFloat(stream, lens.apertureRange.x);
-                apertureRangeMaxHandle.SetFloat(stream, lens.apertureRange.y);
+                ApertureHandle.SetFloat(stream, Lens.Aperture);
+                ApertureRangeMinHandle.SetFloat(stream, LensIntrinsics.ApertureRange.x);
+                ApertureRangeMaxHandle.SetFloat(stream, LensIntrinsics.ApertureRange.y);
             }
 
-            lensShiftXHandle.SetFloat(stream, lens.lensShift.x);
-            lensShiftYHandle.SetFloat(stream, lens.lensShift.y);
-            bladeCountHandle.SetInt(stream, lens.bladeCount);
-            curvatureXHandle.SetFloat(stream, lens.curvature.x);
-            curvatureYHandle.SetFloat(stream, lens.curvature.y);
-            barrelClippingHandle.SetFloat(stream, lens.barrelClipping);
-            anamorphismHandle.SetFloat(stream, lens.anamorphism);
-            sensorSizeXHandle.SetFloat(stream, cameraBody.sensorSize.x);
-            sensorSizeYHandle.SetFloat(stream, cameraBody.sensorSize.y);
-            isoHandle.SetInt(stream, cameraBody.iso);
-            shutterSpeedHandle.SetFloat(stream, cameraBody.shutterSpeed);
+            LensShiftXHandle.SetFloat(stream, LensIntrinsics.LensShift.x);
+            LensShiftYHandle.SetFloat(stream, LensIntrinsics.LensShift.y);
+            BladeCountHandle.SetInt(stream, LensIntrinsics.BladeCount);
+            CurvatureXHandle.SetFloat(stream, LensIntrinsics.Curvature.x);
+            CurvatureYHandle.SetFloat(stream, LensIntrinsics.Curvature.y);
+            BarrelClippingHandle.SetFloat(stream, LensIntrinsics.BarrelClipping);
+            AnamorphismHandle.SetFloat(stream, LensIntrinsics.Anamorphism);
+            SensorSizeXHandle.SetFloat(stream, CameraBody.SensorSize.x);
+            SensorSizeYHandle.SetFloat(stream, CameraBody.SensorSize.y);
+            IsoHandle.SetInt(stream, CameraBody.Iso);
+            ShutterSpeedHandle.SetFloat(stream, CameraBody.ShutterSpeed);
+            CropAspectHandle.SetFloat(stream, CropAspect);
         }
     }
 
@@ -127,13 +130,15 @@ namespace Unity.LiveCapture.VirtualCamera
         /// Sets the channels that the live link will output to.
         /// </summary>
         [EnumFlagButtonGroup(100f)]
-        public VirtualCameraChannelFlags channels = VirtualCameraChannelFlags.All;
+        public VirtualCameraChannelFlags Channels = VirtualCameraChannelFlags.All;
 
-        public Vector3 position { get; set; }
-        public Quaternion rotation { get; set; }
-        public Lens lens { get; set; }
-        public CameraBody cameraBody { get; set; }
-        public bool depthOfFieldEnabled { get; set; }
+        public Vector3 Position { get; set; }
+        public Quaternion Rotation { get; set; }
+        public Lens Lens { get; set; }
+        public LensIntrinsics LensIntrinsics { get; set; }
+        public CameraBody CameraBody { get; set; }
+        public bool DepthOfFieldEnabled { get; set; }
+        public float CropAspect { get; set; }
 
         /// <inheritdoc/>
         protected override VirtualCameraLiveLinkJob CreateAnimationJob(Animator animator)
@@ -144,39 +149,40 @@ namespace Unity.LiveCapture.VirtualCamera
             var transform = animator.transform;
             var animationJob = new VirtualCameraLiveLinkJob();
 
-            animationJob.position = position;
-            animationJob.rotation = rotation;
-            animationJob.lens = lens;
-            animationJob.cameraBody = cameraBody;
-            animationJob.depthOfFieldEnabled = depthOfFieldEnabled;
+            animationJob.Position = Position;
+            animationJob.Rotation = Rotation;
+            animationJob.Lens = Lens;
+            animationJob.CameraBody = CameraBody;
+            animationJob.DepthOfFieldEnabled = DepthOfFieldEnabled;
 
-            animationJob.transformHandle = animator.BindStreamTransform(transform);
+            animationJob.TransformHandle = animator.BindStreamTransform(transform);
 
-            animationJob.focalLengthHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.focalLength");
-            animationJob.focalLengthRangeMinHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.focalLengthRange.x");
-            animationJob.focalLengthRangeMaxHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.focalLengthRange.y");
+            animationJob.FocalLengthHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.FocalLength");
+            animationJob.FocalLengthRangeMinHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.FocalLengthRange.x");
+            animationJob.FocalLengthRangeMaxHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.FocalLengthRange.y");
 
-            animationJob.focusDistanceHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.focusDistance");
-            animationJob.focusDistanceRangeMinHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.focusDistanceRange.x");
-            animationJob.focusDistanceRangeMaxHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.focusDistanceRange.y");
+            animationJob.FocusDistanceHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.FocusDistance");
+            animationJob.CloseFocusDistanceHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.CloseFocusDistance");
 
-            animationJob.apertureHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.aperture");
-            animationJob.apertureRangeMinHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.apertureRange.x");
-            animationJob.apertureRangeMaxHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.apertureRange.y");
+            animationJob.ApertureHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.Aperture");
+            animationJob.ApertureRangeMinHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.ApertureRange.x");
+            animationJob.ApertureRangeMaxHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.ApertureRange.y");
 
-            animationJob.lensShiftXHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.lensShift.x");
-            animationJob.lensShiftYHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.lensShift.y");
-            animationJob.bladeCountHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.bladeCount");
-            animationJob.curvatureXHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.curvature.x");
-            animationJob.curvatureYHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.curvature.y");
-            animationJob.barrelClippingHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.barrelClipping");
-            animationJob.anamorphismHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.anamorphism");
-            animationJob.sensorSizeXHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.sensorSize.x");
-            animationJob.sensorSizeYHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.sensorSize.y");
-            animationJob.isoHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.iso");
-            animationJob.shutterSpeedHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.shutterSpeed");
+            animationJob.LensShiftXHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.LensShift.x");
+            animationJob.LensShiftYHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.LensShift.y");
+            animationJob.BladeCountHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.BladeCount");
+            animationJob.CurvatureXHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.Curvature.x");
+            animationJob.CurvatureYHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.Curvature.y");
+            animationJob.BarrelClippingHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.BarrelClipping");
+            animationJob.AnamorphismHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.Anamorphism");
+            animationJob.SensorSizeXHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.SensorSize.x");
+            animationJob.SensorSizeYHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.SensorSize.y");
+            animationJob.IsoHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.Iso");
+            animationJob.ShutterSpeedHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.ShutterSpeed");
 
-            animationJob.depthOfFieldEnabledHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_DepthOfField");
+            animationJob.DepthOfFieldEnabledHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_DepthOfField");
+
+            animationJob.CropAspectHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CropAspect");
 
             return animationJob;
         }
@@ -184,12 +190,14 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         protected override VirtualCameraLiveLinkJob Update(VirtualCameraLiveLinkJob data)
         {
-            data.channels = channels;
-            data.position = position;
-            data.rotation = rotation;
-            data.lens = lens;
-            data.cameraBody = cameraBody;
-            data.depthOfFieldEnabled = depthOfFieldEnabled;
+            data.Channels = Channels;
+            data.Position = Position;
+            data.Rotation = Rotation;
+            data.Lens = Lens;
+            data.LensIntrinsics = LensIntrinsics;
+            data.CameraBody = CameraBody;
+            data.DepthOfFieldEnabled = DepthOfFieldEnabled;
+            data.CropAspect = CropAspect;
 
             return data;
         }

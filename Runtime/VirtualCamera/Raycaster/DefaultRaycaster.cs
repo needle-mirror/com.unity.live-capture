@@ -14,7 +14,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// Creates an instance of DefaultRaycaster.
         /// </summary>
-        /// <param name="graphicsRaycaster">The <see cref="GraphicsRaycaster"> to use.</param>
+        /// <param name="graphicsRaycaster">The <see cref="GraphicsRaycaster"/> to use.</param>
         public DefaultRaycaster(GraphicsRaycaster graphicsRaycaster)
         {
             if (graphicsRaycaster == null)
@@ -65,13 +65,11 @@ namespace Unity.LiveCapture.VirtualCamera
                 throw new Exception("GraphicsRaycaster instance has been destroyed.");
             }
 
-            var isValid = camera != null && m_GraphicsRaycaster.isSupported;
-
-            if (isValid)
+            if (camera != null)
             {
                 var screenPosition = new Vector2(camera.pixelWidth * normalizedPosition.x, camera.pixelHeight * normalizedPosition.y);
                 ray = camera.ScreenPointToRay(screenPosition);
-                bounds = LensParameterBounds.focusDistance;
+                bounds = LensLimits.FocusDistance;
                 return true;
             }
 

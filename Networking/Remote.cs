@@ -6,27 +6,27 @@ namespace Unity.LiveCapture.Networking
     /// <summary>
     /// A handle to a remote server or client.
     /// </summary>
-    public class Remote : IEquatable<Remote>
+    class Remote : IEquatable<Remote>
     {
         /// <summary>
         /// The handle that represents all remotes.
         /// </summary>
-        public static Remote all { get; } = new Remote(Guid.Parse("ffffffffffffffffffffffffffffffff"), null, null);
+        public static Remote All { get; } = new Remote(Guid.Parse("ffffffffffffffffffffffffffffffff"), null, null);
 
         /// <summary>
         /// The ID of the <see cref="NetworkBase"/> represented by this handle.
         /// </summary>
-        public Guid id { get; }
+        public Guid ID { get; }
 
         /// <summary>
         /// The ip address and port the remote uses for reliable communication.
         /// </summary>
-        public IPEndPoint tcpEndPoint { get; }
+        public IPEndPoint TcpEndPoint { get; }
 
         /// <summary>
         /// The ip address and port the remote uses for unreliable communication.
         /// </summary>
-        public IPEndPoint udpEndPoint { get; }
+        public IPEndPoint UdpEndPoint { get; }
 
         /// <summary>
         /// Creates a new <see cref="Remote"/> handle instance.
@@ -36,9 +36,9 @@ namespace Unity.LiveCapture.Networking
         /// <param name="udpEndPoint">The ip address and port the remote uses for unreliable communication.</param>
         internal Remote(Guid id, IPEndPoint tcpEndPoint, IPEndPoint udpEndPoint)
         {
-            this.id = id;
-            this.tcpEndPoint = tcpEndPoint;
-            this.udpEndPoint = udpEndPoint;
+            ID = id;
+            TcpEndPoint = tcpEndPoint;
+            UdpEndPoint = udpEndPoint;
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace Unity.LiveCapture.Networking
         /// </summary>
         /// <param name="other">The other <see cref="Remote"/> to compare with the current object.</param>
         /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>
-        public bool Equals(Remote other) => !(other is null) && id == other.id;
+        public bool Equals(Remote other) => !(other is null) && ID == other.ID;
 
         /// <summary>
         /// Determines whether two object instances are equal.
@@ -59,7 +59,7 @@ namespace Unity.LiveCapture.Networking
         /// Serves as the default hash function.
         /// </summary>
         /// <returns>A hash code for the current object.</returns>
-        public override int GetHashCode() => id.GetHashCode();
+        public override int GetHashCode() => ID.GetHashCode();
 
         /// <summary>
         /// Returns a string that represents the current object.
@@ -68,7 +68,7 @@ namespace Unity.LiveCapture.Networking
         public override string ToString()
         {
             // truncate the GUID to keep it a readable length
-            return this == all ? "All" : $"{id.ToString("N").Substring(0, 8)}";
+            return this == All ? "All" : $"{ID.ToString("N").Substring(0, 8)}";
         }
 
         /// <summary>

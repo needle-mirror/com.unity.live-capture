@@ -12,7 +12,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The description of the enum value.
         /// </summary>
-        public readonly string description;
+        public readonly string Description;
 
         /// <summary>
         /// Creates a new <see cref="DescriptionAttribute"/> instance.
@@ -20,7 +20,7 @@ namespace Unity.LiveCapture
         /// <param name="description">The description of the enum value</param>
         public DescriptionAttribute(string description)
         {
-            this.description = description;
+            Description = description;
         }
     }
 }

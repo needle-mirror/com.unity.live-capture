@@ -41,7 +41,13 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The device calls this method when the device is about to get destroyed.
         /// </summary>
-        public virtual void OnDestroyDevice() {}
+        /// <remarks>
+        /// If you override this method, call the base method in your implementation.
+        /// </remarks>
+        protected virtual void OnDestroy()
+        {
+            Unregister();
+        }
 
         /// <summary>
         /// Updates the internal state of the device.
@@ -107,13 +113,6 @@ namespace Unity.LiveCapture
                 UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
             }
 #endif
-        }
-
-        void OnDestroy()
-        {
-            Unregister();
-
-            OnDestroyDevice();
         }
 
         void Update()

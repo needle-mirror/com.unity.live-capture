@@ -49,6 +49,12 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
             m_Camera.cameraType = CameraType.Preview;
 
             var data = m_Raycaster.AddComponent<HDAdditionalCameraData>();
+
+            // Avoid an HDRP 10.2.2 Volumetric System leak.
+            data.customRenderingSettings = true;
+            data.renderingPathCustomFrameSettings.SetEnabled(FrameSettingsField.ReprojectionForVolumetrics, false);
+            data.renderingPathCustomFrameSettingsOverrideMask.mask[(uint)FrameSettingsField.ReprojectionForVolumetrics] = true;
+
             data.customRender += Render;
         }
 

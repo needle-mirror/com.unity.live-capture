@@ -7,9 +7,12 @@ using UnityEngine;
 namespace Unity.LiveCapture.Networking
 {
     /// <summary>
-    /// Represents a connection to a remote. The connection health is tested using a heartbeat,
-    /// sending and receiving UDP packets periodically from the remote to ensure it is still reachable.
+    /// Represents a connection to a remote.
     /// </summary>
+    /// <remarks>
+    /// The connection health is tested using a heartbeat, sending and receiving UDP packets periodically from the
+    /// remote to ensure it is still reachable.
+    /// </remarks>
     class Connection
     {
         /// <summary>
@@ -35,7 +38,7 @@ namespace Unity.LiveCapture.Networking
         /// <summary>
         /// The remote at the other end of the connection.
         /// </summary>
-        public Remote remote { get; }
+        public Remote Remote { get; }
 
         /// <summary>
         /// Creates a new <see cref="Connection"/> instance.
@@ -49,7 +52,7 @@ namespace Unity.LiveCapture.Networking
             m_Network = network ?? throw new ArgumentNullException(nameof(tcp));
             m_Tcp = tcp ?? throw new ArgumentNullException(nameof(tcp));
             m_Udp = udp ?? throw new ArgumentNullException(nameof(udp));
-            this.remote = remote ?? throw new ArgumentNullException(nameof(remote));
+            Remote = remote ?? throw new ArgumentNullException(nameof(remote));
 
             m_Tcp.RegisterConnection(this);
             m_Udp.RegisterConnection(this);
@@ -76,14 +79,14 @@ namespace Unity.LiveCapture.Networking
 
             // Remote the connection from sockets that are shared, and
             // dispose sockets that are exclusive to this connection.
-            if (!m_Udp.isDisposed)
+            if (!m_Udp.IsDisposed)
             {
                 m_Udp.DeregisterConnection(this);
 
-                if (m_Udp.remoteEndPoint != null)
+                if (m_Udp.RemoteEndPoint != null)
                     m_Udp.Dispose();
             }
-            if (!m_Tcp.isDisposed)
+            if (!m_Tcp.IsDisposed)
             {
                 m_Tcp.DeregisterConnection(this);
                 m_Tcp.Dispose();
@@ -100,7 +103,7 @@ namespace Unity.LiveCapture.Networking
             if (m_Disposed)
                 throw new ObjectDisposedException(nameof(Connection));
 
-            switch (packet.message.channelType)
+            switch (packet.Message.ChannelType)
             {
                 case ChannelType.ReliableOrdered:
                     m_Tcp.Send(packet, synchronous);
@@ -109,7 +112,7 @@ namespace Unity.LiveCapture.Networking
                     m_Udp.Send(packet, synchronous);
                     break;
                 default:
-                    throw new ArgumentException($"Message channel {packet.message.channelType} is not supported.");
+                    throw new ArgumentException($"Message channel {packet.Message.ChannelType} is not supported.");
             }
         }
 
@@ -151,9 +154,9 @@ namespace Unity.LiveCapture.Networking
             while (m_TempReceiveQueue.Count > 0)
             {
                 var packet = m_TempReceiveQueue.Dequeue();
-                var message = packet.message;
+                var message = packet.Message;
 
-                switch (packet.type)
+                switch (packet.PacketType)
                 {
                     case Packet.Type.Generic:
                     {
@@ -173,7 +176,7 @@ namespace Unity.LiveCapture.Networking
                         return;
                     }
                     default:
-                        Debug.LogError($"A packet of type {packet.type} ({(int)packet.type}) was received but that type is never used!");
+                        Debug.LogError($"A packet of type {packet.PacketType} ({(int)packet.PacketType}) was received but that type is never used!");
                         message.Dispose();
                         break;
                 }
@@ -194,7 +197,7 @@ namespace Unity.LiveCapture.Networking
 
                 if (!m_HeartbeatCancellationToken.IsCancellationRequested)
                 {
-                    var message = Message.Get(remote, ChannelType.UnreliableUnordered);
+                    var message = Message.Get(Remote, ChannelType.UnreliableUnordered);
                     var packet = new Packet(message, Packet.Type.Heartbeat);
 
                     Send(packet, false);

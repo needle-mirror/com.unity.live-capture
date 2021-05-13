@@ -18,13 +18,19 @@ namespace Unity.LiveCapture
     /// the animation stream and make actors in the scene go live.
     /// </remarks>
     [ExecuteAlways]
+    [DefaultExecutionOrder(-10)]
     [DisallowMultipleComponent]
     [ExcludeFromPreset]
     [RequireComponent(typeof(PlayableDirector))]
-    [RequireComponent(typeof(SlateDatabase))]
     [AddComponentMenu("Live Capture/Take Recorder")]
-    public class TakeRecorder : MonoBehaviour, ITakeRecorder
+    public class TakeRecorder : MonoBehaviour, ITakeRecorderInternal
     {
+        [SerializeField, HideInInspector]
+        PlayableAsset m_NullPlayableAsset = null;
+        [SerializeField]
+        PlayableDirectorSlate m_DefaultSlatePlayer = new PlayableDirectorSlate();
+        [SerializeField]
+        TakePlayer m_TakePlayer = new TakePlayer();
         [SerializeField, OnlyStandardFrameRates]
         FrameRate m_FrameRate = StandardFrameRate.FPS_30_00;
         [SerializeField]
@@ -32,18 +38,17 @@ namespace Unity.LiveCapture
         [SerializeField]
         bool m_Live = true;
         PlayableDirector m_Director;
-        SlateDatabase m_SlateDatabase;
         PlayableGraph m_DirectorGraph;
         List<LiveCaptureDevice> m_RecordingDevices = new List<LiveCaptureDevice>();
         bool m_Recording;
         PlayableGraph m_PreviewGraph;
         TakeRecorderPlayable m_Playable;
+        ISlatePlayer m_ExternalSlatePlayer;
+        bool m_IsEvaluatingExternally;
+        Texture2D m_Screenshot;
 
         /// <inheritdoc/>
-        public ISlate slate => m_SlateDatabase.slate;
-
-        /// <inheritdoc/>
-        public FrameRate frameRate
+        public FrameRate FrameRate
         {
             get => m_FrameRate;
             set
@@ -55,16 +60,49 @@ namespace Unity.LiveCapture
             }
         }
 
+        /// <inheritdoc/>
+        public ISlate GetActiveSlate()
+        {
+            return GetEffectiveSlatePlayer().GetActiveSlate();
+        }
+
+        /// <inheritdoc/>
+        void ITakeRecorderInternal.SetPreviewTime(ISlate slate, double time)
+        {
+            GetEffectiveSlatePlayer().SetTime(slate, time);
+        }
+
+        internal int GetSlateCount()
+        {
+            return GetEffectiveSlatePlayer().GetSlateCount();
+        }
+
+        internal ISlate GetSlate(int index)
+        {
+            return GetEffectiveSlatePlayer().GetSlate(index);
+        }
+
+        internal PlayableDirector GetPlayableDirector()
+        {
+            if (m_Director == null)
+            {
+                SetupComponents();
+            }
+
+            return m_Director;
+        }
+
         void OnDisable()
         {
             StopRecordingInternal();
             DestroyPreviewGraph();
             DestroyLiveLink();
+            DisposeScreenshot();
         }
 
         void OnValidate()
         {
-            ValidateDevices();
+            m_Devices.RemoveAll(device => !IsDeviceValid(device));
         }
 
         void Awake()
@@ -84,18 +122,79 @@ namespace Unity.LiveCapture
 
         void SetupComponents()
         {
-            m_Director = GetComponent<PlayableDirector>();
-            m_SlateDatabase = GetComponent<SlateDatabase>();
+            if (m_Director == null)
+            {
+                m_Director = GetComponent<PlayableDirector>();
+            }
+
+            m_DefaultSlatePlayer.Director = m_Director;
+            m_DefaultSlatePlayer.UnityObject = this;
+
+            m_TakePlayer.Director = m_Director;
+            m_TakePlayer.FallbackPlayableAsset = m_NullPlayableAsset;
+        }
+
+        internal void SetSlatePlayer(ISlatePlayer slatePlayer)
+        {
+            m_ExternalSlatePlayer = slatePlayer;
+        }
+
+        internal void RemoveSlatePlayer(ISlatePlayer slatePlayer)
+        {
+            if (m_ExternalSlatePlayer == slatePlayer)
+            {
+                m_ExternalSlatePlayer = null;
+            }
+        }
+
+        ISlatePlayer GetEffectiveSlatePlayer()
+        {
+            if (m_ExternalSlatePlayer != null)
+            {
+                return m_ExternalSlatePlayer;
+            }
+            else
+            {
+                return m_DefaultSlatePlayer;
+            }
+        }
+
+        internal bool IsExternalSlatePlayer()
+        {
+            return m_ExternalSlatePlayer != null;
+        }
+
+        internal void Prepare(ISlatePlayer slatePlayer)
+        {
+            if (m_ExternalSlatePlayer == slatePlayer)
+            {
+                var take = default(Take);
+                var slate = slatePlayer.GetActiveSlate();
+
+                if (slate != null)
+                {
+                    take = slate.Take;
+                }
+
+                m_TakePlayer.Take = take;
+                m_IsEvaluatingExternally = true;
+            }
         }
 
         internal void AddDevice(LiveCaptureDevice device)
         {
-            m_Devices.AddUnique(device);
+            if (m_Devices.AddUnique(device))
+            {
+                BuildLiveLink(device);
+            }
         }
 
         internal void RemoveDevice(LiveCaptureDevice device)
         {
-            m_Devices.Remove(device);
+            if (m_Devices.Remove(device))
+            {
+                device.BuildLiveLink(default(PlayableGraph));
+            }
         }
 
         internal bool ContainsDevice(LiveCaptureDevice device)
@@ -145,15 +244,20 @@ namespace Unity.LiveCapture
         /// <inheritdoc/>
         public void StartRecording()
         {
+            var slate = GetEffectiveSlatePlayer().GetActiveSlate();
+
             if (isActiveAndEnabled
+                && slate != null
                 && IsLive()
                 && !IsRecording())
             {
+                TakeScreenshot();
+
                 m_Recording = true;
 
                 Debug.Assert(slate != null);
 
-                slate.take = slate.iterationBase;
+                slate.Take = slate.IterationBase;
 
                 PlayPreview();
 
@@ -202,17 +306,21 @@ namespace Unity.LiveCapture
                     }
                 }
 
-                if (m_RecordingDevices.Count > 0)
+                var slate = GetEffectiveSlatePlayer().GetActiveSlate();
+
+                if (slate != null && m_RecordingDevices.Count > 0)
                 {
-                    slate.take = ProduceTake();
-                    slate.takeNumber++;
+                    slate.Take = ProduceTake();
+                    slate.TakeNumber++;
 #if UNITY_EDITOR
-                    if (slate.unityObject != null)
+                    if (slate.UnityObject != null)
                     {
-                        EditorUtility.SetDirty(slate.unityObject);
+                        EditorUtility.SetDirty(slate.UnityObject);
                     }
 #endif
                 }
+
+                DisposeScreenshot();
             }
         }
 
@@ -221,7 +329,7 @@ namespace Unity.LiveCapture
         {
             if (m_Playable != null)
             {
-                return m_Playable.playing;
+                return m_Playable.Playing;
             }
 
             return false;
@@ -252,25 +360,39 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
+        public double GetPreviewTime()
+        {
+            return GetEffectiveSlatePlayer().GetTime();
+        }
+
+        /// <inheritdoc/>
         public void SetPreviewTime(double time)
         {
             if (isActiveAndEnabled)
             {
-                Debug.Assert(slate != null);
+                var slate = GetEffectiveSlatePlayer().GetActiveSlate();
 
-                CreatePreviewGraphIfNeeded();
-
-                if (time < 0d)
+                if (slate != null)
                 {
-                    time = 0d;
-                }
-                else if (time > slate.duration)
-                {
-                    time = slate.duration;
-                }
+                    CreatePreviewGraphIfNeeded();
 
-                m_Playable.SetTime(time);
+                    if (time < 0d)
+                    {
+                        time = 0d;
+                    }
+                    else if (time > slate.Duration)
+                    {
+                        time = slate.Duration;
+                    }
+
+                    m_Playable.SetTime(time);
+                }
             }
+        }
+
+        internal void SetPreviewTimeInternal(double time)
+        {
+            GetEffectiveSlatePlayer().SetTime(time);
         }
 
         internal void OnPreviewEnded()
@@ -301,18 +423,20 @@ namespace Unity.LiveCapture
 
         Take ProduceTake()
         {
+            var slate = GetEffectiveSlatePlayer().GetActiveSlate();
+
             Debug.Assert(slate != null);
 
             using (var takeBuilder = new TakeBuilder(
-                LiveCaptureSettings.instance.takeNameFormat,
-                LiveCaptureSettings.instance.assetNameFormat,
-                slate.sceneNumber,
-                slate.shotName,
-                slate.takeNumber,
-                slate.description,
-                slate.directory,
-                slate.iterationBase,
-                frameRate,
+                slate.Duration,
+                slate.SceneNumber,
+                slate.ShotName,
+                slate.TakeNumber,
+                slate.Description,
+                slate.Directory,
+                slate.IterationBase,
+                FrameRate,
+                m_Screenshot,
                 m_Director))
             {
                 TimelineUndoUtility.SetUndoEnabled(false);
@@ -321,7 +445,7 @@ namespace Unity.LiveCapture
 
                 TimelineUndoUtility.SetUndoEnabled(true);
 
-                return takeBuilder.take;
+                return takeBuilder.Take;
             }
         }
 
@@ -345,7 +469,12 @@ namespace Unity.LiveCapture
 
         void Update()
         {
-            ValidateDevices();
+            if (m_ExternalSlatePlayer == null)
+            {
+                m_TakePlayer.Take = m_DefaultSlatePlayer.Take;
+            }
+
+            m_TakePlayer.Update();
 
             foreach (var device in m_Devices)
             {
@@ -354,18 +483,15 @@ namespace Unity.LiveCapture
                     device.UpdateDevice();
                 }
             }
-
-            SetupDirectorGraphIfNeeded();
-
-            if (IsLive() && IsValidAndPaused())
-            {
-                Evaluate();
-            }
         }
 
-        void ValidateDevices()
+        void LateUpdate()
         {
-            m_Devices.RemoveAll(device => !IsDeviceValid(device));
+            SetupDirectorGraphIfNeeded();
+
+            EvaluateIfNeeded();
+
+            m_IsEvaluatingExternally = false;
         }
 
         bool IsDeviceValid(LiveCaptureDevice device)
@@ -389,7 +515,7 @@ namespace Unity.LiveCapture
             output.SetSourcePlayable(playable);
 
             m_Playable = playable.GetBehaviour();
-            m_Playable.takeRecorder = this;
+            m_Playable.TakeRecorder = this;
         }
 
         void DestroyPreviewGraph()
@@ -413,6 +539,8 @@ namespace Unity.LiveCapture
 
             if (!m_DirectorGraph.Equals(graph))
             {
+                m_IsEvaluatingExternally = false;
+                m_Director.Pause();
                 m_DirectorGraph = graph;
 
                 BuildLiveLink();
@@ -428,10 +556,15 @@ namespace Unity.LiveCapture
 
             foreach (var device in m_Devices)
             {
-                if (device != null && device.isActiveAndEnabled)
-                {
-                    device.BuildLiveLink(m_DirectorGraph);
-                }
+                BuildLiveLink(device);
+            }
+        }
+
+        void BuildLiveLink(LiveCaptureDevice device)
+        {
+            if (device != null && device.isActiveAndEnabled && IsLive())
+            {
+                device.BuildLiveLink(m_DirectorGraph);
             }
         }
 
@@ -443,17 +576,47 @@ namespace Unity.LiveCapture
             }
         }
 
-        void Evaluate()
+        void EvaluateIfNeeded()
         {
-            if (m_DirectorGraph.IsValid())
+            if (!m_IsEvaluatingExternally
+                && IsLive()
+                && m_DirectorGraph.IsValid()
+                && !m_DirectorGraph.IsPlaying())
             {
                 m_DirectorGraph.Evaluate();
             }
         }
 
-        bool IsValidAndPaused()
+        void TakeScreenshot()
         {
-            return m_DirectorGraph.IsValid() && !m_DirectorGraph.IsPlaying();
+            DisposeScreenshot();
+
+            var camera = Camera.main;
+
+            if (camera == null && Camera.allCamerasCount > 0)
+            {
+                camera = Camera.allCameras[0];
+            }
+
+            if (camera != null)
+            {
+                m_Screenshot = Screenshot.Take(camera);
+            }
+        }
+
+        void DisposeScreenshot()
+        {
+            if (m_Screenshot != null)
+            {
+                if (Application.isPlaying)
+                {
+                    Destroy(m_Screenshot);
+                }
+                else
+                {
+                    DestroyImmediate(m_Screenshot);
+                }
+            }
         }
     }
 }

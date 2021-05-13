@@ -17,7 +17,7 @@ namespace Unity.LiveCapture.Networking
         /// <summary>
         /// The ID of the <see cref="NetworkBase"/> instance for a remote.
         /// </summary>
-        public Guid id => m_Id;
+        public Guid ID => m_Id;
 
         /// <summary>
         /// The TCP end point the remote uses to communicate.

@@ -59,14 +59,14 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
         /// <inheritdoc/>
-        public bool SetPhysicalCameraProperties(Lens lens, CameraBody cameraBody)
+        public bool SetPhysicalCameraProperties(Lens lens, LensIntrinsics intrinsics, CameraBody cameraBody)
         {
-            CompositeCameraDriverImpl.UpdateCamera(m_Camera, lens, cameraBody);
+            CompositeCameraDriverImpl.UpdateCamera(m_Camera, lens, intrinsics, cameraBody);
 
             VolumeComponentUtility.UpdateParameterIfNeeded(m_DepthOfField.highQualitySampling, m_UseHighQualityDepthOfField);
-            VolumeComponentUtility.UpdateParameterIfNeeded(m_DepthOfField.focalLength, lens.focalLength);
-            VolumeComponentUtility.UpdateParameterIfNeeded(m_DepthOfField.aperture, lens.aperture);
-            VolumeComponentUtility.UpdateParameterIfNeeded(m_DepthOfField.bladeCount, lens.bladeCount);
+            VolumeComponentUtility.UpdateParameterIfNeeded(m_DepthOfField.focalLength, lens.FocalLength);
+            VolumeComponentUtility.UpdateParameterIfNeeded(m_DepthOfField.aperture, lens.Aperture);
+            VolumeComponentUtility.UpdateParameterIfNeeded(m_DepthOfField.bladeCount, intrinsics.BladeCount);
 
             return true;
         }

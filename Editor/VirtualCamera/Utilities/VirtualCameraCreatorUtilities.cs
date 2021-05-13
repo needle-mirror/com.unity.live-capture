@@ -8,7 +8,7 @@ using UnityEngine.Rendering.HighDefinition;
 using Cinemachine;
 #endif
 
-namespace Unity.LiveCapture.VirtualCamera
+namespace Unity.LiveCapture.VirtualCamera.Editor
 {
     static class VirtualCameraCreatorUtilities
     {
@@ -18,7 +18,9 @@ namespace Unity.LiveCapture.VirtualCamera
         [MenuItem("GameObject/Live Capture/Camera/Virtual Camera Actor", false, 10)]
         public static void CreateVirtualCameraActor()
         {
-            var root = new GameObject("Virtual Camera Actor", typeof(PhysicalCameraDriver)).transform;
+            var root = new GameObject("Virtual Camera Actor",
+                typeof(PhysicalCameraDriver),
+                typeof(FrameLines)).transform;
             GameObjectUtility.EnsureUniqueNameForSibling(root.gameObject);
             Undo.RegisterCreatedObjectUndo(root.gameObject, "Create " + root.name);
             Selection.activeObject = root;
@@ -74,13 +76,16 @@ namespace Unity.LiveCapture.VirtualCamera
             }
             else if (brain == null)
             {
-                brain = camera.gameObject.AddComponent<CinemachineBrain>();
-                Undo.RegisterCreatedObjectUndo(brain, undoName);
+                brain = Undo.AddComponent<CinemachineBrain>(camera.gameObject);
             }
 
 #if HDRP_10_2_OR_NEWER
             ConfigureHDCamera(camera);
 #endif
+            if (camera.GetComponent<FrameLines>() == null)
+            {
+                Undo.AddComponent<FrameLines>(camera.gameObject);
+            }
 
             var root = new GameObject(name, typeof(CinemachineCameraDriver)).transform;
             GameObjectUtility.EnsureUniqueNameForSibling(root.gameObject);
@@ -97,7 +102,7 @@ namespace Unity.LiveCapture.VirtualCamera
             virtualCamera.AddCinemachineComponent<CinemachineSameAsFollowTarget>();
 
             var driver = root.GetComponent<CinemachineCameraDriver>();
-            driver.cinemachineVirtualCamera = virtualCamera;
+            driver.CinemachineVirtualCamera = virtualCamera;
 
             MatchToSceneView(root);
         }
@@ -118,7 +123,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             var additionalCameraData = camera.GetComponent<HDAdditionalCameraData>();
             if (additionalCameraData == null)
-                additionalCameraData = camera.gameObject.AddComponent<HDAdditionalCameraData>();
+                additionalCameraData = Undo.AddComponent<HDAdditionalCameraData>(camera.gameObject);
 
             additionalCameraData.antialiasing = HDAdditionalCameraData.AntialiasingMode.TemporalAntialiasing;
             additionalCameraData.taaSharpenStrength = .6f;

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     class SettingsWindowGUIScope : GUI.Scope
     {
@@ -11,6 +11,7 @@ namespace Unity.LiveCapture
         const float k_MarginTop = 10f;
 
         float m_LabelWidth;
+
         public SettingsWindowGUIScope(float layoutMaxWidth)
         {
             m_LabelWidth = EditorGUIUtility.labelWidth;

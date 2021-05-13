@@ -10,46 +10,46 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
     struct VirtualCameraRigSettings
     {
         /// <summary>
+        /// The default state of a rig settings.
+        /// </summary>
+        public static VirtualCameraRigSettings Identity => new VirtualCameraRigSettings
+        {
+            PositionLock = PositionAxis.None,
+            RotationLock = RotationAxis.None,
+            MotionScale = Vector3.one,
+        };
+
+        /// <summary>
         /// The <see cref="PositionAxis"/> that won't move.
         /// </summary>
-        public PositionAxis positionLock;
+        public PositionAxis PositionLock;
 
         /// <summary>
         /// Rotation Axis constraint settings.
         /// </summary>
-        public RotationAxis rotationLock;
+        public RotationAxis RotationLock;
 
         /// <summary>
         /// Force dutch rotation to be zero.
         /// </summary>
-        public bool zeroDutch;
+        public bool ZeroDutch;
 
         /// <summary>
         /// Rebasing set to true indicates that the Virtual Camera is frozen in virtual space allowing the user
         /// to change position in real world space.
         /// </summary>
-        public bool rebasing;
+        public bool Rebasing;
 
         /// <summary>
         /// Scale of the movement for each axis. A scale of (1, 1, 1) means that the virtual camera position will
         /// Match the device position in real world.
         /// </summary>
-        public Vector3 motionScale;
+        public Vector3 MotionScale;
 
         /// <summary>
         /// The angle around the x-axis to offset the local camera rotation.
         /// </summary>
-        public float ergonomicTilt;
-
-        /// <summary>
-        /// The default state of a rig settings.
-        /// </summary>
-        public static VirtualCameraRigSettings identity => new VirtualCameraRigSettings()
-        {
-            motionScale = Vector3.one,
-            positionLock = PositionAxis.None,
-            rotationLock = RotationAxis.None
-        };
+        public float ErgonomicTilt;
     }
 
     /// <summary>
@@ -59,52 +59,53 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
     struct VirtualCameraRigState
     {
         /// <summary>
-        /// The calculated global <see cref="Pose"/> of the camera.
+        /// The default VirtualCameraRigState.
+        /// </summary>
+        public static VirtualCameraRigState Identity => new VirtualCameraRigState
+        {
+            Pose = Pose.identity,
+            Origin = Pose.identity,
+            LocalPose = Pose.identity,
+            LastInput = Pose.identity,
+            RebaseOffset = Quaternion.identity,
+            ErgonomicTilt = 0,
+        };
+
+        /// <summary>
+        /// The calculated global <see cref="UnityEngine.Pose"/> of the camera.
         /// </summary>
         [ReadOnly, Tooltip("The calculated global pose of the camera.")]
-        public Pose pose;
+        public Pose Pose;
 
         /// <summary>
         /// The global offset in world space representing the origin of the virtual camera.
         /// </summary>
         [Tooltip("The point of origin of the camera.")]
-        public Pose origin;
+        public Pose Origin;
 
         /// <summary>
-        /// The calculated local <see cref="Pose"/> of the camera.
+        /// The calculated local <see cref="UnityEngine.Pose"/> of the camera.
         /// </summary>
         [Tooltip("The pose relative to the origin.")]
-        public Pose localPose;
+        public Pose LocalPose;
 
         /// <summary>
         /// The input sample of the previous calculation.
         /// </summary>
         [HideInInspector]
-        public Pose lastInput;
+        public Pose LastInput;
 
         /// <summary>
         /// Offset relative to the pose input. Generated during a rebase.
         /// </summary>
         [HideInInspector]
-        public Quaternion rebaseOffset;
+        public Quaternion RebaseOffset;
 
         /// <summary>
         /// The current ergonomic tilt value of the state.
         /// </summary>
         [HideInInspector]
-        public float ergonomicTilt;
-
-        /// <summary>
-        /// Identity initialized VirtualCameraRigState.
-        /// </summary>
-        public static VirtualCameraRigState identity => new VirtualCameraRigState()
-        {
-            lastInput = Pose.identity,
-            rebaseOffset = Quaternion.identity,
-            localPose = Pose.identity,
-            pose = Pose.identity,
-            origin = Pose.identity
-        };
+        public float ErgonomicTilt;
     }
 
     /// <summary>
@@ -120,29 +121,29 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         /// <param name="settings">The settings that will be applied while updating the state</param>
         public static void Update(this ref VirtualCameraRigState state, Pose input, VirtualCameraRigSettings settings)
         {
-            if (settings.rebasing)
+            if (settings.Rebasing)
                 state.Rebase(input);
             else
             {
-                var deltaPosition = input.position - state.lastInput.position;
-                var axis = (Axis)settings.positionLock;
+                var deltaPosition = input.position - state.LastInput.position;
+                var axis = (Axis)settings.PositionLock;
 
                 // Make delta position local space
                 deltaPosition = Quaternion.Inverse(input.rotation) * deltaPosition;
                 // Remove locked axis contribution
                 deltaPosition = Mask(deltaPosition, axis.HasFlag(Axis.X), axis.HasFlag(Axis.Y), axis.HasFlag(Axis.Z));
                 // Motion scale
-                deltaPosition = Vector3.Scale(settings.motionScale, deltaPosition);
+                deltaPosition = Vector3.Scale(settings.MotionScale, deltaPosition);
 
-                var lastErgonomicTilt = Quaternion.Euler(state.ergonomicTilt, 0f, 0f);
-                var ergonomicTilt = Quaternion.Euler(settings.ergonomicTilt, 0f, 0f);
+                var lastErgonomicTilt = Quaternion.Euler(state.ErgonomicTilt, 0f, 0f);
+                var ergonomicTilt = Quaternion.Euler(settings.ErgonomicTilt, 0f, 0f);
 
                 // Compensate for rebase offset and ergonomic tilt
-                var targetEuler = (Quaternion.Inverse(state.rebaseOffset) * input.rotation).eulerAngles;
-                var currentEuler = (state.localPose.rotation * Quaternion.Inverse(lastErgonomicTilt)).eulerAngles;
+                var targetEuler = (Quaternion.Inverse(state.RebaseOffset) * input.rotation).eulerAngles;
+                var currentEuler = (state.LocalPose.rotation * Quaternion.Inverse(lastErgonomicTilt)).eulerAngles;
 
                 // Use the current euler value if the rotation axis is locked
-                axis = (Axis)settings.rotationLock;
+                axis = (Axis)settings.RotationLock;
 
                 if (axis.HasFlag(Axis.X))
                     targetEuler.x = currentEuler.x;
@@ -154,18 +155,18 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
                 }
 
                 if (axis.HasFlag(Axis.Z))
-                    targetEuler.z = settings.zeroDutch ? 0f : currentEuler.z;
+                    targetEuler.z = settings.ZeroDutch ? 0f : currentEuler.z;
 
                 var targetRotation = Quaternion.Euler(targetEuler);
-                state.localPose.rotation = targetRotation * ergonomicTilt;
-                state.localPose.position += targetRotation * deltaPosition;
-                state.ergonomicTilt = settings.ergonomicTilt;
+                state.LocalPose.rotation = targetRotation * ergonomicTilt;
+                state.LocalPose.position += targetRotation * deltaPosition;
+                state.ErgonomicTilt = settings.ErgonomicTilt;
             }
 
-            state.pose = new Pose(
-                state.origin.position + state.origin.rotation * state.localPose.position,
-                state.origin.rotation * state.localPose.rotation);
-            state.lastInput = input;
+            state.Pose = new Pose(
+                state.Origin.position + state.Origin.rotation * state.LocalPose.position,
+                state.Origin.rotation * state.LocalPose.rotation);
+            state.LastInput = input;
         }
 
         /// <summary>
@@ -175,9 +176,9 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         /// <param name="input">The input to rebase</param>
         public static void Rebase(this ref VirtualCameraRigState state, Pose input)
         {
-            var localRotationY = Quaternion.Euler(0f, state.localPose.rotation.eulerAngles.y, 0f);
+            var localRotationY = Quaternion.Euler(0f, state.LocalPose.rotation.eulerAngles.y, 0f);
             var inputRotationY = Quaternion.Euler(0f, input.rotation.eulerAngles.y, 0f);
-            state.rebaseOffset = Quaternion.Inverse(localRotationY) * inputRotationY;
+            state.RebaseOffset = Quaternion.Inverse(localRotationY) * inputRotationY;
         }
 
         /// <summary>
@@ -187,15 +188,15 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         /// <param name = "settings" > The settings that will be applied to refresh the state</param>
         public static void Refresh(this ref VirtualCameraRigState state, VirtualCameraRigSettings settings)
         {
-            var lastErgonomicTilt = Quaternion.Euler(state.ergonomicTilt, 0f, 0f);
-            var ergonomicTilt = Quaternion.Euler(settings.ergonomicTilt, 0f, 0f);
-            state.localPose.rotation *= ergonomicTilt * Quaternion.Inverse(lastErgonomicTilt);
+            var lastErgonomicTilt = Quaternion.Euler(state.ErgonomicTilt, 0f, 0f);
+            var ergonomicTilt = Quaternion.Euler(settings.ErgonomicTilt, 0f, 0f);
+            state.LocalPose.rotation *= ergonomicTilt * Quaternion.Inverse(lastErgonomicTilt);
             // updating the pose relative to the origin and the localPose
             var pose = new Pose(
-                state.origin.position + state.origin.rotation * state.localPose.position,
-                state.origin.rotation * state.localPose.rotation);
-            state.pose = pose;
-            state.ergonomicTilt = settings.ergonomicTilt;
+                state.Origin.position + state.Origin.rotation * state.LocalPose.position,
+                state.Origin.rotation * state.LocalPose.rotation);
+            state.Pose = pose;
+            state.ErgonomicTilt = settings.ErgonomicTilt;
         }
 
         /// <summary>
@@ -204,12 +205,12 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         /// <param name="worldCoordinates">World position used to evaluate the localPose</param>
         public static void WorldToLocal(this ref VirtualCameraRigState state, Pose worldCoordinates)
         {
-            var originRotation = state.origin.rotation;
-            var originInv = Matrix4x4.TRS(state.origin.position, originRotation, Vector3.one).inverse;
-            state.localPose.position = originInv.MultiplyPoint3x4(worldCoordinates.position);
-            state.localPose.rotation = Quaternion.Inverse(originRotation) * worldCoordinates.rotation;
-            state.pose.position = worldCoordinates.position;
-            state.pose.rotation = worldCoordinates.rotation;
+            var originRotation = state.Origin.rotation;
+            var originInv = Matrix4x4.TRS(state.Origin.position, originRotation, Vector3.one).inverse;
+            state.LocalPose.position = originInv.MultiplyPoint3x4(worldCoordinates.position);
+            state.LocalPose.rotation = Quaternion.Inverse(originRotation) * worldCoordinates.rotation;
+            state.Pose.position = worldCoordinates.position;
+            state.Pose.rotation = worldCoordinates.rotation;
         }
 
         /// <summary>
@@ -217,9 +218,9 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         /// </summary>
         public static void Reset(this ref VirtualCameraRigState state)
         {
-            state.localPose.position = Vector3.zero;
-            state.localPose.rotation = Quaternion.identity;
-            state.rebaseOffset = Quaternion.Euler(0f, state.lastInput.rotation.eulerAngles.y, 0f);
+            state.LocalPose.position = Vector3.zero;
+            state.LocalPose.rotation = Quaternion.identity;
+            state.RebaseOffset = Quaternion.Euler(0f, state.LastInput.rotation.eulerAngles.y, 0f);
         }
 
         /// <summary>
@@ -232,13 +233,15 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         /// <param name = "settings" > The settings that will be applied while translating the state</param>
         public static void Translate(this ref VirtualCameraRigState state, Vector3 vector, float deltaTime, Vector3 speed, Space pedestalSpace, VirtualCameraRigSettings settings)
         {
+            deltaTime = Mathf.Max(0f, deltaTime);
+
             var deltaSpeed = speed * deltaTime;
 
             // Transpose the Vector and the Speed to local space
-            var up = (pedestalSpace == Space.Self) ? state.localPose.up : state.origin.up;
-            state.localPose.position +=
-                state.localPose.forward * vector.z * deltaSpeed.z +
-                state.localPose.right * vector.x * deltaSpeed.x +
+            var up = (pedestalSpace == Space.Self) ? state.LocalPose.up : state.Origin.up;
+            state.LocalPose.position +=
+                state.LocalPose.forward * vector.z * deltaSpeed.z +
+                state.LocalPose.right * vector.x * deltaSpeed.x +
                 up * vector.y * deltaSpeed.y;
 
             state.Refresh(settings);

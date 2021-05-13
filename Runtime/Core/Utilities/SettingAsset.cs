@@ -22,7 +22,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The asset instance.
         /// </summary>
-        public static T instance
+        public static T Instance
         {
             get
             {
@@ -107,7 +107,7 @@ namespace Unity.LiveCapture
             {
                 if (customAttribute is SettingFilePathAttribute attribute)
                 {
-                    return attribute.filePath;
+                    return attribute.FilePath;
                 }
             }
             return string.Empty;
@@ -122,14 +122,14 @@ namespace Unity.LiveCapture
     [AttributeUsage(AttributeTargets.Class)]
     class SettingFilePathAttribute : Attribute
     {
-        internal string filePath { get; }
+        internal string FilePath { get; }
 
         public SettingFilePathAttribute(string relativePath, Location location)
         {
             if (string.IsNullOrEmpty(relativePath))
                 throw new ArgumentException("Path is empty.", nameof(relativePath));
 
-            filePath = CombineFilePath(relativePath, location);
+            FilePath = CombineFilePath(relativePath, location);
         }
 
         static string CombineFilePath(string relativePath, Location location)

@@ -1,36 +1,53 @@
 using System;
-using Unity.LiveCapture.CompanionApp;
+using Unity.LiveCapture.Editor;
+using Unity.LiveCapture.CompanionApp.Editor;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture.VirtualCamera
+namespace Unity.LiveCapture.VirtualCamera.Editor
 {
     [CustomEditor(typeof(VirtualCameraDevice))]
     class VirtualCameraDeviceEditor : CompanionAppDeviceEditor<IVirtualCameraClient>
     {
-        static class Contents
-        {
-            public static GUIContent lensLabel = EditorGUIUtility.TrTextContent("Lens");
-            public static GUIContent lensPreset = EditorGUIUtility.TrTextContent("Lens Preset");
-        }
+        static readonly float k_SnapshotElementHeight = 4f * (EditorGUIUtility.singleLineHeight + 2f) + 2f;
+        static readonly float k_PreviewWidth = k_SnapshotElementHeight * 16f / 9f;
 
-        static readonly string[] s_ExcludeProperties = { "m_Script", "m_Actor", "m_Rig", "m_LiveLink", "m_Lens", "m_LensPreset" };
+        public static class Contents
+        {
+            public static GUIContent None = EditorGUIUtility.TrTextContent("None");
+            public static GUIContent LensAssetLabel = EditorGUIUtility.TrTextContent("Lens Asset", "The asset that provides the lens intrinsics.");
+            public static GUIContent CameraBody = EditorGUIUtility.TrTextContent("Camera Body", "The parameters of the camera's body.");
+            public static GUIContent Settings = EditorGUIUtility.TrTextContent("Settings", "The settings of the device.");
+            public static GUIContent VideoSettingsButton = EditorGUIUtility.TrTextContent("Open Video Settings", "Open the settings of the video server.");
+            public static GUIContent AlignWithActor = EditorGUIUtility.TrTextContent("Align With Actor", "Aligns the pose of the device with the actor when not live.");
+            public static string AlignWithActorUndo = L10n.Tr("Align With Actor");
+            public static string Deleted = L10n.Tr("(deleted)");
+            public static GUIContent Snapshots = EditorGUIUtility.TrTextContent("Snapshots", "The snapshots taken using this device.");
+            public static GUIContent TakeSnapshot = EditorGUIUtility.TrTextContent("Take Snapshot", "Save the current position, lens and camera body while generating a screenshot.");
+            public static GUIContent GotoLabel = EditorGUIUtility.TrTextContent("Go To", "Move the camera to the saved position.");
+            public static GUIContent Load = EditorGUIUtility.TrTextContent("Load", "Move the camera to the saved position and restore the saved lens and the camera body.");
+            public static string PreviewNotAvailable = L10n.Tr("Preview not available.");
+            public static GUIStyle CenteredLabel;
+
+            static Contents()
+            {
+                CenteredLabel = new GUIStyle(GUI.skin.label)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    wordWrap = true
+                };
+            }
+        }
 
         VirtualCameraDevice m_Device;
         SerializedProperty m_LiveLinkChannels;
-        SerializedProperty m_LensPreset;
         SerializedProperty m_Lens;
-        SerializedProperty m_FocalLengthProp;
-        SerializedProperty m_FocalLengthRangeProp;
-        SerializedProperty m_FocusDistanceProp;
-        SerializedProperty m_FocusDistanceRangeProp;
-        SerializedProperty m_ApertureProp;
-        SerializedProperty m_ApertureRangeProp;
-        SerializedProperty m_LensShiftProp;
-        SerializedProperty m_BladeCountProp;
-        SerializedProperty m_CurvatureProp;
-        SerializedProperty m_BarrelClippingProp;
-        SerializedProperty m_AnamorphismProp;
+        SerializedProperty m_LensAsset;
+        SerializedProperty m_LensIntrinsics;
+        SerializedProperty m_CameraBody;
+        SerializedProperty m_Settings;
+        SerializedProperty m_Snapshots;
+        CompactList m_List;
 
         protected override void OnEnable()
         {
@@ -38,65 +55,265 @@ namespace Unity.LiveCapture.VirtualCamera
 
             m_Device = target as VirtualCameraDevice;
 
-            m_LiveLinkChannels = serializedObject.FindProperty("m_LiveLink.channels");
-            m_LensPreset = serializedObject.FindProperty("m_LensPreset");
+            m_LiveLinkChannels = serializedObject.FindProperty("m_LiveLink.Channels");
+            m_LensAsset = serializedObject.FindProperty("m_LensAsset");
             m_Lens = serializedObject.FindProperty("m_Lens");
+            m_LensIntrinsics = serializedObject.FindProperty("m_LensIntrinsics");
+            m_CameraBody = serializedObject.FindProperty("m_CameraBody");
+            m_Settings = serializedObject.FindProperty("m_Settings");
+            m_Snapshots = serializedObject.FindProperty("m_Snapshots");
 
-            m_FocalLengthProp = m_Lens.FindPropertyRelative("focalLength");
-            m_FocalLengthRangeProp = m_Lens.FindPropertyRelative("focalLengthRange");
-            m_FocusDistanceProp = m_Lens.FindPropertyRelative("focusDistance");
-            m_FocusDistanceRangeProp = m_Lens.FindPropertyRelative("focusDistanceRange");
-            m_ApertureProp = m_Lens.FindPropertyRelative("aperture");
-            m_ApertureRangeProp = m_Lens.FindPropertyRelative("apertureRange");
-            m_LensShiftProp = m_Lens.FindPropertyRelative("lensShift");
-            m_BladeCountProp = m_Lens.FindPropertyRelative("bladeCount");
-            m_CurvatureProp = m_Lens.FindPropertyRelative("curvature");
-            m_BarrelClippingProp = m_Lens.FindPropertyRelative("barrelClipping");
-            m_AnamorphismProp = m_Lens.FindPropertyRelative("anamorphism");
+            CreateList();
         }
 
         protected override void OnDeviceGUI()
         {
             DoClientGUI();
-            DoActorGUI(m_Device.actor, (actor) => m_Device.actor = actor);
+            DoActorGUI(m_Device.Actor, (actor) => m_Device.Actor = actor);
 
             serializedObject.Update();
 
             DoLiveLinkChannelsGUI(m_LiveLinkChannels);
-            DrawPropertiesExcluding(serializedObject, s_ExcludeProperties);
+            DoLensAssetField();
 
-            DoLensGUI();
+            LensDrawerUtility.DoLensGUI(m_Lens, m_LensIntrinsics);
+
+            EditorGUILayout.PropertyField(m_CameraBody, Contents.CameraBody);
+            EditorGUILayout.PropertyField(m_Settings, Contents.Settings);
+
+            m_Snapshots.isExpanded = EditorGUILayout.Foldout(m_Snapshots.isExpanded, Contents.Snapshots, true);
+
+            if (m_Snapshots.isExpanded)
+            {
+                DoSnapshotsGUI();
+            }
+
+            serializedObject.ApplyModifiedProperties();
+
+            DoAlignWithActorGUI();
+
+            if (GUILayout.Button(Contents.VideoSettingsButton))
+            {
+                VideoServerSettingsProvider.Open();
+            }
+        }
+
+        void CreateList()
+        {
+            m_List = new CompactList(m_Snapshots);
+            m_List.OnCanAddCallback = () => false;
+            m_List.OnCanRemoveCallback = () => true;
+            m_List.DrawElementCallback = null;
+            m_List.Reorderable = true;
+            m_List.ItemHeight = k_SnapshotElementHeight;
+            m_List.ShowSearchBar = false;
+            m_List.DrawElementCallback = (r, i) => {};
+            m_List.ElementHeightCallback = (i) => 0f;
+            m_List.DrawListItemCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
+            {
+                var element = m_Snapshots.GetArrayElementAtIndex(index);
+                var screenshot = element.FindPropertyRelative("m_Screenshot").objectReferenceValue as Texture2D;
+                var slate = element.FindPropertyRelative("m_Slate").objectReferenceValue as ISlate;
+                var frameRate = new FrameRate(
+                    element.FindPropertyRelative("m_FrameRate.m_Numerator").intValue,
+                    element.FindPropertyRelative("m_FrameRate.m_Denominator").intValue,
+                    element.FindPropertyRelative("m_FrameRate.m_IsDropFrame").boolValue);
+                var time = element.FindPropertyRelative("m_Time").doubleValue;
+                var focalLength = element.FindPropertyRelative("m_Lens.FocalLength").floatValue;
+                var aperture = element.FindPropertyRelative("m_Lens.Aperture").floatValue;
+                var lensAsset = element.FindPropertyRelative("m_LensAsset").objectReferenceValue;
+                var sensorSize = element.FindPropertyRelative("m_CameraBody.SensorSize").vector2Value;
+                var previewRect = new Rect(rect.x, rect.y + 2.5f, k_PreviewWidth, rect.height - 5f);
+                var propertiesRect = new Rect(previewRect.xMax + 5f, rect.y + 2f, rect.width - previewRect.width, rect.height);
+
+                if (screenshot != null)
+                {
+                    var preview = AssetPreview.GetAssetPreview(screenshot);
+
+                    if (preview != null)
+                    {
+                        var textureRect = BestFit(previewRect, preview);
+
+                        EditorGUI.DrawPreviewTexture(textureRect, preview);
+                    }
+                }
+                else
+                {
+                    EditorGUI.LabelField(previewRect, Contents.PreviewNotAvailable, Contents.CenteredLabel);
+                }
+
+                var rowHeight = EditorGUIUtility.singleLineHeight;
+                var yOffset = rowHeight + 2f;
+                var rowRect1 = new Rect(propertiesRect.x, propertiesRect.y, propertiesRect.width, rowHeight);
+                var rowRect2 = new Rect(propertiesRect.x, propertiesRect.y + yOffset, propertiesRect.width, rowHeight);
+                var rowRect3 = new Rect(propertiesRect.x, propertiesRect.y + yOffset * 2f, propertiesRect.width, rowHeight);
+                var rowRect4 = new Rect(propertiesRect.x, propertiesRect.y + yOffset * 3f, propertiesRect.width, rowHeight);
+                var slateField = string.Empty;
+                var timecode = Timecode.FromSeconds(frameRate, time);
+
+                if (slate != null)
+                {
+                    slateField = $"[{slate.SceneNumber.ToString("D3")}] {slate.ShotName} TC [{timecode}]";
+                }
+                else
+                {
+                    slateField = $"TC [{timecode}]";
+                }
+
+                var lensAssetField = string.Empty;
+
+                if (lensAsset != null)
+                {
+                    lensAssetField = $"Lens: {lensAsset.name}";
+                }
+                else
+                {
+                    lensAssetField = $"Lens: {Contents.Deleted}";
+                }
+
+                var lensField = $"{focalLength.ToString("F1")}mm f/{aperture}";
+                var sensorField = GetSensorName(sensorSize);
+
+                EditorGUI.LabelField(rowRect1, slateField);
+                EditorGUI.LabelField(rowRect2, lensAssetField);
+                EditorGUI.LabelField(rowRect3, lensField);
+                EditorGUI.LabelField(rowRect4, sensorField);
+            };
+            m_List.OnRemoveCallback = () =>
+            {
+                m_Device.DeleteSnapshot(m_List.Index);
+            };
+        }
+
+        string GetSensorName(Vector2 sensorSize)
+        {
+            var sensorSizes = SensorPresetsCache.GetSensorSizes();
+            var index = Array.FindIndex(sensorSizes, (s) => s == sensorSize);
+
+            if (index == -1)
+            {
+                return $"[{sensorSize.x} x {sensorSize.y}]";
+            }
+
+            var options = SensorPresetsCache.GetSensorNames();
+
+            return options[index];
+        }
+
+        Rect BestFit(Rect rect, Texture2D texture)
+        {
+            var rectAspect = rect.width / rect.height;
+            var textureAspect = texture.width / texture.height;
+
+            if (textureAspect > rectAspect)
+            {
+                var height = rect.width / textureAspect;
+
+                rect.y += (rect.height - height) * 0.5f;
+                rect.height = height;
+            }
+            else if (textureAspect < rectAspect)
+            {
+                var width = rect.height * textureAspect;
+
+                rect.x += (rect.width - width) * 0.5f;
+                rect.width = width;
+            }
+
+            return rect;
+        }
+
+        void DoSnapshotsGUI()
+        {
+            m_List.DoGUILayout();
+
+            using (new EditorGUILayout.HorizontalScope())
+            using (new EditorGUI.DisabledScope(m_Device.IsRecording()))
+            {
+                using (new EditorGUI.DisabledScope(!m_Device.IsLive()))
+                {
+                    if (GUILayout.Button(Contents.TakeSnapshot))
+                    {
+                        m_Device.TakeSnapshot();
+
+                        EditorUtility.SetDirty(m_Device);
+                    }
+                }
+
+                if (GUILayout.Button(Contents.GotoLabel))
+                {
+                    m_Device.GoToSnapshot(m_List.Index);
+
+                    EditorUtility.SetDirty(m_Device);
+                }
+
+                if (GUILayout.Button(Contents.Load))
+                {
+                    m_Device.LoadSnapshot(m_List.Index);
+
+                    EditorUtility.SetDirty(m_Device);
+                }
+            }
+        }
+
+        void DoLensAssetField()
+        {
+            LensKitCache.Get(out var presets, out var contents);
+
+            var asset = m_LensAsset.objectReferenceValue;
+            var rect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight);
+
+            EditorGUI.LabelField(rect, Contents.LensAssetLabel);
+
+            rect.x += EditorGUIUtility.labelWidth + 5;
+            rect.width -= EditorGUIUtility.labelWidth + 5;
+
+            var name = Contents.None;
+
+            if (asset != null)
+            {
+                name = new GUIContent(asset.name);
+            }
+
+            if (GUI.Button(rect, name, EditorStyles.popup))
+            {
+                var menu = new GenericMenu();
+
+                for (var i = 0; i < contents.Length; ++i)
+                {
+                    menu.AddItem(contents[i], presets[i] == asset, (p) => SetLensPreset(p as LensAsset), presets[i]);
+                }
+
+                menu.ShowAsContext();
+            }
+        }
+
+        void SetLensPreset(LensAsset preset)
+        {
+            serializedObject.Update();
+
+            m_LensAsset.objectReferenceValue = preset;
 
             serializedObject.ApplyModifiedProperties();
         }
 
-        void DoLensGUI()
+        void DoAlignWithActorGUI()
         {
-            EditorGUILayout.LabelField(Contents.lensLabel, EditorStyles.boldLabel);
+            var takeRecorder = m_Device.GetTakeRecorder();
+            var isLive = takeRecorder != null && takeRecorder.IsLive() && m_Device.IsLive();
+            var disabled = m_Device.Actor == null || isLive;
 
-            EditorGUI.indentLevel++;
-            using var check = new EditorGUI.ChangeCheckScope();
-            m_LensPreset.objectReferenceValue = EditorGUILayout.ObjectField(Contents.lensPreset, m_LensPreset.objectReferenceValue, typeof(LensPreset), false);
-            EditorGUI.indentLevel--;
-
-            if (check.changed && m_LensPreset.objectReferenceValue != null)
+            using (new EditorGUI.DisabledGroupScope(disabled))
             {
-                var preset = ((LensPreset)m_LensPreset.objectReferenceValue).lens;
+                if (GUILayout.Button(Contents.AlignWithActor))
+                {
+                    Undo.RegisterCompleteObjectUndo(m_Device, Contents.AlignWithActorUndo);
 
-                m_FocalLengthProp.floatValue = preset.focalLength;
-                m_FocalLengthRangeProp.vector2Value = preset.focalLengthRange;
-                m_FocusDistanceProp.floatValue = preset.focusDistance;
-                m_FocusDistanceRangeProp.vector2Value = preset.focusDistanceRange;
-                m_ApertureProp.floatValue = preset.aperture;
-                m_ApertureRangeProp.vector2Value = preset.apertureRange;
-                m_LensShiftProp.vector2Value = preset.lensShift;
-                m_BladeCountProp.intValue = preset.bladeCount;
-                m_CurvatureProp.vector2Value = preset.curvature;
-                m_BarrelClippingProp.floatValue = preset.barrelClipping;
-                m_AnamorphismProp.floatValue = preset.anamorphism;
+                    m_Device.InitializeLocalPose();
+
+                    EditorUtility.SetDirty(m_Device);
+                }
             }
-
-            EditorGUILayout.PropertyField(m_Lens);
         }
     }
 }

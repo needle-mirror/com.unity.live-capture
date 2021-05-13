@@ -18,13 +18,13 @@ namespace Unity.LiveCapture.VirtualCamera
 #endif
         ICameraDriverImpl m_Impl;
 
-        public CinemachineVirtualCamera cinemachineVirtualCamera
+        public CinemachineVirtualCamera CinemachineVirtualCamera
         {
-            get => m_CinemachineComponent.cinemachineVirtualCamera;
-            set => m_CinemachineComponent.cinemachineVirtualCamera = value;
+            get => m_CinemachineComponent.CinemachineVirtualCamera;
+            set => m_CinemachineComponent.CinemachineVirtualCamera = value;
         }
 
-        protected override void OnAwake()
+        protected override void Initialize()
         {
 #if HDRP_10_2_OR_NEWER
             m_HdrpCoreComponent.SetRoot(gameObject);
@@ -55,7 +55,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         public override Camera GetCamera()
         {
-            var brain = CinemachineCore.Instance.FindPotentialTargetBrain(cinemachineVirtualCamera);
+            var brain = CinemachineCore.Instance.FindPotentialTargetBrain(CinemachineVirtualCamera);
             if (brain != null)
                 return brain.OutputCamera;
 
@@ -63,7 +63,7 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
 #else
-        protected override void OnAwake()
+        protected override void Initialize()
         {
             Debug.LogError(
                 $"A {nameof(CinemachineCameraDriver)} is used yet Cinemachine is not installed." +

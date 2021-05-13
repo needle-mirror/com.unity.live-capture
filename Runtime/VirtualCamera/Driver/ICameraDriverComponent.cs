@@ -32,6 +32,6 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// True if the component actually supports the operation, false otherwise.
         /// </returns>
-        bool SetPhysicalCameraProperties(Lens lens, CameraBody cameraBody);
+        bool SetPhysicalCameraProperties(Lens lens, LensIntrinsics intrinsics, CameraBody cameraBody);
     }
 }

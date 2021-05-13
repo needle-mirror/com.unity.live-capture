@@ -16,9 +16,9 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// The Cinemachine virtual camera driven by this component.
         /// </summary>
-        public CinemachineVirtualCamera cinemachineVirtualCamera
+        public CinemachineVirtualCamera CinemachineVirtualCamera
         {
-            get { return m_CinemachineVirtualCamera;}
+            get => m_CinemachineVirtualCamera;
             set
             {
                 m_CinemachineVirtualCamera = value;
@@ -76,16 +76,16 @@ namespace Unity.LiveCapture.VirtualCamera
 
             var targetDamping = damping;
 
-            if (!damping.enabled)
+            if (!damping.Enabled)
             {
-                targetDamping.body = Vector3.zero;
-                targetDamping.aim = 0;
+                targetDamping.Body = Vector3.zero;
+                targetDamping.Aim = 0;
             }
 
-            m_Transposer.m_XDamping = targetDamping.body.x;
-            m_Transposer.m_YDamping = targetDamping.body.y;
-            m_Transposer.m_ZDamping = targetDamping.body.z;
-            m_Aim.m_Damping = targetDamping.aim;
+            m_Transposer.m_XDamping = targetDamping.Body.x;
+            m_Transposer.m_YDamping = targetDamping.Body.y;
+            m_Transposer.m_ZDamping = targetDamping.Body.z;
+            m_Aim.m_Damping = targetDamping.Aim;
 
             return true;
         }
@@ -94,7 +94,7 @@ namespace Unity.LiveCapture.VirtualCamera
         public bool SetFocusDistance(float value) { return false; }
 
         /// <inheritdoc/>
-        public bool SetPhysicalCameraProperties(Lens lens, CameraBody cameraBody)
+        public bool SetPhysicalCameraProperties(Lens lens, LensIntrinsics intrinsics, CameraBody cameraBody)
         {
             // In case the component was not assigned a virtual camera yet.
             if (m_CinemachineVirtualCamera == null)
@@ -107,20 +107,20 @@ namespace Unity.LiveCapture.VirtualCamera
             var brain = CinemachineCore.Instance.FindPotentialTargetBrain(m_CinemachineVirtualCamera);
             if (brain != null)
             {
-                brain.OutputCamera.sensorSize = cameraBody.sensorSize;
+                brain.OutputCamera.sensorSize = cameraBody.SensorSize;
                 brain.OutputCamera.usePhysicalProperties = true;
             }
 
-            m_CinemachineVirtualCamera.m_Lens.FieldOfView = Camera.FocalLengthToFieldOfView(lens.focalLength, cameraBody.sensorSize.y);
+            m_CinemachineVirtualCamera.m_Lens.FieldOfView = Camera.FocalLengthToFieldOfView(lens.FocalLength, cameraBody.SensorSize.y);
 
 #if HDRP_10_2_OR_NEWER
-            m_CinemachineVirtualCamera.m_Lens.Anamorphism = lens.anamorphism;
-            m_CinemachineVirtualCamera.m_Lens.BarrelClipping = lens.barrelClipping;
-            m_CinemachineVirtualCamera.m_Lens.Curvature = lens.curvature;
-            m_CinemachineVirtualCamera.m_Lens.BladeCount = lens.bladeCount;
-            m_CinemachineVirtualCamera.m_Lens.Iso = cameraBody.iso;
-            m_CinemachineVirtualCamera.m_Lens.ShutterSpeed = cameraBody.shutterSpeed;
-            m_CinemachineVirtualCamera.m_Lens.Aperture = lens.aperture;
+            m_CinemachineVirtualCamera.m_Lens.Anamorphism = intrinsics.Anamorphism;
+            m_CinemachineVirtualCamera.m_Lens.BarrelClipping = intrinsics.BarrelClipping;
+            m_CinemachineVirtualCamera.m_Lens.Curvature = intrinsics.Curvature;
+            m_CinemachineVirtualCamera.m_Lens.BladeCount = intrinsics.BladeCount;
+            m_CinemachineVirtualCamera.m_Lens.Iso = cameraBody.Iso;
+            m_CinemachineVirtualCamera.m_Lens.ShutterSpeed = cameraBody.ShutterSpeed;
+            m_CinemachineVirtualCamera.m_Lens.Aperture = lens.Aperture;
 #endif
             return true;
         }

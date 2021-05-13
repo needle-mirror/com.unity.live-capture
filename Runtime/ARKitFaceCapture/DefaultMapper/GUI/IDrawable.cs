@@ -5,7 +5,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
     /// <summary>
     /// An interface for classes that can be drawn using IMGUI.
     /// </summary>
-    public interface IDrawable
+    interface IDrawable
     {
 #if UNITY_EDITOR
         /// <summary>

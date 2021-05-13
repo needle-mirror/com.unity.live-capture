@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     /// <summary>
     /// A property drawer for enums. Does not block the main thread.
@@ -39,9 +39,9 @@ namespace Unity.LiveCapture
                 if (change.changed)
                 {
                     frameRate = newRate.ToValue();
-                    numeratorProp.intValue = frameRate.numerator;
-                    denominatorProp.intValue = frameRate.denominator;
-                    isDropFrameProp.boolValue = frameRate.isDropFrame;
+                    numeratorProp.intValue = frameRate.Numerator;
+                    denominatorProp.intValue = frameRate.Denominator;
+                    isDropFrameProp.boolValue = frameRate.IsDropFrame;
                 }
             }
         }

@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture.VirtualCamera
+namespace Unity.LiveCapture.VirtualCamera.Editor
 {
     [CustomPropertyDrawer(typeof(VirtualCameraTrackMetadata))]
     class VirtualCameraTrackMetadataPropertyDrawer : PropertyDrawer
     {
         static class Contents
         {
-            public static string[] channels = new string[]
+            public static readonly GUIContent CropAspect = EditorGUIUtility.TrTextContent("Crop Aspect", "The aspect ratio of the crop mask.");
+            public static string[] Channels =
             {
                 EditorGUIUtility.TrTextContent("Position").text,
                 EditorGUIUtility.TrTextContent("Rotation").text,
@@ -18,22 +19,24 @@ namespace Unity.LiveCapture.VirtualCamera
                 EditorGUIUtility.TrTextContent("Focus Distance").text,
                 EditorGUIUtility.TrTextContent("Aperture").text,
             };
-            public static GUIStyle textAreaStyle = new GUIStyle(EditorStyles.textArea) { wordWrap = true };
+            public static GUIStyle TextAreaStyle = new GUIStyle(EditorStyles.textArea)
+            {
+                wordWrap = true,
+            };
         }
 
         List<string> m_Channels = new List<string>();
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            var rows = 1;
             var rowHeight = EditorGUIUtility.singleLineHeight + 2f;
+            var height = rowHeight;
 
             if (property.isExpanded)
             {
                 var channelsProp = property.FindPropertyRelative("m_Channels");
                 var channels = (VirtualCameraChannelFlags)channelsProp.enumValueIndex;
-
-                rows = 7;
+                var rows = 8;
 
                 if (channels.HasFlag(VirtualCameraChannelFlags.FocalLength))
                 {
@@ -49,15 +52,18 @@ namespace Unity.LiveCapture.VirtualCamera
                 {
                     ++rows;
                 }
+
+                height = rows * rowHeight;
+                height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("m_CropAspect"));
             }
 
-            return rowHeight * rows;
+            return height;
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             position.height = EditorGUIUtility.singleLineHeight;
-            property.isExpanded = EditorGUI.Foldout(position, property.isExpanded, label);
+            property.isExpanded = EditorGUI.Foldout(position, property.isExpanded, label, true);
 
             if (property.isExpanded)
             {
@@ -73,11 +79,13 @@ namespace Unity.LiveCapture.VirtualCamera
             var channelsProp = property.FindPropertyRelative("m_Channels");
             var cameraBodyProp = property.FindPropertyRelative("m_CameraBody");
             var channels = (VirtualCameraChannelFlags)channelsProp.enumValueIndex;
-            var sensorSize = cameraBodyProp.FindPropertyRelative("sensorSize").vector2Value;
-            var isoProp = cameraBodyProp.FindPropertyRelative("iso");
-            var shutterSpeedProp = cameraBodyProp.FindPropertyRelative("shutterSpeed");
-            var sensorSizes = FormatPresetsCache.GetSensorSizes();
-            var options = FormatPresetsCache.GetSensorNameContents();
+            var sensorSize = cameraBodyProp.FindPropertyRelative("SensorSize").vector2Value;
+            var isoProp = cameraBodyProp.FindPropertyRelative("Iso");
+            var shutterSpeedProp = cameraBodyProp.FindPropertyRelative("ShutterSpeed");
+            var lensAsset = property.FindPropertyRelative("m_LensAsset");
+            var cropMask = property.FindPropertyRelative("m_CropAspect");
+            var sensorSizes = SensorPresetsCache.GetSensorSizes();
+            var options = SensorPresetsCache.GetSensorNameContents();
             var index = Array.FindIndex(sensorSizes, (s) => s == sensorSize);
 
             m_Channels.Clear();
@@ -86,7 +94,7 @@ namespace Unity.LiveCapture.VirtualCamera
             {
                 if (channels.HasFlag((VirtualCameraChannelFlags)(1 << i)))
                 {
-                    m_Channels.Add(Contents.channels[i]);
+                    m_Channels.Add(Contents.Channels[i]);
                 }
             }
 
@@ -98,52 +106,60 @@ namespace Unity.LiveCapture.VirtualCamera
 
             position.y += position.height + 2f;
             position.height = EditorGUIUtility.singleLineHeight * 2f;
-            EditorGUI.TextArea(position, channelsStr, Contents.textAreaStyle);
+            EditorGUI.TextArea(position, channelsStr, Contents.TextAreaStyle);
 
             if (channels.HasFlag(VirtualCameraChannelFlags.FocalLength))
             {
-                var prop = lensProp.FindPropertyRelative("focalLength");
+                var prop = lensProp.FindPropertyRelative("FocalLength");
 
                 position.y += position.height + 2f;
                 position.height = EditorGUIUtility.singleLineHeight;
-                EditorGUI.PropertyField(position, prop, LensPropertyDrawer.Contents.focalLength);
+                EditorGUI.PropertyField(position, prop, LensDrawerUtility.Contents.FocalLength);
             }
 
             if (channels.HasFlag(VirtualCameraChannelFlags.FocusDistance))
             {
-                var prop = lensProp.FindPropertyRelative("focusDistance");
+                var prop = lensProp.FindPropertyRelative("FocusDistance");
 
                 position.y += position.height + 2f;
                 position.height = EditorGUIUtility.singleLineHeight;
-                EditorGUI.PropertyField(position, prop, LensPropertyDrawer.Contents.focusDistance);
+                EditorGUI.PropertyField(position, prop, LensDrawerUtility.Contents.FocusDistance);
             }
 
             if (channels.HasFlag(VirtualCameraChannelFlags.Aperture))
             {
-                var prop = lensProp.FindPropertyRelative("aperture");
+                var prop = lensProp.FindPropertyRelative("Aperture");
 
                 position.y += position.height + 2f;
                 position.height = EditorGUIUtility.singleLineHeight;
-                EditorGUI.PropertyField(position, prop, LensPropertyDrawer.Contents.aperture);
+                EditorGUI.PropertyField(position, prop, LensDrawerUtility.Contents.Aperture);
             }
+
+            position.y += position.height + 2f;
+            position.height = EditorGUIUtility.singleLineHeight;
+
+            EditorGUI.PropertyField(position, lensAsset, VirtualCameraDeviceEditor.Contents.LensAssetLabel);
 
             position.y += position.height + 2f;
             position.height = EditorGUIUtility.singleLineHeight;
 
             if (index == -1)
             {
-                EditorGUI.Vector2Field(position, SensorSizePropertyDrawer.Contents.sensorSize, sensorSize);
+                EditorGUI.Vector2Field(position, SensorSizePropertyDrawer.Contents.SensorSize, sensorSize);
             }
             else
             {
-                EditorGUI.LabelField(position, SensorSizePropertyDrawer.Contents.sensorSize, new GUIContent(options[index]));
+                EditorGUI.LabelField(position, SensorSizePropertyDrawer.Contents.SensorSize, new GUIContent(options[index]));
             }
 
             position.y += position.height + 2f;
-            EditorGUI.PropertyField(position, isoProp, CameraBodyPropertyDrawer.Contents.iso);
+            EditorGUI.PropertyField(position, isoProp, CameraBodyPropertyDrawer.Contents.Iso);
 
             position.y += position.height + 2f;
-            EditorGUI.PropertyField(position, shutterSpeedProp, CameraBodyPropertyDrawer.Contents.shutterSpeed);
+            EditorGUI.PropertyField(position, shutterSpeedProp, CameraBodyPropertyDrawer.Contents.ShutterSpeed);
+
+            position.y += position.height + 2f;
+            EditorGUI.PropertyField(position, cropMask, Contents.CropAspect);
         }
     }
 }

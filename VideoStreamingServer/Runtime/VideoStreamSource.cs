@@ -3,17 +3,17 @@
 #endif
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
+
 #if URP_10_2_OR_NEWER
 using UnityEngine.Rendering.Universal;
 #endif
 #if HDRP_10_2_OR_NEWER
 using UnityEngine.Rendering.HighDefinition;
-
 #endif
 
 namespace Unity.LiveCapture.VideoStreaming.Server
@@ -27,6 +27,16 @@ namespace Unity.LiveCapture.VideoStreaming.Server
         /// Attempt to minimize the latency of retrieving rendered frames from the GPU at the cost of performance.
         /// </summary>
         bool ShouldPrioritizeLatency();
+
+        /// <summary>
+        /// Does the sink require access to the texture on the GPU instead of the CPU.
+        /// </summary>
+        bool usesDirectAccess { get; }
+
+        /// <summary>
+        /// The texture format of the frames consumed by this sink.
+        /// </summary>
+        EncoderFormat frameFormat { get; }
 
         /// <summary>
         /// Gets the target frame rate in Hz of the video stream.
@@ -46,11 +56,19 @@ namespace Unity.LiveCapture.VideoStreaming.Server
         /// </summary>
         /// <param name="frame">A completed request containing the frame data. The frame's resolution may not
         /// exactly match that specified by <see cref="GetResolution"/> in order to better accommodate the encoder.</param>
-        void ConsumeFrame(VideoFrameRequest frame);
+        void ConsumeFrame(AsyncGPUVideoFrameRequest frame);
+
+        /// <summary>
+        /// Called by the <see cref="VideoStreamSource"/> this sink has been registered to when a new frame
+        /// is ready to consume.
+        /// </summary>
+        /// <param name="frame">A completed request containing the frame data. The frame's resolution may not
+        /// exactly match that specified by <see cref="GetResolution"/> in order to better accommodate the encoder.</param>
+        void ConsumeFrame(DirectAccessVideoFrameRequest frame);
     }
 
     /// <summary>
-    /// Component that manages a camera in order generate a stream of <see cref="VideoFrameRequest"/> in NV12 format.
+    /// Component that manages a camera in order generate a stream of <see cref="AsyncGPUVideoFrameRequest"/> in NV12 format.
     /// Generated frames are consumed by one or many <see cref="IVideoStreamSink"/> instances registered with <see cref="RegisterSink"/>.
     /// </summary>
     [ExecuteAlways]
@@ -82,7 +100,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
         class SinkState
         {
             readonly IVideoStreamSink m_Sink;
-            readonly Queue<VideoFrameRequest> m_FrameStream = new Queue<VideoFrameRequest>();
+            readonly Queue<AsyncGPUVideoFrameRequest> m_FrameStream = new Queue<AsyncGPUVideoFrameRequest>();
             float m_StartTime = 0f;
             int m_LastFrameIndex = -1;
             int m_LastFrameRate = 0;
@@ -121,9 +139,10 @@ namespace Unity.LiveCapture.VideoStreaming.Server
             /// <param name="request">The request containing the next video frame for this sink.</param>
             /// <param name="width">The width of the video frame.</param>
             /// <param name="height">The height of the video frame.</param>
-            public void EnqueueFrame(AsyncGPUReadbackRequest request, int width, int height)
+            /// <param name="encoderFormat">The texture format.</param>
+            public void EnqueueFrame(AsyncGPUReadbackRequest request, int width, int height, EncoderFormat encoderFormat)
             {
-                var frame = new VideoFrameRequest(request, width, height, GetElapsedTime());
+                var frame = new AsyncGPUVideoFrameRequest(request, width, height, GetElapsedTime(), encoderFormat);
 
                 // Using AsyncGPUReadback asynchronously introduces a few frames of latency,
                 // so we optionally allow reading the result back synchronously.
@@ -149,7 +168,15 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 m_LastFrameIndex = GetFrameIndex();
             }
 
-            bool GetNextFrame(out VideoFrameRequest frame)
+            public void ConsumeFrameDirect(int width, int height, RenderTexture renderTexture, EncoderFormat encoderFormat)
+            {
+                var frame = new DirectAccessVideoFrameRequest(width, height, GetElapsedTime(), renderTexture, encoderFormat);
+                m_Sink.ConsumeFrame(frame);
+
+                m_LastFrameIndex = GetFrameIndex();
+            }
+
+            bool GetNextFrame(out AsyncGPUVideoFrameRequest frame)
             {
                 frame = default;
                 var isFrameValid = false;
@@ -184,15 +211,11 @@ namespace Unity.LiveCapture.VideoStreaming.Server
 
         readonly Dictionary<IVideoStreamSink, SinkState> m_SinkStates = new Dictionary<IVideoStreamSink, SinkState>();
 
-        [SerializeField]
-        bool m_Crop;
-
         Camera m_Camera;
         RenderTexture m_CaptureTarget;
         Material m_RgbToNV12Material;
-        CommandBuffer m_LegacyCaptureCommandBuffer;
-        bool m_AddedLegacyCommandBuffer;
         bool m_UsingLegacyRenderPipeline;
+        CommandBuffer m_LegacyCaptureCommandBuffer;
 
         // May seen redundant but warranted by our lifecycle management,
         // we automatically deactivate on Awake, leading to OnDisable being called before OnEnable has executed.
@@ -225,24 +248,28 @@ namespace Unity.LiveCapture.VideoStreaming.Server
         {
             m_Camera = GetComponent<Camera>();
 
-            hideFlags = HideFlags.DontSave;
+            hideFlags = HideFlags.HideAndDontSave;
             enabled = false;
         }
 
         void OnEnable()
         {
             m_UsingLegacyRenderPipeline = true;
-            m_RgbToNV12Material = new Material(Shader.Find("Video/RGBToNV12"))
+            m_RgbToNV12Material = new Material(Shader.Find("Hidden/Live Capture/RGBToNV12"))
             {
-                hideFlags = HideFlags.HideAndDontSave
+                hideFlags = HideFlags.HideAndDontSave,
             };
 
 #if USING_SCRIPTABLE_RENDER_PIPELINE
             m_UsingLegacyRenderPipeline = false;
-            CameraCaptureBridge.enabled = true;
             CameraCaptureBridge.AddCaptureAction(m_Camera, Capture);
-            RenderPipelineManager.endCameraRendering -= OnEndCameraRendering;
-            RenderPipelineManager.endCameraRendering += OnEndCameraRendering;
+#if UNITY_2021_1_OR_NEWER
+            RenderPipelineManager.endContextRendering -= OnEndFrameRendering;
+            RenderPipelineManager.endContextRendering += OnEndFrameRendering;
+#else
+            RenderPipelineManager.endFrameRendering -= OnEndFrameRendering;
+            RenderPipelineManager.endFrameRendering += OnEndFrameRendering;
+#endif
 #endif
 
             // Add capture command buffer for the legacy render pipeline.
@@ -251,7 +278,6 @@ namespace Unity.LiveCapture.VideoStreaming.Server
             {
                 m_LegacyCaptureCommandBuffer = new CommandBuffer();
                 m_Camera.AddCommandBuffer(CameraEvent.AfterEverything, m_LegacyCaptureCommandBuffer);
-                m_AddedLegacyCommandBuffer = true;
 
                 m_RgbToNV12Material.EnableKeyword(k_VerticalFlipKeyword);
             }
@@ -266,18 +292,20 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 return;
             }
 
-            if (m_AddedLegacyCommandBuffer)
+            if (m_LegacyCaptureCommandBuffer != null)
             {
                 m_Camera.RemoveCommandBuffer(CameraEvent.AfterEverything, m_LegacyCaptureCommandBuffer);
                 m_LegacyCaptureCommandBuffer.Release();
-                m_AddedLegacyCommandBuffer = false;
+                m_LegacyCaptureCommandBuffer = null;
             }
 
 #if USING_SCRIPTABLE_RENDER_PIPELINE
-            RenderPipelineManager.endCameraRendering -= OnEndCameraRendering;
-
-            // We don't disable the capture bridge since we have no way to know if something else is using it.
             CameraCaptureBridge.RemoveCaptureAction(m_Camera, Capture);
+#if UNITY_2021_1_OR_NEWER
+            RenderPipelineManager.endContextRendering -= OnEndFrameRendering;
+#else
+            RenderPipelineManager.endFrameRendering -= OnEndFrameRendering;
+#endif
 #endif
 
             if (Application.isPlaying)
@@ -288,11 +316,6 @@ namespace Unity.LiveCapture.VideoStreaming.Server
             Destroy(ref m_CaptureTarget);
 
             m_Initialized = false;
-        }
-
-        void Capture(RenderTargetIdentifier source, CommandBuffer cmd)
-        {
-            cmd.Blit(source, m_CaptureTarget);
         }
 
         void Update()
@@ -309,10 +332,22 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 sinkState.Value.Update();
         }
 
-#if USING_SCRIPTABLE_RENDER_PIPELINE
-        void OnEndCameraRendering(ScriptableRenderContext context, Camera currentCamera)
+        void Capture(RenderTargetIdentifier source, CommandBuffer cmd)
         {
-            if (currentCamera == m_Camera && m_CaptureTarget != null)
+            if (m_CaptureTarget != null)
+            {
+                cmd.Blit(source, m_CaptureTarget);
+            }
+        }
+
+#if USING_SCRIPTABLE_RENDER_PIPELINE
+#if UNITY_2021_1_OR_NEWER
+        void OnEndFrameRendering(ScriptableRenderContext context, List<Camera> cameras)
+#else
+        void OnEndFrameRendering(ScriptableRenderContext context, Camera[] cameras)
+#endif
+        {
+            if (m_CaptureTarget != null)
             {
                 CaptureVideoFrames();
             }
@@ -332,8 +367,6 @@ namespace Unity.LiveCapture.VideoStreaming.Server
         {
             Profiler.BeginSample($"{nameof(VideoStreamSource)}.{nameof(CaptureVideoFrames)}");
 
-            var captureResolution = new Vector2Int(m_CaptureTarget.width, m_CaptureTarget.height);
-
             foreach (var sinkState in m_SinkStates)
             {
                 var sink = sinkState.Key;
@@ -342,77 +375,53 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 if (!state.NeedsNextFrame())
                     continue;
 
+                var encoderFormat = sink.frameFormat;
                 var resolution = CalculateEncoderResolution(sink.GetResolution());
                 var width = resolution.x;
                 var height = resolution.y;
 
-                // The NV12 texture needs extra height scaling for the chroma sub-sampling (See the shader for details).
-                var nv12Texture = RenderTexture.GetTemporary(width, height * 3 / 2, 0, RenderTextureFormat.R8, RenderTextureReadWrite.Linear);
+                RenderTexture capturedTexture = null;
 
-                ComputeCopyTransformation(captureResolution, resolution, m_Crop, out var scale, out var offset);
+                switch (encoderFormat)
+                {
+                    case EncoderFormat.R8G8B8:
+                    {
+                        capturedTexture = RenderTexture.GetTemporary(width, height, 0, GraphicsFormat.B8G8R8A8_SRGB);
 
-                m_RgbToNV12Material.SetVector(k_SrcScaleOffsetProperty, new Vector4(scale.x, scale.y, offset.x, offset.y));
-                m_RgbToNV12Material.SetVector(k_DstTexelSizeProperty, new Vector4(1f / width, 1f / height, width, height));
+                        var scale = new Vector2(1f, m_UsingLegacyRenderPipeline ? -1f : 1f);
+                        var offset = new Vector2(0f, m_UsingLegacyRenderPipeline ? 1f : 0f);
 
-                Graphics.Blit(m_CaptureTarget, nv12Texture, m_RgbToNV12Material);
+                        Graphics.Blit(m_CaptureTarget, capturedTexture, scale, offset);
+                        break;
+                    }
+                    case EncoderFormat.NV12:
+                    {
+                        // The NV12 texture needs extra height scaling for the chroma sub-sampling (See the shader for details).
+                        capturedTexture = RenderTexture.GetTemporary(width, height * 3 / 2, 0, RenderTextureFormat.R8, RenderTextureReadWrite.Linear);
 
-                var request = AsyncGPUReadback.Request(nv12Texture);
-                state.EnqueueFrame(request, width, height);
+                        m_RgbToNV12Material.SetVector(k_SrcScaleOffsetProperty, new Vector4(1f, 1f, 0f, 0f));
+                        m_RgbToNV12Material.SetVector(k_DstTexelSizeProperty, new Vector4(1f / width, 1f / height, width, height));
 
-                RenderTexture.ReleaseTemporary(nv12Texture);
+                        Graphics.Blit(m_CaptureTarget, capturedTexture, m_RgbToNV12Material);
+                        break;
+                    }
+                    default:
+                        throw new InvalidOperationException("Encoder format is not supported.");
+                }
+
+                if (sink.usesDirectAccess)
+                {
+                    state.ConsumeFrameDirect(width, height, capturedTexture, encoderFormat);
+                }
+                else
+                {
+                    var request = AsyncGPUReadback.Request(capturedTexture);
+                    state.EnqueueFrame(request, width, height, encoderFormat);
+                    RenderTexture.ReleaseTemporary(capturedTexture);
+                }
             }
 
             Profiler.EndSample();
-        }
-
-        /// <summary>
-        /// Computes the scaling and offset transformation needed to copy a texture to another
-        /// while preserving the aspect ratio of the source texture.
-        /// </summary>
-        /// <param name="srcRes">Resolution of the source texture.</param>
-        /// <param name="dstRes">Resolution of the destination texture.</param>
-        /// <param name="crop">We crop the source texture if true, otherwise use letterboxing.</param>
-        /// <param name="scale">The scaling transformation to apply.</param>
-        /// <param name="offset">The translation transformation to apply.</param>
-        public static void ComputeCopyTransformation(Vector2 srcRes, Vector2 dstRes, bool crop, out Vector2 scale, out Vector2 offset)
-        {
-            var srcAspect = srcRes.x / srcRes.y;
-            var dstAspect = dstRes.x / dstRes.y;
-
-            var dstRegionSize = (srcAspect > dstAspect) ^ crop ? new Vector2(dstRes.x, dstRes.x / srcAspect) : new Vector2(dstRes.y * srcAspect, dstRes.y);
-
-            var dstRegionOffset = (dstRes - dstRegionSize) * 0.5f;
-            var dstRegion = new Rect(dstRegionOffset, dstRegionSize);
-
-            scale = dstRes / dstRegion.size;
-            offset = -dstRegion.position / dstRegion.size;
-        }
-
-        static bool ResizeTexture(ref RenderTexture texture, int width, int height)
-        {
-            if (texture != null && (texture.width != width || texture.height != height))
-            {
-                Destroy(ref texture);
-            }
-
-            if (texture == null)
-            {
-                texture = new RenderTexture(width, height, 32, RenderTextureFormat.ARGB32);
-                texture.name = "Camera Capture";
-                texture.hideFlags = HideFlags.HideAndDontSave;
-                return true;
-            }
-
-            return false;
-        }
-
-        static void Destroy(ref RenderTexture renderTexture)
-        {
-            if (renderTexture != null)
-            {
-                renderTexture.Release();
-                renderTexture = null;
-            }
         }
 
         /// <summary>
@@ -428,6 +437,35 @@ namespace Unity.LiveCapture.VideoStreaming.Server
             );
 
             return Vector2Int.Min(Vector2Int.Max(blockCount * k_BlockSize, k_MinEncoderResolution), k_MaxEncoderResolution);
+        }
+
+        static bool ResizeTexture(ref RenderTexture texture, int width, int height)
+        {
+            if (texture != null && (texture.width != width || texture.height != height))
+            {
+                Destroy(ref texture);
+            }
+
+            if (texture == null)
+            {
+                texture = new RenderTexture(width, height, 32, RenderTextureFormat.ARGB32)
+                {
+                    name = "Camera Capture",
+                    hideFlags = HideFlags.HideAndDontSave,
+                };
+                return true;
+            }
+
+            return false;
+        }
+
+        static void Destroy(ref RenderTexture renderTexture)
+        {
+            if (renderTexture != null)
+            {
+                renderTexture.Release();
+                renderTexture = null;
+            }
         }
     }
 }

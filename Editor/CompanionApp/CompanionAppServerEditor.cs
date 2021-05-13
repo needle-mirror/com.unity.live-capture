@@ -1,11 +1,12 @@
 using System;
 using System.Linq;
 using System.Net;
+using Unity.LiveCapture.Editor;
 using Unity.LiveCapture.Networking;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture.CompanionApp
+namespace Unity.LiveCapture.CompanionApp.Editor
 {
     [CustomEditor(typeof(CompanionAppServer), true)]
     class CompanionAppServerEditor : ServerEditor
@@ -15,18 +16,18 @@ namespace Unity.LiveCapture.CompanionApp
 
         static class Contents
         {
-            public static readonly GUILayoutOption[] startButtonOptions =
+            public static readonly GUILayoutOption[] StartButtonOptions =
             {
                 GUILayout.Width(60f),
             };
-            public static readonly GUIContent startLabel = new GUIContent("Start", "Start the server.");
-            public static readonly GUIContent stopLabel = new GUIContent("Stop", "Stop the server.");
+            public static readonly GUIContent StartLabel = new GUIContent("Start", "Start the server.");
+            public static readonly GUIContent StopLabel = new GUIContent("Stop", "Stop the server.");
 
-            public static readonly GUIContent interfacesLabel = new GUIContent("Available Interfaces", "Available IP addresses on this machine.");
-            public static readonly GUIContent clientDevicesLabel = new GUIContent("Connected Clients", "The client devices currently connected to the server.");
-            public static readonly GUIContent clientNameTitle = new GUIContent("Name", "The name of the client device.");
-            public static readonly GUIContent clientTypeTitle = new GUIContent("Type", "The type of the client device.");
-            public static readonly GUIContent noClientsLabel = new GUIContent("No clients connected");
+            public static readonly GUIContent InterfacesLabel = new GUIContent("Available Interfaces", "Available IP addresses on this machine.");
+            public static readonly GUIContent ClientDevicesLabel = new GUIContent("Connected Clients", "The client devices currently connected to the server.");
+            public static readonly GUIContent ClientNameTitle = new GUIContent("Name", "The name of the client device.");
+            public static readonly GUIContent ClientTypeTitle = new GUIContent("Type", "The type of the client device.");
+            public static readonly GUIContent NoClientsLabel = new GUIContent("No clients connected");
         }
 
         SerializedProperty m_AutoStartOnPlay;
@@ -62,8 +63,8 @@ namespace Unity.LiveCapture.CompanionApp
         {
             using (var change = new EditorGUI.ChangeCheckScope())
             {
-                var label = m_Server.isRunning ? Contents.stopLabel : Contents.startLabel;
-                var run = GUILayout.Toggle(m_Server.isRunning, label, EditorStyles.toolbarButton, Contents.startButtonOptions);
+                var label = m_Server.IsRunning ? Contents.StopLabel : Contents.StartLabel;
+                var run = GUILayout.Toggle(m_Server.IsRunning, label, EditorStyles.toolbarButton, Contents.StartButtonOptions);
 
                 if (change.changed)
                 {
@@ -101,7 +102,7 @@ namespace Unity.LiveCapture.CompanionApp
         {
             var refreshPort = EditorApplication.timeSinceStartup - m_LastPortRefreshTime > k_PortRefreshPeriod;
 
-            using (new EditorGUI.DisabledGroupScope(m_Server.isRunning))
+            using (new EditorGUI.DisabledGroupScope(m_Server.IsRunning))
             using (var change = new EditorGUI.ChangeCheckScope())
             {
                 EditorGUILayout.PropertyField(m_Port);
@@ -109,7 +110,7 @@ namespace Unity.LiveCapture.CompanionApp
             }
 
             // check if the selected port is valid
-            if (refreshPort && !m_Server.isRunning)
+            if (refreshPort && !m_Server.IsRunning)
             {
                 var port = m_Port.intValue;
 
@@ -124,7 +125,7 @@ namespace Unity.LiveCapture.CompanionApp
             }
 
             // display messages explaining why the port is not valid
-            if (!m_Server.isRunning)
+            if (!m_Server.IsRunning)
             {
                 if (!m_PortValid)
                 {
@@ -146,7 +147,7 @@ namespace Unity.LiveCapture.CompanionApp
 
         void DrawInterfaces()
         {
-            if (!DoFoldout(m_InterfacesExpanded, Contents.interfacesLabel))
+            if (!DoFoldout(m_InterfacesExpanded, Contents.InterfacesLabel))
                 return;
 
             if (EditorApplication.timeSinceStartup - m_LastInterfaceRefreshTime > k_InterfaceRefreshPeriod)
@@ -166,16 +167,16 @@ namespace Unity.LiveCapture.CompanionApp
 
         void DrawClients()
         {
-            if (!DoFoldout(m_ClientsExpanded, Contents.clientDevicesLabel))
+            if (!DoFoldout(m_ClientsExpanded, Contents.ClientDevicesLabel))
                 return;
 
             using (new EditorGUI.IndentLevelScope())
             {
-                if (m_Server.clientCount > 0)
+                if (m_Server.ClientCount > 0)
                 {
                     var clients = m_Server.GetClients().ToArray();
 
-                    for (var i = 0; i < m_Server.clientCount + 1; i++)
+                    for (var i = 0; i < m_Server.ClientCount + 1; i++)
                     {
                         var rect = EditorGUILayout.GetControlRect();
                         rect = EditorGUI.IndentedRect(rect);
@@ -194,13 +195,13 @@ namespace Unity.LiveCapture.CompanionApp
 
                         if (i == 0)
                         {
-                            EditorGUI.LabelField(leftRect, Contents.clientNameTitle, EditorStyles.boldLabel);
-                            EditorGUI.LabelField(rightRect, Contents.clientTypeTitle, EditorStyles.boldLabel);
+                            EditorGUI.LabelField(leftRect, Contents.ClientNameTitle, EditorStyles.boldLabel);
+                            EditorGUI.LabelField(rightRect, Contents.ClientTypeTitle, EditorStyles.boldLabel);
                         }
                         else
                         {
                             var client = clients[i - 1];
-                            EditorGUI.LabelField(leftRect, client.name);
+                            EditorGUI.LabelField(leftRect, client.Name);
                             EditorGUI.LabelField(rightRect, client.ToString());
                         }
 
@@ -209,7 +210,7 @@ namespace Unity.LiveCapture.CompanionApp
                 }
                 else
                 {
-                    EditorGUILayout.LabelField(Contents.noClientsLabel);
+                    EditorGUILayout.LabelField(Contents.NoClientsLabel);
                 }
             }
         }

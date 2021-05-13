@@ -1,4 +1,4 @@
-Shader "Video/RGBToNV12"
+Shader "Hidden/Live Capture/RGBToNV12"
 {
     Properties
     {
@@ -28,11 +28,11 @@ Shader "Video/RGBToNV12"
                 float4 vertex : SV_POSITION;
             };
 
-            sampler2D _MainTex;
+            UNITY_DECLARE_TEX2D(_MainTex);
             float4 _SrcTex_ScaleOffset;
             float4 _DstTex_TexelSize;
 
-            v2f vert (appdata v)
+            v2f vert(appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
@@ -60,17 +60,10 @@ Shader "Video/RGBToNV12"
 
             half3 sampleMainTex(float2 uv)
             {
-                #if defined(VERTICAL_FLIP)
+#if defined(VERTICAL_FLIP)
                 uv.y = 1.0 - uv.y;
-                #endif
-
-                float2 delta = uv - saturate(uv);
-                float outOfNormalizedRange = dot(delta, delta);
-                if (outOfNormalizedRange < 0.000001)
-                {
-                    return tex2D(_MainTex, uv);
-                }
-                return half3(0, 0, 0);
+#endif
+                return UNITY_SAMPLE_TEX2D(_MainTex, uv);
             }
 
             fixed3 RGB2YUV601(half3 rgb)

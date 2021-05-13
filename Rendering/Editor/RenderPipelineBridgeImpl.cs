@@ -7,7 +7,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace Unity.LiveCapture.Rendering.Editor
 {
-    internal class RenderPipelineBridgeImpl : IRenderPipelineBridge
+    class RenderPipelineBridgeImpl : IRenderPipelineBridge
     {
         [InitializeOnLoadMethod]
         static void Initialize()
@@ -16,6 +16,7 @@ namespace Unity.LiveCapture.Rendering.Editor
         }
 
 #if URP_10_2_OR_NEWER
+        /// <inheritdoc/>
         public T RequestRenderFeature<T>() where T : ScriptableRendererFeature
         {
             if (URPUtility.HasRenderFeature<T>(out var feature))
@@ -24,6 +25,7 @@ namespace Unity.LiveCapture.Rendering.Editor
             return URPUtility.AddRenderFeature<T>();
         }
 
+        /// <inheritdoc/>
         public bool HasRenderFeature<T>(out T result) where T : ScriptableRendererFeature
         {
             return URPUtility.HasRenderFeature<T>(out result);

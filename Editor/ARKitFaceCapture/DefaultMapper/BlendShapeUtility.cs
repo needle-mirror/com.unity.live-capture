@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Unity.LiveCapture.ARKitFaceCapture
+namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
 {
     /// <summary>
     /// A class containing methods for processing blend shape names.

@@ -10,7 +10,7 @@ namespace Unity.LiveCapture.Networking
     /// allocations, so it is extremely important not to hold onto message references after they
     /// have been disposed.
     /// </summary>
-    public class Message : IDisposable
+    class Message : IDisposable
     {
         /// <summary>
         /// When the message contains a data stream larger than this value in bytes, the stream will
@@ -29,7 +29,7 @@ namespace Unity.LiveCapture.Networking
         /// <summary>
         /// The remote this message is sent to, or where the message was received from.
         /// </summary>
-        public Remote remote
+        public Remote Remote
         {
             get
             {
@@ -43,7 +43,7 @@ namespace Unity.LiveCapture.Networking
         /// <summary>
         /// The networking channel the message is delivered using.
         /// </summary>
-        public ChannelType channelType
+        public ChannelType ChannelType
         {
             get
             {
@@ -57,7 +57,7 @@ namespace Unity.LiveCapture.Networking
         /// <summary>
         /// The contents of the message.
         /// </summary>
-        public MemoryStream data
+        public MemoryStream Data
         {
             get
             {
@@ -108,7 +108,7 @@ namespace Unity.LiveCapture.Networking
         /// <summary>
         /// Gets a <see cref="Message"/> instance from the message pool. This is thread safe.
         /// </summary>
-        /// <param name="remote">The remote to send the message to. Use <see cref="Remote.all"/> to send this
+        /// <param name="remote">The remote to send the message to. Use <see cref="Networking.Remote.All"/> to send this
         /// message to all connected remotes.</param>
         /// <param name="channelType">The networking channel the message is delivered using.</param>
         /// <param name="dataCapacity">The expected size of the message data. If larger than 0, this value is used to

@@ -112,24 +112,24 @@ namespace Unity.LiveCapture
         /// <returns><see langword="true"/> if there is a <see cref="StandardFrameRate"/> value that corresponds to <paramref name="rate"/>; otherwise, <see langword="false"/>.</returns>
         public static bool TryGetStandardRate(this FrameRate rate, out StandardFrameRate frameRate)
         {
-            if (rate.denominator == 1001)
+            if (rate.Denominator == 1001)
             {
-                switch (rate.numerator)
+                switch (rate.Numerator)
                 {
                     case 24000:
-                        frameRate = rate.isDropFrame ? StandardFrameRate.FPS_23_976_DF : StandardFrameRate.FPS_23_976;
+                        frameRate = rate.IsDropFrame ? StandardFrameRate.FPS_23_976_DF : StandardFrameRate.FPS_23_976;
                         return true;
                     case 30000:
-                        frameRate = rate.isDropFrame ? StandardFrameRate.FPS_29_97_DF : StandardFrameRate.FPS_29_97;
+                        frameRate = rate.IsDropFrame ? StandardFrameRate.FPS_29_97_DF : StandardFrameRate.FPS_29_97;
                         return true;
                     case 60000:
-                        frameRate = rate.isDropFrame ? StandardFrameRate.FPS_59_94_DF : StandardFrameRate.FPS_59_94;
+                        frameRate = rate.IsDropFrame ? StandardFrameRate.FPS_59_94_DF : StandardFrameRate.FPS_59_94;
                         return true;
                 }
             }
             else
             {
-                switch (rate.numerator)
+                switch (rate.Numerator)
                 {
                     case 24:
                         frameRate = StandardFrameRate.FPS_24_00;

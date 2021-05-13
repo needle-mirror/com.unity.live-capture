@@ -19,10 +19,10 @@ namespace Unity.LiveCapture.VirtualCamera
         bool m_InitializedTarget;
 
         /// <inheritdoc/>
-        public Material renderMaterial => m_RenderMaterial;
+        public Material RenderMaterial => m_RenderMaterial;
 
         /// <inheritdoc/>
-        public Material composeMaterial => m_ComposeMaterial;
+        public Material ComposeMaterial => m_ComposeMaterial;
 
         /// <inheritdoc/>
         public bool TryGetRenderTarget<T>(out T target)
@@ -36,6 +36,7 @@ namespace Unity.LiveCapture.VirtualCamera
             return false;
         }
 
+        /// <inheritdoc/>
         bool IRenderTargetProvider<RTHandle>.TryGetRenderTarget(out RTHandle target)
         {
             target = m_Target;
@@ -49,8 +50,8 @@ namespace Unity.LiveCapture.VirtualCamera
             m_ComposeMaterial = CoreUtils.CreateEngineMaterial("Hidden/LiveCapture/FocusPlane/Compose/Hdrp");
             m_RenderPassHandle = new CustomPassManager.Handle<HdrpFocusPlaneRenderPass>(CustomPassInjectionPoint.BeforePostProcess);
             m_ComposePassHandle = new CustomPassManager.Handle<HdrpFocusPlaneComposePass>(CustomPassInjectionPoint.AfterPostProcess);
-            m_RenderPassHandle.GetPass().name = FocusPlaneConsts.k_RenderProfilingSamplerLabel;
-            m_ComposePassHandle.GetPass().name = FocusPlaneConsts.k_ComposePlaneProfilingSamplerLabel;
+            m_RenderPassHandle.GetPass().name = FocusPlaneConsts.RenderProfilingSamplerLabel;
+            m_ComposePassHandle.GetPass().name = FocusPlaneConsts.ComposePlaneProfilingSamplerLabel;
         }
 
         /// <inheritdoc/>
@@ -70,7 +71,7 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
         /// <inheritdoc/>
-        public void AllocateTargetIfNeeded(int width, int height)
+        public bool AllocateTargetIfNeeded(int width, int height)
         {
             if (!m_InitializedTarget)
             {
@@ -79,9 +80,21 @@ namespace Unity.LiveCapture.VirtualCamera
                     useDynamicScale: true, name: "Focus Plane Buffer");
                 m_InitializedTarget = true;
 
-                m_ComposeMaterial.SetTexture(FocusPlaneConsts.k_InputTextureProperty, m_Target);
+                m_ComposeMaterial.SetTexture(FocusPlaneConsts.InputTextureProperty, m_Target);
+
+                return true;
             }
+
+            return false;
         }
+
+        // These 2 methods are only used with the Legacy Render Pipeline so far.
+
+        /// <inheritdoc/>
+        public void SetCamera(Camera camera) {}
+
+        /// <inheritdoc/>
+        public void Update() {}
     }
 }
 #endif

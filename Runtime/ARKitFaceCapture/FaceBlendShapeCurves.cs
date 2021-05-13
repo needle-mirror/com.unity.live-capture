@@ -12,23 +12,23 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         readonly ICurve<float>[] m_Curves;
 
         /// <inheritdoc/>
-        public string relativePath { get; }
+        public string RelativePath { get; }
 
         /// <inheritdoc/>
-        public string propertyName { get; }
+        public string PropertyName { get; }
 
         /// <inheritdoc/>
-        public Type bindingType { get; }
+        public Type BindingType { get; }
 
         /// <inheritdoc/>
-        public FrameRate frameRate
+        public FrameRate FrameRate
         {
-            get => m_Curves[0].frameRate;
+            get => m_Curves[0].FrameRate;
             set
             {
                 foreach (var curve in m_Curves)
                 {
-                    curve.frameRate = value;
+                    curve.FrameRate = value;
                 }
             }
         }
@@ -42,11 +42,11 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// <param name="bindingType">The type of component this curve is applied to.</param>
         public FaceBlendShapeCurves(string relativePath, string propertyName, Type bindingType)
         {
-            this.relativePath = relativePath;
-            this.propertyName = propertyName;
-            this.bindingType = bindingType;
+            RelativePath = relativePath;
+            PropertyName = propertyName;
+            BindingType = bindingType;
 
-            m_Curves = FaceBlendShapePose.shapes
+            m_Curves = FaceBlendShapePose.Shapes
                 .Select(shape => new FloatCurve(relativePath, $"{propertyName}.{shape}", bindingType))
                 .ToArray();
         }
@@ -57,10 +57,10 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             AddKey(time, ref value);
         }
 
-        /// <inheritdoc cref="AddKey(float,Unity.LiveCapture.ARKitFaceCapture.FaceBlendShapePose)"/>
+        /// <inheritdoc cref="AddKey(float,FaceBlendShapePose)"/>
         public void AddKey(float time, ref FaceBlendShapePose value)
         {
-            for (var i = 0; i < FaceBlendShapePose.shapeCount; ++i)
+            for (var i = 0; i < FaceBlendShapePose.ShapeCount; ++i)
             {
                 m_Curves[i].AddKey(time, value[i]);
             }

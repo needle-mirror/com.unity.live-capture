@@ -4,7 +4,7 @@ namespace Unity.LiveCapture
 {
     class FileNameFormatter
     {
-        public static FileNameFormatter instance { get; } = new FileNameFormatter();
+        public static FileNameFormatter Instance { get; } = new FileNameFormatter();
 
         static readonly string s_InvalidFilenameChars = Regex.Escape("/?<>\\:*|\"");
         static readonly string s_InvalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", s_InvalidFilenameChars);

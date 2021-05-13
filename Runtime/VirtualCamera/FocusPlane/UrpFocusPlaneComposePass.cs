@@ -16,14 +16,14 @@ namespace Unity.LiveCapture.VirtualCamera
             if (camera.cameraType == CameraType.SceneView)
                 return;
 
-            if (FocusPlaneMap.instance.TryGetInstance(camera, out var focusPlane))
+            if (FocusPlaneMap.Instance.TryGetInstance(camera, out var focusPlane))
             {
                 // Compositing is done by drawing a fullscreen quad as opposed to using Blit,
                 // since it saves us the need to explicitly access the right destination target,
                 // which turns out to be buggy in case of passes executed after post processes.
-                CommandBuffer cmd = CommandBufferPool.Get(FocusPlaneConsts.k_ComposePlaneProfilingSamplerLabel);
+                var cmd = CommandBufferPool.Get(FocusPlaneConsts.ComposePlaneProfilingSamplerLabel);
                 cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
-                cmd.DrawMesh(RenderingUtils.fullscreenMesh, Matrix4x4.identity, focusPlane.composeMaterial);
+                cmd.DrawMesh(RenderingUtils.fullscreenMesh, Matrix4x4.identity, focusPlane.ComposeMaterial);
                 context.ExecuteCommandBuffer(cmd);
                 CommandBufferPool.Release(cmd);
             }

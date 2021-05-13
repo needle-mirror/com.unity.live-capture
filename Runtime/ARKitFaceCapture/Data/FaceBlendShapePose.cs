@@ -238,7 +238,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// <summary>
         /// The face blend shapes, excluding shapes with a negative value.
         /// </summary>
-        public static FaceBlendShape[] shapes { get; } = Enum.GetValues(typeof(FaceBlendShape))
+        public static FaceBlendShape[] Shapes { get; } = Enum.GetValues(typeof(FaceBlendShape))
             .Cast<FaceBlendShape>()
             .Where(s => (int)s >= 0)
             .ToArray();

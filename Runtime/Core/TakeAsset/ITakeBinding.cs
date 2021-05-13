@@ -19,7 +19,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The type of the value of the binding.
         /// </summary>
-        Type type { get; }
+        Type Type { get; }
 
         /// <summary>
         /// Sets the name of the binding.

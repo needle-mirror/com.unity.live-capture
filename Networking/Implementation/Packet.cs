@@ -3,7 +3,7 @@ namespace Unity.LiveCapture.Networking
     /// <summary>
     /// Holds a message and any metadata used by the network layer.
     /// </summary>
-    struct Packet
+    readonly struct Packet
     {
         /// <summary>
         /// The types of messages used in the network protocol.
@@ -35,12 +35,12 @@ namespace Unity.LiveCapture.Networking
         /// <summary>
         /// The message associated with this packet.
         /// </summary>
-        public Message message { get; }
+        public Message Message { get; }
 
         /// <summary>
         /// The meaning of the message in the network protocol.
         /// </summary>
-        public Type type { get; }
+        public Type PacketType { get; }
 
         /// <summary>
         /// Creates a new <see cref="Packet"/> instance.
@@ -49,8 +49,8 @@ namespace Unity.LiveCapture.Networking
         /// <param name="type">The meaning of the message in the network protocol.</param>
         public Packet(Message message, Type type)
         {
-            this.message = message;
-            this.type = type;
+            Message = message;
+            PacketType = type;
         }
     }
 }

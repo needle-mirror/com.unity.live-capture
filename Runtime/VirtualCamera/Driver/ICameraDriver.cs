@@ -5,7 +5,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// <summary>
     /// Interface expected by the <see cref="VirtualCameraDevice"/>
     /// </summary>
-    public interface ICameraDriver
+    interface ICameraDriver
     {
         /// <summary>
         /// Provides access to the currently rendering Camera.

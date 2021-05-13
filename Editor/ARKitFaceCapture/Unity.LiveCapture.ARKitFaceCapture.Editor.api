@@ -1,14 +1,3 @@
 // This file is generated. Do not modify by hand.
 // XML documentation file not found. To check if public methods have XML comments,
 // make sure the XML doc file is present and located next to the scraped dll
-namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
-{
-    [System.Runtime.CompilerServices.Extension] public static class SerializedPropertyExtensions
-    {
-        [System.Runtime.CompilerServices.Extension] public static object GetValue(UnityEditor.SerializedProperty property);
-        [System.Runtime.CompilerServices.Extension] public static T GetValue<T>(UnityEditor.SerializedProperty property);
-        [System.Runtime.CompilerServices.Extension] public static object[] GetValues(UnityEditor.SerializedProperty property);
-        [System.Runtime.CompilerServices.Extension] public static T[] GetValues<T>(UnityEditor.SerializedProperty property);
-        [System.Runtime.CompilerServices.Extension] public static void SetValue(UnityEditor.SerializedProperty property, object value);
-    }
-}

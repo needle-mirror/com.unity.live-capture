@@ -3,26 +3,25 @@ using UnityEngine;
 namespace Unity.LiveCapture.VirtualCamera
 {
     /// <summary>
-    /// Interface that describes a render-pipeline specific focus plane implementation.
+    /// Interface that describes a render pipeline specific focus plane implementation.
     /// </summary>
     interface IFocusPlaneImpl
     {
         /// <summary>
         /// The material used to render the focus plane.
         /// </summary>
-        Material renderMaterial { get; }
+        Material RenderMaterial { get; }
 
         /// <summary>
         /// The material used to blend the rasterized focus plane with the final frame.
         /// </summary>
-        Material composeMaterial { get; }
+        Material ComposeMaterial { get; }
 
         /// <summary>
-        /// Provides access to a render target of the specified type, if supported.
+        /// Set the camera to render the focus plane on.
         /// </summary>
-        /// <typeparam name="T">The render target.</typeparam>
-        /// <returns>Indicates whether or not a render target of the specified type is supported.</returns>
-        bool TryGetRenderTarget<T>(out T target);
+        /// <param name="camera">The camera.</param>
+        void SetCamera(Camera camera);
 
         /// <summary>
         /// Initializes the implementation, allocating resources such as materials.
@@ -35,11 +34,24 @@ namespace Unity.LiveCapture.VirtualCamera
         void Dispose();
 
         /// <summary>
+        /// Updates the implementation.
+        /// </summary>
+        void Update();
+
+        /// <summary>
+        /// Provides access to a render target of the specified type, if supported.
+        /// </summary>
+        /// <typeparam name="T">The render target.</typeparam>
+        /// <returns>Indicates whether or not a render target of the specified type is supported.</returns>
+        bool TryGetRenderTarget<T>(out T target);
+
+        /// <summary>
         /// Allocates (or re-allocates) the intermediary render target in which the focus plane is rendered.
         /// </summary>
         /// <remarks>
         /// This render texture is allocated in a deferred manner for one needs to wait for the render pipeline to be initialized.
         /// </remarks>
-        void AllocateTargetIfNeeded(int width, int height);
+        /// <returns>True if an allocation occured.</returns>
+        bool AllocateTargetIfNeeded(int width, int height);
     }
 }

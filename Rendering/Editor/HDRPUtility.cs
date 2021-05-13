@@ -1,14 +1,14 @@
 #if HDRP_10_2_OR_NEWER
 using System;
-using UnityEngine;
-using UnityEditor;
 using System.Reflection;
+using UnityEditor;
+using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
 
-namespace Unity.LiveCapture.Rendering
+namespace Unity.LiveCapture.Rendering.Editor
 {
-    public static class HDRPEditorUtilities
+    static class HDRPEditorUtilities
     {
         static HDRenderPipelineAsset GetAsset()
         {
@@ -32,7 +32,7 @@ namespace Unity.LiveCapture.Rendering
         /// <param name="injectionPoint">Injection point of the post effect in the rendering pipeline.</param>
         /// <typeparam name="T">Type of the post effect, subclass of CustomPostProcessVolumeComponent.</typeparam>
         /// <returns>Whether or not the post effect is present.</returns>
-        internal static bool ContainsPostEffect<T>(CustomPostProcessInjectionPoint injectionPoint) where T : CustomPostProcessVolumeComponent
+        public static bool ContainsPostEffect<T>(CustomPostProcessInjectionPoint injectionPoint) where T : CustomPostProcessVolumeComponent
         {
             var asset = GetAsset();
 
@@ -59,7 +59,7 @@ namespace Unity.LiveCapture.Rendering
         /// </summary>
         /// <param name="injectionPoint">Injection point of the post effect in the rendering pipeline.</param>
         /// <typeparam name="T">Type of the post effect, subclass of CustomPostProcessVolumeComponent.</typeparam>
-        internal static void AddPostEffect<T>(CustomPostProcessInjectionPoint injectionPoint) where T : CustomPostProcessVolumeComponent
+        public static void AddPostEffect<T>(CustomPostProcessInjectionPoint injectionPoint) where T : CustomPostProcessVolumeComponent
         {
             var asset = GetAsset();
 
@@ -94,7 +94,7 @@ namespace Unity.LiveCapture.Rendering
                 case CustomPostProcessInjectionPoint.AfterPostProcess:
                     return "afterPostProcessCustomPostProcesses";
             }
-            return String.Empty;
+            return string.Empty;
         }
     }
 }

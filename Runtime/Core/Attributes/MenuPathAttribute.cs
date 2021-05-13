@@ -13,13 +13,13 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The menu item represented like a path name. For example, the menu item could be "Sub Menu/Action".
         /// </summary>
-        public string itemName { get; }
+        public string ItemName { get; }
 
         /// <summary>
         /// The order by which the menu items are displayed. Items in the same sub menu have a separator
         /// placed between them if their priority differs by more than 10.
         /// </summary>
-        public int priority { get; }
+        public int Priority { get; }
 
         /// <summary>
         /// Creates a new <see cref="MenuPathAttribute"/> instance.
@@ -28,10 +28,10 @@ namespace Unity.LiveCapture
         /// could be "Sub Menu/Action".</param>
         /// <param name="priority">The order by which the menu items are displayed. Items in the same sub
         /// menu have a separator placed between them if their priority differs by more than 10.</param>
-        public MenuPathAttribute(string itemName, int priority = 0)
+        protected MenuPathAttribute(string itemName, int priority = 0)
         {
-            this.itemName = itemName;
-            this.priority = priority;
+            ItemName = itemName;
+            Priority = priority;
         }
     }
 }

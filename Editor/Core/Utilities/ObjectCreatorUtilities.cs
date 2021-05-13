@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     static class ObjectCreatorUtilities
     {

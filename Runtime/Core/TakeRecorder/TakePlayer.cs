@@ -1,30 +1,37 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 
 namespace Unity.LiveCapture
 {
-    /// <summary>
-    /// A component that plays a <see cref="Take"/>.
-    /// </summary>
-    [ExecuteAlways]
-    [DisallowMultipleComponent]
-    [RequireComponent(typeof(PlayableDirector))]
-    [ExcludeFromPreset]
-    [AddComponentMenu("Live Capture/Take Player")]
-    public class TakePlayer : MonoBehaviour
+    [Serializable]
+    class TakePlayer
     {
-        [SerializeField, HideInInspector]
-        PlayableAsset m_NullPlayableAsset = null;
+        [SerializeField]
+        PlayableAsset m_FallbackPlayableAsset;
+        [SerializeField]
+        PlayableDirector m_Director;
         [SerializeField]
         Take m_Take;
-        PlayableDirector m_Director;
         IEnumerable<TrackBindingEntry> m_Entries;
 
+        public PlayableDirector Director
+        {
+            get => m_Director;
+            set => m_Director = value;
+        }
+
+        public PlayableAsset FallbackPlayableAsset
+        {
+            get => m_FallbackPlayableAsset;
+            set => m_FallbackPlayableAsset = value;
+        }
+
         /// <summary>
-        /// The <see cref="Take"/> to play.
+        /// The <see cref="LiveCapture.Take"/> to play.
         /// </summary>
-        public Take take
+        public Take Take
         {
             get => m_Take;
             set
@@ -41,119 +48,39 @@ namespace Unity.LiveCapture
             }
         }
 
-        void OnValidate()
-        {
-            Validate();
-        }
-
-        void Reset()
-        {
-            SetupComponentsIfNeeded();
-        }
-
-        void Awake()
-        {
-            SetupComponentsIfNeeded();
-        }
-
-        void SetupComponentsIfNeeded()
-        {
-            if (m_Director == null)
-            {
-                m_Director = GetComponent<PlayableDirector>();
-            }
-        }
-
-        void Update()
+        public void Update()
         {
             HandlePlayableAssetChange();
         }
 
         void HandlePlayableAssetChange()
         {
-            SetupComponentsIfNeeded();
+            Debug.Assert(Director != null);
 
-            Debug.Assert(m_Director != null);
-            Debug.Assert(m_NullPlayableAsset != null);
-
-            var playableAsset = m_NullPlayableAsset;
+            var playableAsset = FallbackPlayableAsset;
 
             if (m_Take != null)
             {
-                playableAsset = m_Take.timeline;
+                playableAsset = m_Take.Timeline;
             }
 
-            if (m_Director.playableAsset != playableAsset)
+            if (Director.playableAsset != playableAsset)
             {
-                m_Director.playableAsset = playableAsset;
-                m_Director.DeferredEvaluate();
+                Director.playableAsset = playableAsset;
+                Director.DeferredEvaluate();
             }
-        }
-
-        internal void Validate()
-        {
-            SetupComponentsIfNeeded();
-            ClearSceneBindings();
-
-            Debug.Assert(m_Director != null);
-
-            if (m_Take != null)
-            {
-                var resolver = m_Director as IExposedPropertyTable;
-                var entries = m_Take.bindingEntries;
-
-                foreach (var entry in entries)
-                {
-                    var binding = entry.binding;
-
-                    if (binding == null)
-                    {
-                        continue;
-                    }
-
-                    var value = binding.GetValue(resolver);
-
-                    if (value == null)
-                    {
-                        continue;
-                    }
-
-                    if (typeof(Component).IsAssignableFrom(binding.type) &&
-                        value is GameObject go)
-                    {
-                        value = go.GetComponent(binding.type);
-
-                        if (value != null)
-                        {
-                            binding.SetValue(value, resolver);
-                        }
-                        else
-                        {
-                            binding.ClearValue(resolver);
-                        }
-                    }
-                    else if (!binding.type.IsAssignableFrom(value.GetType()))
-                    {
-                        binding.ClearValue(resolver);
-                    }
-                }
-            }
-
-            SetSceneBindings();
         }
 
         void ClearSceneBindings()
         {
-            if (m_Entries == null)
+            if (Director == null || m_Entries == null)
             {
                 return;
             }
 
-            Debug.Assert(m_Director != null);
-
             foreach (var entry in m_Entries)
             {
-                m_Director.ClearGenericBinding(entry.track);
+                Director.ClearGenericBinding(entry.Track);
             }
 
             m_Entries = null;
@@ -163,26 +90,31 @@ namespace Unity.LiveCapture
         {
             m_Entries = null;
 
-            if (m_Take == null || m_Director == null)
+            if (m_Take == null || Director == null)
             {
                 return;
             }
 
-            m_Entries = m_Take.bindingEntries;
+            m_Entries = m_Take.BindingEntries;
+
+            if (m_Entries == null)
+            {
+                return;
+            }
 
             foreach (var entry in m_Entries)
             {
-                var track = entry.track;
-                var binding = entry.binding;
+                var track = entry.Track;
+                var binding = entry.Binding;
 
                 if (track == null ||  binding == null)
                 {
                     continue;
                 }
 
-                var value = binding.GetValue(m_Director);
+                var value = binding.GetValue(Director);
 
-                m_Director.SetGenericBinding(track, value);
+                Director.SetGenericBinding(track, value);
             }
         }
     }

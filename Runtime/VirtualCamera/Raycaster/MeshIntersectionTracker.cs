@@ -56,23 +56,6 @@ namespace Unity.LiveCapture.VirtualCamera
             SkinnedMeshCpuSkinning
         }
 
-        // A helper to simplify profiling methods with complex flow control.
-        struct CustomSamplerScope : IDisposable
-        {
-            readonly CustomSampler m_Sampler;
-
-            public CustomSamplerScope(CustomSampler sampler)
-            {
-                m_Sampler = sampler;
-                m_Sampler.Begin();
-            }
-
-            public void Dispose()
-            {
-                m_Sampler.End();
-            }
-        }
-
         // No concurrent access expected, used to minimize allocations.
         static readonly List<Vector3> k_TmpVertices = new List<Vector3>();
         static readonly List<int> k_TmpTriangles = new List<int>();
@@ -81,10 +64,10 @@ namespace Unity.LiveCapture.VirtualCamera
         struct VertexBoneInfo
         {
             // Number of bones for this vertex.
-            public byte count;
+            public byte Count;
 
             // Index of the first entry for this vertex in a BoneWeight1 buffer.
-            public int index;
+            public int Index;
         }
 
         // Avoid reallocating collections.
@@ -115,15 +98,13 @@ namespace Unity.LiveCapture.VirtualCamera
         // Mesh used to store baked skinned meshes.
         Mesh m_BakedSkinnedMesh;
 
-        Mode m_Mode = Mode.None;
-
         CustomSampler m_TrackSampler;
         CustomSampler m_UpdateSampler;
 
         /// <summary>
         /// The current tracking mode.
         /// </summary>
-        public Mode mode => m_Mode;
+        public Mode CurrentMode { get; private set; } = Mode.None;
 
         /// <summary>
         /// Initialize resources.
@@ -131,10 +112,14 @@ namespace Unity.LiveCapture.VirtualCamera
         public void Initialize()
         {
             if (m_TrackSampler == null)
-                m_TrackSampler = CustomSampler.Create($"{nameof(MeshIntersectionTracker)}.{nameof(TryTrack)}");
+            {
+                m_TrackSampler = CustomSampler.Create($"{nameof(MeshIntersectionTracker)}.{nameof(TryTrack)}", true);
+            }
 
             if (m_UpdateSampler == null)
-                m_UpdateSampler = CustomSampler.Create($"{nameof(MeshIntersectionTracker)}.{nameof(TryUpdate)}");
+            {
+                m_UpdateSampler = CustomSampler.Create($"{nameof(MeshIntersectionTracker)}.{nameof(TryUpdate)}", true);
+            }
         }
 
         /// <summary>
@@ -143,7 +128,7 @@ namespace Unity.LiveCapture.VirtualCamera
         public void Dispose()
         {
             Reset();
-            AdditionalCoreUtils.Destroy(m_BakedSkinnedMesh);
+            AdditionalCoreUtils.DestroyIfNeeded(ref m_BakedSkinnedMesh);
         }
 
         /// <summary>
@@ -151,7 +136,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// </summary>
         public void Reset()
         {
-            m_Mode = Mode.None;
+            CurrentMode = Mode.None;
             m_Renderer = null;
             m_Mesh = null;
         }
@@ -166,7 +151,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             using (new CustomSamplerScope(m_UpdateSampler))
             {
-                if (m_Mode == Mode.None || !m_Renderer.gameObject.activeInHierarchy)
+                if (CurrentMode == Mode.None || !m_Renderer.gameObject.activeInHierarchy)
                 {
                     Reset();
                     worldPosition = Vector3.zero;
@@ -177,7 +162,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 {
                     m_LastReadbackFrame = Time.frameCount;
 
-                    switch (m_Mode)
+                    switch (CurrentMode)
                     {
                         case Mode.MeshDynamic:
                         {
@@ -199,7 +184,7 @@ namespace Unity.LiveCapture.VirtualCamera
                             {
                                 var vertexBoneInfo = m_BonesPerVertex[i];
                                 m_TriangleSkinnedVertices[i] = SkinVertex(
-                                    m_TriangleVertices[i], vertexBoneInfo.index, vertexBoneInfo.count,
+                                    m_TriangleVertices[i], vertexBoneInfo.Index, vertexBoneInfo.Count,
                                     m_BoneWeights, m_BindPoses, bones);
                             }
 
@@ -279,14 +264,14 @@ namespace Unity.LiveCapture.VirtualCamera
 
                 if (avoidReadback)
                 {
-                    m_Mode = Mode.MeshStatic;
+                    CurrentMode = Mode.MeshStatic;
 
                     // In static mode, readback once and cache the local position.
                     m_LocalIntersectionPoint = ReadbackVerticesAndReturnLocalPosition();
                 }
                 else
                 {
-                    m_Mode = Mode.MeshDynamic;
+                    CurrentMode = Mode.MeshDynamic;
                 }
 
                 return true;
@@ -312,7 +297,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
                 if (avoidReadback)
                 {
-                    m_Mode = Mode.SkinnedMeshCpuSkinning;
+                    CurrentMode = Mode.SkinnedMeshCpuSkinning;
 
                     var sharedMesh = skinnedMeshRenderer.sharedMesh;
 
@@ -352,8 +337,8 @@ namespace Unity.LiveCapture.VirtualCamera
 
                         m_BonesPerVertex[i] = new VertexBoneInfo
                         {
-                            count = numBones,
-                            index = index
+                            Count = numBones,
+                            Index = index
                         };
 
                         index += numBones;
@@ -363,7 +348,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 }
                 else
                 {
-                    m_Mode = Mode.SkinnedMesh;
+                    CurrentMode = Mode.SkinnedMesh;
                 }
 
                 return true;
@@ -435,9 +420,21 @@ namespace Unity.LiveCapture.VirtualCamera
             Mesh mesh, Transform transform, Ray worldRay, Vector3 estimatedWorldIntersectionPoint,
             out Vector3Int triangle, out Vector2 barycentricCoordinates)
         {
+            if (!mesh.isReadable)
+            {
+                Debug.LogWarning(
+                    $"Cannot track intersection with {nameof(Mesh)} '{mesh.name}' since it is not readable. " +
+                    $"Read/Write must be enabled in import settings. Make sure the {nameof(GameObject)} is not marked 'static'.");
+
+                triangle = Vector3Int.zero;
+                barycentricCoordinates = Vector2.zero;
+                return false;
+            }
+
             Assert.IsFalse(mesh.vertexCount == 0);
 
             mesh.GetVertices(k_TmpVertices);
+
             for (var i = 0; i != mesh.subMeshCount; ++i)
             {
                 mesh.GetTriangles(k_TmpTriangles, i);

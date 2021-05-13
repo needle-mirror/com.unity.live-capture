@@ -8,7 +8,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// <remarks>
     /// Adds a tint to the fields.
     /// </remarks>
-    public class ReadOnly : PropertyAttribute
+    class ReadOnly : PropertyAttribute
     {
     }
 }

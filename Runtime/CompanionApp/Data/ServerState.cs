@@ -7,7 +7,7 @@ namespace Unity.LiveCapture.CompanionApp
     /// <summary>
     /// An enum defining the mode the server operates in.
     /// </summary>
-    public enum ServerMode : byte
+    enum ServerMode : byte
     {
         /// <summary>The server is disabled.</summary>
         None = 0,
@@ -22,27 +22,27 @@ namespace Unity.LiveCapture.CompanionApp
     /// </summary>
     [Serializable]
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct ServerState : IEquatable<ServerState>
+    struct ServerState : IEquatable<ServerState>
     {
         /// <summary>
         /// The default ServerState.
         /// </summary>
-        public static readonly ServerState defaultState = new ServerState
+        public static readonly ServerState DefaultState = new ServerState
         {
-            recording = false,
-            mode = ServerMode.None,
+            Recording = false,
+            Mode = ServerMode.None,
         };
 
         /// <summary>
         /// Is a take being recorded.
         /// </summary>
         [MarshalAs(UnmanagedType.U1)]
-        public bool recording;
+        public bool Recording;
 
         /// <summary>
         /// The state the server is in.
         /// </summary>
-        public ServerMode mode;
+        public ServerMode Mode;
 
         /// <summary>
         /// Returns a string that represents the current object.
@@ -50,7 +50,7 @@ namespace Unity.LiveCapture.CompanionApp
         /// <returns>A string that represents the current object.</returns>
         public override string ToString()
         {
-            return $"(Mode {mode}, Recording {recording}";
+            return $"(Mode {Mode}, Recording {Recording}";
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace Unity.LiveCapture.CompanionApp
         /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>
         public bool Equals(ServerState other)
         {
-            return recording == other.recording && mode == other.mode;
+            return Recording == other.Recording && Mode == other.Mode;
         }
 
         /// <summary>
@@ -81,8 +81,8 @@ namespace Unity.LiveCapture.CompanionApp
         {
             unchecked
             {
-                var hashCode = recording.GetHashCode();
-                hashCode = (hashCode * 397) ^ (int)mode;
+                var hashCode = Recording.GetHashCode();
+                hashCode = (hashCode * 397) ^ (int)Mode;
                 return hashCode;
             }
         }

@@ -58,11 +58,11 @@ namespace Unity.LiveCapture
         /// <param name="save">Should the server's serialized data be re-written to disk.</param>
         protected void OnServerChanged(bool save)
         {
-            ServerManager.instance.OnServerChanged();
+            ServerManager.Instance.OnServerChanged();
 
             if (save)
             {
-                ServerManager.instance.Save();
+                ServerManager.Instance.Save();
             }
         }
     }

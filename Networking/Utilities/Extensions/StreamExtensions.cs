@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Unity.LiveCapture.Networking
 {
@@ -35,7 +37,7 @@ namespace Unity.LiveCapture.Networking
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteStruct<T>(this Stream stream, ref T data) where T : struct
         {
-            var size = SizeOfCache<T>.size;
+            var size = SizeOfCache<T>.Size;
 
             EnsureBufferCapacity(size);
             s_TempBuffer.WriteStruct(ref data);
@@ -52,7 +54,7 @@ namespace Unity.LiveCapture.Networking
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T ReadStruct<T>(this Stream stream) where T : struct
         {
-            var size = SizeOfCache<T>.size;
+            var size = SizeOfCache<T>.Size;
 
             Read(stream, size);
 
@@ -121,6 +123,34 @@ namespace Unity.LiveCapture.Networking
         {
             if (s_TempBuffer == null || s_TempBuffer.Length < capacity)
                 s_TempBuffer = new byte[capacity];
+        }
+
+        /// <summary>
+        /// Copies a native array into a stream.
+        /// </summary>
+        /// <param name="stream">The stream to write the array into.</param>
+        /// <param name="array">The array to write.</param>
+        /// <typeparam name="T">The type of data in the native array.</typeparam>
+        /// <returns><see langword="true"/> if the array was successfully written into the stream; otherwise, <see langword="false"/>.</returns>
+        public static bool WriteArray<T>(this MemoryStream stream, NativeArray<T> array) where T : struct
+        {
+            stream.SetLength(stream.Length + array.Length);
+
+            if (!stream.TryGetBuffer(out var buffer) || buffer.Array == null)
+            {
+                return false;
+            }
+
+            unsafe
+            {
+                fixed(void* streamPtr = &buffer.Array[buffer.Offset + stream.Position])
+                {
+                    UnsafeUtility.MemCpy(streamPtr, array.GetUnsafePtr(), array.Length);
+                }
+            }
+
+            stream.Position += array.Length;
+            return true;
         }
     }
 }

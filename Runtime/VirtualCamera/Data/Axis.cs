@@ -6,22 +6,22 @@ namespace Unity.LiveCapture.VirtualCamera
     /// 3D Axis flags. Useful to convert PositionAxis and RotationAxis.
     /// </summary>
     [Flags]
-    public enum Axis
+    enum Axis
     {
         /// <summary>
-        /// No Axis flags set.
+        /// No axis flags set.
         /// </summary>
         None = 0,
         /// <summary>
-        /// The X Axis flag.
+        /// The X axis flag.
         /// </summary>
         X = (1 << 0),
         /// <summary>
-        /// The Y Axis flag.
+        /// The Y axis flag.
         /// </summary>
         Y = (1 << 1),
         /// <summary>
-        /// The Z Axis flag.
+        /// The Z axis flag.
         /// </summary>
         Z = (1 << 2),
     }
@@ -30,27 +30,27 @@ namespace Unity.LiveCapture.VirtualCamera
     /// Position axis flags. Represents a camera rig position.
     /// </summary>
     [Flags]
-    public enum PositionAxis
+    enum PositionAxis
     {
         /// <summary>
-        /// No Axis.
+        /// No axis.
         /// </summary>
-        [Description("No Axis.")]
+        [Description("No axis.")]
         None = Axis.None,
         /// <summary>
-        /// The Truck Axis, equivalent to the X Axis.
+        /// The truck axis, equivalent to the X axis.
         /// </summary>
-        [Description("The Truck Axis, equivalent to the X Axis.")]
+        [Description("The truck axis, equivalent to the X axis.")]
         Truck = Axis.X,
         /// <summary>
-        /// The Pedestal Axis, equivalent to the Y Axis.
+        /// The pedestal axis, equivalent to the Y axis.
         /// </summary>
-        [Description("The Pedestal Axis, equivalent to the Y Axis.")]
+        [Description("The pedestal axis, equivalent to the Y axis.")]
         Pedestal = Axis.Y,
         /// <summary>
         /// The Dolly Axis, equivalent to the Z Axis.
         /// </summary>
-        [Description("The Dolly Axis, equivalent to the Z Axis.")]
+        [Description("The dolly axis, equivalent to the Z axis.")]
         Dolly = Axis.Z,
     }
 
@@ -58,27 +58,27 @@ namespace Unity.LiveCapture.VirtualCamera
     /// Rotation axis flags. Represents a camera rig rotation.
     /// </summary>
     [Flags]
-    public enum RotationAxis
+    enum RotationAxis
     {
         /// <summary>
-        /// No Axis.
+        /// No axis.
         /// </summary>
-        [Description("No Axis.")]
+        [Description("No axis.")]
         None = Axis.None,
         /// <summary>
-        /// The Tilt Axis, equivalent to the X Axis.
+        /// The tilt axis, equivalent to the X axis.
         /// </summary>
-        [Description("The Tilt Axis, equivalent to the X Axis.")]
+        [Description("The tilt axis, equivalent to the X axis.")]
         Tilt = Axis.X,
         /// <summary>
-        /// The Pan Axis, equivalent to the Y Axis.
+        /// The pan axis, equivalent to the Y axis.
         /// </summary>
-        [Description("The Pan Axis, equivalent to the Y Axis.")]
+        [Description("The pan axis, equivalent to the Y axis.")]
         Pan = Axis.Y,
         /// <summary>
-        /// The Dutch Axis, equivalent to the Z Axis.
+        /// The dutch axis, equivalent to the Z axis.
         /// </summary>
-        [Description("The Dutch Axis, equivalent to the Z Axis.")]
-        Dutch = Axis.Z,
+        [Description("The dutch axis, equivalent to the Z axis.")]
+        Roll = Axis.Z,
     }
 }

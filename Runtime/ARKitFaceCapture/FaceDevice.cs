@@ -21,7 +21,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         [SerializeField, HideInInspector]
         FaceLiveLink m_LiveLink = new FaceLiveLink();
         [SerializeField, HideInInspector]
-        FacePose m_Pose = FacePose.identity;
+        FacePose m_Pose = FacePose.Identity;
         FaceDeviceRecorder m_Recorder = new FaceDeviceRecorder();
         TimestampTracker m_TimestampTracker = new TimestampTracker();
 
@@ -29,7 +29,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// Gets the <see cref="FaceActor"/> currently assigned to this device.
         /// </summary>
         /// <returns>The assigned actor, or null if none is assigned.</returns>
-        public FaceActor actor
+        public FaceActor Actor
         {
             get => m_Actor;
             set
@@ -38,15 +38,16 @@ namespace Unity.LiveCapture.ARKitFaceCapture
                 {
                     m_Actor = value;
                     m_LiveLink.SetAnimator(null);
-
-                    if (m_Actor != null)
-                    {
-                        m_Pose = m_Actor.facePose;
-                    }
-
                     Refresh();
                 }
             }
+        }
+
+        bool TryGetInternalClient(out IFaceClientInternal client)
+        {
+            client = GetClient() as IFaceClientInternal;
+
+            return client != null;
         }
 
         /// <inheritdoc/>
@@ -72,7 +73,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             if (IsRecording())
             {
                 m_TimestampTracker.Reset();
-                m_Recorder.frameRate = GetTakeRecorder().frameRate;
+                m_Recorder.FrameRate = GetTakeRecorder().FrameRate;
                 m_Recorder.Clear();
 
                 UpdateTimestampTracker();
@@ -82,17 +83,19 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// <inheritdoc />
         protected override void OnClientAssigned()
         {
-            var client = GetClient();
-
-            client.facePoseSampleReceived += OnFacePoseSampleReceived;
+            if (TryGetInternalClient(out var client))
+            {
+                client.FacePoseSampleReceived += OnFacePoseSampleReceived;
+            }
         }
 
         /// <inheritdoc />
         protected override void OnClientUnassigned()
         {
-            var client = GetClient();
-
-            client.facePoseSampleReceived -= OnFacePoseSampleReceived;
+            if (TryGetInternalClient(out var client))
+            {
+                client.FacePoseSampleReceived -= OnFacePoseSampleReceived;
+            }
         }
 
         /// <inheritdoc/>
@@ -103,7 +106,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
                 return;
             }
 
-            takeBuilder.CreateAnimationTrack("Face", m_Actor.animator, m_Recorder.Bake());
+            takeBuilder.CreateAnimationTrack("Face", m_Actor.Animator, m_Recorder.Bake());
         }
 
         /// <inheritdoc/>
@@ -126,24 +129,24 @@ namespace Unity.LiveCapture.ARKitFaceCapture
 
             if (m_Actor != null)
             {
-                animator = m_Actor.animator;
+                animator = m_Actor.Animator;
             }
 
             m_LiveLink.SetAnimator(animator);
             m_LiveLink.SetActive(IsLive());
-            m_LiveLink.pose = m_Pose;
+            m_LiveLink.Pose = m_Pose;
             m_LiveLink.Update();
         }
 
         void OnFacePoseSampleReceived(FaceSample sample)
         {
-            m_TimestampTracker.SetTimestamp(sample.timestamp);
-            m_Pose = sample.facePose;
+            m_TimestampTracker.SetTimestamp(sample.Timestamp);
+            m_Pose = sample.FacePose;
 
             if (IsRecording())
             {
-                m_Recorder.channels = m_LiveLink.channels;
-                m_Recorder.time = m_TimestampTracker.localTime;
+                m_Recorder.Channels = m_LiveLink.Channels;
+                m_Recorder.Time = m_TimestampTracker.LocalTime;
                 m_Recorder.Record(ref m_Pose);
             }
 
@@ -152,10 +155,9 @@ namespace Unity.LiveCapture.ARKitFaceCapture
 
         void UpdateTimestampTracker()
         {
-            var takeRecorder = GetTakeRecorder();
-            var time = (float)takeRecorder.slate.time;
+            var time = (float)GetTakeRecorder().GetPreviewTime();
 
-            m_TimestampTracker.time = time;
+            m_TimestampTracker.Time = time;
         }
     }
 }

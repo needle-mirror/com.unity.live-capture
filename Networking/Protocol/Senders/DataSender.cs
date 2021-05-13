@@ -9,7 +9,7 @@ namespace Unity.LiveCapture.Networking.Protocols
     /// An enum defining options that configure how data is sent over the network.
     /// </summary>
     [Flags]
-    public enum DataOptions : int
+    enum DataOptions : int
     {
         /// <summary>
         /// No options specified.
@@ -33,15 +33,21 @@ namespace Unity.LiveCapture.Networking.Protocols
     /// The base class for message used to send data to a remote.
     /// </summary>
     /// <typeparam name="T">The type of data to send.</typeparam>
-    public abstract class DataSender<T> : MessageBase, IDataSender
+    abstract class DataSender<T> : MessageBase, IDataSender
     {
+        /// <summary>
+        /// The latest version of the message serialized format.
+        /// </summary>
+        internal const int k_Version = 0;
+
         /// <summary>
         /// The flags used to configure how data is sent.
         /// </summary>
         protected readonly DataOptions m_Options;
+
+        readonly int m_Version;
         readonly MemoryStream m_Buffer0;
         readonly MemoryStream m_Buffer1;
-
         int m_LastBuffer;
 
         /// <summary>
@@ -52,6 +58,7 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// <param name="options">The flags used to configure how data is sent.</param>
         protected DataSender(string id, ChannelType channel, DataOptions options) : base(id, channel)
         {
+            m_Version = k_Version;
             m_Options = options;
 
             if (m_Options.Contains(DataOptions.OnlySendChangedValues))
@@ -66,7 +73,16 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// <inheritdoc/>
         protected DataSender(Stream stream) : base(stream)
         {
-            m_Options = stream.ReadStruct<DataOptions>();
+            m_Version = stream.ReadStruct<int>();
+
+            switch (m_Version)
+            {
+                case 0:
+                    m_Options = stream.ReadStruct<DataOptions>();
+                    break;
+                default:
+                    throw new Exception($"{nameof(DataSender<T>)} version is not supported by this application version.");
+            }
 
             if (m_Options.Contains(DataOptions.OnlySendChangedValues))
             {
@@ -75,6 +91,23 @@ namespace Unity.LiveCapture.Networking.Protocols
             }
 
             Reset();
+        }
+
+        /// <inheritdoc/>
+        internal override void Serialize(Stream stream)
+        {
+            base.Serialize(stream);
+
+            stream.WriteStruct(m_Version);
+
+            switch (m_Version)
+            {
+                case 0:
+                    stream.WriteStruct(m_Options);
+                    break;
+                default:
+                    throw new Exception($"{nameof(DataSender<T>)} version is not supported by this application version.");
+            }
         }
 
         /// <inheritdoc/>
@@ -118,7 +151,7 @@ namespace Unity.LiveCapture.Networking.Protocols
                     m_LastBuffer = (m_LastBuffer + 1) % 2;
                 }
 
-                protocol.SendMessage(this, ref data);
+                Protocol.SendMessage(this, ref data);
             }
             catch (Exception e)
             {
@@ -138,14 +171,6 @@ namespace Unity.LiveCapture.Networking.Protocols
             {
                 OnWrite(stream, ref data);
             }
-        }
-
-        /// <inheritdoc/>
-        internal override void Serialize(Stream stream)
-        {
-            base.Serialize(stream);
-
-            stream.WriteStruct(m_Options);
         }
 
         void Reset()

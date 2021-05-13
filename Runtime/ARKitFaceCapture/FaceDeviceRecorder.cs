@@ -9,36 +9,38 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     {
         ICurve[] m_Curves =
         {
-            new FaceBlendShapeCurves(string.Empty, $"m_Pose.{nameof(FacePose.blendShapes)}", typeof(FaceActor)),
-            new Vector4Curve(string.Empty, $"m_Pose.{nameof(FacePose.headOrientation)}", typeof(FaceActor)),
-            new Vector4Curve(string.Empty, $"m_Pose.{nameof(FacePose.leftEyeOrientation)}", typeof(FaceActor)),
-            new Vector4Curve(string.Empty, $"m_Pose.{nameof(FacePose.rightEyeOrientation)}", typeof(FaceActor)),
-            new BooleanCurve(string.Empty, "m_BlendShapesEnabled", typeof(FaceActor)),
-            new BooleanCurve(string.Empty, "m_HeadOrientationEnabled", typeof(FaceActor)),
-            new BooleanCurve(string.Empty, "m_EyeOrientationEnabled", typeof(FaceActor)),
+            new FaceBlendShapeCurves(string.Empty, FaceActor.PropertyNames.BlendShapes, typeof(FaceActor)),
+            new Vector3Curve(string.Empty, FaceActor.PropertyNames.HeadPosition, typeof(FaceActor)),
+            new EulerCurve(string.Empty, FaceActor.PropertyNames.HeadOrientation, typeof(FaceActor)),
+            new EulerCurve(string.Empty, FaceActor.PropertyNames.LeftEyeOrientation, typeof(FaceActor)),
+            new EulerCurve(string.Empty, FaceActor.PropertyNames.RightEyeOrientation, typeof(FaceActor)),
+            new BooleanCurve(string.Empty, FaceActor.PropertyNames.BlendShapesEnabled, typeof(FaceActor)),
+            new BooleanCurve(string.Empty, FaceActor.PropertyNames.HeadPositionEnabled, typeof(FaceActor)),
+            new BooleanCurve(string.Empty, FaceActor.PropertyNames.HeadOrientationEnabled, typeof(FaceActor)),
+            new BooleanCurve(string.Empty, FaceActor.PropertyNames.EyeOrientationEnabled, typeof(FaceActor)),
         };
 
         /// <summary>
         /// The time used by the recorder in seconds.
         /// </summary>
-        public float time { get; set; }
+        public float Time { get; set; }
 
         /// <summary>
         /// The data channels to record as enum flags.
         /// </summary>
-        public FaceChannelFlags channels { get; set; }
+        public FaceChannelFlags Channels { get; set; }
 
         /// <summary>
         /// The frame rate to use for recording.
         /// </summary>
-        public FrameRate frameRate
+        public FrameRate FrameRate
         {
-            get => m_Curves[0].frameRate;
+            get => m_Curves[0].FrameRate;
             set
             {
                 foreach (var curve in m_Curves)
                 {
-                    curve.frameRate = value;
+                    curve.FrameRate = value;
                 }
             }
         }
@@ -79,23 +81,28 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// <param name="sample">The face pose sample to record</param>
         public void Record(ref FacePose sample)
         {
-            if (channels.HasFlag(FaceChannelFlags.BlendShapes))
+            if (Channels.HasFlag(FaceChannelFlags.BlendShapes))
             {
-                (GetCurve<FaceBlendShapePose>(0) as FaceBlendShapeCurves).AddKey(time, ref sample.blendShapes);
+                (GetCurve<FaceBlendShapePose>(0) as FaceBlendShapeCurves).AddKey(Time, ref sample.BlendShapes);
             }
-            if (channels.HasFlag(FaceChannelFlags.Head))
+            if (Channels.HasFlag(FaceChannelFlags.HeadPosition))
             {
-                GetCurve<Vector4>(1).AddKey(time, ToVector4(sample.headOrientation));
+                GetCurve<Vector3>(1).AddKey(Time, sample.HeadPosition);
             }
-            if (channels.HasFlag(FaceChannelFlags.Eyes))
+            if (Channels.HasFlag(FaceChannelFlags.HeadRotation))
             {
-                GetCurve<Vector4>(2).AddKey(time, ToVector4(sample.leftEyeOrientation));
-                GetCurve<Vector4>(3).AddKey(time, ToVector4(sample.rightEyeOrientation));
+                GetCurve<Quaternion>(2).AddKey(Time, sample.HeadOrientation);
+            }
+            if (Channels.HasFlag(FaceChannelFlags.Eyes))
+            {
+                GetCurve<Quaternion>(3).AddKey(Time, sample.LeftEyeOrientation);
+                GetCurve<Quaternion>(4).AddKey(Time, sample.RightEyeOrientation);
             }
 
-            GetCurve<bool>(4).AddKey(time, channels.HasFlag(FaceChannelFlags.BlendShapes));
-            GetCurve<bool>(5).AddKey(time, channels.HasFlag(FaceChannelFlags.Head));
-            GetCurve<bool>(6).AddKey(time, channels.HasFlag(FaceChannelFlags.Eyes));
+            GetCurve<bool>(5).AddKey(Time, Channels.HasFlag(FaceChannelFlags.BlendShapes));
+            GetCurve<bool>(6).AddKey(Time, Channels.HasFlag(FaceChannelFlags.HeadPosition));
+            GetCurve<bool>(7).AddKey(Time, Channels.HasFlag(FaceChannelFlags.HeadRotation));
+            GetCurve<bool>(8).AddKey(Time, Channels.HasFlag(FaceChannelFlags.Eyes));
         }
 
         /// <summary>
@@ -119,11 +126,6 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         ICurve<T> GetCurve<T>(int index)
         {
             return m_Curves[index] as ICurve<T>;
-        }
-
-        Vector4 ToVector4(Quaternion q)
-        {
-            return new Vector4(q.x, q.y, q.z, q.w);
         }
     }
 }

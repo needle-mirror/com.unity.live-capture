@@ -13,8 +13,8 @@ namespace Unity.LiveCapture
         [SerializeReference]
         ITakeBinding m_Binding;
 
-        public TrackAsset track => m_Track;
-        public ITakeBinding binding => m_Binding;
+        public TrackAsset Track => m_Track;
+        public ITakeBinding Binding => m_Binding;
 
         public TrackBindingEntry(TrackAsset track, ITakeBinding binding)
         {

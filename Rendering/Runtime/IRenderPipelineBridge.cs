@@ -4,7 +4,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace Unity.LiveCapture.Rendering
 {
-    internal interface IRenderPipelineBridge
+    interface IRenderPipelineBridge
     {
 #if URP_10_2_OR_NEWER
         /// <summary>

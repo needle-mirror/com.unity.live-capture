@@ -186,7 +186,6 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                     Profiler.BeginSample("OnDataReceived");
                     // We have an RTP frame.
                     // Fire the DataReceived event with 'frame'
-                    Console.WriteLine("Received RTP data on port " + data_port);
 
                     Messages.RtspChunk currentMessage = new Messages.RtspData();
                     // aMessage.SourcePort = ??

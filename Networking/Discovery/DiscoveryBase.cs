@@ -15,7 +15,7 @@ namespace Unity.LiveCapture.Networking.Discovery
     /// <summary>
     /// The base class for the discovery client and server implementations.
     /// </summary>
-    public abstract class DiscoveryBase
+    abstract class DiscoveryBase
     {
         /// <summary>
         /// The enum used to determine what type of data was received.
@@ -45,7 +45,7 @@ namespace Unity.LiveCapture.Networking.Discovery
             /// <summary>
             /// The type of data in the message payload.
             /// </summary>
-            public PacketType type;
+            public PacketType Type;
         }
 
         /// <summary>
@@ -63,17 +63,17 @@ namespace Unity.LiveCapture.Networking.Discovery
         /// <summary>
         /// Is discovery started.
         /// </summary>
-        public bool isRunning { get; private set; }
+        public bool IsRunning { get; private set; }
 
         /// <summary>
         /// The UDP port used for server discovery messages.
         /// </summary>
         /// <remarks>
-        /// By default this will be <see cref="Constants.k_DefaultPort"/>. Changes will
+        /// By default this will be <see cref="Constants.DefaultPort"/>. Changes will
         /// not take effect until the next time discovery is started. It is supported for
         /// multiple discovery servers or discovery clients to use the same port.
         /// </remarks>
-        public int port { get; set; } = Constants.k_DefaultPort;
+        public int Port { get; set; } = Constants.DefaultPort;
 
         /// <summary>
         /// Creates the buffers and sockets used for server discovery.
@@ -84,12 +84,12 @@ namespace Unity.LiveCapture.Networking.Discovery
         /// <returns>True if discovery started successfully; false otherwise.</returns>
         protected bool StartInternal()
         {
-            if (isRunning)
+            if (IsRunning)
                 Stop();
 
-            if (!NetworkUtilities.IsPortValid(port, out var portMessage))
+            if (!NetworkUtilities.IsPortValid(Port, out var portMessage))
             {
-                Debug.LogError($"Unable to start {GetType().Name}: Port {port} is not valid. {portMessage}");
+                Debug.LogError($"Unable to start {GetType().Name}: Port {Port} is not valid. {portMessage}");
                 return false;
             }
             if (!string.IsNullOrEmpty(portMessage))
@@ -98,7 +98,7 @@ namespace Unity.LiveCapture.Networking.Discovery
             }
 
             // create a socket used to receive broadcasts
-            if (!TryCreateSocket(new IPEndPoint(IPAddress.Any, port), false, out m_RecieveSocket))
+            if (!TryCreateSocket(new IPEndPoint(IPAddress.Any, Port), false, out m_RecieveSocket))
             {
                 Debug.LogError($"{GetType().Name}: Failed to create receive socket, stopping server discovery!");
                 Stop();
@@ -111,7 +111,7 @@ namespace Unity.LiveCapture.Networking.Discovery
             receiveArgs.UserToken = m_RecieveSocket;
             BeginReceive(receiveArgs);
 
-            m_BroadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, port);
+            m_BroadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, Port);
             CreateSendSockets();
 
             // when using sockets, we need to be very careful to close them before trying to unload the domain
@@ -122,7 +122,7 @@ namespace Unity.LiveCapture.Networking.Discovery
             Application.quitting += Stop;
 #endif
 
-            isRunning = true;
+            IsRunning = true;
             return true;
         }
 
@@ -150,7 +150,7 @@ namespace Unity.LiveCapture.Networking.Discovery
                 NetworkUtilities.DisposeSocket(socket);
             m_SendSockets.Clear();
 
-            isRunning = false;
+            IsRunning = false;
         }
 
         /// <summary>
@@ -158,7 +158,7 @@ namespace Unity.LiveCapture.Networking.Discovery
         /// </summary>
         public void Update()
         {
-            if (!isRunning)
+            if (!IsRunning)
                 return;
 
             var now = DateTime.Now;
@@ -183,9 +183,9 @@ namespace Unity.LiveCapture.Networking.Discovery
         {
             var header = new PacketHeader
             {
-                type = type,
+                Type = type,
             };
-            var headerSize = SizeOfCache<PacketHeader>.size;
+            var headerSize = SizeOfCache<PacketHeader>.Size;
 
             var packet = new byte[headerSize + size];
             packet.WriteStruct(header);
@@ -347,7 +347,7 @@ namespace Unity.LiveCapture.Networking.Discovery
                         throw new SocketException((int)args.SocketError);
                 }
 
-                if (args.BytesTransferred >= SizeOfCache<PacketHeader>.size)
+                if (args.BytesTransferred >= SizeOfCache<PacketHeader>.Size)
                 {
                     var header = args.Buffer.ReadStruct<PacketHeader>(0, out var offset);
                     var dataSize = args.BytesTransferred - offset;

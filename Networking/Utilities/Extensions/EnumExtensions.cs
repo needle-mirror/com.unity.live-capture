@@ -7,7 +7,7 @@ namespace Unity.LiveCapture.Networking
     /// <summary>
     /// A class containing <see cref="Enum"/> extension methods.
     /// </summary>
-    public static class EnumExtensions
+    static class EnumExtensions
     {
         /// <summary>
         /// Checks if this enum completely intersects with the given value.
@@ -22,7 +22,7 @@ namespace Unity.LiveCapture.Networking
         /// <returns>True if <paramref name="b"/> completely intersects with this value.</returns>
         public static bool Contains<T>(this T a, T b) where T : Enum
         {
-            return EnumHelper<T>.containsFunc(a, b);
+            return EnumHelper<T>.ContainsFunc(a, b);
         }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace Unity.LiveCapture.Networking
         /// <returns>True if <paramref name="b"/> has any intersection with this value.</returns>
         public static bool Intersects<T>(this T a, T b) where T : Enum
         {
-            return EnumHelper<T>.intersectsFunc(a, b);
+            return EnumHelper<T>.IntersectsFunc(a, b);
         }
 
         static class EnumFunctions
@@ -60,13 +60,13 @@ namespace Unity.LiveCapture.Networking
 
         static class EnumHelper<T> where T : Enum
         {
-            public static readonly Func<T, T, bool> containsFunc;
-            public static readonly Func<T, T, bool> intersectsFunc;
+            public static readonly Func<T, T, bool> ContainsFunc;
+            public static readonly Func<T, T, bool> IntersectsFunc;
 
             static EnumHelper()
             {
-                containsFunc = InitFunction("Contains");
-                intersectsFunc = InitFunction("Intersects");
+                ContainsFunc = InitFunction("Contains");
+                IntersectsFunc = InitFunction("Intersects");
             }
 
             static Func<T, T, bool> InitFunction(string functionName)

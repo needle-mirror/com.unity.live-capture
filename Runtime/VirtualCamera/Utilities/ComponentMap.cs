@@ -17,7 +17,7 @@ namespace Unity.LiveCapture.VirtualCamera
         where TValue : Component
     {
         static ComponentMap<TKey, TValue> s_Default = new ComponentMap<TKey, TValue>();
-        public static ComponentMap<TKey, TValue> instance => s_Default;
+        public static ComponentMap<TKey, TValue> Instance => s_Default;
 
         Dictionary<TKey, TValue> s_KeyToValueMap = new Dictionary<TKey, TValue>();
         Dictionary<TValue, TKey> s_ValueToKeyMap = new Dictionary<TValue, TKey>();

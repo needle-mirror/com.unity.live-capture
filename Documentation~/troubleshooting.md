@@ -4,10 +4,10 @@
 
 Ensure that you have:
 
-* The proper [network setup](network-setup.md) on your Editor workstation. Most connection issues arise from incorrect network configurations.
+* The proper [network setup](setup-network.md) on your Editor workstation. Most connection issues arise from incorrect network configurations.
 * Created a server in the Live Capture window.
 * Started the server in the Editor by pressing the **Start** button in the Live Capture window.
-* WIFI enabled on both the iPad/iPhone and the Editor workstation and they are connected to the same network. 
+* WIFI enabled on both the iPad/iPhone and the Editor workstation and they are connected to the same network.
 
 If you still can't connect: on the app, switch to **Manual** mode and manually enter the port and IP. The port is shown in the Live Capture window. Try all of the different IP values from the **Available Interfaces** section of the Live Capture window until you find one that works.
 

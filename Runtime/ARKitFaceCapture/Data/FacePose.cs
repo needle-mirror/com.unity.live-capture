@@ -7,37 +7,43 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     /// The data representing a captured face pose.
     /// </summary>
     [Serializable]
-    public struct FacePose
+    struct FacePose
     {
         /// <summary>
         /// The neutral pose.
         /// </summary>
-        public static FacePose identity { get; } = new FacePose
+        public static FacePose Identity { get; } = new FacePose
         {
-            blendShapes = default,
-            headOrientation = Quaternion.identity,
-            leftEyeOrientation = Quaternion.identity,
-            rightEyeOrientation = Quaternion.identity
+            BlendShapes = default,
+            HeadPosition = Vector3.zero,
+            HeadOrientation = Quaternion.identity,
+            LeftEyeOrientation = Quaternion.identity,
+            RightEyeOrientation = Quaternion.identity,
         };
 
         /// <summary>
         /// The blend shapes weights defining the face expression.
         /// </summary>
-        public FaceBlendShapePose blendShapes;
+        public FaceBlendShapePose BlendShapes;
+
+        /// <summary>
+        /// The local position of the head transform.
+        /// </summary>
+        public Vector3 HeadPosition;
 
         /// <summary>
         /// The orientation of the head transform.
         /// </summary>
-        public Quaternion headOrientation;
+        public Quaternion HeadOrientation;
 
         /// <summary>
         /// The orientation of the left eye transform.
         /// </summary>
-        public Quaternion leftEyeOrientation;
+        public Quaternion LeftEyeOrientation;
 
         /// <summary>
         /// The orientation of the right eye transform.
         /// </summary>
-        public Quaternion rightEyeOrientation;
+        public Quaternion RightEyeOrientation;
     }
 }

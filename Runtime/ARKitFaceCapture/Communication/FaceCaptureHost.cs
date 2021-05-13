@@ -8,7 +8,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     /// <summary>
     /// A class used to communicate with a face capture device in the Unity editor from the companion app.
     /// </summary>
-    public class FaceCaptureHost : CompanionAppHost
+    class FaceCaptureHost : CompanionAppHost
     {
         readonly DataSender<FaceSample> m_FacePoseSender;
 
@@ -16,7 +16,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         public FaceCaptureHost(NetworkBase network, Remote remote, Stream stream)
             : base(network, remote, stream)
         {
-            m_FacePoseSender = BinarySender<FaceSample>.Get(m_Protocol, FaceMessages.ToServer.k_FacePoseSample);
+            m_FacePoseSender = BinarySender<FaceSample>.Get(m_Protocol, FaceMessages.ToServer.FacePoseSample);
         }
 
         /// <summary>

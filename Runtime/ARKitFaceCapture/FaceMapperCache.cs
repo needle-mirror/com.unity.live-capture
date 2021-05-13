@@ -3,7 +3,7 @@ using System;
 namespace Unity.LiveCapture.ARKitFaceCapture
 {
     /// <summary>
-    /// A class used to store data needed for specific mapper implementations in an actor.
+    /// A class used to store data needed for specific mapper implementations in a <see cref="FaceActor"/>.
     /// </summary>
     /// <remarks>
     /// The cache can be used to store references to transforms and renderers on an actor, preventing
@@ -14,7 +14,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// <summary>
         /// Has this cache been disposed.
         /// </summary>
-        public bool disposed { get; private set; }
+        public bool Disposed { get; private set; }
 
         /// <summary>
         /// The finalizer that attempts to dispose the cache if it is not properly disposed.
@@ -35,12 +35,12 @@ namespace Unity.LiveCapture.ARKitFaceCapture
 
         void Dispose(bool disposing)
         {
-            if (disposed)
+            if (Disposed)
                 return;
 
             OnDispose(disposing);
 
-            disposed = true;
+            Disposed = true;
         }
 
         /// <summary>

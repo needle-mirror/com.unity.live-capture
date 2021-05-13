@@ -9,7 +9,7 @@ namespace Unity.LiveCapture.Networking.Discovery
     /// <summary>
     /// A class that listens for the availability of any servers on the network.
     /// </summary>
-    public class DiscoveryClient : DiscoveryBase
+    class DiscoveryClient : DiscoveryBase
     {
         /// <summary>
         /// How much time must pass since a discovery server was last heard from before it is determined to be lost.
@@ -18,8 +18,8 @@ namespace Unity.LiveCapture.Networking.Discovery
 
         struct Server
         {
-            public DiscoveryInfo discovery;
-            public DateTime lastUpdate;
+            public DiscoveryInfo Discovery;
+            public DateTime LastUpdate;
         }
 
         readonly ConcurrentQueue<DiscoveryInfo> m_UpdatedServers = new ConcurrentQueue<DiscoveryInfo>();
@@ -55,7 +55,7 @@ namespace Unity.LiveCapture.Networking.Discovery
         /// If the client is already started, it will be restarted.
         /// </remarks>
         /// <param name="productName">The name of the server application. Only servers with a matching
-        /// product name will be found by this client. The name must not exceed <see cref="Constants.k_StringMaxLength"/>
+        /// product name will be found by this client. The name must not exceed <see cref="Constants.StringMaxLength"/>
         /// characters in length.</param>
         /// <param name="discoverLocal">Will servers running on this device be discovered in addition to
         /// remote servers.</param>
@@ -68,7 +68,7 @@ namespace Unity.LiveCapture.Networking.Discovery
 
             m_ProductName = productName;
 
-            m_RequestPacket = CreatePacket(PacketType.Request, SizeOfCache<RequestData>.size, out var offset);
+            m_RequestPacket = CreatePacket(PacketType.Request, SizeOfCache<RequestData>.Size, out var offset);
             m_RequestPacket.WriteStruct(new RequestData(productName), offset);
 
             // ignore packets from IP addresses on this device if we don't want to discover local servers
@@ -92,7 +92,7 @@ namespace Unity.LiveCapture.Networking.Discovery
         /// </remarks>
         public void Refresh()
         {
-            if (!isRunning)
+            if (!IsRunning)
                 return;
 
             Broadcast(m_RequestPacket, false);
@@ -116,10 +116,10 @@ namespace Unity.LiveCapture.Networking.Discovery
         {
             while (m_UpdatedServers.TryDequeue(out var discovery))
             {
-                var id = discovery.serverInfo.id;
+                var id = discovery.ServerInfo.ID;
 
                 // when a server changes we report the previous configuration as lost
-                if (m_Servers.TryGetValue(id, out var server) && !discovery.Equals(server.discovery))
+                if (m_Servers.TryGetValue(id, out var server) && !discovery.Equals(server.Discovery))
                     OnServerLost(server);
 
                 // report the first time we see a server configuration
@@ -129,8 +129,8 @@ namespace Unity.LiveCapture.Networking.Discovery
                 // record the time we last updated this server
                 m_Servers[id] = new Server
                 {
-                    discovery = discovery,
-                    lastUpdate = now,
+                    Discovery = discovery,
+                    LastUpdate = now,
                 };
             }
 
@@ -139,8 +139,8 @@ namespace Unity.LiveCapture.Networking.Discovery
             {
                 var server = guidServer.Value;
 
-                if (now - server.lastUpdate > k_ServerLossTime)
-                    m_LostServers.Enqueue(server.discovery.serverInfo.id);
+                if (now - server.LastUpdate > k_ServerLossTime)
+                    m_LostServers.Enqueue(server.Discovery.ServerInfo.ID);
             }
 
             while (m_LostServers.TryDequeue(out var id))
@@ -155,20 +155,20 @@ namespace Unity.LiveCapture.Networking.Discovery
         /// <inheritdoc />
         protected override void OnDataReceived(byte[] packet, PacketHeader header, int dataSize, int dataOffset)
         {
-            switch (header.type)
+            switch (header.Type)
             {
                 case PacketType.Shutdown:
                 {
-                    if (dataSize != SizeOfCache<ShutdownData>.size)
+                    if (dataSize != SizeOfCache<ShutdownData>.Size)
                         return;
 
                     var data = packet.ReadStruct<ShutdownData>(dataOffset);
-                    m_LostServers.Enqueue(data.id);
+                    m_LostServers.Enqueue(data.ID);
                     break;
                 }
                 case PacketType.Discovery:
                 {
-                    var minSize = SizeOfCache<ServerData>.size + sizeof(byte);
+                    var minSize = SizeOfCache<ServerData>.Size + sizeof(byte);
 
                     if (dataSize < minSize)
                         return;
@@ -176,12 +176,12 @@ namespace Unity.LiveCapture.Networking.Discovery
                     var serverData = packet.ReadStruct<ServerData>(dataOffset, out dataOffset);
 
                     // only consider discovery packets from a matching product
-                    if (serverData.productName != m_ProductName)
+                    if (serverData.ProductName != m_ProductName)
                         return;
 
                     var endPointCount = packet.ReadStruct<byte>(dataOffset, out dataOffset);
 
-                    if (dataSize - minSize != endPointCount * SizeOfCache<EndPointData>.size)
+                    if (dataSize - minSize != endPointCount * SizeOfCache<EndPointData>.Size)
                         return;
 
                     var endPoints = new IPEndPoint[endPointCount];
@@ -211,9 +211,9 @@ namespace Unity.LiveCapture.Networking.Discovery
 
         void OnServerLost(Server server)
         {
-            if (m_Servers.Remove(server.discovery.serverInfo.id))
+            if (m_Servers.Remove(server.Discovery.ServerInfo.ID))
             {
-                ServerLost?.Invoke(server.discovery);
+                ServerLost?.Invoke(server.Discovery);
             }
         }
     }

@@ -16,7 +16,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The desired width of the buttons in pixels.
         /// </summary>
-        public readonly float segmentWidth;
+        public readonly float SegmentWidth;
 
         /// <summary>
         /// Creates a new <see cref="EnumButtonGroupAttribute"/> instance.
@@ -24,7 +24,7 @@ namespace Unity.LiveCapture
         /// <param name="width">The desired width of the buttons in pixels.</param>
         public EnumButtonGroupAttribute(float width)
         {
-            segmentWidth = width;
+            SegmentWidth = width;
         }
     }
 }

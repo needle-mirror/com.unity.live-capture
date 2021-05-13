@@ -7,11 +7,11 @@ namespace Unity.LiveCapture.VirtualCamera
     /// <summary>
     /// Contains the minimum and maximum values for each camera body parameter.
     /// </summary>
-    static class CameraBodyParameterBounds
+    static class CameraBodyParameterLimits
     {
-        public static readonly Vector2 sensorSize = new Vector2(1f, 205f);
-        public static readonly Vector2Int iso = new Vector2Int(1, 10000);
-        public static readonly Vector2 shutterSpeed = new Vector2(0f, 10f);
+        public static readonly Vector2 SensorSize = new Vector2(1f, 205f);
+        public static readonly Vector2Int Iso = new Vector2Int(1, 10000);
+        public static readonly Vector2 ShutterSpeed = new Vector2(0f, 10f);
     }
 
     /// <summary>
@@ -28,36 +28,41 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// The default CameraBody.
         /// </summary>
-        public static readonly CameraBody defaultParams = new CameraBody
+        public static readonly CameraBody DefaultParams = new CameraBody
         {
-            sensorSize = k_DefaultSensorSize,
-            iso = k_DefaultIso,
-            shutterSpeed = k_DefaultShutterSpeed,
+            SensorSize = k_DefaultSensorSize,
+            Iso = k_DefaultIso,
+            ShutterSpeed = k_DefaultShutterSpeed,
         };
+
+        /// <summary>
+        /// The default sensor size.
+        /// </summary>
+        public static Vector2 DefaultSensorSize => k_DefaultSensorSize;
 
         /// <summary>
         /// Set the size, in millimeters, of the real-world camera sensor.
         /// </summary>
         [SensorSize]
-        public Vector2 sensorSize;
+        public Vector2 SensorSize;
 
         /// <summary>
         /// Set the sensibility of the real-world camera sensor. Higher values increase the Camera's sensitivity to
         /// light and result in faster exposure times.
         /// </summary>
-        public int iso;
+        public int Iso;
 
         /// <summary>
         /// Sets the exposure time, in seconds for the camera. Lower values result in less exposed pictures.
         /// </summary>
-        public float shutterSpeed;
+        public float ShutterSpeed;
 
         /// <inheritdoc/>
         public bool Equals(CameraBody other)
         {
-            return sensorSize == other.sensorSize
-                && iso == other.iso
-                && shutterSpeed == other.shutterSpeed;
+            return SensorSize == other.SensorSize
+                && Iso == other.Iso
+                && ShutterSpeed == other.ShutterSpeed;
         }
 
         /// <summary>
@@ -82,9 +87,9 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             unchecked
             {
-                var hashCode = sensorSize.GetHashCode();
-                hashCode = (hashCode * 397) ^ iso.GetHashCode();
-                hashCode = (hashCode * 397) ^ shutterSpeed.GetHashCode();
+                var hashCode = SensorSize.GetHashCode();
+                hashCode = (hashCode * 397) ^ Iso.GetHashCode();
+                hashCode = (hashCode * 397) ^ ShutterSpeed.GetHashCode();
                 return hashCode;
             }
         }
@@ -132,45 +137,45 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
         /// <summary>
-        /// Validates <see cref="CameraBody.sensorSize"/> by setting it into its valid bounds.
+        /// Validates <see cref="CameraBody.SensorSize"/> by setting it into its valid bounds.
         /// </summary>
         public static void ValidateSensorSize(this ref CameraBody cameraParams)
         {
-            var sensorSize = cameraParams.sensorSize;
+            var sensorSize = cameraParams.SensorSize;
 
             sensorSize.x = Mathf.Clamp(
                 sensorSize.x,
-                CameraBodyParameterBounds.sensorSize.x,
-                CameraBodyParameterBounds.sensorSize.y);
+                CameraBodyParameterLimits.SensorSize.x,
+                CameraBodyParameterLimits.SensorSize.y);
 
             sensorSize.y = Mathf.Clamp(
                 sensorSize.y,
-                CameraBodyParameterBounds.sensorSize.x,
-                CameraBodyParameterBounds.sensorSize.y);
+                CameraBodyParameterLimits.SensorSize.x,
+                CameraBodyParameterLimits.SensorSize.y);
 
-            cameraParams.sensorSize = sensorSize;
+            cameraParams.SensorSize = sensorSize;
         }
 
         /// <summary>
-        /// Validates <see cref="CameraBody.iso"/> by setting it into its valid bounds.
+        /// Validates <see cref="CameraBody.Iso"/> by setting it into its valid bounds.
         /// </summary>
         public static void ValidateIso(this ref CameraBody cameraParams)
         {
-            cameraParams.iso = Mathf.Clamp(
-                cameraParams.iso,
-                CameraBodyParameterBounds.iso.x,
-                CameraBodyParameterBounds.iso.y);
+            cameraParams.Iso = Mathf.Clamp(
+                cameraParams.Iso,
+                CameraBodyParameterLimits.Iso.x,
+                CameraBodyParameterLimits.Iso.y);
         }
 
         /// <summary>
-        /// Validates <see cref="CameraBody.shutterSpeed"/> by setting it into its valid bounds.
+        /// Validates <see cref="CameraBody.ShutterSpeed"/> by setting it into its valid bounds.
         /// </summary>
         public static void ValidateShutterSpeed(this ref CameraBody cameraParams)
         {
-            cameraParams.shutterSpeed = Mathf.Clamp(
-                cameraParams.shutterSpeed,
-                CameraBodyParameterBounds.shutterSpeed.x,
-                CameraBodyParameterBounds.shutterSpeed.y);
+            cameraParams.ShutterSpeed = Mathf.Clamp(
+                cameraParams.ShutterSpeed,
+                CameraBodyParameterLimits.ShutterSpeed.x,
+                CameraBodyParameterLimits.ShutterSpeed.y);
         }
     }
 }

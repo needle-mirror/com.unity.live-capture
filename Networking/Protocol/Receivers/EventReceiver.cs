@@ -9,7 +9,7 @@ namespace Unity.LiveCapture.Networking.Protocols
     /// <summary>
     /// A message used to receive events from a remote.
     /// </summary>
-    public sealed class EventReceiver : MessageBase, IDataReceiver
+    sealed class EventReceiver : MessageBase, IDataReceiver
     {
         readonly List<Action> m_Handlers = new List<Action>();
 
@@ -73,7 +73,7 @@ namespace Unity.LiveCapture.Networking.Protocols
         }
 
         /// <inheritdoc />
-        internal override MessageBase GetInverse() => new EventSender(id);
+        internal override MessageBase GetInverse() => new EventSender(ID);
 
         /// <summary>
         /// Gets a <see cref="EventReceiver"/> from a protocol by ID.

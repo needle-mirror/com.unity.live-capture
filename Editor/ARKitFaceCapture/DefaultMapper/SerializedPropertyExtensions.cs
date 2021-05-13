@@ -7,12 +7,12 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using Object = UnityEngine.Object;
 
-namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
+namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
 {
     /// <summary>
     /// A class containing extension methods for <see cref="SerializedProperty"/>.
     /// </summary>
-    public static class SerializedPropertyExtensions
+    static class SerializedPropertyExtensions
     {
         /// <summary>
         /// Gets the field value backing a serialized property.

@@ -5,7 +5,7 @@ using UnityEngine.Timeline;
 namespace Unity.LiveCapture
 {
     /// <summary>
-    /// A take is a recorded performance of one or more actors. The <see cref="TakeRecorder"> stores the performance
+    /// A take is a recorded performance of one or more actors. The <see cref="TakeRecorder"/> stores the performance
     /// as a timeline asset.
     /// </summary>
     public class Take : ScriptableObject
@@ -18,8 +18,12 @@ namespace Unity.LiveCapture
         int m_TakeNumber;
         [SerializeField, TextArea(2, 4)]
         string m_Description;
+        [SerializeField]
+        int m_Rating;
         [SerializeField, OnlyStandardFrameRates]
         FrameRate m_FrameRate;
+        [SerializeField]
+        Texture2D m_Screenshot;
         [SerializeField]
         TimelineAsset m_Timeline;
         [SerializeField]
@@ -30,7 +34,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The number associated with the scene where the take was captured.
         /// </summary>
-        public int sceneNumber
+        public int SceneNumber
         {
             get => m_SceneNumber;
             internal set => m_SceneNumber = value;
@@ -39,7 +43,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The name of the shot where the take was captured.
         /// </summary>
-        public string shotName
+        public string ShotName
         {
             get => m_ShotName;
             internal set => m_ShotName = value;
@@ -48,7 +52,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The number associated with the take.
         /// </summary>
-        public int takeNumber
+        public int TakeNumber
         {
             get => m_TakeNumber;
             internal set => m_TakeNumber = value;
@@ -57,33 +61,51 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The description of the shot where the take was captured.
         /// </summary>
-        public string description
+        public string Description
         {
             get => m_Description;
             internal set => m_Description = value;
         }
 
         /// <summary>
+        /// The rating of the take.
+        /// </summary>
+        public int Rating
+        {
+            get => m_Rating;
+            set => m_Rating = value;
+        }
+
+        /// <summary>
         /// The frame rate used during the recording.
         /// </summary>
-        public FrameRate frameRate
+        public FrameRate FrameRate
         {
             get => m_FrameRate;
             internal set => m_FrameRate = value;
         }
 
         /// <summary>
+        /// The screenshot at the beginning of the take.
+        /// </summary>
+        public Texture2D Screenshot
+        {
+            get => m_Screenshot;
+            internal set => m_Screenshot = value;
+        }
+
+        /// <summary>
         /// The timeline asset containing the recorded performance.
         /// </summary>
-        public TimelineAsset timeline
+        public TimelineAsset Timeline
         {
             get => m_Timeline;
             internal set => m_Timeline = value;
         }
 
-        internal IEnumerable<TrackBindingEntry> bindingEntries => m_Entries;
+        internal IEnumerable<TrackBindingEntry> BindingEntries => m_Entries;
 
-        internal IEnumerable<TrackMetadataEntry> metadataEntries => m_MetadataEntries;
+        internal IEnumerable<TrackMetadataEntry> MetadataEntries => m_MetadataEntries;
 
         internal void AddTrackBinding(TrackAsset track, ITakeBinding binding)
         {

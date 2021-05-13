@@ -4,6 +4,79 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-pre.400] - 2021-05-13
+
+### Added
+- [Virtual Camera App] New settings.
+
+### Fixed
+- Warnings when importing the HDRP and URP face samples in the same project
+- [Virtual Camera App] Usage of the Resources folder.
+- Documentation references to experimental package.
+- [Virtual Camera App] Focus Mode Display.
+- [Face Capture App] Timecode layout.
+
+## [1.0.0-pre.360] - 2021-05-12
+
+### Added
+- Mechanism to align virtual camera device with actor.
+- [Face Capture] Send and apply head position.
+- Frame lines.
+- Vcam snapshots.
+- Default Lens kits.
+- Default aspect ratio and sensor presets.
+
+### Changed
+- Rename Joystick Speed to Joystick Sensitivity.
+- Rename QuadroSync API to GPUFrameSync.
+- [Virtual Camera] Focus distance dial goes up to infinity.
+- A lens does not have a max focus distance.
+- Depth of field is disabled in auto focus modes when nothing is tracked.
+- [Virtual Camera] UI layout improvements.
+- Allow to manually refine an automatically determined focus distance.
+- [Virtual Camera] Move record button to the left.
+- Package description.
+- Non-linear scaling for focus distance slider.
+- Improved face samples.
+- Slate change logic.
+ 
+### Fixed
+- Crash when using NvEnc on some computers.
+- [Companion App] Server Scan no longer overriden by manually entered server address.
+- Support for focal length on vanilla built-in renderer.
+- Exception when recording multiple devices.
+- Video stream is no longer cropped on device.
+- Flicker when changing slate in timeline while live.
+- Fix error when removing a running server.
+- Lens properties not being recorded. 
+- Verbose video stream logs.
+- Jump when starting to record with joysticks.
+- Connection view error on phone.
+
+## [1.0.0-pre.1] - 2021-05-03
+
+### Added
+- Legacy Render Pipeline support.
+- Support for GPU Encoding via NvEnc.
+- Lens Kit to group a collection of LensAssets.
+- Support for Mac OS video streaming.
+- SwapBarrier and GPUSync plug-in.
+- Metadata on Take, Lens and VirtualCameraTrack.
+- FrameRate field in TakeRecorder.
+
+### Changed
+- Face rotations recorded as Euler angles instead of quaternions.
+- Internalized APIs that were previously public.
+- CameraState renamed to Settings.
+- Improvements to the TakeRecorder.
+- Takes playback use the crop aspect used during recording.
+- New names for some camera movements and focus modes.
+- [Virtual Camera] iPhone UI.
+ 
+### Fixed
+- Bug where a take iteration longer than its parent base track would be shortened. 
+- Memory leaks on HDRP 10.2
+
 ## [1.0.0-exp.235] - 2021-04-22
 
 ### Added

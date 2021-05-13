@@ -5,7 +5,7 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
+namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
 {
     class MappingList
     {
@@ -26,20 +26,20 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         /// <summary>
         /// The preset evaluation function to assign to new bindings.
         /// </summary>
-        public EvaluatorPreset defaultPreset => m_DefaultEvaluator.objectReferenceValue as EvaluatorPreset;
+        public EvaluatorPreset DefaultPreset => m_DefaultEvaluator.objectReferenceValue as EvaluatorPreset;
 
         /// <summary>
         /// The number of blend shapes defined in the mesh this mapping applies to.
         /// </summary>
-        public int meshBlendShapeCount => m_MeshBlendShapeNames.Length;
+        public int MeshBlendShapeCount => m_MeshBlendShapeNames.Length;
 
-        public List<FaceBlendShape> unusedLocations { get; } = new List<FaceBlendShape>();
-        public List<int> unusedShapeIndices { get; } = new List<int>();
+        public List<FaceBlendShape> UnusedLocations { get; } = new List<FaceBlendShape>();
+        public List<int> UnusedShapeIndices { get; } = new List<int>();
 
         /// <summary>
         /// Is the mapping list shown in the inspector.
         /// </summary>
-        public bool isExpanded
+        public bool IsExpanded
         {
             get => m_IsExpanded.boolValue;
             set => m_IsExpanded.boolValue = value;
@@ -107,25 +107,25 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         {
             if (m_IsInverted)
             {
-                unusedShapeIndices.Clear();
+                UnusedShapeIndices.Clear();
 
                 for (var i = 0; i < m_MeshBlendShapeNames.Length; i++)
                 {
-                    if (!m_ShapeIndexMappings.Any(b => b.shapeIndex == i))
+                    if (!m_ShapeIndexMappings.Any(b => b.ShapeIndex == i))
                     {
-                        unusedShapeIndices.Add(i);
+                        UnusedShapeIndices.Add(i);
                     }
                 }
             }
             else
             {
-                unusedLocations.Clear();
+                UnusedLocations.Clear();
 
-                foreach (var location in FaceBlendShapePose.shapes)
+                foreach (var location in FaceBlendShapePose.Shapes)
                 {
-                    if (!m_LocationMappings.Any(m => m.location == location))
+                    if (!m_LocationMappings.Any(m => m.Location == location))
                     {
-                        unusedLocations.Add(location);
+                        UnusedLocations.Add(location);
                     }
                 }
             }
@@ -177,7 +177,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                 m_LocationMappings = null;
 
                 m_ShapeIndexMappings = bindings
-                    .ToLookup(b => b.shapeIndex, b => (b.location, b.config, b.isExpanded))
+                    .ToLookup(b => b.ShapeIndex, b => (location: b.Location, config: b.Config, isExpanded: b.IsExpanded))
                     .Select(mapping => new ShapeIndexMapping(this, mapping.Key, mapping))
                     .ToList();
 
@@ -188,7 +188,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                 m_ShapeIndexMappings = null;
 
                 m_LocationMappings = bindings
-                    .ToLookup(b => b.location, b => (b.shapeIndex, b.config, b.isExpanded))
+                    .ToLookup(b => b.Location, b => (shapeIndex: b.ShapeIndex, config: b.Config, isExpanded: b.IsExpanded))
                     .Select(mapping => new LocationMapping(this, mapping.Key, mapping))
                     .ToList();
 
@@ -241,18 +241,18 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
 
         bool CanAddMapping()
         {
-            return m_IsInverted ? unusedShapeIndices.Count > 0 : unusedLocations.Count > 0;
+            return m_IsInverted ? UnusedShapeIndices.Count > 0 : UnusedLocations.Count > 0;
         }
 
         void AddMapping()
         {
             if (m_IsInverted)
             {
-                m_ShapeIndexMappings.Add(new ShapeIndexMapping(this, unusedShapeIndices[0]));
+                m_ShapeIndexMappings.Add(new ShapeIndexMapping(this, UnusedShapeIndices[0]));
             }
             else
             {
-                m_LocationMappings.Add(new LocationMapping(this, unusedLocations[0]));
+                m_LocationMappings.Add(new LocationMapping(this, UnusedLocations[0]));
             }
 
             RefreshUnusedMappings();

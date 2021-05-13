@@ -14,7 +14,7 @@ namespace Unity.LiveCapture.Networking.Protocols
     /// serialized and sent to the remote, allowing the remote to know exactly what messages are
     /// valid and ensure message data is formatted identically on both ends.
     /// </remarks>
-    public partial class Protocol : IEnumerable<MessageBase>
+    partial class Protocol : IEnumerable<MessageBase>
     {
         readonly List<MessageBase> m_Messages = new List<MessageBase>();
         readonly Dictionary<string, MessageBase> m_IdToMessage = new Dictionary<string, MessageBase>();
@@ -25,7 +25,7 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// <summary>
         /// Gets the name of this protocol.
         /// </summary>
-        public string name { get; }
+        public string Name { get; }
 
         /// <summary>
         /// Gets a value indicating whether the protocol is read-only.
@@ -34,7 +34,7 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// A protocol that is read-only does not allow adding new messages after the protocol
         /// has been created.
         /// </remarks>
-        public bool isReadOnly { get; private set; }
+        public bool IsReadOnly { get; private set; }
 
         /// <summary>
         /// Creates a new <see cref="Protocol"/> instance.
@@ -46,8 +46,8 @@ namespace Unity.LiveCapture.Networking.Protocols
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("A non-empty name must be provided.", nameof(name));
 
-            this.name = name;
-            isReadOnly = false;
+            Name = name;
+            IsReadOnly = false;
         }
 
         /// <summary>
@@ -85,14 +85,14 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// </exception>
         public T Add<T>(T message) where T : MessageBase
         {
-            if (isReadOnly)
+            if (IsReadOnly)
                 throw new InvalidOperationException($"Protocol \"{this}\" is read only.");
             if (message == null)
                 throw new ArgumentNullException(nameof(message));
-            if (message.protocol != null)
-                throw new ArgumentException($"Message \"{message}\" is already assigned to protocol \"{message.protocol}\".", nameof(message));
-            if (m_IdToMessage.ContainsKey(message.id))
-                throw new ArgumentException($"A message with ID \"{message.id}\" is already defined in protocol \"{this}\".", nameof(message));
+            if (message.Protocol != null)
+                throw new ArgumentException($"Message \"{message}\" is already assigned to protocol \"{message.Protocol}\".", nameof(message));
+            if (m_IdToMessage.ContainsKey(message.ID))
+                throw new ArgumentException($"A message with ID \"{message.ID}\" is already defined in protocol \"{this}\".", nameof(message));
             if (m_Messages.Count >= ushort.MaxValue)
                 throw new InvalidOperationException($"Protocol \"{this}\" already has the maximum number of messages registered ({ushort.MaxValue}).");
 
@@ -105,7 +105,7 @@ namespace Unity.LiveCapture.Networking.Protocols
             message.SetProtocol(this, code);
 
             m_Messages.Add(message);
-            m_IdToMessage.Add(message.id, message);
+            m_IdToMessage.Add(message.ID, message);
 
             if (message is IDataReceiver receiver)
                 m_CodeToHandler.Add(code, receiver);
@@ -217,12 +217,12 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// <returns>A new inverted protocol instance.</returns>
         public Protocol CreateInverse()
         {
-            var inverted = new Protocol(name);
+            var inverted = new Protocol(Name);
 
             foreach (var message in this)
                 inverted.Add(message.GetInverse());
 
-            inverted.isReadOnly = true;
+            inverted.IsReadOnly = true;
 
             return inverted;
         }
@@ -249,8 +249,8 @@ namespace Unity.LiveCapture.Networking.Protocols
 
             if (m_Network.IsConnected(m_Remote))
             {
-                var message = Message.Get(m_Remote, sender.channel);
-                message.data.WriteStruct(sender.code);
+                var message = Message.Get(m_Remote, sender.Channel);
+                message.Data.WriteStruct(sender.Code);
 
                 m_Network.SendMessage(message);
             }
@@ -263,9 +263,9 @@ namespace Unity.LiveCapture.Networking.Protocols
 
             if (m_Network.IsConnected(m_Remote))
             {
-                var message = Message.Get(m_Remote, sender.channel);
-                message.data.WriteStruct(sender.code);
-                sender.Write(message.data, ref data);
+                var message = Message.Get(m_Remote, sender.Channel);
+                message.Data.WriteStruct(sender.Code);
+                sender.Write(message.Data, ref data);
 
                 m_Network.SendMessage(message);
             }
@@ -275,10 +275,10 @@ namespace Unity.LiveCapture.Networking.Protocols
         {
             try
             {
-                var code = message.data.ReadStruct<ushort>();
+                var code = message.Data.ReadStruct<ushort>();
 
                 if (m_CodeToHandler.TryGetValue(code, out var receiver))
-                    receiver.Receive(message.data);
+                    receiver.Receive(message.Data);
             }
             finally
             {
@@ -290,6 +290,6 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// Returns a string that represents the current object.
         /// </summary>
         /// <returns>A string that represents the current object.</returns>
-        public override string ToString() => name;
+        public override string ToString() => Name;
     }
 }

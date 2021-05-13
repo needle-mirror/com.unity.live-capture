@@ -1,8 +1,10 @@
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
+
 #if HDRP_10_2_OR_NEWER
 using UnityEngine.Rendering.HighDefinition;
+
 #endif
 #if URP_10_2_OR_NEWER
 using UnityEngine.Rendering.Universal;
@@ -14,11 +16,10 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
     /// Conducts raycasts by rendering the scene depth to a camera to ensure the
     /// raycast matches how the scene visually appears.
     /// </summary>
-    public class GraphicsRaycaster : IDisposable
+    class GraphicsRaycaster : IDisposable
     {
         const float k_MinNearPlane = 0.01f;
 
-        bool m_IsSupported;
         IRaycasterImpl m_Impl;
 
         /// <summary>
@@ -33,40 +34,31 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
             if (GraphicsSettings.renderPipelineAsset is HDRenderPipelineAsset)
             {
                 m_Impl = new HighDefinitionRaycasterImpl();
-                m_IsSupported = true;
             }
 #endif
 #if URP_10_2_OR_NEWER
             if (GraphicsSettings.renderPipelineAsset is UniversalRenderPipelineAsset)
             {
                 m_Impl = new UniversalRaycasterImpl();
-                m_IsSupported = true;
             }
 #endif
-            if (m_IsSupported)
-                m_Impl.Initialize();
-        }
 
-        /// <summary>
-        /// Whether or not the graphics raycaster supports the currently used render pipeline.
-        /// </summary>
-        public bool isSupported => m_IsSupported;
+            // Default to legacy render pipeline.
+            if (m_Impl == null)
+            {
+                m_Impl = new LegacyRaycasterImpl();
+            }
+
+            m_Impl.Initialize();
+        }
 
         /// <summary>
         /// Deinitialize the raycaster, resources are freed here.
         /// </summary>
         public void Dispose()
         {
-            if (!m_IsSupported)
-                return;
-
-            m_IsSupported = false;
-
-            if (m_Impl != null)
-            {
-                m_Impl.Dispose();
-                m_Impl = null;
-            }
+            m_Impl.Dispose();
+            m_Impl = null;
         }
 
         /// <summary>
@@ -137,10 +129,6 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
 
         void Validate(float minDistance, float maxDistance)
         {
-            if (!m_IsSupported)
-                throw new InvalidOperationException(
-                    $"{nameof(GraphicsRaycaster)} is not supported.");
-
             if (minDistance < k_MinNearPlane)
                 throw new ArgumentOutOfRangeException(nameof(minDistance), minDistance,
                     $"Value should be equal or superior to [{k_MinNearPlane}].");

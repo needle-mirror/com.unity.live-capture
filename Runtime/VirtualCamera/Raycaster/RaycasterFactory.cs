@@ -1,7 +1,7 @@
 namespace Unity.LiveCapture.VirtualCamera
 {
     /// <summary>
-    /// Factory that produces <see cref="IRaycaster"> instances.
+    /// Factory that produces <see cref="IRaycaster"/> instances.
     /// </summary>
     static class RaycasterFactory
     {
@@ -26,18 +26,18 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
         /// <summary>
-        /// Create a <see cref="IRaycaster"> instance.
+        /// Create a <see cref="IRaycaster"/> instance.
         /// </summary>
-        /// <returns>The instantiated <see cref="IRaycaster">.</returns>
+        /// <returns>The instantiated <see cref="IRaycaster"/>.</returns>
         public static IRaycaster Create()
         {
             return s_Impl.Create();
         }
 
         /// <summary>
-        /// Dispose a <see cref="IRaycaster"> instance.
+        /// Dispose a <see cref="IRaycaster"/> instance.
         /// </summary>
-        /// <param name="raycaster">The <see cref="IRaycaster"> to dispose.</param>
+        /// <param name="raycaster">The <see cref="IRaycaster"/> to dispose.</param>
         public static void Dispose(IRaycaster raycaster)
         {
             s_Impl.Dispose(raycaster);

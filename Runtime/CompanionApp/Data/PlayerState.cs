@@ -9,32 +9,32 @@ namespace Unity.LiveCapture.CompanionApp
     /// </summary>
     [Serializable]
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct PlayerState : IEquatable<PlayerState>
+    struct PlayerState : IEquatable<PlayerState>
     {
         /// <summary>
         /// The default PlayerState.
         /// </summary>
-        public static readonly PlayerState defaultState = new PlayerState();
+        public static readonly PlayerState DefaultState = new PlayerState();
 
         /// <summary>
         /// Is the player playing.
         /// </summary>
-        public bool playing;
+        public bool Playing;
 
         /// <summary>
         /// The time set.
         /// </summary>
-        public double time;
+        public double Time;
 
         /// <summary>
         /// The duration of the current playback session.
         /// </summary>
-        public double duration;
+        public double Duration;
 
         /// <summary>
         /// The player has a Timeline assigned.
         /// </summary>
-        public bool hasTimeline;
+        public bool HasTimeline;
 
         /// <summary>
         /// Returns a string that represents the current PlayerState.
@@ -44,16 +44,16 @@ namespace Unity.LiveCapture.CompanionApp
         /// </returns>
         public override string ToString()
         {
-            return $"(Playing {playing}, Time {time}, Duration {duration}, Has Timeline {hasTimeline})";
+            return $"(Playing {Playing}, Time {Time}, Duration {Duration}, Has Timeline {HasTimeline})";
         }
 
         /// <inheritdoc/>
         public bool Equals(PlayerState other)
         {
-            return playing == other.playing
-                && time == other.time
-                && duration == other.duration
-                && hasTimeline == other.hasTimeline;
+            return Playing == other.Playing
+                && Time == other.Time
+                && Duration == other.Duration
+                && HasTimeline == other.HasTimeline;
         }
 
         /// <summary>
@@ -78,10 +78,10 @@ namespace Unity.LiveCapture.CompanionApp
         {
             unchecked
             {
-                var hashCode = playing.GetHashCode();
-                hashCode = (hashCode * 397) ^ time.GetHashCode();
-                hashCode = (hashCode * 397) ^ duration.GetHashCode();
-                hashCode = (hashCode * 397) ^ hasTimeline.GetHashCode();
+                var hashCode = Playing.GetHashCode();
+                hashCode = (hashCode * 397) ^ Time.GetHashCode();
+                hashCode = (hashCode * 397) ^ Duration.GetHashCode();
+                hashCode = (hashCode * 397) ^ HasTimeline.GetHashCode();
                 return hashCode;
             }
         }

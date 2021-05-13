@@ -8,13 +8,11 @@ namespace Unity.LiveCapture.VirtualCamera
     [AttributeUsage(AttributeTargets.Class)]
     class CustomPassOrderAttribute : Attribute
     {
-        int m_OrderHint;
-
-        public int orderHint => m_OrderHint;
+        public int OrderHint { get; }
 
         public CustomPassOrderAttribute(int orderHint)
         {
-            m_OrderHint = orderHint;
+            OrderHint = orderHint;
         }
     }
 }

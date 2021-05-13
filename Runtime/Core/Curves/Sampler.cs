@@ -23,7 +23,7 @@ namespace Unity.LiveCapture
         FrameRate m_FrameRate = StandardFrameRate.FPS_30_00;
         FrameTime m_CurrentFrameTime;
 
-        public FrameRate frameRate
+        public FrameRate FrameRate
         {
             get => m_FrameRate;
             set
@@ -36,7 +36,7 @@ namespace Unity.LiveCapture
             }
         }
 
-        public FrameTime frameTime => m_CurrentFrameTime;
+        public FrameTime FrameTime => m_CurrentFrameTime;
 
         public Keyframe Current { get; private set; }
 
@@ -94,7 +94,7 @@ namespace Unity.LiveCapture
 
                 var nextFrameTime = FrameTime.FromSeconds(m_FrameRate, nextSample.time);
 
-                m_CurrentFrameTime = new FrameTime(nextFrameTime.frameNumber - 1);
+                m_CurrentFrameTime = new FrameTime(nextFrameTime.FrameNumber - 1);
 
                 Current = new Keyframe()
                 {
@@ -112,7 +112,7 @@ namespace Unity.LiveCapture
                 }
 
                 var nextSampleFrameTime = FrameTime.FromSeconds(m_FrameRate, nextSample.time);
-                var nextFrameTime = new FrameTime(m_CurrentFrameTime.frameNumber + 1);
+                var nextFrameTime = new FrameTime(m_CurrentFrameTime.FrameNumber + 1);
 
                 while (nextFrameTime > nextSampleFrameTime)
                 {
@@ -172,7 +172,7 @@ namespace Unity.LiveCapture
 
         bool TryPeek(out Keyframe sample)
         {
-            sample = default(Keyframe);
+            sample = default;
 
             if (m_Samples.Count > 0)
             {

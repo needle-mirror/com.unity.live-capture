@@ -1,6 +1,6 @@
 {
     "name": "Unity.LiveCapture.Editor",
-    "rootNamespace": "Unity.LiveCapture",
+    "rootNamespace": "Unity.LiveCapture.Editor",
     "references": [
         "Unity.LiveCapture",
         "Unity.LiveCapture.Networking",

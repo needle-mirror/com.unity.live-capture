@@ -9,7 +9,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// <summary>
         /// The number of supported blend shapes.
         /// </summary>
-        public const int shapeCount = 52;
+        public const int ShapeCount = 52;
 
         /// <inheritdoc cref="FaceBlendShape.BrowDownLeft"/>
         public float BrowDownLeft;
@@ -173,7 +173,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
                 case 50: return NoseSneerRight;
                 case 51: return TongueOut;
             }
-            throw new IndexOutOfRangeException($"Blend shape index {index} out of valid range [0, {shapeCount}].");
+            throw new IndexOutOfRangeException($"Blend shape index {index} out of valid range [0, {ShapeCount}].");
         }
 
         void SetValue(int index, float value)
@@ -233,13 +233,15 @@ namespace Unity.LiveCapture.ARKitFaceCapture
                 case 50: NoseSneerRight = value; return;
                 case 51: TongueOut = value; return;
             }
-            throw new IndexOutOfRangeException($"Blend shape index {index} out of valid range [0, {shapeCount}].");
+            throw new IndexOutOfRangeException($"Blend shape index {index} out of valid range [0, {ShapeCount}].");
         }
 
         /// <summary>
         /// Horizontally mirrors the face pose.
         /// </summary>
-        /// <remarks>ARKit's ARKit's default blend shapes are set so that 'right' would be the right side when viewing from the front.</remarks>
+        /// <remarks>
+        /// ARKit's default blend shapes are set so that 'right' indicates the right side of the face when viewing from the front.
+        /// </remarks>
         public void FlipHorizontally()
         {
             var tempBrowDownLeft = BrowDownLeft;

@@ -1,19 +1,20 @@
 using System;
 using System.Linq;
+using Unity.LiveCapture.Editor;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture.CompanionApp
+namespace Unity.LiveCapture.CompanionApp.Editor
 {
     [CustomEditor(typeof(CompanionAppDevice<>), true)]
     class CompanionAppDeviceEditor<TClient> : LiveCaptureDeviceEditor where TClient : class, ICompanionAppClient
     {
         static class Contents
         {
-            public static readonly GUIContent actorLabel = EditorGUIUtility.TrTextContent("Actor", "The actor currently assigned to this device.");
-            public static readonly GUIContent channelsLabel = EditorGUIUtility.TrTextContent("Channels", "The channels that will be recorded in the next take.");
-            public static readonly GUIContent notAssignedLabel = EditorGUIUtility.TrTextContent("None");
-            public static readonly GUIContent clientAssignLabel = EditorGUIUtility.TrTextContent("Client Device", "The remote device to capture recordings from. Only compatible connected devices are shown.");
+            public static readonly GUIContent ActorLabel = EditorGUIUtility.TrTextContent("Actor", "The actor currently assigned to this device.");
+            public static readonly GUIContent ChannelsLabel = EditorGUIUtility.TrTextContent("Channels", "The channels that will be recorded in the next take.");
+            public static readonly GUIContent NotAssignedLabel = EditorGUIUtility.TrTextContent("None");
+            public static readonly GUIContent ClientAssignLabel = EditorGUIUtility.TrTextContent("Client Device", "The remote device to capture recordings from. Only compatible connected devices are shown.");
         }
 
         static readonly string[] s_ExcludeProperties = { "m_Script" };
@@ -59,23 +60,23 @@ namespace Unity.LiveCapture.CompanionApp
             var device = target as CompanionAppDevice<TClient>;
             var currentClient = device.GetClient();
 
-            var currentOption = currentClient != null ? new GUIContent(currentClient.name) : Contents.notAssignedLabel;
+            var currentOption = currentClient != null ? new GUIContent(currentClient.Name) : Contents.NotAssignedLabel;
 
             var rect = EditorGUILayout.GetControlRect();
-            rect = EditorGUI.PrefixLabel(rect, Contents.clientAssignLabel);
+            rect = EditorGUI.PrefixLabel(rect, Contents.ClientAssignLabel);
 
             if (GUI.Button(rect, currentOption, EditorStyles.popup))
             {
                 var clients = GetClients();
                 var options = new GUIContent[clients.Length + 1];
-                options[0] = Contents.notAssignedLabel;
+                options[0] = Contents.NotAssignedLabel;
 
                 var formatter = new UniqueNameFormatter();
 
                 for (var i = 0; i < clients.Length; i++)
                 {
                     var client = clients[i];
-                    var name = client.name;
+                    var name = client.Name;
 
                     if (ClientMappingDatabase.TryGetDevice(client, out var d))
                     {
@@ -102,7 +103,7 @@ namespace Unity.LiveCapture.CompanionApp
         {
             using (var change = new EditorGUI.ChangeCheckScope())
             {
-                var newActor = EditorGUILayout.ObjectField(Contents.actorLabel, actor, typeof(T), true) as T;
+                var newActor = EditorGUILayout.ObjectField(Contents.ActorLabel, actor, typeof(T), true) as T;
 
                 if (change.changed)
                 {
@@ -119,12 +120,12 @@ namespace Unity.LiveCapture.CompanionApp
         /// <param name="channels">The live link channels property.</param>
         protected void DoLiveLinkChannelsGUI(SerializedProperty channels)
         {
-            EditorGUILayout.PropertyField(channels, Contents.channelsLabel);
+            EditorGUILayout.PropertyField(channels, Contents.ChannelsLabel);
         }
 
         static TClient[] GetClients()
         {
-            if (ServerManager.instance.TryGetServer<CompanionAppServer>(out var server))
+            if (ServerManager.Instance.TryGetServer<CompanionAppServer>(out var server))
             {
                 return server
                     .GetClients()

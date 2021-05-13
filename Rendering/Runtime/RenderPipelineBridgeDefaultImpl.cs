@@ -12,17 +12,19 @@ namespace Unity.LiveCapture.Rendering
     /// It can be used to implement user warnings or more
     /// when for some reason the editor implementation has not been bound.
     /// </summary>
-    internal class RenderPipelineBridgeDefaultImpl : IRenderPipelineBridge
+    class RenderPipelineBridgeDefaultImpl : IRenderPipelineBridge
     {
-        internal readonly static IRenderPipelineBridge s_Instance = new RenderPipelineBridgeDefaultImpl();
+        internal static readonly IRenderPipelineBridge s_Instance = new RenderPipelineBridgeDefaultImpl();
 
 #if URP_10_2_OR_NEWER
+        /// <inheritdoc/>
         public T RequestRenderFeature<T>() where T : ScriptableRendererFeature
         {
             Error();
             return null;
         }
 
+        /// <inheritdoc/>
         public bool HasRenderFeature<T>(out T result) where T : ScriptableRendererFeature
         {
             result = null;

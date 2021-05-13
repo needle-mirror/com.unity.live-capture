@@ -7,38 +7,38 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
+namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
 {
     [CustomEditor(typeof(DefaultFaceMapper))]
-    class DefaultFaceMapperEditor : Editor
+    class DefaultFaceMapperEditor : UnityEditor.Editor
     {
         static class Contents
         {
-            public static readonly GUILayoutOption[] buttonOptions =
+            public static readonly GUILayoutOption[] ButtonOptions =
             {
                 GUILayout.Width(230f),
                 GUILayout.Height(24f),
             };
 
-            public static readonly GUIContent eyesHeader = new GUIContent("Eyes");
-            public static readonly GUIContent headHeader = new GUIContent("Head");
-            public static readonly GUIContent blendShapesHeader = new GUIContent("Blend Shapes");
-            public static readonly GUIContent addRenderer = new GUIContent("Add Renderer", "Add a renderer to control its blend shapes using face capture.");
-            public static readonly GUIContent addEmpty = new GUIContent("Empty");
-            public static readonly GUIStyle rendererPathHeaderStyle = "RL FooterButton";
-            public static readonly GUIContent menuIcon = EditorGUIUtility.TrIconContent("_Menu");
-            public static readonly GUIContent reinitialize = new GUIContent("Initialize", "Clear the mappings and initialize from the currently assigned rig prefab.");
-            public static readonly GUIContent deleteMappings = new GUIContent("Delete", "Delete the mappings for this renderer.");
-            public static readonly float menuButtonWidth = 16f;
-            public static readonly GUIContent editPathButtonIcon = EditorGUIUtility.TrIconContent("d_UnityEditor.SceneHierarchyWindow", "Enables changing the renderer for these mappings.");
-            public static readonly float editPathButtonWidth = 20f;
-            public static readonly GUIContent mappingDirection = new GUIContent("Mapping Direction", "Whether mappings should be driver-to-blend shape or blend shape-to-driver.");
+            public static readonly GUIContent EyesHeader = new GUIContent("Eyes");
+            public static readonly GUIContent HeadHeader = new GUIContent("Head");
+            public static readonly GUIContent BlendShapesHeader = new GUIContent("Blend Shapes");
+            public static readonly GUIContent AddRenderer = new GUIContent("Add Renderer", "Add a renderer to control its blend shapes using face capture.");
+            public static readonly GUIContent AddEmpty = new GUIContent("Empty");
+            public static readonly GUIStyle RendererPathHeaderStyle = "RL FooterButton";
+            public static readonly GUIContent MenuIcon = EditorGUIUtility.TrIconContent("_Menu");
+            public static readonly GUIContent Reinitialize = new GUIContent("Initialize", "Clear the mappings and initialize from the currently assigned rig prefab.");
+            public static readonly GUIContent DeleteMappings = new GUIContent("Delete", "Delete the mappings for this renderer.");
+            public static readonly float MenuButtonWidth = 16f;
+            public static readonly GUIContent EditPathButtonIcon = EditorGUIUtility.TrIconContent("d_UnityEditor.SceneHierarchyWindow", "Enables changing the renderer for these mappings.");
+            public static readonly float EditPathButtonWidth = 20f;
+            public static readonly GUIContent MappingDirection = new GUIContent("Mapping Direction", "Whether mappings should be driver-to-blend shape or blend shape-to-driver.");
         }
 
         enum MappingDirection
         {
             DriverToBlendShape = 0,
-            BlendShapeToDriver = 1
+            BlendShapeToDriver = 1,
         }
 
         static ReorderableList.Defaults s_ListDefaults;
@@ -57,7 +57,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         SerializedProperty m_EyeAngleRange;
         SerializedProperty m_EyeAngleOffset;
         SerializedProperty m_EyeSmoothing;
-        SerializedProperty m_Head;
+        SerializedProperty m_HeadPosition;
+        SerializedProperty m_HeadRotation;
         SerializedProperty m_HeadSmoothing;
 
         MappingDirection m_MappingDirection;
@@ -69,8 +70,6 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             m_DefaultEvaluator = serializedObject.FindProperty("m_DefaultEvaluator");
             m_InvertMappings = serializedObject.FindProperty("m_InvertMappings");
 
-            m_MappingDirection = m_InvertMappings.boolValue ? MappingDirection.BlendShapeToDriver : MappingDirection.DriverToBlendShape;
-
             m_Maps = serializedObject.FindProperty("m_Maps");
             m_LeftEye = serializedObject.FindProperty("m_LeftEye");
             m_RightEye = serializedObject.FindProperty("m_RightEye");
@@ -78,9 +77,11 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             m_EyeAngleRange = serializedObject.FindProperty("m_EyeAngleRange");
             m_EyeAngleOffset = serializedObject.FindProperty("m_EyeAngleOffset");
             m_EyeSmoothing = serializedObject.FindProperty("m_EyeSmoothing");
-
-            m_Head = serializedObject.FindProperty("m_Head");
+            m_HeadPosition = serializedObject.FindProperty("m_HeadPosition");
+            m_HeadRotation = serializedObject.FindProperty("m_HeadRotation");
             m_HeadSmoothing = serializedObject.FindProperty("m_HeadSmoothing");
+
+            m_MappingDirection = m_InvertMappings.boolValue ? MappingDirection.BlendShapeToDriver : MappingDirection.DriverToBlendShape;
 
             m_MappingLists.Clear();
 
@@ -114,17 +115,17 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                 using (var changeCheck = new EditorGUI.ChangeCheckScope())
                 {
                     EditorGUILayout.Space();
-                    EditorGUILayout.LabelField(Contents.eyesHeader, EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField(Contents.EyesHeader, EditorStyles.boldLabel);
 
                     DoEyeGUI(actor);
 
                     EditorGUILayout.Space();
-                    EditorGUILayout.LabelField(Contents.headHeader, EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField(Contents.HeadHeader, EditorStyles.boldLabel);
 
                     DoHeadGUI(actor);
 
                     EditorGUILayout.Space();
-                    EditorGUILayout.LabelField(Contents.blendShapesHeader, EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField(Contents.BlendShapesHeader, EditorStyles.boldLabel);
 
                     DoRenderersGUI(actor);
 
@@ -139,7 +140,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             {
                 foreach (var actor in FindObjectsOfType<FaceActor>())
                 {
-                    if (actor.mapper == target)
+                    if (actor.Mapper == target)
                         actor.ClearCache();
                 }
             }
@@ -157,7 +158,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                     EditorGUILayout.PropertyField(m_ShapeMatchTolerance);
                     EditorGUILayout.PropertyField(m_DefaultEvaluator);
 
-                    m_MappingDirection = (MappingDirection)EditorGUILayout.EnumPopup(Contents.mappingDirection, m_MappingDirection);
+                    m_MappingDirection = (MappingDirection)EditorGUILayout.EnumPopup(Contents.MappingDirection, m_MappingDirection);
                     m_InvertMappings.boolValue = (int)m_MappingDirection == 1;
 
                     if (change.changed)
@@ -183,7 +184,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             {
                 GUILayout.FlexibleSpace();
 
-                if (GUILayout.Button(Contents.addRenderer, Contents.buttonOptions))
+                if (GUILayout.Button(Contents.AddRenderer, Contents.ButtonOptions))
                 {
                     var menu = new GenericMenu();
 
@@ -202,7 +203,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                     if (skinnedMeshRenderers.Length > 0)
                         menu.AddSeparator(string.Empty);
 
-                    menu.AddItem(Contents.addEmpty, false, () =>
+                    menu.AddItem(Contents.AddEmpty, false, () =>
                     {
                         AddRendererMapping(actor, null);
                     });
@@ -250,17 +251,17 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             // draw the dropdown menu
             var menuButtonRect = new Rect(headerRect)
             {
-                xMin = headerRect.xMax - 2f - Contents.menuButtonWidth,
+                xMin = headerRect.xMax - 2f - Contents.MenuButtonWidth,
                 xMax = headerRect.xMax - 2f,
                 y = headerRect.y + 2f,
             };
-            if (GUI.Button(menuButtonRect, Contents.menuIcon, Contents.rendererPathHeaderStyle))
+            if (GUI.Button(menuButtonRect, Contents.MenuIcon, Contents.RendererPathHeaderStyle))
             {
                 var menu = new GenericMenu();
 
                 if (TryGetMesh(actor, rendererMapping, out var m, false))
                 {
-                    menu.AddItem(Contents.reinitialize, false, () =>
+                    menu.AddItem(Contents.Reinitialize, false, () =>
                     {
                         Initialize(rendererMapping, path.stringValue, m);
                         serializedObject.ApplyModifiedProperties();
@@ -268,10 +269,10 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                 }
                 else
                 {
-                    menu.AddDisabledItem(Contents.reinitialize, false);
+                    menu.AddDisabledItem(Contents.Reinitialize, false);
                 }
 
-                menu.AddItem(Contents.deleteMappings, false, () =>
+                menu.AddItem(Contents.DeleteMappings, false, () =>
                 {
                     m_MappingLists.Clear();
                     SetIsEditingPath(path, false);
@@ -288,13 +289,13 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
 
             var editPathButtonRect = new Rect(headerRect)
             {
-                xMin = menuButtonRect.xMin - 2f - Contents.editPathButtonWidth,
+                xMin = menuButtonRect.xMin - 2f - Contents.EditPathButtonWidth,
                 xMax = menuButtonRect.xMin - 2f,
                 y = headerRect.y + 2f,
             };
             using (new EditorGUI.DisabledScope(!TryGetMesh(actor, rendererMapping, out _, false)))
             {
-                if (GUI.Button(editPathButtonRect, Contents.editPathButtonIcon, Contents.rendererPathHeaderStyle))
+                if (GUI.Button(editPathButtonRect, Contents.EditPathButtonIcon, Contents.RendererPathHeaderStyle))
                 {
                     isEditingPath = !isEditingPath;
                     SetIsEditingPath(path, isEditingPath);
@@ -319,10 +320,10 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                 if (TryGetMappingList(actor, rendererMapping, out var list))
                 {
                     var rendererName = Path.GetFileName(path.stringValue);
-                    var expanded = EditorGUI.Foldout(foldoutRect, list.isExpanded, rendererName, true);
+                    var expanded = EditorGUI.Foldout(foldoutRect, list.IsExpanded, rendererName, true);
 
                     if (change.changed)
-                        list.isExpanded = expanded;
+                        list.IsExpanded = expanded;
                 }
             }
 
@@ -362,7 +363,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
 
             if (TryGetMappingList(actor, rendererMapping, out var mappingList))
             {
-                if (!mappingList.isExpanded)
+                if (!mappingList.IsExpanded)
                     return;
 
                 mappingList.OnGUI();
@@ -469,11 +470,12 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
 
         void DoHeadGUI(FaceActor actor)
         {
-            PickComponent<Transform>(actor, m_Head);
+            PickComponent<Transform>(actor, m_HeadPosition);
+            PickComponent<Transform>(actor, m_HeadRotation);
 
             using (new EditorGUI.IndentLevelScope())
             {
-                if (!string.IsNullOrEmpty(m_Head.stringValue))
+                if (!string.IsNullOrEmpty(m_HeadPosition.stringValue) || !string.IsNullOrEmpty(m_HeadRotation.stringValue))
                 {
                     EditorGUILayout.PropertyField(m_HeadSmoothing);
                 }
@@ -537,7 +539,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             if (mesh == null)
                 return;
 
-            var locationNames = FaceBlendShapePose.shapes.Select(s => s.ToString()).ToArray();
+            var locationNames = FaceBlendShapePose.Shapes.Select(s => s.ToString()).ToArray();
             var meshBlendShapes = BlendShapeUtility.GetBlendShapeNames(mesh);
 
             foreach (var(indexA, indexB) in BlendShapeUtility.FindMatches(locationNames, meshBlendShapes, m_ShapeMatchTolerance.floatValue))

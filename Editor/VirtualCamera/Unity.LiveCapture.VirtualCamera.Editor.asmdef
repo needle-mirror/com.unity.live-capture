@@ -1,6 +1,6 @@
 {
     "name": "Unity.LiveCapture.VirtualCamera.Editor",
-    "rootNamespace": "Unity.LiveCapture.VirtualCamera",
+    "rootNamespace": "Unity.LiveCapture.VirtualCamera.Editor",
     "references": [
         "Unity.LiveCapture",
         "Unity.LiveCapture.Networking",

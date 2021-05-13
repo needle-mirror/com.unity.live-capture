@@ -8,17 +8,17 @@ namespace Unity.LiveCapture.VirtualCamera
     /// The payload sent over the network to transport a focal length samples.
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct FocalLengthSample : ISample
+    struct FocalLengthSample : ISample
     {
         float m_Timestamp;
 
         /// <summary>
         /// The focal length in millimeters.
         /// </summary>
-        public float focalLength;
+        public float FocalLength;
 
         /// <inheritdoc/>
-        public float timestamp
+        public float Timestamp
         {
             get => m_Timestamp;
             set => m_Timestamp = value;

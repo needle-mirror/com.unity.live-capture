@@ -3,7 +3,7 @@ namespace Unity.LiveCapture.Networking
     /// <summary>
     /// Describes how a disconnection occured.
     /// </summary>
-    public enum DisconnectStatus
+    enum DisconnectStatus
     {
         /// <summary>
         /// The connection was shut down gracefully.

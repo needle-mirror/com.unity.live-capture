@@ -1,9 +1,5 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace Unity.LiveCapture
 {
@@ -15,22 +11,22 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The transform path of the object that is animated.
         /// </summary>
-        string relativePath { get; }
+        string RelativePath { get; }
 
         /// <summary>
         /// The name of the property to be animated.
         /// </summary>
-        string propertyName { get; }
+        string PropertyName { get; }
 
         /// <summary>
         /// The type of the property to be animated.
         /// </summary>
-        Type bindingType { get; }
+        Type BindingType { get; }
 
         /// <summary>
         /// The sampling rate in Hz.
         /// </summary>
-        FrameRate frameRate { get; set; }
+        FrameRate FrameRate { get; set; }
 
         /// <summary>
         /// Checks if the animation curve contains keyframes.
@@ -54,7 +50,7 @@ namespace Unity.LiveCapture
     /// Represents an animation curve that stores keyframes of generic value.
     /// </summary>
     /// <typeparam name="T">The type of data to store in the curve.</typeparam>
-    public interface ICurve<T> : ICurve
+    public interface ICurve<in T> : ICurve
     {
         /// <summary>
         /// Adds a keyframe to the curve.

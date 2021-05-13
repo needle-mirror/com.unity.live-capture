@@ -1,0 +1,19 @@
+{
+    "name": "Unity.LiveCapture.GPUFrameSync",
+    "rootNamespace": "Unity.LiveCapture.GPUFrameSync",
+    "references": [
+        "Unity.LiveCapture"
+    ],
+    "includePlatforms": [
+        "Editor",
+        "WindowsStandalone64"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

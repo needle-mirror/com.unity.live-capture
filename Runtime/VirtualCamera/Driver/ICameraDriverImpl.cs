@@ -14,10 +14,11 @@ namespace Unity.LiveCapture.VirtualCamera
         void SetFocusDistance(float focusDistance);
 
         /// <summary>
-        /// Set physical camera properties, such as lens parameters, focus mode, etc.
+        /// Set physical camera properties, such as lens intrinsics, focus mode, etc.
         /// </summary>
         /// <param name="lens">Lens data.</param>
+        /// <param name="intrinsics">Lens intrinsic parameters.</param>
         /// <param name="cameraBody">Camera body data.</param>
-        void SetPhysicalCameraProperties(Lens lens, CameraBody cameraBody);
+        void SetPhysicalCameraProperties(Lens lens, LensIntrinsics intrinsics, CameraBody cameraBody);
     }
 }

@@ -8,15 +8,24 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
 {
     class UniversalRaycasterImpl : BaseScriptableRenderPipelineRaycasterImpl
     {
+        RenderTexture m_PlaceholderTarget;
+
         public override void Initialize()
         {
             base.Initialize();
+
+            // We assign a target texture even though its content is not relevant to us to avoid
+            // "Missing Vulkan framebuffer attachment image?" errors on Linux + Vulkan.
+            m_PlaceholderTarget = new RenderTexture(1, 1, 0);
+            m_Camera.targetTexture = m_PlaceholderTarget;
+            
             RenderPipelineBridge.RequestRenderFeature<InjectionPointRenderFeature>();
             InjectionPointRenderPass.onExecute += OnExecute;
         }
 
         public override void Dispose()
         {
+            m_PlaceholderTarget.Release();
             InjectionPointRenderPass.onExecute -= OnExecute;
             base.Dispose();
         }

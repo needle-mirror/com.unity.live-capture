@@ -17,8 +17,7 @@ namespace Unity.LiveCapture.VirtualCamera
     [ExecuteAlways]
     abstract class BaseCameraDriver : MonoBehaviour, ICameraDriver
     {
-        [SerializeField, HideInInspector]
-        protected VirtualCameraActor m_VirtualCameraActor;
+        VirtualCameraActor m_VirtualCameraActor;
 
         float m_CachedFocusDistance;
         bool m_CachedFocusDistanceEnabled;
@@ -28,7 +27,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         protected abstract ICameraDriverImpl GetImplementation();
 
-        protected abstract void OnAwake();
+        protected abstract void Initialize();
 
         bool TryGetImplementation(out ICameraDriverImpl impl)
         {
@@ -43,10 +42,10 @@ namespace Unity.LiveCapture.VirtualCamera
             return impl != null;
         }
 
-        void Awake()
+        void OnEnable()
         {
             m_VirtualCameraActor = GetComponent<VirtualCameraActor>();
-            OnAwake();
+            Initialize();
         }
 
         void LateUpdate()
@@ -54,18 +53,23 @@ namespace Unity.LiveCapture.VirtualCamera
             if (TryGetImplementation(out var impl))
             {
                 Assert.IsNotNull(m_VirtualCameraActor);
-                var lens = m_VirtualCameraActor.lens;
-                var cameraBody = m_VirtualCameraActor.cameraBody;
+                var lens = m_VirtualCameraActor.Lens;
+                var lensIntrinsics = m_VirtualCameraActor.LensIntrinsics;
+                var cameraBody = m_VirtualCameraActor.CameraBody;
 
-                impl.EnableDepthOfField(m_VirtualCameraActor.depthOfFieldEnabled);
-                impl.SetFocusDistance(lens.focusDistance);
-                impl.SetPhysicalCameraProperties(lens, cameraBody);
+                lens.Validate(lensIntrinsics);
+                impl.EnableDepthOfField(m_VirtualCameraActor.DepthOfFieldEnabled);
+                impl.SetFocusDistance(lens.FocusDistance);
+                impl.SetPhysicalCameraProperties(lens, lensIntrinsics, cameraBody);
 
-                if (FocusPlaneMap.instance.TryGetInstance(GetCamera(), out var focusPlane))
-                    focusPlane.SetFocusDistance(lens.focusDistance);
+                if (FocusPlaneMap.Instance.TryGetInstance(GetCamera(), out var focusPlane))
+                    focusPlane.SetFocusDistance(lens.FocusDistance);
 
-                m_CachedFocusDistanceEnabled = m_VirtualCameraActor.depthOfFieldEnabled;
-                m_CachedFocusDistance = lens.focusDistance;
+                if (FrameLinesMap.Instance.TryGetInstance(GetCamera(), out var frameLines))
+                    frameLines.CropAspect = m_VirtualCameraActor.CropAspect;
+
+                m_CachedFocusDistanceEnabled = m_VirtualCameraActor.DepthOfFieldEnabled;
+                m_CachedFocusDistance = lens.FocusDistance;
             }
         }
 

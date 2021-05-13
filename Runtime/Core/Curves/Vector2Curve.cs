@@ -11,23 +11,23 @@ namespace Unity.LiveCapture
         readonly ICurve<float>[] m_Curves;
 
         /// <inheritdoc/>
-        public string relativePath { get; private set; }
+        public string RelativePath { get; }
 
         /// <inheritdoc/>
-        public string propertyName { get; private set; }
+        public string PropertyName { get; }
 
         /// <inheritdoc/>
-        public Type bindingType { get; private set; }
+        public Type BindingType { get; }
 
         /// <inheritdoc/>
-        public FrameRate frameRate
+        public FrameRate FrameRate
         {
-            get => m_Curves[0].frameRate;
+            get => m_Curves[0].FrameRate;
             set
             {
                 foreach (var curve in m_Curves)
                 {
-                    curve.frameRate = value;
+                    curve.FrameRate = value;
                 }
             }
         }
@@ -41,9 +41,9 @@ namespace Unity.LiveCapture
         /// <param name="bindingType">The type of component this curve is applied to.</param>
         public Vector2Curve(string relativePath, string propertyName, Type bindingType)
         {
-            this.relativePath = relativePath;
-            this.propertyName = propertyName;
-            this.bindingType = bindingType;
+            RelativePath = relativePath;
+            PropertyName = propertyName;
+            BindingType = bindingType;
 
             m_Curves = new[]
             {

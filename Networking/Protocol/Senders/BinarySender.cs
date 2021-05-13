@@ -11,8 +11,15 @@ namespace Unity.LiveCapture.Networking.Protocols
     /// This message type is optimized for smaller messages that are frequently sent.
     /// </remarks>
     /// <typeparam name="T">The type of data to send. It must be a blittable struct.</typeparam>
-    public sealed class BinarySender<T> : DataSender<T> where T : struct
+    sealed class BinarySender<T> : DataSender<T> where T : struct
     {
+        /// <summary>
+        /// The latest version of the message serialized format.
+        /// </summary>
+        internal new const int k_Version = 0;
+
+        readonly int m_Version;
+
         /// <summary>
         /// Creates a new <see cref="BinarySender{T}"/> instance.
         /// </summary>
@@ -22,21 +29,54 @@ namespace Unity.LiveCapture.Networking.Protocols
         public BinarySender(string id, ChannelType channel = ChannelType.ReliableOrdered, DataOptions options = DataOptions.Default)
             : base(id, channel, options)
         {
+            m_Version = k_Version;
         }
 
         /// <inheritdoc />
         [Preserve]
         internal BinarySender(Stream stream) : base(stream)
         {
+            m_Version = stream.ReadStruct<int>();
+
+            switch (m_Version)
+            {
+                case 0:
+                    break;
+                default:
+                    throw new Exception($"{nameof(BinarySender<T>)} version is not supported by this application version.");
+            }
+        }
+
+        /// <inheritdoc/>
+        internal override void Serialize(Stream stream)
+        {
+            base.Serialize(stream);
+
+            stream.WriteStruct(m_Version);
+
+            switch (m_Version)
+            {
+                case 0:
+                    break;
+                default:
+                    throw new Exception($"{nameof(BinarySender<T>)} version is not supported by this application version.");
+            }
         }
 
         /// <inheritdoc />
-        internal override MessageBase GetInverse() => new BinaryReceiver<T>(id, channel, m_Options);
+        internal override MessageBase GetInverse() => new BinaryReceiver<T>(ID, Channel, m_Options);
 
         /// <inheritdoc />
         protected override void OnWrite(MemoryStream stream, ref T data)
         {
-            stream.WriteStruct(ref data);
+            switch (m_Version)
+            {
+                case 0:
+                    stream.WriteStruct(ref data);
+                    break;
+                default:
+                    throw new Exception($"{nameof(BinarySender<T>)} version is not supported by this application version.");
+            }
         }
 
         /// <summary>

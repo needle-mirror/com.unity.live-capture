@@ -5,6 +5,7 @@ using System.Linq;
 using System.IO;
 using UnityEngine;
 using UnityEditor;
+
 using UnityObject = UnityEngine.Object;
 
 namespace Unity.LiveCapture
@@ -55,6 +56,27 @@ namespace Unity.LiveCapture
             var path = AssetDatabase.GUIDToAssetPath(guid);
 
             return AssetDatabase.LoadAssetAtPath<T>(path);
+        }
+
+        /// <summary>
+        /// Returns the list of sub assets at given asset.
+        /// </summary>
+        /// <typeparam name="T">Type of the asset to load.</typeparam>
+        /// <param name="asset">The main asset reference.</param>
+        /// <returns>The list of assets.</returns>
+        public static List<T> GetSubAssets<T>(UnityObject asset) where T : UnityObject
+        {
+            var assets = new List<T>();
+            var path = AssetDatabase.GetAssetPath(asset);
+
+            if (!string.IsNullOrEmpty(path))
+            {
+                var enumerable = AssetDatabase.LoadAllAssetsAtPath(path).Where(a => a is T).Cast<T>();
+
+                assets.AddRange(enumerable);
+            }
+
+            return assets;
         }
     }
 }

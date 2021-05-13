@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     /// <summary>
     /// A formatter that ensures redundant string entries are given a unique name.

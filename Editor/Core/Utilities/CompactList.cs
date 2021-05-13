@@ -6,7 +6,7 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     /// <summary>
     /// A list implementation optimized for large numbers of complex elements.
@@ -33,32 +33,32 @@ namespace Unity.LiveCapture
 
         class Defaults
         {
-            public const float boxPadding = 1f;
-            public readonly GUIStyle boxHeaderBackground = "RL Empty Header";
-            public readonly GUIStyle boxBackground = "RL Background";
+            public const float BoxPadding = 1f;
+            public readonly GUIStyle BoxHeaderBackground = "RL Empty Header";
+            public readonly GUIStyle BoxBackground = "RL Background";
 
-            public const float itemPadding = 6f;
-            public readonly GUIStyle itemBackground = "RL Element";
+            public const float ItemPadding = 6f;
+            public readonly GUIStyle ItemBackground = "RL Element";
 
-            public const float resizeHandleHeight = 12f;
-            public readonly GUIStyle resizeHandle = "RL DragHandle";
+            public const float ResizeHandleHeight = 12f;
+            public readonly GUIStyle ResizeHandle = "RL DragHandle";
 
-            public const float searchBarHeight = 18f;
-            public const float searchBottomPadding = 2f;
-            public const float searchSidePadding = 6f;
-            public readonly GUIContent showSearchbar = EditorGUIUtility.TrTextContent("Show Searchbar");
+            public const float SearchBarHeight = 18f;
+            public const float SearchBottomPadding = 2f;
+            public const float SearchSidePadding = 6f;
+            public readonly GUIContent ShowSearchbar = EditorGUIUtility.TrTextContent("Show Searchbar");
 
-            public const float controlsSpacing = 2f;
-            public const float buttonHeight = 15f;
-            public const float buttonWidth = 20f;
-            public const float buttonSpacing = 8f;
-            public readonly GUIContent iconToolbarPlus = EditorGUIUtility.TrIconContent("Toolbar Plus", "Add to list");
-            public readonly GUIContent iconToolbarPlusMore = EditorGUIUtility.TrIconContent("Toolbar Plus More", "Choose to add to list");
-            public readonly GUIContent iconToolbarMinus = EditorGUIUtility.TrIconContent("Toolbar Minus", "Remove selection or last element from list");
-            public readonly GUIContent menuButton = EditorGUIUtility.TrIconContent("_Menu", "List menu");
-            public readonly GUIContent moveUpIcon = EditorGUIUtility.TrTextContent("\u25B2", "Move selection up");
-            public readonly GUIContent moveDownIcon = EditorGUIUtility.TrTextContent("\u25BC", "Move selection down");
-            public readonly GUIStyle controlButton = new GUIStyle("RL FooterButton")
+            public const float ControlsSpacing = 2f;
+            public const float ButtonHeight = 15f;
+            public const float ButtonWidth = 20f;
+            public const float ButtonSpacing = 8f;
+            public readonly GUIContent IconToolbarPlus = EditorGUIUtility.TrIconContent("Toolbar Plus", "Add to list");
+            public readonly GUIContent IconToolbarPlusMore = EditorGUIUtility.TrIconContent("Toolbar Plus More", "Choose to add to list");
+            public readonly GUIContent IconToolbarMinus = EditorGUIUtility.TrIconContent("Toolbar Minus", "Remove selection or last element from list");
+            public readonly GUIContent MenuButton = EditorGUIUtility.TrIconContent("_Menu", "List menu");
+            public readonly GUIContent MoveUpIcon = EditorGUIUtility.TrTextContent("\u25B2", "Move selection up");
+            public readonly GUIContent MoveDownIcon = EditorGUIUtility.TrTextContent("\u25BC", "Move selection down");
+            public readonly GUIStyle ControlButton = new GUIStyle("RL FooterButton")
             {
                 fontSize = 10,
             };
@@ -75,30 +75,30 @@ namespace Unity.LiveCapture
 
             public void DoAddButton(CompactList list)
             {
-                if (list.property != null)
+                if (list.Property != null)
                 {
-                    list.property.arraySize += 1;
-                    list.index = list.property.arraySize - 1;
+                    list.Property.arraySize += 1;
+                    list.Index = list.Property.arraySize - 1;
                 }
                 else
                 {
-                    var elementType = list.list.GetType().GetElementType();
+                    var elementType = list.List.GetType().GetElementType();
 
                     if (elementType == typeof(string))
                     {
-                        list.index = list.list.Add(string.Empty);
+                        list.Index = list.List.Add(string.Empty);
                     }
                     else if (elementType != null && elementType.GetConstructor(Type.EmptyTypes) == null)
                     {
                         Debug.LogError($"Cannot add element. Type {elementType} has no default constructor. Implement a default constructor or implement your own add behaviour.");
                     }
-                    else if (list.list.GetType().GetGenericArguments()[0] != null)
+                    else if (list.List.GetType().GetGenericArguments()[0] != null)
                     {
-                        list.index = list.list.Add(Activator.CreateInstance(list.list.GetType().GetGenericArguments()[0]));
+                        list.Index = list.List.Add(Activator.CreateInstance(list.List.GetType().GetGenericArguments()[0]));
                     }
                     else if (elementType != null)
                     {
-                        list.index = list.list.Add(Activator.CreateInstance(elementType));
+                        list.Index = list.List.Add(Activator.CreateInstance(elementType));
                     }
                     else
                     {
@@ -109,19 +109,19 @@ namespace Unity.LiveCapture
 
             public void DoRemoveButton(CompactList list)
             {
-                if (list.property != null)
+                if (list.Property != null)
                 {
-                    list.property.DeleteArrayElementAtIndex(list.index);
+                    list.Property.DeleteArrayElementAtIndex(list.Index);
 
-                    if (list.index >= list.property.arraySize - 1)
-                        list.index = list.property.arraySize - 1;
+                    if (list.Index >= list.Property.arraySize - 1)
+                        list.Index = list.Property.arraySize - 1;
                 }
                 else
                 {
-                    list.list.RemoveAt(list.index);
+                    list.List.RemoveAt(list.Index);
 
-                    if (list.index >= list.list.Count - 1)
-                        list.index = list.list.Count - 1;
+                    if (list.Index >= list.List.Count - 1)
+                        list.Index = list.List.Count - 1;
                 }
             }
 
@@ -145,8 +145,8 @@ namespace Unity.LiveCapture
                         yMin = rect.y + 5f,
                     };
 
-                    boxHeaderBackground.Draw(topRect, false, false, false, false);
-                    boxBackground.Draw(bottomRect, false, false, false, false);
+                    BoxHeaderBackground.Draw(topRect, false, false, false, false);
+                    BoxBackground.Draw(bottomRect, false, false, false, false);
                 }
             }
 
@@ -154,7 +154,7 @@ namespace Unity.LiveCapture
             {
                 if (Event.current.type == EventType.Repaint)
                 {
-                    itemBackground.Draw(rect, false, selected, selected, focused);
+                    ItemBackground.Draw(rect, false, selected, selected, focused);
                 }
             }
 
@@ -165,20 +165,20 @@ namespace Unity.LiveCapture
 
             string GetItemName(CompactList list, int index)
             {
-                if (list.property != null)
+                if (list.Property != null)
                 {
-                    var element = list.property.GetArrayElementAtIndex(index);
+                    var element = list.Property.GetArrayElementAtIndex(index);
                     return element.displayName;
                 }
                 else
                 {
-                    var element = list.list[index];
+                    var element = list.List[index];
                     return element.ToString();
                 }
             }
         }
 
-        static Defaults defaults { get; set; }
+        static Defaults Default { get; set; }
 
         readonly int m_ID;
         readonly string m_StatePath;
@@ -199,53 +199,53 @@ namespace Unity.LiveCapture
         /// The serialized property being edited by instance.
         /// </summary>
         /// <value>
-        /// If null, <see cref="list"/> is being used instead.
+        /// If null, <see cref="List"/> is being used instead.
         /// </value>
-        public SerializedProperty property { get; }
+        public SerializedProperty Property { get; }
 
         /// <summary>
         /// The list being edited by this instance.
         /// </summary>
         /// <value>
-        /// If null, <see cref="property"/> is being used instead.
+        /// If null, <see cref="Property"/> is being used instead.
         /// </value>
-        public IList list { get; }
+        public IList List { get; }
 
         /// <summary>
         /// The number of elements in the list.
         /// </summary>
         /// <remarks>
-        /// If <see cref="property"/> is non-null and multiple target objects are being edited,
+        /// If <see cref="Property"/> is non-null and multiple target objects are being edited,
         /// this will be the minimum array size out of all the target objects.
         /// </remarks>
-        public int count
+        public int Count
         {
             get
             {
-                if (property != null)
+                if (Property != null)
                 {
-                    if (!property.hasMultipleDifferentValues)
-                        return property.arraySize;
+                    if (!Property.hasMultipleDifferentValues)
+                        return Property.arraySize;
 
-                    var minArraySize = property.arraySize;
-                    foreach (var targetObject in property.serializedObject.targetObjects)
+                    var minArraySize = Property.arraySize;
+                    foreach (var targetObject in Property.serializedObject.targetObjects)
                     {
                         using (var serializedObject = new SerializedObject(targetObject))
                         {
-                            var property = serializedObject.FindProperty(this.property.propertyPath);
+                            var property = serializedObject.FindProperty(this.Property.propertyPath);
                             minArraySize = Math.Min(property.arraySize, minArraySize);
                         }
                     }
                     return minArraySize;
                 }
-                return list.Count;
+                return List.Count;
             }
         }
 
         /// <summary>
         /// The index of the selected element in the list.
         /// </summary>
-        public int index
+        public int Index
         {
             get => m_Index;
             set
@@ -262,22 +262,22 @@ namespace Unity.LiveCapture
         /// <summary>
         /// Can the list size be changed by dragging the footer.
         /// </summary>
-        public bool resizable { get; set; } = true;
+        public bool Resizable { get; set; } = true;
 
         /// <summary>
         /// Can the items in the list be reordered.
         /// </summary>
-        public bool reorderable { get; set; } = true;
+        public bool Reorderable { get; set; } = true;
 
         /// <summary>
         /// Can the list items be searched.
         /// </summary>
-        public bool searchable { get; set; } = true;
+        public bool Searchable { get; set; } = true;
 
         /// <summary>
         /// Expand the search bar.
         /// </summary>
-        public bool showSearchBar
+        public bool ShowSearchBar
         {
             get => m_ShowSearchBar;
             set
@@ -293,7 +293,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The search string used to filter the list items.
         /// </summary>
-        public string searchFilter
+        public string SearchFilter
         {
             get => m_SearchFilter;
             set
@@ -309,12 +309,12 @@ namespace Unity.LiveCapture
         /// <summary>
         /// Is there a search filter currently being applied to the list.
         /// </summary>
-        public bool isSearchActive => searchable && !string.IsNullOrEmpty(searchFilter);
+        public bool IsSearchActive => Searchable && !string.IsNullOrEmpty(SearchFilter);
 
         /// <summary>
         /// The height of items in the list in pixels.
         /// </summary>
-        public float itemHeight
+        public float ItemHeight
         {
             get => m_ItemHeight;
             set
@@ -322,7 +322,7 @@ namespace Unity.LiveCapture
                 if (m_ItemHeight != value)
                 {
                     m_ItemHeight = Mathf.Max(k_MinItemHeight, value);
-                    ScrollToItem(index);
+                    ScrollToItem(Index);
                 }
             }
         }
@@ -330,7 +330,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The height of the list item area in pixels.
         /// </summary>
-        public float listHeight
+        public float ListHeight
         {
             get => m_ListHeight;
             set
@@ -339,7 +339,7 @@ namespace Unity.LiveCapture
                 {
                     m_ListHeight = Mathf.Max(k_MinListHeight, value);
                     SessionState.SetFloat($"{m_StatePath}/listHeight", m_ListHeight);
-                    ScrollToItem(index);
+                    ScrollToItem(Index);
                 }
             }
         }
@@ -350,7 +350,7 @@ namespace Unity.LiveCapture
         /// <remarks>
         /// <para>Return true if elements can be added to the list; false otherwise.</para>
         /// </remarks>
-        public Func<bool> onCanAddCallback;
+        public Func<bool> OnCanAddCallback;
 
         /// <summary>
         /// A callback used to determine if the user is able to remove items from the list.
@@ -358,12 +358,12 @@ namespace Unity.LiveCapture
         /// <remarks>
         /// <para>Return true if elements can be removed from the list; false otherwise.</para>
         /// </remarks>
-        public Func<bool> onCanRemoveCallback;
+        public Func<bool> OnCanRemoveCallback;
 
         /// <summary>
         /// A callback used to override how items are added to the list.
         /// </summary>
-        public Action onAddCallback;
+        public Action OnAddCallback;
 
         /// <summary>
         /// A callback used to display advanced options when the add button is clicked.
@@ -371,17 +371,17 @@ namespace Unity.LiveCapture
         /// <remarks>
         /// <para>The first parameter contains the add button position.</para>
         /// </remarks>
-        public Action<Rect> onAddDropdownCallback;
+        public Action<Rect> OnAddDropdownCallback;
 
         /// <summary>
         /// A callback used to override how items are removed from the list.
         /// </summary>
-        public Action onRemoveCallback;
+        public Action OnRemoveCallback;
 
         /// <summary>
         /// A callback invoked after the user has clicked on the add or remove buttons.
         /// </summary>
-        public Action onChangedCallback;
+        public Action OnChangedCallback;
 
         /// <summary>
         /// A callback used to add a custom menu to the list controls.
@@ -389,7 +389,7 @@ namespace Unity.LiveCapture
         /// <remarks>
         /// <para>The first parameter contains the menu to add items to.</para>
         /// </remarks>
-        public Action<GenericMenu> onMenuCallback;
+        public Action<GenericMenu> OnMenuCallback;
 
         /// <summary>
         /// A callback invoked when the user moves an item to a new index in the list.
@@ -398,22 +398,22 @@ namespace Unity.LiveCapture
         /// <para>The first parameter contains the previous index of the moved item.</para>
         /// <para>The second parameter contains the new index of the moved item.</para>
         /// </remarks>
-        public Action<int, int> onReorderCallback;
+        public Action<int, int> OnReorderCallback;
 
         /// <summary>
         /// A callback invoked when the user selects an item in the list.
         /// </summary>
-        public Action onSelectCallback;
+        public Action OnSelectCallback;
 
         /// <summary>
         /// A callback invoked when the user releases a click on the selected item in the list.
         /// </summary>
-        public Action onMouseUpCallback;
+        public Action OnMouseUpCallback;
 
         /// <summary>
         /// A callback invoked when the user changes the list size.
         /// </summary>
-        public Action onResizeCallback;
+        public Action OnResizeCallback;
 
         /// <summary>
         /// A callback that overrides the search filter behaviour.
@@ -423,7 +423,7 @@ namespace Unity.LiveCapture
         /// <para>The second parameter contains the search string.</para>
         /// <para>Return true to show the item in the filtered list, false to reject it.</para>
         /// </remarks>
-        public Func<int, string, bool> searchFilterCallback;
+        public Func<int, string, bool> SearchFilterCallback;
 
         /// <summary>
         /// A callback that overrides the height of the GUI for the selected element.
@@ -432,7 +432,7 @@ namespace Unity.LiveCapture
         /// <para>The first parameter contains the index of the element to get the height of.</para>
         /// <para>Return the height of the element in pixels.</para>
         /// </remarks>
-        public Func<int, float> elementHeightCallback;
+        public Func<int, float> ElementHeightCallback;
 
         /// <summary>
         /// A callback that overrides the background for items in the list box.
@@ -446,7 +446,7 @@ namespace Unity.LiveCapture
         /// <para>The third parameter indicates if this item is currently selected.</para>
         /// <para>The fourth parameter indicates if this item is currently selected and has keyboard focus.</para>
         /// </remarks>
-        public Action<Rect, int, bool, bool> drawListItemBackgroundCallback;
+        public Action<Rect, int, bool, bool> DrawListItemBackgroundCallback;
 
         /// <summary>
         /// A callback that overrides the GUI for items in the list box.
@@ -460,7 +460,7 @@ namespace Unity.LiveCapture
         /// <para>The third parameter indicates if this item is currently selected.</para>
         /// <para>The fourth parameter indicates if this item is currently selected and has keyboard focus.</para>
         /// </remarks>
-        public Action<Rect, int, bool, bool> drawListItemCallback;
+        public Action<Rect, int, bool, bool> DrawListItemCallback;
 
         /// <summary>
         /// A callback that overrides the GUI for the selected element that is drawn beneath the list.
@@ -469,7 +469,7 @@ namespace Unity.LiveCapture
         /// <para>The first parameter contains the position to draw the element GUI in.</para>
         /// <para>The second parameter contains the index of the element to draw the GUI for.</para>
         /// </remarks>
-        public Action<Rect, int> drawElementCallback;
+        public Action<Rect, int> DrawElementCallback;
 
         /// <summary>
         /// Creates a new <see cref="CompactList"/> instance.
@@ -485,7 +485,7 @@ namespace Unity.LiveCapture
                 throw new ArgumentException($"Must be an array {nameof(SerializedProperty)}!", nameof(elements));
 
             m_ID = (int)s_GetPermanentControlID.Invoke(null, null);
-            property = elements;
+            Property = elements;
 
             m_StatePath = $"{elements.serializedObject.targetObject.GetInstanceID()}/{elements.propertyPath}";
             LoadState();
@@ -507,7 +507,7 @@ namespace Unity.LiveCapture
                 throw new ArgumentException("Path \"{statePath}\" is not valid!", nameof(statePath));
 
             m_ID = (int)s_GetPermanentControlID.Invoke(null, null);
-            list = elements;
+            List = elements;
 
             m_StatePath = statePath;
             LoadState();
@@ -515,11 +515,11 @@ namespace Unity.LiveCapture
 
         void LoadState()
         {
-            index = SessionState.GetInt($"{m_StatePath}/index", index);
-            showSearchBar = SessionState.GetBool($"{m_StatePath}/showSearchBar", showSearchBar);
-            searchFilter = SessionState.GetString($"{m_StatePath}/searchFilter", searchFilter);
+            Index = SessionState.GetInt($"{m_StatePath}/index", Index);
+            ShowSearchBar = SessionState.GetBool($"{m_StatePath}/showSearchBar", ShowSearchBar);
+            SearchFilter = SessionState.GetString($"{m_StatePath}/searchFilter", SearchFilter);
             m_ScrollPosition = SessionState.GetFloat($"{m_StatePath}/scrollPosition", m_ScrollPosition);
-            listHeight = SessionState.GetFloat($"{m_StatePath}/listHeight", listHeight);
+            ListHeight = SessionState.GetFloat($"{m_StatePath}/listHeight", ListHeight);
         }
 
         /// <summary>
@@ -538,36 +538,36 @@ namespace Unity.LiveCapture
 
         float GetListItemsHeight()
         {
-            return listHeight + (2f * Defaults.boxPadding);
+            return ListHeight + (2f * Defaults.BoxPadding);
         }
 
         float GetListFooterHeight()
         {
             var height = 0f;
 
-            if (resizable)
-                height += Defaults.resizeHandleHeight;
-            if (searchable && showSearchBar)
-                height += Defaults.searchBarHeight + Defaults.searchBottomPadding;
+            if (Resizable)
+                height += Defaults.ResizeHandleHeight;
+            if (Searchable && ShowSearchBar)
+                height += Defaults.SearchBarHeight + Defaults.SearchBottomPadding;
 
             return height;
         }
 
         float GetElementHeight()
         {
-            if (index < 0 || index >= count)
+            if (Index < 0 || Index >= Count)
                 return 0f;
 
-            if (elementHeightCallback == null)
+            if (ElementHeightCallback == null)
             {
-                if (property != null)
+                if (Property != null)
                 {
-                    var element = property.GetArrayElementAtIndex(index);
+                    var element = Property.GetArrayElementAtIndex(Index);
                     return EditorGUIUtility.standardVerticalSpacing + EditorGUI.GetPropertyHeight(element);
                 }
                 return 0f;
             }
-            return elementHeightCallback(index);
+            return ElementHeightCallback(Index);
         }
 
         /// <summary>
@@ -612,8 +612,8 @@ namespace Unity.LiveCapture
         {
             Profiler.BeginSample($"{nameof(CompactList)}.{nameof(DoListInternal)}()");
 
-            if (defaults == null)
-                defaults = new Defaults();
+            if (Default == null)
+                Default = new Defaults();
 
             DoList(listRect);
             DoElement(elementRect);
@@ -625,14 +625,14 @@ namespace Unity.LiveCapture
         {
             var controlsRect = new Rect(rect)
             {
-                xMin = rect.xMax - Defaults.buttonWidth,
+                xMin = rect.xMax - Defaults.ButtonWidth,
             };
 
             DoListControls(controlsRect);
 
             var listRect = new Rect(rect)
             {
-                xMax = controlsRect.xMin - Defaults.controlsSpacing,
+                xMax = controlsRect.xMin - Defaults.ControlsSpacing,
             };
             var itemsRect = new Rect(listRect)
             {
@@ -644,7 +644,7 @@ namespace Unity.LiveCapture
                 height = GetListFooterHeight(),
             };
 
-            defaults.DrawListBackground(listRect);
+            Default.DrawListBackground(listRect);
 
             // we need to draw the search field before the items, to prevent the control IDs from changing during the search
             DoListFooter(footerRect);
@@ -655,7 +655,7 @@ namespace Unity.LiveCapture
         {
             var addRect = new Rect(rect)
             {
-                height = Defaults.buttonHeight,
+                height = Defaults.ButtonHeight,
             };
             var removeRect = new Rect(addRect)
             {
@@ -663,72 +663,72 @@ namespace Unity.LiveCapture
             };
             var menuRect = new Rect(removeRect)
             {
-                y = removeRect.yMax + Defaults.buttonSpacing,
+                y = removeRect.yMax + Defaults.ButtonSpacing,
             };
             var upRect = new Rect(menuRect)
             {
-                y = menuRect.yMax + Defaults.buttonSpacing,
+                y = menuRect.yMax + Defaults.ButtonSpacing,
             };
             var downRect = new Rect(upRect)
             {
                 y = upRect.yMax,
             };
 
-            var indexInvalid = index < 0 || index >= count;
+            var indexInvalid = Index < 0 || Index >= Count;
 
-            using (new EditorGUI.DisabledScope(onCanAddCallback != null && !onCanAddCallback()))
+            using (new EditorGUI.DisabledScope(OnCanAddCallback != null && !OnCanAddCallback()))
             {
-                if (GUI.Button(addRect, onAddDropdownCallback != null ? defaults.iconToolbarPlusMore : defaults.iconToolbarPlus, defaults.controlButton))
+                if (GUI.Button(addRect, OnAddDropdownCallback != null ? Default.IconToolbarPlusMore : Default.IconToolbarPlus, Default.ControlButton))
                 {
-                    if (onAddDropdownCallback != null)
+                    if (OnAddDropdownCallback != null)
                     {
-                        onAddDropdownCallback(addRect);
+                        OnAddDropdownCallback(addRect);
                     }
-                    else if (onAddCallback == null)
+                    else if (OnAddCallback == null)
                     {
-                        defaults.DoAddButton(this);
+                        Default.DoAddButton(this);
                     }
                     else
                     {
-                        onAddCallback();
+                        OnAddCallback();
                     }
 
-                    onChangedCallback?.Invoke();
+                    OnChangedCallback?.Invoke();
                 }
             }
 
-            using (new EditorGUI.DisabledScope(indexInvalid || (onCanRemoveCallback != null && !onCanRemoveCallback())))
+            using (new EditorGUI.DisabledScope(indexInvalid || (OnCanRemoveCallback != null && !OnCanRemoveCallback())))
             {
-                if (GUI.Button(removeRect, defaults.iconToolbarMinus, defaults.controlButton))
+                if (GUI.Button(removeRect, Default.IconToolbarMinus, Default.ControlButton))
                 {
-                    if (onRemoveCallback == null)
+                    if (OnRemoveCallback == null)
                     {
-                        defaults.DoRemoveButton(this);
+                        Default.DoRemoveButton(this);
                     }
                     else
                     {
-                        onRemoveCallback();
+                        OnRemoveCallback();
                     }
 
-                    onChangedCallback?.Invoke();
+                    OnChangedCallback?.Invoke();
                 }
             }
 
-            if (onMenuCallback != null || searchable)
+            if (OnMenuCallback != null || Searchable)
             {
-                if (GUI.Button(menuRect, defaults.menuButton, defaults.controlButton))
+                if (GUI.Button(menuRect, Default.MenuButton, Default.ControlButton))
                 {
                     var menu = new GenericMenu();
 
-                    if (onMenuCallback != null)
+                    if (OnMenuCallback != null)
                     {
-                        onMenuCallback(menu);
+                        OnMenuCallback(menu);
                     }
-                    else if (searchable)
+                    else if (Searchable)
                     {
-                        menu.AddItem(defaults.showSearchbar, showSearchBar, () =>
+                        menu.AddItem(Default.ShowSearchbar, ShowSearchBar, () =>
                         {
-                            showSearchBar = !showSearchBar;
+                            ShowSearchBar = !ShowSearchBar;
                         });
                     }
 
@@ -736,15 +736,15 @@ namespace Unity.LiveCapture
                 }
             }
 
-            if (reorderable)
+            if (Reorderable)
             {
-                using (new EditorGUI.DisabledScope(indexInvalid || count < 2))
+                using (new EditorGUI.DisabledScope(indexInvalid || Count < 2))
                 {
-                    if (GUI.Button(upRect, defaults.moveUpIcon, defaults.controlButton))
+                    if (GUI.Button(upRect, Default.MoveUpIcon, Default.ControlButton))
                     {
                         MoveSelectionUp();
                     }
-                    if (GUI.Button(downRect, defaults.moveDownIcon, defaults.controlButton))
+                    if (GUI.Button(downRect, Default.MoveDownIcon, Default.ControlButton))
                     {
                         MoveSelectionDown();
                     }
@@ -754,36 +754,36 @@ namespace Unity.LiveCapture
 
         void MoveSelectionUp()
         {
-            var arraySize = count;
-            var dstIndex = (index - 1 + arraySize) % arraySize;
+            var arraySize = Count;
+            var dstIndex = (Index - 1 + arraySize) % arraySize;
             MoveSelection(dstIndex);
         }
 
         void MoveSelectionDown()
         {
-            var arraySize = count;
-            var dstIndex = (index + 1 + arraySize) % arraySize;
+            var arraySize = Count;
+            var dstIndex = (Index + 1 + arraySize) % arraySize;
             MoveSelection(dstIndex);
         }
 
         void MoveSelection(int dstIndex)
         {
-            var srcIndex = index;
+            var srcIndex = Index;
 
-            if (property != null)
+            if (Property != null)
             {
-                property.MoveArrayElement(srcIndex, dstIndex);
+                Property.MoveArrayElement(srcIndex, dstIndex);
             }
             else
             {
-                var value = list[srcIndex];
-                list.RemoveAt(srcIndex);
-                list.Insert(dstIndex, value);
+                var value = List[srcIndex];
+                List.RemoveAt(srcIndex);
+                List.Insert(dstIndex, value);
             }
 
-            index = dstIndex;
+            Index = dstIndex;
 
-            onReorderCallback?.Invoke(srcIndex, dstIndex);
+            OnReorderCallback?.Invoke(srcIndex, dstIndex);
         }
 
         void DoListItems(Rect rect)
@@ -794,12 +794,12 @@ namespace Unity.LiveCapture
 
             // don't draw over the list box border
             var scrollRect = rect;
-            scrollRect.min += Vector2.one * Defaults.boxPadding;
-            scrollRect.max -= Vector2.one * Defaults.boxPadding;
+            scrollRect.min += Vector2.one * Defaults.BoxPadding;
+            scrollRect.max -= Vector2.one * Defaults.BoxPadding;
 
             // determine how much space is needed for the list
             var listRect = scrollRect;
-            listRect.height = itemHeight * itemCount;
+            listRect.height = ItemHeight * itemCount;
 
             // if the list is larger the scroll box we need to make room for the scroll bar
             var showScrollbar = listRect.yMax > scrollRect.yMax;
@@ -830,34 +830,34 @@ namespace Unity.LiveCapture
                     var itemRect = GetItemRect(listRect, i);
 
                     // get the original element index
-                    var idx = isSearchActive ? m_SearchElementToItem.reverse[i] : i;
-                    var activeElement = (idx == index);
-                    var focusedElement = (idx == index && HasKeyboardControl());
+                    var idx = IsSearchActive ? m_SearchElementToItem.Reverse[i] : i;
+                    var activeElement = (idx == Index);
+                    var focusedElement = (idx == Index && HasKeyboardControl());
 
                     // draw the background
-                    if (drawListItemBackgroundCallback == null)
+                    if (DrawListItemBackgroundCallback == null)
                     {
-                        defaults.DrawListItemBackground(itemRect, idx, activeElement, focusedElement);
+                        Default.DrawListItemBackground(itemRect, idx, activeElement, focusedElement);
                     }
                     else
                     {
-                        drawListItemBackgroundCallback(itemRect, idx, activeElement, focusedElement);
+                        DrawListItemBackgroundCallback(itemRect, idx, activeElement, focusedElement);
                     }
 
                     // draw the list item
                     var itemContentRect = new Rect(itemRect)
                     {
-                        xMin = itemRect.xMin + Defaults.itemPadding,
-                        xMax = itemRect.xMax - Defaults.itemPadding,
+                        xMin = itemRect.xMin + Defaults.ItemPadding,
+                        xMax = itemRect.xMax - Defaults.ItemPadding,
                     };
 
-                    if (drawListItemCallback == null)
+                    if (DrawListItemCallback == null)
                     {
-                        defaults.DrawListItem(this, itemContentRect, idx, activeElement, focusedElement);
+                        Default.DrawListItem(this, itemContentRect, idx, activeElement, focusedElement);
                     }
                     else
                     {
-                        drawListItemCallback(itemContentRect, idx, activeElement, focusedElement);
+                        DrawListItemCallback(itemContentRect, idx, activeElement, focusedElement);
                     }
                 }
 
@@ -881,8 +881,8 @@ namespace Unity.LiveCapture
 
         int FilterList()
         {
-            if (!isSearchActive)
-                return count;
+            if (!IsSearchActive)
+                return Count;
 
             Profiler.BeginSample($"{nameof(CompactList)}.{nameof(FilterList)}()");
 
@@ -890,17 +890,17 @@ namespace Unity.LiveCapture
             // in the list and the original elements in the list.
             m_SearchElementToItem.Clear();
 
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < Count; i++)
             {
                 bool passesFilter;
 
-                if (searchFilterCallback == null)
+                if (SearchFilterCallback == null)
                 {
-                    passesFilter = defaults.DoSearchFilter(this, i, searchFilter);
+                    passesFilter = Default.DoSearchFilter(this, i, SearchFilter);
                 }
                 else
                 {
-                    passesFilter = searchFilterCallback(i, searchFilter);
+                    passesFilter = SearchFilterCallback(i, SearchFilter);
                 }
 
                 if (passesFilter)
@@ -917,7 +917,7 @@ namespace Unity.LiveCapture
         void ProcessListItemInteraction(Rect listRect, int itemCount)
         {
             var evt = Event.current;
-            var lastIndex = index;
+            var lastIndex = Index;
             var clicked = false;
 
             switch (evt.GetTypeForControl(m_ID))
@@ -931,40 +931,40 @@ namespace Unity.LiveCapture
                     if (evt.keyCode == KeyCode.DownArrow)
                     {
                         // find the next item that passes the search filter, if any
-                        if (isSearchActive)
+                        if (IsSearchActive)
                         {
-                            for (var i = Mathf.Max(0, index + 1); i < count; i++)
+                            for (var i = Mathf.Max(0, Index + 1); i < Count; i++)
                             {
                                 if (m_SearchElementToItem.ContainsKey(i))
                                 {
-                                    index = i;
+                                    Index = i;
                                     break;
                                 }
                             }
                         }
                         else
                         {
-                            index = Mathf.Clamp(index + 1, 0, itemCount - 1);
+                            Index = Mathf.Clamp(Index + 1, 0, itemCount - 1);
                         }
                         evt.Use();
                     }
                     if (evt.keyCode == KeyCode.UpArrow)
                     {
                         // find the previous item that passes the search filter, if any
-                        if (isSearchActive)
+                        if (IsSearchActive)
                         {
-                            for (var i = Mathf.Min(count - 1, index - 1); i >= 0; i--)
+                            for (var i = Mathf.Min(Count - 1, Index - 1); i >= 0; i--)
                             {
                                 if (m_SearchElementToItem.ContainsKey(i))
                                 {
-                                    index = i;
+                                    Index = i;
                                     break;
                                 }
                             }
                         }
                         else
                         {
-                            index = Mathf.Clamp(index - 1, 0, itemCount - 1);
+                            Index = Mathf.Clamp(Index - 1, 0, itemCount - 1);
                         }
                         evt.Use();
                     }
@@ -982,7 +982,7 @@ namespace Unity.LiveCapture
 
                     // do not auto-scroll to the new selection, it can be confusing to the user
                     var item = GetItemUnderMouse(listRect, itemCount);
-                    m_Index = isSearchActive ? m_SearchElementToItem.reverse[item] : item;;
+                    m_Index = IsSearchActive ? m_SearchElementToItem.Reverse[item] : item;;
                     SessionState.SetInt($"{m_StatePath}/index", m_Index);
 
                     // Prevent consuming the right mouse event in order to enable context menus
@@ -997,13 +997,13 @@ namespace Unity.LiveCapture
                 {
                     // if mouse up was on the same index as mouse down we fire a mouse up callback
                     // (useful if for beginning renaming on mouseup and so on)
-                    if (onMouseUpCallback != null)
+                    if (OnMouseUpCallback != null)
                     {
                         var item = GetItemUnderMouse(listRect, itemCount);
 
-                        if (item == index && GetItemRect(listRect, item).Contains(evt.mousePosition))
+                        if (item == Index && GetItemRect(listRect, item).Contains(evt.mousePosition))
                         {
-                            onMouseUpCallback();
+                            OnMouseUpCallback();
                         }
                     }
                     break;
@@ -1011,31 +1011,31 @@ namespace Unity.LiveCapture
             }
 
             // if the index has changed and there is a selected callback, call it
-            if (onSelectCallback != null && (index != lastIndex || clicked))
+            if (OnSelectCallback != null && (Index != lastIndex || clicked))
             {
-                onSelectCallback();
+                OnSelectCallback();
             }
         }
 
         Rect GetItemRect(Rect listRect, int item)
         {
-            return new Rect(listRect.x, listRect.y + (itemHeight * item), listRect.width, itemHeight);
+            return new Rect(listRect.x, listRect.y + (ItemHeight * item), listRect.width, ItemHeight);
         }
 
         int GetItemUnderMouse(Rect listRect, int itemCount)
         {
             var viewY = Event.current.mousePosition.y - listRect.y;
-            return Mathf.Clamp(Mathf.FloorToInt(viewY / itemHeight), 0, itemCount - 1);
+            return Mathf.Clamp(Mathf.FloorToInt(viewY / ItemHeight), 0, itemCount - 1);
         }
 
         bool IsItemClipped(float viewBottom, float viewTop, int itemIndex)
         {
-            var itemTop = itemHeight * itemIndex;
+            var itemTop = ItemHeight * itemIndex;
 
             if (itemTop > viewBottom + 1f)
                 return true;
 
-            var itemBottom = itemTop + itemHeight;
+            var itemBottom = itemTop + ItemHeight;
 
             if (itemBottom < viewTop - 1f)
                 return true;
@@ -1046,19 +1046,19 @@ namespace Unity.LiveCapture
         void ScrollToElement(float viewHeight, float viewBottom, float viewTop, int elementIndex)
         {
             // only scroll to valid elements
-            if (elementIndex < 0 || elementIndex >= count)
+            if (elementIndex < 0 || elementIndex >= Count)
                 return;
 
             // find the item corresponding to the target element
             var itemIndex = elementIndex;
 
             // do not scroll to elements that are filtered out by the search
-            if (isSearchActive && !m_SearchElementToItem.forward.TryGetValue(itemIndex, out itemIndex))
+            if (IsSearchActive && !m_SearchElementToItem.Forward.TryGetValue(itemIndex, out itemIndex))
                 return;
 
             // find the bounds of the selected item
-            var itemTop = itemHeight * itemIndex;
-            var itemBottom = itemTop + itemHeight;
+            var itemTop = ItemHeight * itemIndex;
+            var itemBottom = itemTop + ItemHeight;
 
             // Constrain how close to the edge of the viewport the selected item can be,
             // unless the selection is near the beginning or end of the list.
@@ -1066,7 +1066,7 @@ namespace Unity.LiveCapture
             // while larger values will show additional values past the selection in the
             // scroll direction. Each multiple reveals an additional item.
             const float viewMargin = 1f;
-            var margin = Mathf.Min(itemHeight * viewMargin, (viewHeight - itemHeight) / 2f);
+            var margin = Mathf.Min(ItemHeight * viewMargin, (viewHeight - ItemHeight) / 2f);
 
             var adjustedTop = itemTop - margin;
             var adjustedBottom = itemBottom + margin;
@@ -1091,7 +1091,7 @@ namespace Unity.LiveCapture
 
         void DoListFooter(Rect rect)
         {
-            if (resizable)
+            if (Resizable)
             {
                 // draw a handle icon to signify the list is resizable to the center
                 var resizeHandleRect = new Rect(rect)
@@ -1103,13 +1103,13 @@ namespace Unity.LiveCapture
 
                 if (Event.current.type == EventType.Repaint)
                 {
-                    defaults.resizeHandle.Draw(resizeHandleRect, false, false, false, false);
+                    Default.ResizeHandle.Draw(resizeHandleRect, false, false, false, false);
                 }
 
                 // dragging anywhere near the bottom of the list will start resizing
                 var resizeRect = new Rect(rect)
                 {
-                    height = Defaults.resizeHandleHeight,
+                    height = Defaults.ResizeHandleHeight,
                 };
 
                 // when resizing the list always show the resize cursor even if not over the hot spot
@@ -1119,17 +1119,17 @@ namespace Unity.LiveCapture
                 ProcessResizeInteraction(resizeRect);
             }
 
-            if (searchable && showSearchBar)
+            if (Searchable && ShowSearchBar)
             {
                 var searchBarRect = new Rect(rect)
                 {
-                    xMin = rect.xMin + Defaults.searchSidePadding,
-                    xMax = rect.xMax - Defaults.searchSidePadding,
-                    y = rect.yMax - (Defaults.searchBarHeight + Defaults.searchBottomPadding),
-                    height = Defaults.searchBarHeight,
+                    xMin = rect.xMin + Defaults.SearchSidePadding,
+                    xMax = rect.xMax - Defaults.SearchSidePadding,
+                    y = rect.yMax - (Defaults.SearchBarHeight + Defaults.SearchBottomPadding),
+                    height = Defaults.SearchBarHeight,
                 };
 
-                searchFilter = s_ToolbarSearchField?.Invoke(null, new object[] { searchBarRect, searchFilter, false }) as string;
+                SearchFilter = s_ToolbarSearchField?.Invoke(null, new object[] { searchBarRect, SearchFilter, false }) as string;
             }
         }
 
@@ -1149,10 +1149,10 @@ namespace Unity.LiveCapture
                         GUIUtility.hotControl = 0;
                         m_Resizing = false;
 
-                        if (listHeight != m_ResizeStartHeight)
+                        if (ListHeight != m_ResizeStartHeight)
                         {
-                            listHeight = m_ResizeStartHeight;
-                            onResizeCallback?.Invoke();
+                            ListHeight = m_ResizeStartHeight;
+                            OnResizeCallback?.Invoke();
                         }
 
                         evt.Use();
@@ -1174,7 +1174,7 @@ namespace Unity.LiveCapture
                         GUIUtility.hotControl = m_ID;
                         m_Resizing = true;
                         m_ResizeStartOffset = evt.mousePosition.y;
-                        m_ResizeStartHeight = listHeight;
+                        m_ResizeStartHeight = ListHeight;
                     }
 
                     // Prevent consuming the right mouse event in order to enable the context menu
@@ -1190,12 +1190,12 @@ namespace Unity.LiveCapture
                         break;
 
                     var targetHeight = m_ResizeStartHeight + (evt.mousePosition.y - m_ResizeStartOffset);
-                    var snappedHeight = Mathf.RoundToInt(targetHeight / itemHeight) * itemHeight;
+                    var snappedHeight = Mathf.RoundToInt(targetHeight / ItemHeight) * ItemHeight;
 
-                    if (listHeight != snappedHeight)
+                    if (ListHeight != snappedHeight)
                     {
-                        listHeight = snappedHeight;
-                        onResizeCallback?.Invoke();
+                        ListHeight = snappedHeight;
+                        OnResizeCallback?.Invoke();
                     }
 
                     evt.Use();
@@ -1217,20 +1217,20 @@ namespace Unity.LiveCapture
 
         void DoElement(Rect rect)
         {
-            if (index < 0 || index >= count)
+            if (Index < 0 || Index >= Count)
                 return;
 
-            if (drawElementCallback == null)
+            if (DrawElementCallback == null)
             {
-                if (property != null)
+                if (Property != null)
                 {
-                    var element = property.GetArrayElementAtIndex(index);
+                    var element = Property.GetArrayElementAtIndex(Index);
                     EditorGUI.PropertyField(rect, element, true);
                 }
             }
             else
             {
-                drawElementCallback(rect, index);
+                DrawElementCallback(rect, Index);
             }
         }
 
@@ -1240,7 +1240,7 @@ namespace Unity.LiveCapture
         /// <param name="index">The index of the element to scroll to.</param>
         public void ScrollToItem(int index)
         {
-            if (index < 0 || index >= count)
+            if (index < 0 || index >= Count)
                 return;
 
             m_ScrollToElement = index;

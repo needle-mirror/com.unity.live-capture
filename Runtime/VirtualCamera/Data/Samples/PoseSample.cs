@@ -9,22 +9,17 @@ namespace Unity.LiveCapture.VirtualCamera
     /// The payload sent over the network to transport camera pose samples.
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct PoseSample : ISample
+    struct PoseSample : ISample
     {
         float m_Timestamp;
 
         /// <summary>
         /// The transform pose.
         /// </summary>
-        public Pose pose;
-
-        /// <summary>
-        /// The direction of the joysticks.
-        /// </summary>
-        public Vector3 joystick;
+        public Pose Pose;
 
         /// <inheritdoc/>
-        public float timestamp
+        public float Timestamp
         {
             get => m_Timestamp;
             set => m_Timestamp = value;

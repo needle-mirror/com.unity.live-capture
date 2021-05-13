@@ -6,7 +6,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// <typeparam name="T">Render target type to use.</typeparam>
     interface IRenderTargetProvider<T>
     {
-        /// <inheritdoc cref="IFocusPlaneImpl.TryGetRenderTarget"/>
+        /// <inheritdoc cref="IFocusPlaneImpl.TryGetRenderTarget{T}"/>
         bool TryGetRenderTarget(out T target);
     }
 }

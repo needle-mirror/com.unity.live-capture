@@ -3,33 +3,25 @@
 // make sure the XML doc file is present and located next to the scraped dll
 namespace Unity.LiveCapture.VirtualCamera
 {
-    public struct ApertureSample : Unity.LiveCapture.CompanionApp.ISample
-    {
-        public float aperture;
-        public virtual float timestamp { get; set; }
-    }
-
     public struct AspectRatioPreset
     {
-        public float aspectRatio;
-        public string name;
+        public float AspectRatio { get; set; }
+        public string Name { get; set; }
     }
 
-    [System.Flags] public enum Axis
+    [UnityEngine.CreateAssetMenu(fileName = @"Aspect Ratio Presets", menuName = @"Live Capture/Virtual Camera/Aspect Ratio Presets", order = 1)] public class AspectRatioPresets : UnityEngine.ScriptableObject
     {
-        public const Unity.LiveCapture.VirtualCamera.Axis None = 0;
-        public int value__;
-        public const Unity.LiveCapture.VirtualCamera.Axis X = 1;
-        public const Unity.LiveCapture.VirtualCamera.Axis Y = 2;
-        public const Unity.LiveCapture.VirtualCamera.Axis Z = 4;
+        public Unity.LiveCapture.VirtualCamera.AspectRatioPreset[] AspectRatios { get; }
+        public AspectRatioPresets() {}
     }
 
     public struct CameraBody : System.IEquatable<Unity.LiveCapture.VirtualCamera.CameraBody>
     {
-        public static readonly Unity.LiveCapture.VirtualCamera.CameraBody defaultParams;
-        public int iso;
-        public UnityEngine.Vector2 sensorSize;
-        public float shutterSpeed;
+        public static readonly Unity.LiveCapture.VirtualCamera.CameraBody DefaultParams;
+        public int Iso;
+        public UnityEngine.Vector2 SensorSize;
+        public float ShutterSpeed;
+        public static UnityEngine.Vector2 DefaultSensorSize { get; }
         public virtual bool Equals(object obj);
         public virtual bool Equals(Unity.LiveCapture.VirtualCamera.CameraBody other);
         public virtual int GetHashCode();
@@ -37,139 +29,31 @@ namespace Unity.LiveCapture.VirtualCamera
         public static bool operator !=(Unity.LiveCapture.VirtualCamera.CameraBody a, Unity.LiveCapture.VirtualCamera.CameraBody b);
     }
 
-    public struct CameraState : System.IEquatable<Unity.LiveCapture.VirtualCamera.CameraState>
+    [UnityEngine.AddComponentMenu(@"Live Capture/Virtual Camera/Focus Plane Renderer")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExecuteAlways] public class FocusPlaneRenderer : UnityEngine.MonoBehaviour
     {
-        [UnityEngine.Tooltip(@"Settings to configure the delay and smooth the motion of the position and rotation of the camera.")] public Unity.LiveCapture.VirtualCamera.Damping damping;
-        public static readonly Unity.LiveCapture.VirtualCamera.CameraState defaultData;
-        [UnityEngine.Tooltip(@"The angle around the x-axis to offset the local camera rotation.")] public float ergonomicTilt;
-        [Unity.LiveCapture.EnumButtonGroup(60)] public Unity.LiveCapture.VirtualCamera.FocusMode focusMode;
-        [UnityEngine.Tooltip(@"Scaling applied to joystick motion, A scale of (1, 2, 1) means the joystick will translate the Y axis twice faster than the X and Z axis.")] public UnityEngine.Vector3 joystickSpeed;
-        [UnityEngine.Tooltip(@"Scale of the movement for each axis. A scale of (1, 1, 1) means that the virtual camera position will match the device position in real world.")] public UnityEngine.Vector3 motionScale;
-        [Unity.LiveCapture.EnumButtonGroup(60)] [UnityEngine.Tooltip(@"The space on which the joystick is moving. World space will translate the rig pedestal relative to the world axis. Self space will translate the rig relative to the camera's look direction. ")] public UnityEngine.Space pedestalSpace;
-        [Unity.LiveCapture.EnumFlagButtonGroup(60)] [UnityEngine.Tooltip(@"Position Axis constraint settings.")] public Unity.LiveCapture.VirtualCamera.PositionAxis positionLock;
-        [UnityEngine.HideInInspector] public bool rebasing;
-        public UnityEngine.Vector2 reticlePosition;
-        [Unity.LiveCapture.EnumFlagButtonGroup(60)] [UnityEngine.Tooltip(@"Rotation Axis constraint settings.")] public Unity.LiveCapture.VirtualCamera.RotationAxis rotationLock;
-        [UnityEngine.Tooltip(@"Force dutch rotation to be zero.")] public bool zeroDutch;
-        public virtual bool Equals(object obj);
-        public virtual bool Equals(Unity.LiveCapture.VirtualCamera.CameraState other);
-        public virtual int GetHashCode();
-        public static bool operator ==(Unity.LiveCapture.VirtualCamera.CameraState a, Unity.LiveCapture.VirtualCamera.CameraState b);
-        public static bool operator !=(Unity.LiveCapture.VirtualCamera.CameraState a, Unity.LiveCapture.VirtualCamera.CameraState b);
-        public virtual string ToString();
-    }
-
-    public struct Damping : System.IEquatable<Unity.LiveCapture.VirtualCamera.Damping>
-    {
-        [UnityEngine.Tooltip(@"Time in seconds for the camera to catch up with the target rotation.")] public float aim;
-        [UnityEngine.Tooltip(@"Time in seconds for the camera to reach reach the target position.")] public UnityEngine.Vector3 body;
-        public static readonly Unity.LiveCapture.VirtualCamera.Damping Default;
-        [UnityEngine.Tooltip(@"Enable or disable damping.")] public bool enabled;
-        public virtual bool Equals(object obj);
-        public virtual bool Equals(Unity.LiveCapture.VirtualCamera.Damping other);
-        public virtual int GetHashCode();
-        public static bool operator ==(Unity.LiveCapture.VirtualCamera.Damping a, Unity.LiveCapture.VirtualCamera.Damping b);
-        public static bool operator !=(Unity.LiveCapture.VirtualCamera.Damping a, Unity.LiveCapture.VirtualCamera.Damping b);
-    }
-
-    [UnityEngine.AddComponentMenu(@"Live Capture/Virtual Camera/Film Format")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExecuteAlways] public class FilmFormat : UnityEngine.MonoBehaviour
-    {
-        public float cropAspect { get; set; }
-        public float opacity { get; set; }
-        public bool showCropMask { get; set; }
-        public bool showGateMask { get; set; }
-        public FilmFormat() {}
-        public void SetCamera(UnityEngine.Camera camera);
-        public bool ShouldRender();
-    }
-
-    public struct FocalLengthSample : Unity.LiveCapture.CompanionApp.ISample
-    {
-        public float focalLength;
-        public virtual float timestamp { get; set; }
-    }
-
-    public struct FocusDistanceSample : Unity.LiveCapture.CompanionApp.ISample
-    {
-        public float focusDistance;
-        public virtual float timestamp { get; set; }
-    }
-
-    public enum FocusMode
-    {
-        [Unity.LiveCapture.Description(@"Focus adjusts to keep in focus the 3D point under a movable screen-space reticle.")] public const Unity.LiveCapture.VirtualCamera.FocusMode Auto = 2;
-        [Unity.LiveCapture.Description(@"Depth of Field is disabled.")] public const Unity.LiveCapture.VirtualCamera.FocusMode Disabled = 0;
-        [Unity.LiveCapture.Description(@"Focus distance is manually set by tapping the screen or manipulating the dial.")] public const Unity.LiveCapture.VirtualCamera.FocusMode Manual = 1;
-        [Unity.LiveCapture.Description(@"Focus adjusts to match a scene object's distance to the camera.")] public const Unity.LiveCapture.VirtualCamera.FocusMode Spatial = 3;
-        public byte value__;
-    }
-
-    [System.Runtime.CompilerServices.Extension] public static class FocusModeExtensions
-    {
-        [System.Runtime.CompilerServices.Extension] public static string GetDescription(Unity.LiveCapture.VirtualCamera.FocusMode mode);
-    }
-
-    [UnityEngine.AddComponentMenu(@"Live Capture/Virtual Camera/Focus Plane")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExecuteAlways] public class FocusPlane : UnityEngine.MonoBehaviour
-    {
-        public FocusPlane() {}
+        public FocusPlaneRenderer() {}
         public void SetCamera(UnityEngine.Camera camera);
         public void SetFocusDistance(float value);
     }
 
-    [UnityEngine.AddComponentMenu(@"")] [UnityEngine.ExecuteAlways] public class FocusReticle : UnityEngine.MonoBehaviour
+    [UnityEngine.AddComponentMenu(@"Live Capture/Virtual Camera/Frame Lines")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExecuteAlways] [UnityEngine.RequireComponent(typeof(UnityEngine.Camera))] public class FrameLines : UnityEngine.MonoBehaviour
     {
-        public event System.Action animationComplete;
-        public FocusReticle() {}
-        [System.Runtime.CompilerServices.IteratorStateMachine(typeof(Unity.LiveCapture.VirtualCamera.FocusReticle.<Animate>d__7))] public System.Collections.IEnumerator Animate(bool hideOnComplete);
-        public void ResetAnimation();
-    }
-
-    [UnityEngine.CreateAssetMenu(fileName = @"Format Presets", menuName = @"Live Capture/Virtual Camera/Format Presets", order = 1)] public class FormatPresets : UnityEngine.ScriptableObject
-    {
-        public Unity.LiveCapture.VirtualCamera.AspectRatioPreset[] aspectRatioPresets { get; }
-        public Unity.LiveCapture.VirtualCamera.SensorPreset[] sensorPresets { get; }
-        public FormatPresets() {}
-    }
-
-    public interface ICameraDriver
-    {
-        public abstract UnityEngine.Camera GetCamera();
-    }
-
-    public interface ICustomDamping
-    {
-        public abstract void SetDamping(Unity.LiveCapture.VirtualCamera.Damping damping);
+        public float CropAspect { get; set; }
+        public bool ShowAspectRatio { get; set; }
+        public bool ShowCenterMarker { get; set; }
+        public FrameLines() {}
     }
 
     public interface IVirtualCameraClient : Unity.LiveCapture.CompanionApp.ICompanionAppClient
     {
-        public event System.Action<Unity.LiveCapture.VirtualCamera.ApertureSample> apertureSampleReceived;
-        public event System.Action<Unity.LiveCapture.VirtualCamera.CameraState> cameraStateReceived;
-        public event System.Action<Unity.LiveCapture.VirtualCamera.FocalLengthSample> focalLengthSampleReceived;
-        public event System.Action<Unity.LiveCapture.VirtualCamera.FocusDistanceSample> focusDistanceSampleReceived;
-        public event System.Action<Unity.LiveCapture.VirtualCamera.PoseSample> poseSampleReceived;
-        public event System.Action<UnityEngine.Vector2> reticlePositionReceived;
-        public event System.Action setPoseToOrigin;
-        public abstract void SendCameraBody(Unity.LiveCapture.VirtualCamera.CameraBody body);
-        public abstract void SendCameraLens(Unity.LiveCapture.VirtualCamera.Lens lens);
-        public abstract void SendCameraState(Unity.LiveCapture.VirtualCamera.CameraState state);
-        public abstract void SendVideoStreamState(Unity.LiveCapture.VirtualCamera.VideoStreamState state);
     }
 
     public struct Lens : System.IEquatable<Unity.LiveCapture.VirtualCamera.Lens>
     {
-        public float anamorphism;
-        public float aperture;
-        public UnityEngine.Vector2 apertureRange;
-        public float barrelClipping;
-        public int bladeCount;
-        public UnityEngine.Vector2 curvature;
-        public static readonly Unity.LiveCapture.VirtualCamera.Lens defaultParams;
-        public float focalLength;
-        public UnityEngine.Vector2 focalLengthRange;
-        public float focusDistance;
-        public UnityEngine.Vector2 focusDistanceRange;
-        public UnityEngine.Vector2 lensShift;
+        public float Aperture;
+        public static readonly Unity.LiveCapture.VirtualCamera.Lens DefaultParams;
+        public float FocalLength;
+        public float FocusDistance;
         public virtual bool Equals(object obj);
         public virtual bool Equals(Unity.LiveCapture.VirtualCamera.Lens other);
         public virtual int GetHashCode();
@@ -177,115 +61,76 @@ namespace Unity.LiveCapture.VirtualCamera
         public static bool operator !=(Unity.LiveCapture.VirtualCamera.Lens a, Unity.LiveCapture.VirtualCamera.Lens b);
     }
 
-    public static class LensParameterBounds
+    public class LensAsset : UnityEngine.ScriptableObject
     {
-        public static readonly UnityEngine.Vector2 anamorphism;
-        public static readonly UnityEngine.Vector2 aperture;
-        public static readonly UnityEngine.Vector2 barrelClipping;
-        public static readonly UnityEngine.Vector2Int bladeCount;
-        public static readonly UnityEngine.Vector2 curvature;
-        public static readonly UnityEngine.Vector2 focalLength;
-        public static readonly UnityEngine.Vector2 focusDistance;
-        public static readonly float minFocusDistanceRange;
+        public Unity.LiveCapture.VirtualCamera.Lens DefaultValues { get; set; }
+        public Unity.LiveCapture.VirtualCamera.LensIntrinsics Intrinsics { get; set; }
+        public string Manufacturer { get; set; }
+        public string Model { get; set; }
+        public LensAsset() {}
     }
 
-    [UnityEngine.CreateAssetMenu(fileName = @"Lens Preset", menuName = @"Live Capture/Virtual Camera/Lens Preset", order = 2)] public class LensPreset : UnityEngine.ScriptableObject
+    public struct LensIntrinsics : System.IEquatable<Unity.LiveCapture.VirtualCamera.LensIntrinsics>
     {
-        public Unity.LiveCapture.VirtualCamera.Lens lens { get; }
-        public LensPreset() {}
-    }
-
-    public class LensSettingsEqualityComparer : System.Collections.Generic.IEqualityComparer<Unity.LiveCapture.VirtualCamera.Lens>
-    {
-        public static readonly Unity.LiveCapture.VirtualCamera.LensSettingsEqualityComparer Default;
-        public LensSettingsEqualityComparer() {}
-        public virtual bool Equals(Unity.LiveCapture.VirtualCamera.Lens x, Unity.LiveCapture.VirtualCamera.Lens y);
-        public virtual int GetHashCode(Unity.LiveCapture.VirtualCamera.Lens lens);
-    }
-
-    public struct PoseSample : Unity.LiveCapture.CompanionApp.ISample
-    {
-        public UnityEngine.Vector3 joystick;
-        public UnityEngine.Pose pose;
-        public virtual float timestamp { get; set; }
-    }
-
-    [System.Flags] public enum PositionAxis
-    {
-        [Unity.LiveCapture.Description(@"The Dolly Axis, equivalent to the Z Axis.")] public const Unity.LiveCapture.VirtualCamera.PositionAxis Dolly = 4;
-        [Unity.LiveCapture.Description(@"No Axis.")] public const Unity.LiveCapture.VirtualCamera.PositionAxis None = 0;
-        [Unity.LiveCapture.Description(@"The Pedestal Axis, equivalent to the Y Axis.")] public const Unity.LiveCapture.VirtualCamera.PositionAxis Pedestal = 2;
-        [Unity.LiveCapture.Description(@"The Truck Axis, equivalent to the X Axis.")] public const Unity.LiveCapture.VirtualCamera.PositionAxis Truck = 1;
-        public int value__;
-    }
-
-    public class ReadOnly : UnityEngine.PropertyAttribute
-    {
-        public ReadOnly() {}
-    }
-
-    [System.Flags] public enum RotationAxis
-    {
-        [Unity.LiveCapture.Description(@"The Dutch Axis, equivalent to the Z Axis.")] public const Unity.LiveCapture.VirtualCamera.RotationAxis Dutch = 4;
-        [Unity.LiveCapture.Description(@"No Axis.")] public const Unity.LiveCapture.VirtualCamera.RotationAxis None = 0;
-        [Unity.LiveCapture.Description(@"The Pan Axis, equivalent to the Y Axis.")] public const Unity.LiveCapture.VirtualCamera.RotationAxis Pan = 2;
-        [Unity.LiveCapture.Description(@"The Tilt Axis, equivalent to the X Axis.")] public const Unity.LiveCapture.VirtualCamera.RotationAxis Tilt = 1;
-        public int value__;
-    }
-
-    public struct SensorPreset
-    {
-        public string name;
-        public UnityEngine.Vector2 sensorSize;
-    }
-
-    public struct VideoStreamState : System.IEquatable<Unity.LiveCapture.VirtualCamera.VideoStreamState>
-    {
-        public bool isRunning;
-        public int port;
+        public float Anamorphism;
+        public UnityEngine.Vector2 ApertureRange;
+        public float BarrelClipping;
+        public int BladeCount;
+        public float CloseFocusDistance;
+        public UnityEngine.Vector2 Curvature;
+        public static readonly Unity.LiveCapture.VirtualCamera.LensIntrinsics DefaultParams;
+        public UnityEngine.Vector2 FocalLengthRange;
+        public UnityEngine.Vector2 LensShift;
         public virtual bool Equals(object obj);
-        public virtual bool Equals(Unity.LiveCapture.VirtualCamera.VideoStreamState other);
+        public virtual bool Equals(Unity.LiveCapture.VirtualCamera.LensIntrinsics other);
         public virtual int GetHashCode();
-        public static bool operator ==(Unity.LiveCapture.VirtualCamera.VideoStreamState a, Unity.LiveCapture.VirtualCamera.VideoStreamState b);
-        public static bool operator !=(Unity.LiveCapture.VirtualCamera.VideoStreamState a, Unity.LiveCapture.VirtualCamera.VideoStreamState b);
-        public virtual string ToString();
+        public static bool operator ==(Unity.LiveCapture.VirtualCamera.LensIntrinsics a, Unity.LiveCapture.VirtualCamera.LensIntrinsics b);
+        public static bool operator !=(Unity.LiveCapture.VirtualCamera.LensIntrinsics a, Unity.LiveCapture.VirtualCamera.LensIntrinsics b);
+    }
+
+    [UnityEngine.CreateAssetMenu(menuName = @"Live Capture/Virtual Camera/Lens Kit", order = 2)] public class LensKit : UnityEngine.ScriptableObject
+    {
+        public Unity.LiveCapture.VirtualCamera.LensAsset[] Lenses { get; }
+        public LensKit() {}
+    }
+
+    public struct SensorPreset : System.IEquatable<Unity.LiveCapture.VirtualCamera.SensorPreset>
+    {
+        public string Name;
+        public UnityEngine.Vector2 SensorSize;
+        public virtual bool Equals(object obj);
+        public virtual bool Equals(Unity.LiveCapture.VirtualCamera.SensorPreset other);
+        public virtual int GetHashCode();
+        public static bool operator ==(Unity.LiveCapture.VirtualCamera.SensorPreset left, Unity.LiveCapture.VirtualCamera.SensorPreset right);
+        public static bool operator !=(Unity.LiveCapture.VirtualCamera.SensorPreset left, Unity.LiveCapture.VirtualCamera.SensorPreset right);
+    }
+
+    [UnityEngine.CreateAssetMenu(fileName = @"Sensor Presets", menuName = @"Live Capture/Virtual Camera/Sensor Presets", order = 1)] public class SensorPresets : UnityEngine.ScriptableObject
+    {
+        public Unity.LiveCapture.VirtualCamera.SensorPreset[] Sensors { get; }
+        public SensorPresets() {}
     }
 
     [UnityEngine.AddComponentMenu(@"Live Capture/Virtual Camera/Virtual Camera Actor")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.RequireComponent(typeof(UnityEngine.Animator))] public class VirtualCameraActor : UnityEngine.MonoBehaviour
     {
-        public UnityEngine.Animator animator { get; }
-        public Unity.LiveCapture.VirtualCamera.CameraBody cameraBody { get; }
-        public bool depthOfFieldEnabled { get; }
-        public Unity.LiveCapture.VirtualCamera.Lens lens { get; }
+        public UnityEngine.Animator Animator { get; }
+        public Unity.LiveCapture.VirtualCamera.CameraBody CameraBody { get; }
+        public float CropAspect { get; }
+        public bool DepthOfFieldEnabled { get; }
+        public Unity.LiveCapture.VirtualCamera.Lens Lens { get; }
+        public Unity.LiveCapture.VirtualCamera.LensIntrinsics LensIntrinsics { get; }
         public VirtualCameraActor() {}
     }
 
-    [Unity.LiveCapture.CompanionApp.Client(@"Virtual Camera")] [UnityEngine.Scripting.Preserve] public class VirtualCameraClient : Unity.LiveCapture.CompanionApp.CompanionAppClient, Unity.LiveCapture.CompanionApp.ICompanionAppClient, Unity.LiveCapture.VirtualCamera.IVirtualCameraClient
+    [Unity.LiveCapture.CreateDeviceMenuItem(@"Virtual Camera Device", 0)] [UnityEngine.AddComponentMenu(@"Live Capture/Virtual Camera/Virtual Camera Device")] [UnityEngine.RequireComponent(typeof(Unity.LiveCapture.VirtualCamera.FocusPlaneRenderer))] public class VirtualCameraDevice : Unity.LiveCapture.CompanionApp.CompanionAppDevice<Unity.LiveCapture.VirtualCamera.IVirtualCameraClient>
     {
-        public event System.Action<Unity.LiveCapture.VirtualCamera.ApertureSample> apertureSampleReceived;
-        public event System.Action<Unity.LiveCapture.VirtualCamera.CameraState> cameraStateReceived;
-        public event System.Action<Unity.LiveCapture.VirtualCamera.FocalLengthSample> focalLengthSampleReceived;
-        public event System.Action<Unity.LiveCapture.VirtualCamera.FocusDistanceSample> focusDistanceSampleReceived;
-        public event System.Action<Unity.LiveCapture.VirtualCamera.PoseSample> poseSampleReceived;
-        public event System.Action<UnityEngine.Vector2> reticlePositionReceived;
-        public event System.Action setPoseToOrigin;
-        public VirtualCameraClient(Unity.LiveCapture.Networking.NetworkBase network, Unity.LiveCapture.Networking.Remote remote, Unity.LiveCapture.CompanionApp.ClientInitialization data) {}
-        public virtual void SendCameraBody(Unity.LiveCapture.VirtualCamera.CameraBody body);
-        public virtual void SendCameraLens(Unity.LiveCapture.VirtualCamera.Lens lens);
-        public virtual void SendCameraState(Unity.LiveCapture.VirtualCamera.CameraState state);
-        public virtual void SendVideoStreamState(Unity.LiveCapture.VirtualCamera.VideoStreamState state);
-        public virtual string ToString();
-    }
-
-    [Unity.LiveCapture.CreateDeviceMenuItem(@"Virtual Camera Device", 0)] [UnityEngine.AddComponentMenu(@"Live Capture/Virtual Camera/Virtual Camera Device")] [UnityEngine.ExcludeFromPreset] [UnityEngine.RequireComponent(typeof(Unity.LiveCapture.VirtualCamera.FilmFormat))] [UnityEngine.RequireComponent(typeof(Unity.LiveCapture.VirtualCamera.FocusPlane))] public class VirtualCameraDevice : Unity.LiveCapture.CompanionApp.CompanionAppDevice<Unity.LiveCapture.VirtualCamera.IVirtualCameraClient>
-    {
-        public Unity.LiveCapture.VirtualCamera.VirtualCameraActor actor { get; set; }
-        public Unity.LiveCapture.VirtualCamera.CameraBody cameraBody { get; }
-        public Unity.LiveCapture.VirtualCamera.CameraState cameraState { get; }
-        public Unity.LiveCapture.VirtualCamera.Lens lens { get; }
-        public Unity.LiveCapture.VirtualCamera.LensPreset lensPreset { get; }
-        public UnityEngine.Pose origin { get; }
-        public UnityEngine.Pose pose { get; }
+        public Unity.LiveCapture.VirtualCamera.VirtualCameraActor Actor { get; set; }
+        public Unity.LiveCapture.VirtualCamera.CameraBody CameraBody { get; }
+        public Unity.LiveCapture.VirtualCamera.Lens Lens { get; set; }
+        public Unity.LiveCapture.VirtualCamera.LensAsset LensAsset { get; set; }
+        public Unity.LiveCapture.VirtualCamera.LensIntrinsics LensIntrinsics { get; }
+        public UnityEngine.Pose Origin { get; }
+        public UnityEngine.Pose Pose { get; }
         public VirtualCameraDevice() {}
         public virtual void BuildLiveLink(UnityEngine.Playables.PlayableGraph graph);
         protected virtual void OnClientAssigned();
@@ -297,37 +142,5 @@ namespace Unity.LiveCapture.VirtualCamera
         public virtual void UpdateClient();
         public virtual void UpdateDevice();
         public virtual void Write(Unity.LiveCapture.ITakeBuilder takeBuilder);
-    }
-
-    public class VirtualCameraHost : Unity.LiveCapture.CompanionApp.CompanionAppHost
-    {
-        public event System.Action<Unity.LiveCapture.VirtualCamera.CameraBody> cameraBodyReceived;
-        public event System.Action<Unity.LiveCapture.VirtualCamera.Lens> cameraLensReceived;
-        public event System.Action<Unity.LiveCapture.VirtualCamera.CameraState> cameraStateReceived;
-        public event System.Action initialize;
-        public event System.Action<Unity.LiveCapture.VirtualCamera.VideoStreamState> videoStreamStateReceived;
-        public VirtualCameraHost(Unity.LiveCapture.Networking.NetworkBase network, Unity.LiveCapture.Networking.Remote remote, System.IO.Stream stream) {}
-        protected virtual void Initialize();
-        public void SendAperture(Unity.LiveCapture.VirtualCamera.ApertureSample sample);
-        public void SendFocalLength(Unity.LiveCapture.VirtualCamera.FocalLengthSample sample);
-        public void SendFocusDistance(Unity.LiveCapture.VirtualCamera.FocusDistanceSample sample);
-        public void SendPose(Unity.LiveCapture.VirtualCamera.PoseSample sample);
-        public void SetCameraState(Unity.LiveCapture.VirtualCamera.CameraState state);
-        public void SetPoseToOrigin();
-        public void SetReticlePosition(UnityEngine.Vector2 position);
-    }
-}
-
-namespace Unity.LiveCapture.VirtualCamera.Raycasting
-{
-    public class GraphicsRaycaster : System.IDisposable
-    {
-        public bool isSupported { get; }
-        public GraphicsRaycaster() {}
-        public virtual void Dispose();
-        public bool Raycast(UnityEngine.Camera camera, UnityEngine.Vector2 screenPosition, out UnityEngine.RaycastHit hit, int layerMask = -1);
-        public bool Raycast(UnityEngine.Camera camera, UnityEngine.Vector2 screenPosition, out UnityEngine.RaycastHit hit, out UnityEngine.GameObject gameObject, int layerMask = -1);
-        public bool Raycast(UnityEngine.Vector3 origin, UnityEngine.Vector3 direction, out UnityEngine.RaycastHit hit, float minDistance = 0.01, float maxDistance = 1000, int layerMask = -1);
-        public bool Raycast(UnityEngine.Vector3 origin, UnityEngine.Vector3 direction, out UnityEngine.RaycastHit hit, out UnityEngine.GameObject gameObject, float minDistance = 0.01, float maxDistance = 1000, int layerMask = -1);
     }
 }

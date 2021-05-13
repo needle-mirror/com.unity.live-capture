@@ -58,10 +58,27 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
         /// <summary>
+        /// Retrieves a component from a gameObject, adding it if none already exists.
+        /// </summary>
+        /// <param name="gameObject">The gameObject holding the component.</param>
+        /// <typeparam name="T">The type of the component.</typeparam>
+        /// <returns>The component instance.</returns>
+        public static T GetOrAddComponent<T>(GameObject gameObject) where T : Component
+        {
+            var comp = gameObject.GetComponent<T>();
+            if (comp != null)
+            {
+                return comp;
+            }
+
+            return gameObject.AddComponent<T>();
+        }
+
+        /// <summary>
         /// Destroys a UnityObject safely.
         /// </summary>
         /// <param name="obj">Object to destroy.</param>
-        public static void Destroy(Object obj)
+        public static void DestroyIfNeeded<T>(ref T obj) where T : Object
         {
             if (obj != null)
             {
@@ -73,6 +90,7 @@ namespace Unity.LiveCapture.VirtualCamera
 #else
                 Object.Destroy(obj);
 #endif
+                obj = null;
             }
         }
     }

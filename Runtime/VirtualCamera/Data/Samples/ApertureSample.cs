@@ -8,17 +8,17 @@ namespace Unity.LiveCapture.VirtualCamera
     /// The payload sent over the network to transport a aperture samples.
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct ApertureSample : ISample
+    struct ApertureSample : ISample
     {
         float m_Timestamp;
 
         /// <summary>
         /// The aperture in millimeters.
         /// </summary>
-        public float aperture;
+        public float Aperture;
 
         /// <inheritdoc/>
-        public float timestamp
+        public float Timestamp
         {
             get => m_Timestamp;
             set => m_Timestamp = value;

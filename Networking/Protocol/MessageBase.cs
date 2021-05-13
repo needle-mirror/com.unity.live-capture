@@ -5,29 +5,36 @@ using UnityEngine;
 namespace Unity.LiveCapture.Networking.Protocols
 {
     /// <summary>
-    /// The base class used by all messages that can be added to a <see cref="Protocol"/>.
+    /// The base class used by all messages that can be added to a <see cref="Protocols.Protocol"/>.
     /// </summary>
-    public abstract class MessageBase
+    abstract class MessageBase
     {
+        /// <summary>
+        /// The latest version of the message serialized format.
+        /// </summary>
+        const int k_Version = 0;
+
         /// <summary>
         /// The unique identifier of this message.
         /// </summary>
-        public string id { get; }
+        public string ID { get; }
 
         /// <summary>
         /// The network channel used to deliver this message.
         /// </summary>
-        public ChannelType channel { get; }
+        public ChannelType Channel { get; }
 
         /// <summary>
         /// The protocol instance this message belongs to.
         /// </summary>
-        public Protocol protocol { get; private set; }
+        public Protocol Protocol { get; private set; }
 
         /// <summary>
         /// The code used to identify packets associated with this message.
         /// </summary>
-        internal ushort code { get; private set; }
+        internal ushort Code { get; private set; }
+
+        readonly int m_Version;
 
         /// <summary>
         /// Creates a new <see cref="MessageBase"/> instance.
@@ -40,8 +47,9 @@ namespace Unity.LiveCapture.Networking.Protocols
             if (id == null)
                 throw new ArgumentNullException(nameof(id));
 
-            this.id = id;
-            this.channel = channel;
+            m_Version = k_Version;
+            ID = id;
+            Channel = channel;
         }
 
         /// <summary>
@@ -50,9 +58,18 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// <param name="stream">The stream to read from.</param>
         protected MessageBase(Stream stream)
         {
-            id = stream.ReadString();
-            channel = stream.ReadStruct<ChannelType>();
-            code = stream.ReadStruct<ushort>();
+            m_Version = stream.ReadStruct<int>();
+
+            switch (m_Version)
+            {
+                case 0:
+                    ID = stream.ReadString();
+                    Channel = stream.ReadStruct<ChannelType>();
+                    Code = stream.ReadStruct<ushort>();
+                    break;
+                default:
+                    throw new Exception($"{nameof(MessageBase)} version is not supported by this application version.");
+            }
         }
 
         /// <summary>
@@ -61,9 +78,18 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// <param name="stream">The stream to write into.</param>
         internal virtual void Serialize(Stream stream)
         {
-            stream.WriteString(id);
-            stream.WriteStruct(channel);
-            stream.WriteStruct(code);
+            stream.WriteStruct(m_Version);
+
+            switch (m_Version)
+            {
+                case 0:
+                    stream.WriteString(ID);
+                    stream.WriteStruct(Channel);
+                    stream.WriteStruct(Code);
+                    break;
+                default:
+                    throw new Exception($"{nameof(MessageBase)} version is not supported by this application version.");
+            }
         }
 
         /// <summary>
@@ -73,8 +99,8 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// <param name="code">The code used to identify packets associated with this message.</param>
         internal void SetProtocol(Protocol protocol, ushort code)
         {
-            this.protocol = protocol;
-            this.code = code;
+            Protocol = protocol;
+            Code = code;
         }
 
         internal abstract MessageBase GetInverse();
@@ -83,6 +109,6 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// Returns a string that represents the current object.
         /// </summary>
         /// <returns>A string that represents the current object.</returns>
-        public override string ToString() => id;
+        public override string ToString() => ID;
     }
 }

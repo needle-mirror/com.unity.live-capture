@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 using UnityEditor;
 #endif
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     class LiveCaptureSettingsProvider : SettingsProvider
     {
@@ -13,10 +13,10 @@ namespace Unity.LiveCapture
 
         static class Contents
         {
-            public static readonly GUIContent settingMenuIcon = EditorGUIUtility.IconContent("_Popup");
-            public static readonly GUIContent takeNameFormatLabel = EditorGUIUtility.TrTextContent("Take Name Format", "The format of the file name of the output take.");
-            public static readonly GUIContent assetNameFormatLabel = EditorGUIUtility.TrTextContent("Asset Name Format", "The format of the file name of the generated assets.");
-            public static readonly GUIContent resetLabel = EditorGUIUtility.TrTextContent("Reset", "Reset to default.");
+            public static readonly GUIContent SettingMenuIcon = EditorGUIUtility.IconContent("_Popup");
+            public static readonly GUIContent TakeNameFormatLabel = EditorGUIUtility.TrTextContent("Take Name Format", "The format of the file name of the output take.");
+            public static readonly GUIContent AssetNameFormatLabel = EditorGUIUtility.TrTextContent("Asset Name Format", "The format of the file name of the generated assets.");
+            public static readonly GUIContent ResetLabel = EditorGUIUtility.TrTextContent("Reset", "Reset to default.");
         }
 
         SerializedObject m_SerializedObject;
@@ -36,7 +36,7 @@ namespace Unity.LiveCapture
 
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {
-            m_SerializedObject = new SerializedObject(LiveCaptureSettings.instance);
+            m_SerializedObject = new SerializedObject(LiveCaptureSettings.Instance);
             m_TakeNameFormatProp = m_SerializedObject.FindProperty("m_TakeNameFormat");
             m_AssetNameFormatProp = m_SerializedObject.FindProperty("m_AssetNameFormat");
         }
@@ -47,12 +47,12 @@ namespace Unity.LiveCapture
 
         public override void OnTitleBarGUI()
         {
-            if (EditorGUILayout.DropdownButton(Contents.settingMenuIcon, FocusType.Passive, EditorStyles.label))
+            if (EditorGUILayout.DropdownButton(Contents.SettingMenuIcon, FocusType.Passive, EditorStyles.label))
             {
                 var menu = new GenericMenu();
-                menu.AddItem(Contents.resetLabel, false, reset =>
+                menu.AddItem(Contents.ResetLabel, false, reset =>
                 {
-                    LiveCaptureSettings.instance.Reset();
+                    LiveCaptureSettings.Instance.Reset();
                     LiveCaptureSettings.Save();
                 }, null);
                 menu.ShowAsContext();
@@ -66,8 +66,8 @@ namespace Unity.LiveCapture
             using (var change = new EditorGUI.ChangeCheckScope())
             using (new SettingsWindowGUIScope())
             {
-                EditorGUILayout.PropertyField(m_TakeNameFormatProp, Contents.takeNameFormatLabel);
-                EditorGUILayout.PropertyField(m_AssetNameFormatProp, Contents.assetNameFormatLabel);
+                EditorGUILayout.PropertyField(m_TakeNameFormatProp, Contents.TakeNameFormatLabel);
+                EditorGUILayout.PropertyField(m_AssetNameFormatProp, Contents.AssetNameFormatLabel);
 
                 if (change.changed)
                 {
@@ -91,7 +91,7 @@ namespace Unity.LiveCapture
             return new LiveCaptureSettingsProvider(
                 k_SettingsMenuPath,
                 SettingsScope.Project,
-                GetSearchKeywordsFromSerializedObject(new SerializedObject(LiveCaptureSettings.instance))
+                GetSearchKeywordsFromSerializedObject(new SerializedObject(LiveCaptureSettings.Instance))
             );
         }
     }

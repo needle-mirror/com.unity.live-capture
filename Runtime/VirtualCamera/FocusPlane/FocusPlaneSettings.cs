@@ -7,10 +7,10 @@ namespace Unity.LiveCapture.VirtualCamera
     {
         public static readonly int _CameraDepthThreshold = Shader.PropertyToID("_CameraDepthThreshold");
         public static readonly int _Color = Shader.PropertyToID("_Color");
-        public static readonly int _GridResolution = Shader.PropertyToID("_GridResolution");
-        public static readonly int _GridLineWidth = Shader.PropertyToID("_GridLineWidth");
+        public static readonly int _CellSize = Shader.PropertyToID("_CellSize");
         public static readonly int _IntersectionLineWidth = Shader.PropertyToID("_IntersectionLineWidth");
         public static readonly int _BackgroundOpacity = Shader.PropertyToID("_BackgroundOpacity");
+        public static readonly int _GridOpacity = Shader.PropertyToID("_GridOpacity");
     }
 
     /// <summary>
@@ -19,18 +19,21 @@ namespace Unity.LiveCapture.VirtualCamera
     [Serializable]
     struct FocusPlaneSettings : IEquatable<FocusPlaneSettings>
     {
+        const string k_UseGridKeyword = "USE_GRID";
+        const int k_GridResolution = 8;
+
         [Tooltip("The camera space depth at which the focus plane will be rendered.")]
-        public float cameraDepthThreshold;
+        public float CameraDepthThreshold;
         [Tooltip("Color of the focus plane.")]
-        public Color color;
-        [Tooltip("Resolution of the focus plane's grid.")]
-        public int gridResolution;
-        [Tooltip("Width of the focus plane's grid outlines.")]
-        public float gridLineWidth;
-        [Tooltip("Width of the intersection of the scene geometry and the focus plane.")]
-        public float intersectionLineWidth;
-        [Tooltip("Opacity of the focus plane's background.")]
-        public float backgroundOpacity;
+        public Color Color;
+        [Tooltip("Width of the intersection of the scene geometry and the focus plane."), Range(0, 1)]
+        public float IntersectionLineWidth;
+        [Tooltip("Opacity of the focus plane's background."), Range(0, 1)]
+        public float BackgroundOpacity;
+        [Tooltip("Show the grid overlay.")]
+        public bool ShowGrid;
+        [Tooltip("Opacity of the focus plane's grid overlay."), Range(0, 1)]
+        public float GridOpacity;
 
         /// <summary>
         /// Configures material uniforms based on rendering settings.
@@ -38,24 +41,42 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="material">The material used to render the focus plane.</param>
         public void Apply(Material material)
         {
-            material.SetFloat(ShaderIDs._CameraDepthThreshold, cameraDepthThreshold);
-            material.SetColor(ShaderIDs._Color, color);
-            material.SetInt(ShaderIDs._GridResolution, gridResolution);
-            material.SetFloat(ShaderIDs._GridLineWidth, gridLineWidth);
-            material.SetFloat(ShaderIDs._IntersectionLineWidth, intersectionLineWidth);
-            material.SetFloat(ShaderIDs._BackgroundOpacity, backgroundOpacity);
+            material.SetFloat(ShaderIDs._CameraDepthThreshold, CameraDepthThreshold);
+            material.SetColor(ShaderIDs._Color, Color);
+            material.SetFloat(ShaderIDs._IntersectionLineWidth, IntersectionLineWidth);
+            material.SetFloat(ShaderIDs._GridOpacity, GridOpacity);
+            material.SetFloat(ShaderIDs._BackgroundOpacity, BackgroundOpacity);
+
+            var isGridVisible = material.IsKeywordEnabled(k_UseGridKeyword);
+            if (isGridVisible != ShowGrid)
+            {
+                if (ShowGrid)
+                {
+                    material.EnableKeyword(k_UseGridKeyword);
+                }
+                else
+                {
+                    material.DisableKeyword(k_UseGridKeyword);
+                }
+            }
+
+            // Grid cell size is affected by camera depth.
+            var cellSize = 1 + Mathf.Max(0, CameraDepthThreshold);
+            var n = Mathf.Floor(Mathf.Log(cellSize, 2));
+            cellSize = k_GridResolution * cellSize / Mathf.Pow(2, n);
+            material.SetFloat(ShaderIDs._CellSize, cellSize);
         }
 
         public override int GetHashCode()
         {
             unchecked
             {
-                var hashCode = cameraDepthThreshold.GetHashCode();
-                hashCode = (hashCode * 397) ^ color.GetHashCode();
-                hashCode = (hashCode * 397) ^ gridResolution.GetHashCode();
-                hashCode = (hashCode * 397) ^ gridLineWidth.GetHashCode();
-                hashCode = (hashCode * 397) ^ intersectionLineWidth.GetHashCode();
-                hashCode = (hashCode * 397) ^ backgroundOpacity.GetHashCode();
+                var hashCode = CameraDepthThreshold.GetHashCode();
+                hashCode = (hashCode * 397) ^ Color.GetHashCode();
+                hashCode = (hashCode * 397) ^ IntersectionLineWidth.GetHashCode();
+                hashCode = (hashCode * 397) ^ GridOpacity.GetHashCode();
+                hashCode = (hashCode * 397) ^ BackgroundOpacity.GetHashCode();
+                hashCode = (hashCode * 397) ^ ShowGrid.GetHashCode();
                 return hashCode;
             }
         }
@@ -63,12 +84,12 @@ namespace Unity.LiveCapture.VirtualCamera
         public bool Equals(FocusPlaneSettings other)
         {
             return
-                cameraDepthThreshold == other.cameraDepthThreshold &&
-                color == other.color &&
-                gridResolution == other.gridResolution &&
-                gridLineWidth == other.gridLineWidth &&
-                intersectionLineWidth == other.intersectionLineWidth &&
-                backgroundOpacity == other.backgroundOpacity;
+                CameraDepthThreshold == other.CameraDepthThreshold &&
+                Color == other.Color &&
+                IntersectionLineWidth == other.IntersectionLineWidth &&
+                GridOpacity == other.GridOpacity &&
+                BackgroundOpacity == other.BackgroundOpacity &&
+                ShowGrid == other.ShowGrid;
         }
 
         public override bool Equals(object obj)
@@ -96,12 +117,11 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             return new FocusPlaneSettings
             {
-                cameraDepthThreshold = 5,
-                color = new Color(0.269f, 0.546f, 1, 1),
-                backgroundOpacity = 0.1f,
-                gridLineWidth = 0.1f,
-                gridResolution = 16,
-                intersectionLineWidth = 0.1f
+                CameraDepthThreshold = 5,
+                Color = new Color(0.269f, 0.546f, 1, 1),
+                BackgroundOpacity = 0.1f,
+                GridOpacity = 0.5f,
+                IntersectionLineWidth = 0.1f
             };
         }
     }

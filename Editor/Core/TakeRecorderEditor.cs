@@ -1,31 +1,30 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
+using UnityEditor.Timeline;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     [CustomEditor(typeof(TakeRecorder))]
-    class TakeRecorderEditor : Editor
+    class TakeRecorderEditor : UnityEditor.Editor
     {
         static class Contents
         {
-            public static readonly GUIContent liveToggleContent = EditorGUIUtility.TrTextContent("", "Toggle the live state of the device.");
-            public static readonly GUIContent liveButtonContent = EditorGUIUtility.TrTextContent("Live", "Set live mode.");
-            public static readonly GUIContent previewButtonContent = EditorGUIUtility.TrTextContent("Preview", "Set preview mode.");
-            public static readonly GUIContent takeNameFormatLabel = EditorGUIUtility.TrTextContent("Take Name Format", "The format of the file name of the output take.");
-            public static readonly GUIContent assetNameFormatLabel = EditorGUIUtility.TrTextContent("Asset Name Format", "The format of the file name of the generated assets.");
-            public static readonly GUIContent startRecordingLabel = EditorGUIUtility.TrTextContentWithIcon("Start Recording", "Start recording a new Take.", "Animation.Record");
-            public static readonly GUIContent stopRecordingLabel = EditorGUIUtility.TrTextContentWithIcon("Stop Recording", "Stop the ongoing recording.", "Animation.Record");
-            public static readonly GUIContent playPreviewLabel = EditorGUIUtility.TrTextContentWithIcon("Start Preview", "Start previewing the slected Take.", "PlayButton");
-            public static readonly GUIContent stopPreviewLabel = EditorGUIUtility.TrTextContentWithIcon("Stop Preview", "Stop the ongoing playback.", "PauseButton");
-            public static GUIContent frameRateLabel = EditorGUIUtility.TrTextContent("Frame Rate", "The frame rate to use for recording.");
-            public static readonly GUIStyle buttonToggleStyle = "Button";
-            public static readonly string undoSetLive = "Toggle Live Mode";
-            public static readonly string undoCreateDevice = "Create Capture Device";
-            public static readonly GUILayoutOption[] recordButtonOptions = new[]
+            public static readonly GUIContent LiveToggleContent = EditorGUIUtility.TrTextContent("", "Toggle the live state of the device.");
+            public static readonly GUIContent LiveButtonContent = EditorGUIUtility.TrTextContent("Live", "Set live mode.");
+            public static readonly GUIContent PreviewButtonContent = EditorGUIUtility.TrTextContent("Preview", "Set preview mode.");
+            public static readonly GUIContent StartRecordingLabel = EditorGUIUtility.TrTextContentWithIcon("Start Recording", "Start recording a new Take.", "Animation.Record");
+            public static readonly GUIContent StopRecordingLabel = EditorGUIUtility.TrTextContentWithIcon("Stop Recording", "Stop the ongoing recording.", "Animation.Record");
+            public static readonly GUIContent PlayPreviewLabel = EditorGUIUtility.TrTextContentWithIcon("Start Preview", "Start previewing the selected Take.", "PlayButton");
+            public static readonly GUIContent StopPreviewLabel = EditorGUIUtility.TrTextContentWithIcon("Stop Preview", "Stop the ongoing playback.", "PauseButton");
+            public static readonly GUIContent FrameRateLabel = EditorGUIUtility.TrTextContent("Frame Rate", "The frame rate to use for recording.");
+            public static readonly string ExternalSlateMsg = EditorGUIUtility.TrTextContent("Slate data provided externally using a Timeline track.").text;
+            public static readonly GUIStyle ButtonToggleStyle = "Button";
+            public static readonly string UndoSetLive = "Toggle Live Mode";
+            public static readonly string UndoCreateDevice = "Create Capture Device";
+            public static readonly GUILayoutOption[] RecordButtonOptions =
             {
                 GUILayout.Height(30f)
             };
@@ -33,19 +32,37 @@ namespace Unity.LiveCapture
 
         static IEnumerable<(Type, CreateDeviceMenuItemAttribute[])> s_CreateDeviceMenuItems;
 
+        SlateInspector m_SlateInspector;
         TakeRecorder m_TakeRecorder;
         SerializedProperty m_FrameRateProp;
+        SerializedProperty m_Take;
         SerializedProperty m_DevicesProp;
         ReorderableList m_DeviceList;
 
         void OnEnable()
         {
-            m_DevicesProp = serializedObject.FindProperty("m_Devices");
+            m_SlateInspector = new SlateInspector();
             m_FrameRateProp = serializedObject.FindProperty("m_FrameRate");
+            m_Take = serializedObject.FindProperty("m_TakePlayer.m_Take");
+            m_DevicesProp = serializedObject.FindProperty("m_Devices");
 
             m_TakeRecorder = target as TakeRecorder;
 
             CreateDeviceList();
+
+            Undo.undoRedoPerformed += UndoRedoPerformed;
+        }
+
+        void OnDisable()
+        {
+            Undo.undoRedoPerformed -= UndoRedoPerformed;
+
+            m_SlateInspector.Dispose();
+        }
+
+        void UndoRedoPerformed()
+        {
+            m_SlateInspector.Refresh();
         }
 
         void CreateDeviceList()
@@ -74,11 +91,11 @@ namespace Unity.LiveCapture
 
                 using (var change = new EditorGUI.ChangeCheckScope())
                 {
-                    isLive = GUI.Toggle(buttonRect, isLive, Contents.liveToggleContent);
+                    isLive = GUI.Toggle(buttonRect, isLive, Contents.LiveToggleContent);
 
                     if (change.changed)
                     {
-                        Undo.RegisterCompleteObjectUndo(device, Contents.undoSetLive);
+                        Undo.RegisterCompleteObjectUndo(device, Contents.UndoSetLive);
 
                         device.SetLive(isLive);
 
@@ -111,12 +128,12 @@ namespace Unity.LiveCapture
         {
             Debug.Assert(type != null);
 
-            var go = new GameObject($"New {type.Name}", new Type[] { type });
-            var device = go.GetComponent<LiveCaptureDevice>();
+            var go = new GameObject($"New {type.Name}", type);
 
             go.transform.SetParent(m_TakeRecorder.transform, false);
+            GameObjectUtility.EnsureUniqueNameForSibling(go);
 
-            Undo.RegisterCreatedObjectUndo(go, Contents.undoCreateDevice);
+            Undo.RegisterCreatedObjectUndo(go, Contents.UndoCreateDevice);
 
             m_TakeRecorder.Rebuild();
 
@@ -125,22 +142,39 @@ namespace Unity.LiveCapture
 
         public override void OnInspectorGUI()
         {
+            DoRecordGUI();
+            DoExternalPrevewMsg();
+            DoSlateInspector();
+
+            EditorGUILayout.Space();
+
+            DoDevicesGUI();
+        }
+
+        void DoExternalPrevewMsg()
+        {
+            if (m_TakeRecorder.IsExternalSlatePlayer())
+            {
+                EditorGUILayout.HelpBox(Contents.ExternalSlateMsg, MessageType.None, true);
+            }
+        }
+
+        void DoRecordGUI()
+        {
             serializedObject.Update();
 
             using (new EditorGUI.DisabledScope(m_TakeRecorder.IsRecording()))
             {
-                EditorGUILayout.PropertyField(m_FrameRateProp, Contents.frameRateLabel);
-
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     using (var change = new EditorGUI.ChangeCheckScope())
                     {
                         var value = GUILayout.Toggle(m_TakeRecorder.IsLive(),
-                            Contents.liveButtonContent, Contents.buttonToggleStyle);
+                            Contents.LiveButtonContent, Contents.ButtonToggleStyle);
 
                         if (change.changed && value)
                         {
-                            Undo.RegisterCompleteObjectUndo(m_TakeRecorder, Contents.undoSetLive);
+                            Undo.RegisterCompleteObjectUndo(m_TakeRecorder, Contents.UndoSetLive);
 
                             m_TakeRecorder.SetLive(value);
 
@@ -151,11 +185,11 @@ namespace Unity.LiveCapture
                     using (var change = new EditorGUI.ChangeCheckScope())
                     {
                         var value = GUILayout.Toggle(!m_TakeRecorder.IsLive(),
-                            Contents.previewButtonContent, Contents.buttonToggleStyle);
+                            Contents.PreviewButtonContent, Contents.ButtonToggleStyle);
 
                         if (change.changed && value)
                         {
-                            Undo.RegisterCompleteObjectUndo(m_TakeRecorder, Contents.undoSetLive);
+                            Undo.RegisterCompleteObjectUndo(m_TakeRecorder, Contents.UndoSetLive);
 
                             m_TakeRecorder.SetLive(!value);
 
@@ -165,16 +199,46 @@ namespace Unity.LiveCapture
                 }
             }
 
-            if (m_TakeRecorder.IsLive())
+            var slate = m_TakeRecorder.GetActiveSlate();
+
+            using (new EditorGUI.DisabledScope(slate == null))
             {
-                DoRecordButton();
-            }
-            else
-            {
-                DoPlayButton();
+                if (m_TakeRecorder.IsLive())
+                {
+                    DoRecordButton();
+                }
+                else
+                {
+                    DoPlayButton();
+                }
             }
 
-            EditorGUILayout.Space();
+            using (new EditorGUI.DisabledScope(m_TakeRecorder.IsRecording()))
+            {
+                EditorGUILayout.PropertyField(m_FrameRateProp, Contents.FrameRateLabel);
+            }
+
+            serializedObject.ApplyModifiedProperties();
+        }
+
+        void DoSlateInspector()
+        {
+            var slate = m_TakeRecorder.GetActiveSlate();
+
+            using (var change = new EditorGUI.ChangeCheckScope())
+            {
+                m_SlateInspector.OnGUI(slate, m_TakeRecorder.GetPlayableDirector());
+
+                if (change.changed)
+                {
+                    TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved);
+                }
+            }
+        }
+
+        void DoDevicesGUI()
+        {
+            serializedObject.Update();
 
             m_DeviceList.DoLayoutList();
 
@@ -186,7 +250,7 @@ namespace Unity.LiveCapture
             using (var change = new EditorGUI.ChangeCheckScope())
             {
                 GUILayout.Toggle(m_TakeRecorder.IsRecording(),
-                    GetRecordButtonContent(), Contents.buttonToggleStyle, Contents.recordButtonOptions);
+                    GetRecordButtonContent(), Contents.ButtonToggleStyle, Contents.RecordButtonOptions);
 
                 if (change.changed)
                 {
@@ -207,7 +271,7 @@ namespace Unity.LiveCapture
             using (var change = new EditorGUI.ChangeCheckScope())
             {
                 GUILayout.Toggle(m_TakeRecorder.IsPreviewPlaying(),
-                    GetPreviewButtonContent(), Contents.buttonToggleStyle, Contents.recordButtonOptions);
+                    GetPreviewButtonContent(), Contents.ButtonToggleStyle, Contents.RecordButtonOptions);
 
                 if (change.changed)
                 {
@@ -227,11 +291,11 @@ namespace Unity.LiveCapture
         {
             if (m_TakeRecorder.IsRecording())
             {
-                return Contents.stopRecordingLabel;
+                return Contents.StopRecordingLabel;
             }
             else
             {
-                return Contents.startRecordingLabel;
+                return Contents.StartRecordingLabel;
             }
         }
 
@@ -239,11 +303,11 @@ namespace Unity.LiveCapture
         {
             if (m_TakeRecorder.IsPreviewPlaying())
             {
-                return Contents.stopPreviewLabel;
+                return Contents.StopPreviewLabel;
             }
             else
             {
-                return Contents.playPreviewLabel;
+                return Contents.PlayPreviewLabel;
             }
         }
     }

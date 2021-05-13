@@ -2,7 +2,7 @@ using UnityEngine.Playables;
 using UnityEditor;
 using UnityEditor.Timeline;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     [InitializeOnLoad]
     static class CallbackInitializer
@@ -10,7 +10,7 @@ namespace Unity.LiveCapture
         static CallbackInitializer()
         {
             EditorApplication.update += OnUpdate;
-            Callbacks.seekOccurred += SeekOccurred;
+            Callbacks.SeekOccurred += SeekOccurred;
         }
 
         static void OnUpdate()
@@ -20,7 +20,7 @@ namespace Unity.LiveCapture
 
         static void UpdateServers()
         {
-            foreach (var server in ServerManager.instance.servers)
+            foreach (var server in ServerManager.Instance.Servers)
             {
                 server.OnUpdate();
             }

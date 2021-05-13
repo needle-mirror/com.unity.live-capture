@@ -11,10 +11,15 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     /// </summary>
     public interface IFaceClient : ICompanionAppClient
     {
+    }
+
+    /// <inheritdoc cref="IFaceClient"/>
+    interface IFaceClientInternal : IFaceClient
+    {
         /// <summary>
         /// An event invoked when a face pose sample is received.
         /// </summary>
-        event Action<FaceSample> facePoseSampleReceived;
+        event Action<FaceSample> FacePoseSampleReceived;
     }
 
     /// <summary>
@@ -22,7 +27,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     /// </summary>
     [Preserve]
     [Client(k_ClientType)]
-    public class FaceClient : CompanionAppClient, IFaceClient
+    class FaceClient : CompanionAppClient, IFaceClientInternal
     {
         /// <summary>
         /// The type of client this device supports.
@@ -30,16 +35,16 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         const string k_ClientType = "ARKit Face Capture";
 
         /// <inheritdoc />
-        public event Action<FaceSample> facePoseSampleReceived;
+        public event Action<FaceSample> FacePoseSampleReceived;
 
         /// <inheritdoc />
         public FaceClient(NetworkBase network, Remote remote, ClientInitialization data)
             : base(network, remote, data)
         {
-            m_Protocol.Add(new BinaryReceiver<FaceSample>(FaceMessages.ToServer.k_FacePoseSample,
+            m_Protocol.Add(new BinaryReceiver<FaceSample>(FaceMessages.ToServer.FacePoseSample,
                 ChannelType.UnreliableUnordered)).AddHandler((pose) =>
                 {
-                    facePoseSampleReceived?.Invoke(pose);
+                    FacePoseSampleReceived?.Invoke(pose);
                 });
         }
 

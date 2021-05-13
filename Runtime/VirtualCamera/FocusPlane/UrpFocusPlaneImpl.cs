@@ -14,10 +14,10 @@ namespace Unity.LiveCapture.VirtualCamera
         Material m_ComposeMaterial;
 
         /// <inheritdoc/>
-        public Material renderMaterial => m_RenderMaterial;
+        public Material RenderMaterial => m_RenderMaterial;
 
         /// <inheritdoc/>
-        public Material composeMaterial => m_ComposeMaterial;
+        public Material ComposeMaterial => m_ComposeMaterial;
 
         /// <inheritdoc/>
         public bool TryGetRenderTarget<T>(out T target)
@@ -31,6 +31,7 @@ namespace Unity.LiveCapture.VirtualCamera
             return false;
         }
 
+        /// <inheritdoc/>
         bool IRenderTargetProvider<RenderTexture>.TryGetRenderTarget(out RenderTexture target)
         {
             target = m_Target;
@@ -58,7 +59,7 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
         /// <inheritdoc/>
-        public void AllocateTargetIfNeeded(int width, int height)
+        public bool AllocateTargetIfNeeded(int width, int height)
         {
             if (m_Target == null || m_Target.width != width || m_Target.height != height)
             {
@@ -70,9 +71,21 @@ namespace Unity.LiveCapture.VirtualCamera
                     hideFlags = HideFlags.DontSave
                 };
 
-                m_ComposeMaterial.SetTexture(FocusPlaneConsts.k_InputTextureProperty, m_Target);
+                m_ComposeMaterial.SetTexture(FocusPlaneConsts.InputTextureProperty, m_Target);
+
+                return true;
             }
+
+            return false;
         }
+
+        // These 2 methods are only used with the Legacy Render Pipeline so far.
+
+        /// <inheritdoc/>
+        public void SetCamera(Camera camera) {}
+
+        /// <inheritdoc/>
+        public void Update() {}
     }
 }
 #endif

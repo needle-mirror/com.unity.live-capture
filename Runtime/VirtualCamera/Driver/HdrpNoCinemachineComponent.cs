@@ -9,14 +9,13 @@ namespace Unity.LiveCapture.VirtualCamera
     [Serializable]
     class HdrpNoCinemachineCameraDriverComponent : ICameraDriverComponent
     {
-        Transform m_Root;
         Camera m_Camera;
         HDAdditionalCameraData m_HDCameraData;
 
         /// <summary>
         /// Camera to be driven by this component.
         /// </summary>
-        public Camera camera
+        public Camera Camera
         {
             set
             {
@@ -36,17 +35,17 @@ namespace Unity.LiveCapture.VirtualCamera
         public bool SetFocusDistance(float value) { return false; }
 
         /// <inheritdoc/>
-        public bool SetPhysicalCameraProperties(Lens lens, CameraBody cameraBody)
+        public bool SetPhysicalCameraProperties(Lens lens, LensIntrinsics intrinsics, CameraBody cameraBody)
         {
-            CompositeCameraDriverImpl.UpdateCamera(m_Camera, lens, cameraBody);
+            CompositeCameraDriverImpl.UpdateCamera(m_Camera, lens, intrinsics, cameraBody);
 
-            m_HDCameraData.physicalParameters.aperture = lens.aperture;
-            m_HDCameraData.physicalParameters.iso = cameraBody.iso;
-            m_HDCameraData.physicalParameters.shutterSpeed = cameraBody.shutterSpeed;
-            m_HDCameraData.physicalParameters.anamorphism = lens.anamorphism;
-            m_HDCameraData.physicalParameters.curvature = lens.curvature;
-            m_HDCameraData.physicalParameters.barrelClipping = lens.barrelClipping;
-            m_HDCameraData.physicalParameters.bladeCount = lens.bladeCount;
+            m_HDCameraData.physicalParameters.aperture = lens.Aperture;
+            m_HDCameraData.physicalParameters.iso = cameraBody.Iso;
+            m_HDCameraData.physicalParameters.shutterSpeed = cameraBody.ShutterSpeed;
+            m_HDCameraData.physicalParameters.anamorphism = intrinsics.Anamorphism;
+            m_HDCameraData.physicalParameters.curvature = intrinsics.Curvature;
+            m_HDCameraData.physicalParameters.barrelClipping = intrinsics.BarrelClipping;
+            m_HDCameraData.physicalParameters.bladeCount = intrinsics.BladeCount;
 
             return true;
         }

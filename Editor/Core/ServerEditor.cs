@@ -1,27 +1,30 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     /// <summary>
-    /// The base editor for all <see cref="Server"/> instances.
+    /// The base editor for <see cref="Server"/> instances.
     /// </summary>
+    /// <remarks>
+    /// Inherit from this class when implementing the editor for a custom server.
+    /// </remarks>
     [CustomEditor(typeof(Server), true)]
-    public class ServerEditor : Editor
+    public class ServerEditor : UnityEditor.Editor
     {
         static class Contents
         {
-            public static readonly GUIStyle menuButtonStyle = new GUIStyle("toolbarbuttonRight")
+            public static readonly GUIStyle MenuButtonStyle = new GUIStyle("toolbarbuttonRight")
             {
                 padding = new RectOffset(),
                 contentOffset = new Vector2(1, 0),
             };
-            public static readonly GUILayoutOption[] menuButtonOptions =
+            public static readonly GUILayoutOption[] MenuButtonOptions =
             {
                 GUILayout.Width(16f),
             };
-            public static readonly GUIContent menuIcon = EditorGUIUtility.TrIconContent("_Menu");
-            public static readonly GUIContent removeOption = new GUIContent("Remove Server", "Removes this server.");
+            public static readonly GUIContent MenuIcon = EditorGUIUtility.TrIconContent("_Menu");
+            public static readonly GUIContent RemoveOption = new GUIContent("Remove Server", "Removes this server.");
         }
 
         Server m_Server;
@@ -59,13 +62,13 @@ namespace Unity.LiveCapture
         /// </summary>
         protected void DoToolbarMenu()
         {
-            if (GUILayout.Button(Contents.menuIcon, Contents.menuButtonStyle, Contents.menuButtonOptions))
+            if (GUILayout.Button(Contents.MenuIcon, Contents.MenuButtonStyle, Contents.MenuButtonOptions))
             {
                 var menu = new GenericMenu();
 
-                menu.AddItem(Contents.removeOption, false, () =>
+                menu.AddItem(Contents.RemoveOption, false, () =>
                 {
-                    ServerManager.instance.DestroyServer(m_Server);
+                    ServerManager.Instance.DestroyServer(m_Server);
                 });
 
                 menu.ShowAsContext();

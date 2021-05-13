@@ -10,10 +10,10 @@ namespace Unity.LiveCapture
 
     public class BooleanCurve : Unity.LiveCapture.ICurve, Unity.LiveCapture.ICurve<bool>
     {
-        public virtual System.Type bindingType { get; }
-        public virtual Unity.LiveCapture.FrameRate frameRate { get; set; }
-        public virtual string propertyName { get; }
-        public virtual string relativePath { get; }
+        public virtual System.Type BindingType { get; }
+        public virtual Unity.LiveCapture.FrameRate FrameRate { get; set; }
+        public virtual string PropertyName { get; }
+        public virtual string RelativePath { get; }
         public BooleanCurve(string relativePath, string propertyName, System.Type bindingType) {}
         public virtual void AddKey(float time, bool value);
         public virtual void Clear();
@@ -33,13 +33,13 @@ namespace Unity.LiveCapture
 
     [System.AttributeUsage(256)] public class DescriptionAttribute : UnityEngine.PropertyAttribute
     {
-        public readonly string description;
+        public readonly string Description;
         public DescriptionAttribute(string description) {}
     }
 
     [System.AttributeUsage(256)] public class EnumButtonGroupAttribute : UnityEngine.PropertyAttribute
     {
-        public readonly float segmentWidth;
+        public readonly float SegmentWidth;
         public EnumButtonGroupAttribute(float width) {}
     }
 
@@ -50,10 +50,10 @@ namespace Unity.LiveCapture
 
     public class EulerCurve : Unity.LiveCapture.ICurve, Unity.LiveCapture.ICurve<UnityEngine.Quaternion>
     {
-        public virtual System.Type bindingType { get; }
-        public virtual Unity.LiveCapture.FrameRate frameRate { get; set; }
-        public virtual string propertyName { get; }
-        public virtual string relativePath { get; }
+        public virtual System.Type BindingType { get; }
+        public virtual Unity.LiveCapture.FrameRate FrameRate { get; set; }
+        public virtual string PropertyName { get; }
+        public virtual string RelativePath { get; }
         public EulerCurve(string relativePath, string propertyName, System.Type bindingType) {}
         public virtual void AddKey(float time, UnityEngine.Quaternion value);
         public virtual void Clear();
@@ -63,10 +63,10 @@ namespace Unity.LiveCapture
 
     public class FloatCurve : Unity.LiveCapture.ICurve, Unity.LiveCapture.ICurve<float>
     {
-        public virtual System.Type bindingType { get; }
-        public virtual Unity.LiveCapture.FrameRate frameRate { get; set; }
-        public virtual string propertyName { get; }
-        public virtual string relativePath { get; }
+        public virtual System.Type BindingType { get; }
+        public virtual Unity.LiveCapture.FrameRate FrameRate { get; set; }
+        public virtual string PropertyName { get; }
+        public virtual string RelativePath { get; }
         public FloatCurve(string relativePath, string propertyName, System.Type bindingType) {}
         public virtual void AddKey(float time, float value);
         public virtual void Clear();
@@ -76,12 +76,12 @@ namespace Unity.LiveCapture
 
     public struct FrameRate : System.IComparable, System.IComparable<Unity.LiveCapture.FrameRate>, System.IEquatable<Unity.LiveCapture.FrameRate>
     {
-        public int denominator { get; }
-        public double frameInterval { get; }
-        public bool isDropFrame { get; }
-        public bool isValid { get; }
-        public int numerator { get; }
-        public Unity.LiveCapture.FrameRate reciprocal { get; }
+        public int Denominator { get; }
+        public double FrameInterval { get; }
+        public bool IsDropFrame { get; }
+        public bool IsValid { get; }
+        public int Numerator { get; }
+        public Unity.LiveCapture.FrameRate Reciprocal { get; }
         public FrameRate(int frameRate) {}
         public FrameRate(int numerator, int denominator, bool isDropFrame) {}
         public double AsDouble();
@@ -110,8 +110,8 @@ namespace Unity.LiveCapture
 
     public struct FrameTime : System.IComparable, System.IComparable<Unity.LiveCapture.FrameTime>, System.IEquatable<Unity.LiveCapture.FrameTime>
     {
-        public int frameNumber { get; }
-        public Unity.LiveCapture.Subframe subframe { get; }
+        public int FrameNumber { get; }
+        public Unity.LiveCapture.Subframe Subframe { get; }
         public FrameTime(int frameNumber, Unity.LiveCapture.Subframe subframe = default(Unity.LiveCapture.Subframe)) {}
         public Unity.LiveCapture.FrameTime Ceil();
         public virtual int CompareTo(object obj);
@@ -143,10 +143,10 @@ namespace Unity.LiveCapture
 
     public interface ICurve
     {
-        public abstract System.Type bindingType { get; }
-        public abstract Unity.LiveCapture.FrameRate frameRate { get; set; }
-        public abstract string propertyName { get; }
-        public abstract string relativePath { get; }
+        public abstract System.Type BindingType { get; }
+        public abstract Unity.LiveCapture.FrameRate FrameRate { get; set; }
+        public abstract string PropertyName { get; }
+        public abstract string RelativePath { get; }
         public abstract void Clear();
         public abstract bool IsEmpty();
         public abstract void SetToAnimationClip(UnityEngine.AnimationClip clip);
@@ -168,23 +168,35 @@ namespace Unity.LiveCapture
         public abstract void Update();
     }
 
+    public class IntegerCurve : Unity.LiveCapture.ICurve, Unity.LiveCapture.ICurve<int>
+    {
+        public virtual System.Type BindingType { get; }
+        public virtual Unity.LiveCapture.FrameRate FrameRate { get; set; }
+        public virtual string PropertyName { get; }
+        public virtual string RelativePath { get; }
+        public IntegerCurve(string relativePath, string propertyName, System.Type bindingType) {}
+        public virtual void AddKey(float time, int value);
+        public virtual void Clear();
+        public virtual bool IsEmpty();
+        public virtual void SetToAnimationClip(UnityEngine.AnimationClip clip);
+    }
+
     public interface ISlate
     {
-        public abstract string description { get; set; }
-        public abstract string directory { get; set; }
-        public abstract double duration { get; }
-        public abstract Unity.LiveCapture.Take iterationBase { get; set; }
-        public abstract int sceneNumber { get; set; }
-        public abstract string shotName { get; set; }
-        public abstract Unity.LiveCapture.Take take { get; set; }
-        public abstract int takeNumber { get; set; }
-        public abstract double time { get; set; }
-        public abstract UnityEngine.Object unityObject { get; }
+        public abstract string Description { get; set; }
+        public abstract string Directory { get; set; }
+        public abstract double Duration { get; }
+        public abstract Unity.LiveCapture.Take IterationBase { get; set; }
+        public abstract int SceneNumber { get; set; }
+        public abstract string ShotName { get; set; }
+        public abstract Unity.LiveCapture.Take Take { get; set; }
+        public abstract int TakeNumber { get; set; }
+        public abstract UnityEngine.Object UnityObject { get; }
     }
 
     public interface ITakeBinding : System.IEquatable<Unity.LiveCapture.ITakeBinding>
     {
-        public abstract System.Type type { get; }
+        public abstract System.Type Type { get; }
         public abstract void ClearValue(UnityEngine.IExposedPropertyTable resolver);
         public abstract UnityEngine.Object GetValue(UnityEngine.IExposedPropertyTable resolver);
         public abstract void SetName(string name);
@@ -199,8 +211,9 @@ namespace Unity.LiveCapture
 
     public interface ITakeRecorder
     {
-        public abstract Unity.LiveCapture.FrameRate frameRate { get; set; }
-        public abstract Unity.LiveCapture.ISlate slate { get; }
+        public abstract Unity.LiveCapture.FrameRate FrameRate { get; set; }
+        public abstract Unity.LiveCapture.ISlate GetActiveSlate();
+        public abstract double GetPreviewTime();
         public abstract bool IsLive();
         public abstract bool IsPreviewPlaying();
         public abstract bool IsRecording();
@@ -223,7 +236,7 @@ namespace Unity.LiveCapture
         public Unity.LiveCapture.ITakeRecorder GetTakeRecorder();
         public abstract bool IsLive();
         public abstract bool IsRecording();
-        public virtual void OnDestroyDevice();
+        protected virtual void OnDestroy();
         protected void Refresh();
         public abstract void SetLive(bool value);
         public abstract void StartRecording();
@@ -248,9 +261,9 @@ namespace Unity.LiveCapture
 
     public abstract class MenuPathAttribute : System.Attribute
     {
-        public string itemName { get; }
-        public int priority { get; }
-        public MenuPathAttribute(string itemName, int priority = 0) {}
+        public string ItemName { get; }
+        public int Priority { get; }
+        protected MenuPathAttribute(string itemName, int priority = 0) {}
     }
 
     [System.AttributeUsage(256)] public class OnlyStandardFrameRatesAttribute : UnityEngine.PropertyAttribute
@@ -271,37 +284,14 @@ namespace Unity.LiveCapture
 
     public class ServerManager : UnityEngine.ScriptableObject
     {
-        public static event System.Action<Unity.LiveCapture.Server> serverCreated;
-        public static event System.Action<Unity.LiveCapture.Server> serverDestroyed;
-        public static Unity.LiveCapture.ServerManager instance { get; }
-        public System.Collections.Generic.IReadOnlyList<Unity.LiveCapture.Server> servers { get; }
+        public static event System.Action<Unity.LiveCapture.Server> ServerCreated;
+        public static event System.Action<Unity.LiveCapture.Server> ServerDestroyed;
+        public static Unity.LiveCapture.ServerManager Instance { get; }
+        public System.Collections.Generic.IReadOnlyList<Unity.LiveCapture.Server> Servers { get; }
         public Unity.LiveCapture.Server CreateServer(System.Type type);
         public void DestroyServer(Unity.LiveCapture.Server server);
         public bool HasServer(System.Type type);
         public bool TryGetServer<TServer>(out TServer server) where TServer : Unity.LiveCapture.Server;
-    }
-
-    [UnityEngine.AddComponentMenu(@"Live Capture/Slate Database")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.RequireComponent(typeof(Unity.LiveCapture.TakePlayer))] [UnityEngine.RequireComponent(typeof(UnityEngine.Playables.PlayableDirector))] public class SlateDatabase : UnityEngine.MonoBehaviour
-    {
-        public Unity.LiveCapture.ISlate slate { get; set; }
-        public SlateDatabase() {}
-        public void AddSlate(Unity.LiveCapture.ISlate slate);
-        public System.Collections.Generic.IEnumerable<Unity.LiveCapture.ISlate> GetSlates();
-        public void RemoveSlate(Unity.LiveCapture.ISlate slate);
-    }
-
-    public class SlatePlayableAsset : UnityEngine.Playables.PlayableAsset, UnityEngine.Timeline.ITimelineClipAsset
-    {
-        public virtual UnityEngine.Timeline.ClipCaps clipCaps { get; }
-        public SlatePlayableAsset() {}
-        public virtual UnityEngine.Playables.Playable CreatePlayable(UnityEngine.Playables.PlayableGraph graph, UnityEngine.GameObject owner);
-    }
-
-    [UnityEngine.Timeline.TrackBindingType(typeof(Unity.LiveCapture.SlateDatabase))] [UnityEngine.Timeline.TrackClipType(typeof(Unity.LiveCapture.SlatePlayableAsset))] public class SlateTrack : UnityEngine.Timeline.TrackAsset
-    {
-        public SlateTrack() {}
-        public virtual UnityEngine.Playables.Playable CreateTrackMixer(UnityEngine.Playables.PlayableGraph graph, UnityEngine.GameObject go, int inputCount);
-        public virtual void GatherProperties(UnityEngine.Playables.PlayableDirector director, UnityEngine.Timeline.IPropertyCollector driver);
     }
 
     public enum StandardFrameRate
@@ -328,10 +318,10 @@ namespace Unity.LiveCapture
 
     public struct Subframe : System.IComparable, System.IComparable<Unity.LiveCapture.Subframe>, System.IEquatable<Unity.LiveCapture.Subframe>
     {
-        public const int k_DefaultResolution = 51200;
-        public const int k_MaxResolution = 65535;
-        public int resolution { get; }
-        public int subframe { get; }
+        public const int DefaultResolution = 51200;
+        public const int MaxResolution = 65535;
+        public int Resolution { get; }
+        public int Value { get; }
         public Subframe(int subframe, int resolution) {}
         public double AsDouble();
         public float AsFloat();
@@ -355,18 +345,20 @@ namespace Unity.LiveCapture
 
     public class Take : UnityEngine.ScriptableObject
     {
-        public string description { get; }
-        public Unity.LiveCapture.FrameRate frameRate { get; }
-        public int sceneNumber { get; }
-        public string shotName { get; }
-        public int takeNumber { get; }
-        public UnityEngine.Timeline.TimelineAsset timeline { get; }
+        public string Description { get; }
+        public Unity.LiveCapture.FrameRate FrameRate { get; }
+        public int Rating { get; set; }
+        public int SceneNumber { get; }
+        public UnityEngine.Texture2D Screenshot { get; }
+        public string ShotName { get; }
+        public int TakeNumber { get; }
+        public UnityEngine.Timeline.TimelineAsset Timeline { get; }
         public Take() {}
     }
 
     public class TakeBinding<T> : System.IEquatable<Unity.LiveCapture.ITakeBinding>, Unity.LiveCapture.ITakeBinding where T : UnityEngine.Object
     {
-        public virtual System.Type type { get; }
+        public virtual System.Type Type { get; }
         public TakeBinding() {}
         public virtual void ClearValue(UnityEngine.IExposedPropertyTable resolver);
         public virtual bool Equals(Unity.LiveCapture.ITakeBinding other);
@@ -375,17 +367,12 @@ namespace Unity.LiveCapture
         public virtual void SetValue(UnityEngine.Object value, UnityEngine.IExposedPropertyTable resolver);
     }
 
-    [UnityEngine.AddComponentMenu(@"Live Capture/Take Player")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.RequireComponent(typeof(UnityEngine.Playables.PlayableDirector))] public class TakePlayer : UnityEngine.MonoBehaviour
+    [UnityEngine.AddComponentMenu(@"Live Capture/Take Recorder")] [UnityEngine.DefaultExecutionOrder(-10)] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.RequireComponent(typeof(UnityEngine.Playables.PlayableDirector))] public class TakeRecorder : UnityEngine.MonoBehaviour, Unity.LiveCapture.ITakeRecorder, Unity.LiveCapture.ITakeRecorderInternal
     {
-        public Unity.LiveCapture.Take take { get; set; }
-        public TakePlayer() {}
-    }
-
-    [UnityEngine.AddComponentMenu(@"Live Capture/Take Recorder")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.RequireComponent(typeof(Unity.LiveCapture.SlateDatabase))] [UnityEngine.RequireComponent(typeof(UnityEngine.Playables.PlayableDirector))] public class TakeRecorder : UnityEngine.MonoBehaviour, Unity.LiveCapture.ITakeRecorder
-    {
-        public virtual Unity.LiveCapture.FrameRate frameRate { get; set; }
-        public virtual Unity.LiveCapture.ISlate slate { get; }
+        public virtual Unity.LiveCapture.FrameRate FrameRate { get; set; }
         public TakeRecorder() {}
+        public virtual Unity.LiveCapture.ISlate GetActiveSlate();
+        public virtual double GetPreviewTime();
         public virtual bool IsLive();
         public virtual bool IsPreviewPlaying();
         public virtual bool IsRecording();
@@ -400,12 +387,12 @@ namespace Unity.LiveCapture
 
     public struct Timecode : System.IComparable, System.IComparable<Unity.LiveCapture.Timecode>, System.IEquatable<Unity.LiveCapture.Timecode>
     {
-        public int frames { get; }
-        public int hours { get; }
-        public bool isDropFrame { get; }
-        public int minutes { get; }
-        public int seconds { get; }
-        public Unity.LiveCapture.Subframe subframe { get; }
+        public int Frames { get; }
+        public int Hours { get; }
+        public bool IsDropFrame { get; }
+        public int Minutes { get; }
+        public int Seconds { get; }
+        public Unity.LiveCapture.Subframe Subframe { get; }
         public Unity.LiveCapture.Timecode Center();
         public virtual int CompareTo(object obj);
         public virtual int CompareTo(Unity.LiveCapture.Timecode other);
@@ -430,10 +417,10 @@ namespace Unity.LiveCapture
 
     public class Vector2Curve : Unity.LiveCapture.ICurve, Unity.LiveCapture.ICurve<UnityEngine.Vector2>
     {
-        public virtual System.Type bindingType { get; }
-        public virtual Unity.LiveCapture.FrameRate frameRate { get; set; }
-        public virtual string propertyName { get; }
-        public virtual string relativePath { get; }
+        public virtual System.Type BindingType { get; }
+        public virtual Unity.LiveCapture.FrameRate FrameRate { get; set; }
+        public virtual string PropertyName { get; }
+        public virtual string RelativePath { get; }
         public Vector2Curve(string relativePath, string propertyName, System.Type bindingType) {}
         public virtual void AddKey(float time, UnityEngine.Vector2 value);
         public virtual void Clear();
@@ -443,10 +430,10 @@ namespace Unity.LiveCapture
 
     public class Vector3Curve : Unity.LiveCapture.ICurve, Unity.LiveCapture.ICurve<UnityEngine.Vector3>
     {
-        public virtual System.Type bindingType { get; }
-        public virtual Unity.LiveCapture.FrameRate frameRate { get; set; }
-        public virtual string propertyName { get; }
-        public virtual string relativePath { get; }
+        public virtual System.Type BindingType { get; }
+        public virtual Unity.LiveCapture.FrameRate FrameRate { get; set; }
+        public virtual string PropertyName { get; }
+        public virtual string RelativePath { get; }
         public Vector3Curve(string relativePath, string propertyName, System.Type bindingType) {}
         public virtual void AddKey(float time, UnityEngine.Vector3 value);
         public virtual void Clear();
@@ -456,10 +443,10 @@ namespace Unity.LiveCapture
 
     public class Vector4Curve : Unity.LiveCapture.ICurve, Unity.LiveCapture.ICurve<UnityEngine.Vector4>
     {
-        public virtual System.Type bindingType { get; }
-        public virtual Unity.LiveCapture.FrameRate frameRate { get; set; }
-        public virtual string propertyName { get; }
-        public virtual string relativePath { get; }
+        public virtual System.Type BindingType { get; }
+        public virtual Unity.LiveCapture.FrameRate FrameRate { get; set; }
+        public virtual string PropertyName { get; }
+        public virtual string RelativePath { get; }
         public Vector4Curve(string relativePath, string propertyName, System.Type bindingType) {}
         public virtual void AddKey(float time, UnityEngine.Vector4 value);
         public virtual void Clear();

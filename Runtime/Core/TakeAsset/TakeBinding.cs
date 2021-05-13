@@ -8,7 +8,7 @@ namespace Unity.LiveCapture
     /// A serializable implementation of <see cref="ITakeBinding"/> that contains values of
     /// type UnityEngine.Object.
     /// </summary>
-    /// <typeparam name="T">The type of the TakeBinding. It must be a UnityObject</typeparam>
+    /// <typeparam name="T">The type of the TakeBinding. It must be a UnityObject.</typeparam>
     [Serializable]
     public class TakeBinding<T> : ITakeBinding where T : UnityObject
     {
@@ -16,7 +16,7 @@ namespace Unity.LiveCapture
         ExposedReference<UnityObject> m_ExposedReference;
 
         /// <inheritdoc/>
-        public Type type { get => typeof(T); }
+        public Type Type => typeof(T);
 
         /// <inheritdoc/>
         public void SetName(string name)
@@ -45,17 +45,13 @@ namespace Unity.LiveCapture
         /// <inheritdoc/>
         public bool Equals(ITakeBinding other)
         {
-            var binding = other as TakeBinding<T>;
-
-            if (binding != null)
+            if (other is TakeBinding<T> binding)
             {
                 return m_ExposedReference.exposedName == binding.m_ExposedReference.exposedName &&
                     m_ExposedReference.defaultValue == binding.m_ExposedReference.defaultValue;
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
     }
 }

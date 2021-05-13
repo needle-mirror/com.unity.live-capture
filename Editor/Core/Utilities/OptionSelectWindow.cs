@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     /// <summary>
     /// An improved popup window that allows searching and scrolling, making it far more convenient when
@@ -16,14 +16,14 @@ namespace Unity.LiveCapture
     {
         static class Contents
         {
-            public static readonly float itemHeight = 20f;
-            public static GUILayoutOption[] itemOptions =
+            public static readonly float ItemHeight = 20f;
+            public static GUILayoutOption[] ItemOptions =
             {
                 GUILayout.MinWidth(0f),
-                GUILayout.Height(itemHeight),
+                GUILayout.Height(ItemHeight),
             };
-            public static readonly string searchControlName = $"{typeof(OptionSelectWindow)}SearchBox";
-            public static readonly GUIStyle elementBackground = "RL Element";
+            public static readonly string SearchControlName = $"{typeof(OptionSelectWindow)}SearchBox";
+            public static readonly GUIStyle ElementBackground = "RL Element";
         }
 
         GUIContent[] m_Options;
@@ -78,7 +78,7 @@ namespace Unity.LiveCapture
             window.wantsMouseEnterLeaveWindow = true;
 
             // only make the window shorter when there are not enough elements to use the specified size
-            var requiredHeight = (options.Length + 1.0f) * Contents.itemHeight * 1.05f;
+            var requiredHeight = (options.Length + 1.0f) * Contents.ItemHeight * 1.05f;
             if (canSearch)
                 requiredHeight += EditorGUIUtility.singleLineHeight;
 
@@ -154,7 +154,7 @@ namespace Unity.LiveCapture
 
             using (var change = new EditorGUI.ChangeCheckScope())
             {
-                GUI.SetNextControlName(Contents.searchControlName);
+                GUI.SetNextControlName(Contents.SearchControlName);
                 m_Search = EditorGUILayout.TextField(m_Search, EditorStyles.toolbarSearchField);
 
                 if (change.changed)
@@ -173,8 +173,8 @@ namespace Unity.LiveCapture
             if (m_FocusSearchBox)
             {
                 m_FocusSearchBox = false;
-                GUI.FocusControl(Contents.searchControlName);
-                EditorGUI.FocusTextInControl(Contents.searchControlName);
+                GUI.FocusControl(Contents.SearchControlName);
+                EditorGUI.FocusTextInControl(Contents.SearchControlName);
             }
         }
 
@@ -182,7 +182,7 @@ namespace Unity.LiveCapture
         {
             var option = m_Options[index];
 
-            var rect = EditorGUILayout.GetControlRect(Contents.itemOptions);
+            var rect = EditorGUILayout.GetControlRect(Contents.ItemOptions);
             var e = Event.current;
             var hover = rect.Contains(e.mousePosition);
 
@@ -214,7 +214,7 @@ namespace Unity.LiveCapture
                 }
                 case EventType.Repaint:
                 {
-                    Contents.elementBackground.Draw(rect, false, false, hover, false);
+                    Contents.ElementBackground.Draw(rect, false, false, hover, false);
                     break;
                 }
             }

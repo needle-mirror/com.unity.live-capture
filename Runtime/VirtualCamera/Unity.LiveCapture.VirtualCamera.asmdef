@@ -11,7 +11,8 @@
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.RenderPipelines.HighDefinition.Runtime",
         "Unity.RenderPipelines.Universal.Runtime",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "Unity.Postprocessing.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -35,6 +36,11 @@
             "name": "com.unity.render-pipelines.universal",
             "expression": "10.2.2",
             "define": "URP_10_2_OR_NEWER"
+        },
+        {
+            "name": "com.unity.postprocessing",
+            "expression": "3.0.3",
+            "define": "PP_3_0_3_OR_NEWER"
         }
     ],
     "noEngineReferences": false

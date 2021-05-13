@@ -19,17 +19,17 @@ namespace Unity.LiveCapture
         /// <summary>
         /// An event invoked when a Server is added to the manager.
         /// </summary>
-        public static event Action<Server> serverCreated;
+        public static event Action<Server> ServerCreated;
 
         /// <summary>
         /// An event invoked when a Server is removed from the manager.
         /// </summary>
-        public static event Action<Server> serverDestroyed;
+        public static event Action<Server> ServerDestroyed;
 
         /// <summary>
         /// An event invoked when any Server has been modified.
         /// </summary>
-        internal static event Action serverChanged;
+        internal static event Action ServerChanged;
 
         static ServerManager s_Instance;
         static bool s_Loading;
@@ -37,7 +37,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The ServerManager instance.
         /// </summary>
-        public static ServerManager instance
+        public static ServerManager Instance
         {
             get
             {
@@ -53,7 +53,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The servers that are currently active.
         /// </summary>
-        public IReadOnlyList<Server> servers => m_Servers;
+        public IReadOnlyList<Server> Servers => m_Servers;
 
         ServerManager()
         {
@@ -128,7 +128,7 @@ namespace Unity.LiveCapture
 
             Save();
 
-            serverCreated?.Invoke(server);
+            ServerCreated?.Invoke(server);
             OnServerChanged();
 
             return server;
@@ -150,7 +150,7 @@ namespace Unity.LiveCapture
 
             Save();
 
-            serverDestroyed?.Invoke(server);
+            ServerDestroyed?.Invoke(server);
             OnServerChanged();
 
             if (Application.isPlaying)
@@ -191,7 +191,7 @@ namespace Unity.LiveCapture
         {
             foreach (var server in s_Instance.m_Servers)
             {
-                serverCreated?.Invoke(server);
+                ServerCreated?.Invoke(server);
             }
 
             OnServerChanged();
@@ -224,11 +224,11 @@ namespace Unity.LiveCapture
         }
 
         /// <summary>
-        /// Called to invoke the <see cref="serverChanged"/> event.
+        /// Called to invoke the <see cref="ServerChanged"/> event.
         /// </summary>
         internal void OnServerChanged()
         {
-            serverChanged?.Invoke();
+            ServerChanged?.Invoke();
         }
     }
 }

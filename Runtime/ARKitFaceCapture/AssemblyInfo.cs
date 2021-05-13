@@ -1,5 +1,8 @@
 using System.Runtime.CompilerServices;
 
+// Internal access needed by other runtime assemblies to access utilities
+[assembly: InternalsVisibleTo("Unity.VirtualCameraClient.Runtime")]
+
 // Internal access needed for editor scripts
 [assembly: InternalsVisibleTo("Unity.LiveCapture.ARKitFaceCapture.Editor")]
 

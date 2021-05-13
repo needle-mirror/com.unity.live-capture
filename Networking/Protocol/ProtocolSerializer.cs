@@ -10,6 +10,11 @@ namespace Unity.LiveCapture.Networking.Protocols
 {
     partial class Protocol
     {
+        /// <summary>
+        /// The latest version of the protocol serialized format.
+        /// </summary>
+        const int k_Version = 0;
+
         enum MessageType : byte
         {
             NonGeneric = 0,
@@ -33,9 +38,10 @@ namespace Unity.LiveCapture.Networking.Protocols
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            isReadOnly = true;
+            IsReadOnly = true;
 
-            name = stream.ReadString();
+            var version = stream.ReadStruct<int>();
+            Name = stream.ReadString();
             var count = stream.ReadStruct<ushort>();
 
             for (var i = 0; i < count; i++)
@@ -93,7 +99,7 @@ namespace Unity.LiveCapture.Networking.Protocols
 
                     var message = constructor.Invoke(new object[] { stream }) as MessageBase;
 
-                    AddInternal(message, message.code);
+                    AddInternal(message, message.Code);
                 }
                 catch (Exception e)
                 {
@@ -113,7 +119,8 @@ namespace Unity.LiveCapture.Networking.Protocols
         {
             var count = (ushort)m_Messages.Count;
 
-            stream.WriteString(name);
+            stream.WriteStruct(k_Version);
+            stream.WriteString(Name);
             stream.WriteStruct(count);
 
             // Write each message prefixed by the length of the serialized message.

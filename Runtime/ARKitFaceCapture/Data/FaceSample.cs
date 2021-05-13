@@ -9,17 +9,17 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     /// The payload sent over the network to transport an animation pose for a face.
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct FaceSample : ISample
+    struct FaceSample : ISample
     {
         float m_Timestamp;
 
         /// <summary>
         /// The face pose.
         /// </summary>
-        public FacePose facePose;
+        public FacePose FacePose;
 
         /// <inheritdoc/>
-        public float timestamp
+        public float Timestamp
         {
             get => m_Timestamp;
             set => m_Timestamp = value;

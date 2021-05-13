@@ -5,9 +5,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture
 {
     [UnityEngine.AddComponentMenu(@"Live Capture/ARKit Face Capture/ARKit Face Actor")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.RequireComponent(typeof(UnityEngine.Animator))] public sealed class FaceActor : UnityEngine.MonoBehaviour
     {
-        public UnityEngine.Animator animator { get; }
-        public Unity.LiveCapture.ARKitFaceCapture.FacePose facePose { get; set; }
-        public Unity.LiveCapture.ARKitFaceCapture.FaceMapper mapper { get; }
+        public UnityEngine.Animator Animator { get; }
+        public Unity.LiveCapture.ARKitFaceCapture.FaceMapper Mapper { get; }
         public FaceActor() {}
         public void ClearCache();
         public void SetMapper(Unity.LiveCapture.ARKitFaceCapture.FaceMapper mapper);
@@ -125,31 +124,18 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         public float MouthUpperUpRight;
         public float NoseSneerLeft;
         public float NoseSneerRight;
-        public const int shapeCount = 52;
+        public const int ShapeCount = 52;
         public float TongueOut;
         public float this[int index] { get; set; }
-        public static Unity.LiveCapture.ARKitFaceCapture.FaceBlendShape[] shapes { get; }
+        public static Unity.LiveCapture.ARKitFaceCapture.FaceBlendShape[] Shapes { get; }
         public void FlipHorizontally();
         public float GetValue(Unity.LiveCapture.ARKitFaceCapture.FaceBlendShape location);
         public void SetValue(Unity.LiveCapture.ARKitFaceCapture.FaceBlendShape location, float value);
     }
 
-    public class FaceCaptureHost : Unity.LiveCapture.CompanionApp.CompanionAppHost
-    {
-        public FaceCaptureHost(Unity.LiveCapture.Networking.NetworkBase network, Unity.LiveCapture.Networking.Remote remote, System.IO.Stream stream) {}
-        public void SendPose(Unity.LiveCapture.ARKitFaceCapture.FaceSample sample);
-    }
-
-    [Unity.LiveCapture.CompanionApp.Client(@"ARKit Face Capture")] [UnityEngine.Scripting.Preserve] public class FaceClient : Unity.LiveCapture.CompanionApp.CompanionAppClient, Unity.LiveCapture.ARKitFaceCapture.IFaceClient, Unity.LiveCapture.CompanionApp.ICompanionAppClient
-    {
-        public event System.Action<Unity.LiveCapture.ARKitFaceCapture.FaceSample> facePoseSampleReceived;
-        public FaceClient(Unity.LiveCapture.Networking.NetworkBase network, Unity.LiveCapture.Networking.Remote remote, Unity.LiveCapture.CompanionApp.ClientInitialization data) {}
-        public virtual string ToString();
-    }
-
     [Unity.LiveCapture.CreateDeviceMenuItem(@"ARKit Face Device", 0)] [UnityEngine.AddComponentMenu(@"Live Capture/ARKit Face Capture/ARKit Face Device")] [UnityEngine.ExcludeFromPreset] public class FaceDevice : Unity.LiveCapture.CompanionApp.CompanionAppDevice<Unity.LiveCapture.ARKitFaceCapture.IFaceClient>
     {
-        public Unity.LiveCapture.ARKitFaceCapture.FaceActor actor { get; set; }
+        public Unity.LiveCapture.ARKitFaceCapture.FaceActor Actor { get; set; }
         public FaceDevice() {}
         public virtual void BuildLiveLink(UnityEngine.Playables.PlayableGraph graph);
         protected virtual void OnClientAssigned();
@@ -164,93 +150,23 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     public abstract class FaceMapper : UnityEngine.ScriptableObject
     {
         protected FaceMapper() {}
-        public abstract void ApplyBlendShapesToRig(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor, Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache cache, ref Unity.LiveCapture.ARKitFaceCapture.FacePose pose, bool continuous);
-        public abstract void ApplyEyeRotationToRig(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor, Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache cache, ref Unity.LiveCapture.ARKitFaceCapture.FacePose pose, bool continuous);
-        public abstract void ApplyHeadRotationToRig(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor, Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache cache, ref Unity.LiveCapture.ARKitFaceCapture.FacePose pose, bool continuous);
+        public abstract void ApplyBlendShapesToRig(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor, Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache cache, ref Unity.LiveCapture.ARKitFaceCapture.FaceBlendShapePose pose, bool continuous);
+        public abstract void ApplyEyeRotationToRig(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor, Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache cache, ref Unity.LiveCapture.ARKitFaceCapture.FaceBlendShapePose pose, ref UnityEngine.Quaternion leftEyeRotation, ref UnityEngine.Quaternion rightEyeRotation, bool continuous);
+        public abstract void ApplyHeadPositionToRig(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor, Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache cache, ref UnityEngine.Vector3 headPosition, bool continuous);
+        public abstract void ApplyHeadRotationToRig(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor, Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache cache, ref UnityEngine.Quaternion headOrientation, bool continuous);
         public virtual Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache CreateCache(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor);
     }
 
     public abstract class FaceMapperCache : System.IDisposable
     {
-        public bool disposed { get; }
+        public bool Disposed { get; }
         protected FaceMapperCache() {}
         public virtual void Dispose();
         protected virtual void Finalize();
         protected virtual void OnDispose(bool disposing);
     }
 
-    public struct FacePose
-    {
-        public Unity.LiveCapture.ARKitFaceCapture.FaceBlendShapePose blendShapes;
-        public UnityEngine.Quaternion headOrientation;
-        public UnityEngine.Quaternion leftEyeOrientation;
-        public UnityEngine.Quaternion rightEyeOrientation;
-        public static Unity.LiveCapture.ARKitFaceCapture.FacePose identity { get; }
-    }
-
-    public struct FaceSample : Unity.LiveCapture.CompanionApp.ISample
-    {
-        public Unity.LiveCapture.ARKitFaceCapture.FacePose facePose;
-        public virtual float timestamp { get; set; }
-    }
-
     public interface IFaceClient : Unity.LiveCapture.CompanionApp.ICompanionAppClient
     {
-        public event System.Action<Unity.LiveCapture.ARKitFaceCapture.FaceSample> facePoseSampleReceived;
-    }
-}
-
-namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
-{
-    [UnityEngine.CreateAssetMenu(fileName = @"NewCurveEvaluator", menuName = @"Live Capture/ARKit Face Capture/Evaluator/Curve", order = 5)] public class CurveEvaluator : Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.EvaluatorPreset
-    {
-        public virtual Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.IEvaluator evaluator { get; }
-        public CurveEvaluator() {}
-        public class Impl : Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.IDrawable, Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.IEvaluator
-        {
-            public Impl() {}
-            public virtual float Evaluate(float value);
-            public virtual float GetHeight();
-            public virtual void OnGUI(UnityEngine.Rect rect);
-        }
-    }
-
-    [UnityEngine.CreateAssetMenu(fileName = @"NewFaceMapper", menuName = @"Live Capture/ARKit Face Capture/Mapper")] public class DefaultFaceMapper : Unity.LiveCapture.ARKitFaceCapture.FaceMapper
-    {
-        public DefaultFaceMapper() {}
-        public virtual void ApplyBlendShapesToRig(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor, Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache cache, ref Unity.LiveCapture.ARKitFaceCapture.FacePose pose, bool continuous);
-        public virtual void ApplyEyeRotationToRig(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor, Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache cache, ref Unity.LiveCapture.ARKitFaceCapture.FacePose pose, bool continuous);
-        public virtual void ApplyHeadRotationToRig(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor, Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache cache, ref Unity.LiveCapture.ARKitFaceCapture.FacePose pose, bool continuous);
-        public virtual Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache CreateCache(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor);
-    }
-
-    public abstract class EvaluatorPreset : UnityEngine.ScriptableObject
-    {
-        public abstract Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.IEvaluator evaluator { get; }
-        protected EvaluatorPreset() {}
-    }
-
-    public interface IDrawable
-    {
-        public abstract float GetHeight();
-        public abstract void OnGUI(UnityEngine.Rect rect);
-    }
-
-    public interface IEvaluator : Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.IDrawable
-    {
-        public abstract float Evaluate(float value);
-    }
-
-    [UnityEngine.CreateAssetMenu(fileName = @"NewSimpleEvaluator", menuName = @"Live Capture/ARKit Face Capture/Evaluator/Simple", order = 0)] public class SimpleEvaluator : Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.EvaluatorPreset
-    {
-        public virtual Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.IEvaluator evaluator { get; }
-        public SimpleEvaluator() {}
-        public class Impl : Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.IDrawable, Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.IEvaluator
-        {
-            public Impl() {}
-            public virtual float Evaluate(float value);
-            public virtual float GetHeight();
-            public virtual void OnGUI(UnityEngine.Rect rect);
-        }
     }
 }

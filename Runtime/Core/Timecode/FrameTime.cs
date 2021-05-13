@@ -17,12 +17,12 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The number of the frame in the sequence.
         /// </summary>
-        public int frameNumber => m_FrameNumber;
+        public int FrameNumber => m_FrameNumber;
 
         /// <summary>
         /// The time within the frame.
         /// </summary>
-        public Subframe subframe => m_Subframe;
+        public Subframe Subframe => m_Subframe;
 
         /// <summary>
         /// Creates a new <see cref="FrameTime"/> instance.
@@ -42,9 +42,9 @@ namespace Unity.LiveCapture
         /// <param name="subframeResolution">The number of possible subframe values in the frame. If this value is not greater than zero,
         /// the subframe value is treated as zero.</param>
         /// <returns>A new <see cref="FrameTime"/> that represents the given frame time.</returns>
-        public static FrameTime FromFrameTime(double frameTime, int subframeResolution = Subframe.k_DefaultResolution)
+        public static FrameTime FromFrameTime(double frameTime, int subframeResolution = Subframe.DefaultResolution)
         {
-            var maxTime = int.MaxValue + (double)new Subframe(Subframe.k_MaxResolution, Subframe.k_MaxResolution);
+            var maxTime = int.MaxValue + (double)new Subframe(Subframe.MaxResolution, Subframe.MaxResolution);
             frameTime = Math.Max(Math.Min(frameTime, maxTime), int.MinValue);
 
             return FromFrameTimeChecked(frameTime, subframeResolution);
@@ -76,9 +76,9 @@ namespace Unity.LiveCapture
         /// A new <see cref="FrameTime"/> that represents the given time, or <see langword="default"/>
         /// if <paramref name="frameRate"/> is invalid.
         /// </returns>
-        public static FrameTime FromSeconds(FrameRate frameRate, double time, int subframeResolution = Subframe.k_DefaultResolution)
+        public static FrameTime FromSeconds(FrameRate frameRate, double time, int subframeResolution = Subframe.DefaultResolution)
         {
-            return frameRate.isValid ? FromFrameTime(time * frameRate.AsDouble(), subframeResolution) : default;
+            return frameRate.IsValid ? FromFrameTime(time * frameRate.AsDouble(), subframeResolution) : default;
         }
 
         /// <summary>
@@ -87,7 +87,7 @@ namespace Unity.LiveCapture
         /// <returns>A <see cref="FrameTime"/> with no subframe component.</returns>
         public FrameTime Floor()
         {
-            var subframe = new Subframe(0, m_Subframe.resolution);
+            var subframe = new Subframe(0, m_Subframe.Resolution);
             return new FrameTime(m_FrameNumber, subframe);
         }
 
@@ -97,9 +97,9 @@ namespace Unity.LiveCapture
         /// <returns>A <see cref="FrameTime"/> with no subframe component.</returns>
         public FrameTime Ceil()
         {
-            var subframe = new Subframe(0, m_Subframe.resolution);
+            var subframe = new Subframe(0, m_Subframe.Resolution);
 
-            if (m_Subframe.subframe == 0)
+            if (m_Subframe.Value == 0)
             {
                 return new FrameTime(m_FrameNumber, subframe);
             }
@@ -120,9 +120,9 @@ namespace Unity.LiveCapture
         /// <returns>A <see cref="FrameTime"/> with no subframe component.</returns>
         public FrameTime Round()
         {
-            var subframe = new Subframe(0, m_Subframe.resolution);
+            var subframe = new Subframe(0, m_Subframe.Resolution);
 
-            if (m_Subframe.subframe <= (m_Subframe.resolution / 2))
+            if (m_Subframe.Value <= (m_Subframe.Resolution / 2))
             {
                 return new FrameTime(m_FrameNumber, subframe);
             }
@@ -144,7 +144,7 @@ namespace Unity.LiveCapture
         /// </returns>
         public double ToSeconds(FrameRate frameRate)
         {
-            return frameRate.isValid ? (double)this * frameRate.frameInterval : default;
+            return frameRate.IsValid ? (double)this * frameRate.FrameInterval : default;
         }
 
         /// <summary>
@@ -230,12 +230,12 @@ namespace Unity.LiveCapture
         /// <returns>The maximum time in seconds, or <see langword="default"/> if <paramref name="frameRate"/> is invalid.</returns>
         public static double MaxRepresentableSeconds(FrameRate frameRate)
         {
-            if (!frameRate.isValid)
+            if (!frameRate.IsValid)
             {
                 return default;
             }
 
-            var maxSubframe = new Subframe(Subframe.k_MaxResolution, Subframe.k_MaxResolution);
+            var maxSubframe = new Subframe(Subframe.MaxResolution, Subframe.MaxResolution);
             return new FrameTime(int.MaxValue, maxSubframe).ToSeconds(frameRate);
         }
 
@@ -254,7 +254,7 @@ namespace Unity.LiveCapture
         /// by the <see cref="FrameTime"/> type.</exception>
         public static FrameTime Remap(FrameTime frameTime, FrameRate srcRate, FrameRate dstRate)
         {
-            if (!srcRate.isValid || !dstRate.isValid)
+            if (!srcRate.IsValid || !dstRate.IsValid)
             {
                 return default;
             }
@@ -263,11 +263,11 @@ namespace Unity.LiveCapture
                 return frameTime;
             }
 
-            var numerator = (long)dstRate.numerator * srcRate.denominator;
-            var denominator = (long)dstRate.denominator * srcRate.numerator;
+            var numerator = (long)dstRate.Numerator * srcRate.Denominator;
+            var denominator = (long)dstRate.Denominator * srcRate.Numerator;
             var conversionRate = (double)numerator / denominator;
 
-            return FromFrameTimeChecked((double)frameTime * conversionRate, frameTime.m_Subframe.resolution);
+            return FromFrameTimeChecked((double)frameTime * conversionRate, frameTime.m_Subframe.Resolution);
         }
 
         /// <summary>
@@ -349,12 +349,12 @@ namespace Unity.LiveCapture
         {
             // If one of the subframe resolutions is a multiple of the other other, we can produce an exact result.
             // Otherwise, we compute the best approximate result with the larger resolution.
-            var aRes = a.m_Subframe.resolution;
-            var bRes = b.m_Subframe.resolution;
+            var aRes = a.m_Subframe.Resolution;
+            var bRes = b.m_Subframe.Resolution;
 
             if (aRes % bRes == 0)
             {
-                var totalSubframes = a.m_Subframe.subframe + (b.m_Subframe.subframe * (aRes / bRes));
+                var totalSubframes = a.m_Subframe.Value + (b.m_Subframe.Value * (aRes / bRes));
                 var subframes = totalSubframes % aRes;
                 var extraFrames = totalSubframes / aRes;
                 int frameNumber;
@@ -368,7 +368,7 @@ namespace Unity.LiveCapture
             }
             if (bRes % aRes == 0)
             {
-                var totalSubframes = (a.m_Subframe.subframe * (bRes / aRes)) + b.m_Subframe.subframe;
+                var totalSubframes = (a.m_Subframe.Value * (bRes / aRes)) + b.m_Subframe.Value;
                 var subframes = totalSubframes % bRes;
                 var extraFrames = totalSubframes / bRes;
                 int frameNumber;
@@ -415,12 +415,12 @@ namespace Unity.LiveCapture
         {
             // If one of the subframe resolutions is a multiple of the other other, we can produce an exact result.
             // Otherwise, we compute the best approximate result with the larger resolution.
-            var aRes = a.m_Subframe.resolution;
-            var bRes = b.m_Subframe.resolution;
+            var aRes = a.m_Subframe.Resolution;
+            var bRes = b.m_Subframe.Resolution;
 
             if (aRes % bRes == 0)
             {
-                var subframes = a.m_Subframe.subframe - (b.m_Subframe.subframe * (aRes / bRes));
+                var subframes = a.m_Subframe.Value - (b.m_Subframe.Value * (aRes / bRes));
                 var extraFrames = 0;
 
                 if (subframes < 0)
@@ -440,7 +440,7 @@ namespace Unity.LiveCapture
             }
             if (bRes % aRes == 0)
             {
-                var subframes = (a.m_Subframe.subframe * (bRes / aRes)) - b.m_Subframe.subframe;
+                var subframes = (a.m_Subframe.Value * (bRes / aRes)) - b.m_Subframe.Value;
                 var extraFrames = 0;
 
                 if (subframes < 0)

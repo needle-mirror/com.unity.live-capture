@@ -7,11 +7,11 @@ namespace Unity.LiveCapture.Networking.Discovery
     /// A struct that contains information about a server instance.
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
-    public struct ServerData : IEquatable<ServerData>
+    struct ServerData : IEquatable<ServerData>
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Constants.k_StringMaxLength + 1)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Constants.StringMaxLength + 1)]
         string m_ProductName;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Constants.k_StringMaxLength + 1)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Constants.StringMaxLength + 1)]
         string m_InstanceName;
 
         Guid m_Id;
@@ -20,17 +20,17 @@ namespace Unity.LiveCapture.Networking.Discovery
         /// <summary>
         /// The name of the server application.
         /// </summary>
-        public string productName => m_ProductName;
+        public string ProductName => m_ProductName;
 
         /// <summary>
         /// The display name of the server instance.
         /// </summary>
-        public string instanceName => m_InstanceName;
+        public string InstanceName => m_InstanceName;
 
         /// <summary>
         /// The unique identifier of the server instance.
         /// </summary>
-        public Guid id => m_Id;
+        public Guid ID => m_Id;
 
         /// <summary>
         /// Gets the version of the server instance.
@@ -48,7 +48,7 @@ namespace Unity.LiveCapture.Networking.Discovery
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="productName"/>, <paramref name="instanceName"/>
         /// or <paramref name="version"/> is null.</exception>
         /// <exception cref="ArgumentException">Thrown if <paramref name="productName"/> or <paramref name="instanceName"/>
-        /// exceeds <see cref="Constants.k_StringMaxLength"/> characters in length.</exception>
+        /// exceeds <see cref="Constants.StringMaxLength"/> characters in length.</exception>
         public ServerData(string productName, string instanceName, Guid id, Version version)
         {
             if (productName == null)
@@ -58,10 +58,10 @@ namespace Unity.LiveCapture.Networking.Discovery
             if (version == null)
                 throw new ArgumentNullException(nameof(version));
 
-            if (productName.Length > Constants.k_StringMaxLength)
-                throw new ArgumentException($"String length of {productName.Length} exceeds maximum ({Constants.k_StringMaxLength} characters).", nameof(productName));
-            if (instanceName.Length > Constants.k_StringMaxLength)
-                throw new ArgumentException($"String length of {instanceName.Length} exceeds maximum ({Constants.k_StringMaxLength} characters).", nameof(instanceName));
+            if (productName.Length > Constants.StringMaxLength)
+                throw new ArgumentException($"String length of {productName.Length} exceeds maximum ({Constants.StringMaxLength} characters).", nameof(productName));
+            if (instanceName.Length > Constants.StringMaxLength)
+                throw new ArgumentException($"String length of {instanceName.Length} exceeds maximum ({Constants.StringMaxLength} characters).", nameof(instanceName));
 
             m_ProductName = productName;
             m_InstanceName = instanceName;

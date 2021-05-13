@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     /// <summary>
     /// A property drawer for flags enums. Does not block the main thread.
@@ -58,10 +58,10 @@ namespace Unity.LiveCapture
             {
                 k_TmpDisplayedEnumValues.Add(new EnumValue
                 {
-                    name = enumNames[i],
-                    displayName = enumDisplayNames[i],
-                    index = i - startIndex,
-                    selected = IsSelected(property.intValue, i - startIndex)
+                    Name = enumNames[i],
+                    DisplayName = enumDisplayNames[i],
+                    Index = i - startIndex,
+                    Selected = IsSelected(property.intValue, i - startIndex)
                 });
             }
 
@@ -76,9 +76,9 @@ namespace Unity.LiveCapture
             for (var i = 0; i != enumValues.Count; ++i)
             {
                 var entry = enumValues[i];
-                if (entry.newSelected)
+                if (entry.NewSelected)
                 {
-                    intValue |= 1 << entry.index;
+                    intValue |= 1 << entry.Index;
                 }
             }
 

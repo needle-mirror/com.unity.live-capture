@@ -2,7 +2,7 @@
 
 ## App
 
-Install the Virtual Camera app [via Test Flight](installing-app.md).
+Install the Face Capture app [via Test Flight](setup-installing-app.md).
 
 ### Tracking tips
 
@@ -44,10 +44,10 @@ There are basic sample characters you can access by opening the **Package Manage
 9. To drive head movement, assign the character's head transform to the **Head** field
 10. Configure how the head is driven.
 
-It is recommended that you do not drive head movement directly. 
+It is recommended that you do not drive head movement directly.
 
-* If you are driving movement for an entire character using a full mocap setup, use the data from your body tracking solution to get head movement. 
-* For best results, use a **Constraint** component from the [Animation Rigging](https://docs.unity3d.com/Packages/com.unity.animation.rigging@1.0/manual/index.html) package to more realistically drive head movement accounting for neck bone rotation. 
+* If you are driving movement for an entire character using a full mocap setup, use the data from your body tracking solution to get head movement.
+* For best results, use a **Constraint** component from the [Animation Rigging](https://docs.unity3d.com/Packages/com.unity.animation.rigging@1.0/manual/index.html) package to more realistically drive head movement accounting for neck bone rotation.
 
 **Head Smoothing** The amount of smoothing to apply to head movement. It can help reduce jitter in the face capture, but it will also smooth out fast motions.
 
@@ -61,4 +61,4 @@ The system will attempt to auto-match ARKit input values to blendshapes using th
 
 ![Blendshape Built-in Evaluator](images/face-capture-mapper-blendshape.png)
 
-13. This inspector also exposes properties used to process the incoming value before applying it to the blendshape. Learn more about them in the [Mapping Evaluator section](face-capture-getting-started.md).
+13. This inspector also exposes properties used to process the incoming value before applying it to the blendshape. Learn more about them in the [Mapping Evaluator section](face-capture-mapping-evaluator.md).

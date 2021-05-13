@@ -55,8 +55,6 @@ namespace Unity.LiveCapture.VideoStreaming.Server
         // Returns a list of NAL Units (with no 00 00 00 01 header and with no Size header)
         private List<byte[]> Process_H265_RTP_Frame(List<byte[]> rtp_payloads)
         {
-            Console.WriteLine("RTP Data comprised of " + rtp_payloads.Count + " rtp packets");
-
             List<byte[]> nal_units = new List<byte[]>(); // Stores the NAL units for a Video Frame. May be more than one NAL unit in a video frame.
 
             for (int payload_index = 0; payload_index < rtp_payloads.Count; payload_index++)
@@ -92,7 +90,6 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 // 34=PPS
                 if (payload_header_type != 48 && payload_header_type != 49)
                 {
-                    Console.WriteLine("Single NAL");
                     single++;
 
                     //TODO - Handle DONL
@@ -102,7 +99,6 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 // Aggregation Packet
                 else if (payload_header_type == 48)
                 {
-                    Console.WriteLine("Aggregation Packet");
                     agg++;
 
                     // RTP packet contains multiple NALs, each with a 16 bit header
@@ -134,15 +130,12 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 // Fragmentation Unit
                 else if (payload_header_type == 49)
                 {
-                    Console.WriteLine("Fragmentation Unit");
                     frag++;
 
                     // Parse Fragmentation Unit Header
                     int fu_header_s = (rtp_payloads[payload_index][2] >> 7) & 0x01;  // start marker
                     int fu_header_e = (rtp_payloads[payload_index][2] >> 6) & 0x01;  // end marker
                     int fu_header_type = (rtp_payloads[payload_index][2] >> 0) & 0x3F; // fu type
-
-                    Console.WriteLine("Frag FU-A s=" + fu_header_s + "e=" + fu_header_e);
 
                     // Check Start and End flags
                     if (fu_header_s == 1 && fu_header_e == 0)
@@ -213,9 +206,6 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                     Console.WriteLine("Unknown Payload Header Type = " + payload_header_type);
                 }
             }
-
-            // Output some statistics
-            Console.WriteLine("Single=" + single + " Agg=" + agg + " Frag=" + frag);
 
             // Output all the NALs that form one RTP Frame (one frame of video)
             return nal_units;

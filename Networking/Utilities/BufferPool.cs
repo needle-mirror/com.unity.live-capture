@@ -7,7 +7,7 @@ namespace Unity.LiveCapture.Networking
     /// <summary>
     /// A thread-safe pool of byte buffers. Optimized to handle large buffers with greatly varying sizes.
     /// </summary>
-    public class BufferPool
+    class BufferPool
     {
         readonly ConcurrentBag<byte[]>[] m_Pools;
         readonly int m_MinBufferSize;

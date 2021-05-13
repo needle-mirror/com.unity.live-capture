@@ -8,7 +8,7 @@ namespace Unity.LiveCapture
 
         public void AddReplacement(string pattern, string replacement)
         {
-            m_Replacements.Add(pattern, replacement);
+            m_Replacements[pattern] = replacement;
         }
 
         public string Format(string name)

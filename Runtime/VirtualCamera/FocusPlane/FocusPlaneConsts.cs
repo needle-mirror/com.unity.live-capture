@@ -4,8 +4,8 @@ namespace Unity.LiveCapture.VirtualCamera
 {
     static class FocusPlaneConsts
     {
-        internal const string k_RenderProfilingSamplerLabel = "Focus Plane Render";
-        internal const string k_ComposePlaneProfilingSamplerLabel = "Focus Plane Compose";
-        internal static readonly int k_InputTextureProperty = Shader.PropertyToID("_InputTexture");
+        internal const string RenderProfilingSamplerLabel = "Focus Plane Render";
+        internal const string ComposePlaneProfilingSamplerLabel = "Focus Plane Compose";
+        internal static readonly int InputTextureProperty = Shader.PropertyToID("_InputTexture");
     }
 }

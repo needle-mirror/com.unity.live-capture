@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     static class MenuUtility
     {
@@ -22,10 +22,10 @@ namespace Unity.LiveCapture
 
             foreach (var(member, attribute) in attributes
                      .Select(tuple => (tuple.Item1, tuple.Item2.First()))
-                     .OrderBy(tuple => tuple.Item2.priority))
+                     .OrderBy(tuple => tuple.Item2.Priority))
             {
                 // add separators based on the priority, matching how the MenuItem attribute works
-                var subMenu = attribute.itemName.Substring(0, Mathf.Max(0, attribute.itemName.LastIndexOf('/')));
+                var subMenu = attribute.ItemName.Substring(0, Mathf.Max(0, attribute.ItemName.LastIndexOf('/')));
 
                 if (!subMenuMinPriorities.ContainsKey(subMenu))
                 {
@@ -34,7 +34,7 @@ namespace Unity.LiveCapture
                     {
                         var preceding = subMenuMinPriorities.Select(x => (x.Value, x)).Max().x;
 
-                        if (attribute.priority - preceding.Value > 10)
+                        if (attribute.Priority - preceding.Value > 10)
                         {
                             var sharedCharCount = subMenu.Zip(preceding.Key, (c1, c2) => c1 == c2).TakeWhile(b => b).Count();
                             var sharedPath = subMenu.Substring(0, sharedCharCount) + "/";
@@ -42,18 +42,18 @@ namespace Unity.LiveCapture
                         }
                     }
 
-                    subMenuMinPriorities[subMenu] = attribute.priority;
+                    subMenuMinPriorities[subMenu] = attribute.Priority;
                 }
-                else if (attribute.priority - subMenuMaxPriorities[subMenu] > 10)
+                else if (attribute.Priority - subMenuMaxPriorities[subMenu] > 10)
                 {
                     // separate items in the same submenu
                     menu.AddSeparator(subMenu == string.Empty ? string.Empty : subMenu + "/");
                 }
 
-                subMenuMaxPriorities[subMenu] = attribute.priority;
+                subMenuMaxPriorities[subMenu] = attribute.Priority;
 
                 // add the item that creates the device
-                var item = new GUIContent(attribute.itemName);
+                var item = new GUIContent(attribute.ItemName);
 
                 if (isEnabled(member))
                 {

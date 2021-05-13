@@ -10,7 +10,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// </summary>
     class UrpFocusPlaneRenderPass : ScriptableRenderPass
     {
-        public RenderTargetIdentifier source;
+        public RenderTargetIdentifier Source;
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
@@ -18,12 +18,12 @@ namespace Unity.LiveCapture.VirtualCamera
             if (camera.cameraType == CameraType.SceneView)
                 return;
 
-            if (FocusPlaneMap.instance.TryGetInstance(camera, out var focusPlane))
+            if (FocusPlaneMap.Instance.TryGetInstance(camera, out var focusPlane))
             {
                 if (focusPlane.isActiveAndEnabled && focusPlane.TryGetRenderTarget(out RenderTexture target))
                 {
-                    CommandBuffer cmd = CommandBufferPool.Get(FocusPlaneConsts.k_RenderProfilingSamplerLabel);
-                    Blit(cmd, source, target, focusPlane.renderMaterial);
+                    CommandBuffer cmd = CommandBufferPool.Get(FocusPlaneConsts.RenderProfilingSamplerLabel);
+                    Blit(cmd, Source, target, focusPlane.RenderMaterial);
                     context.ExecuteCommandBuffer(cmd);
                     CommandBufferPool.Release(cmd);
                 }

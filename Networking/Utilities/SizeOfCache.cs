@@ -7,17 +7,17 @@ namespace Unity.LiveCapture.Networking
     /// Stores the marshalled size of a struct.
     /// </summary>
     /// <typeparam name="T">The type of struct to get the size of.</typeparam>
-    static class SizeOfCache<T> where T : struct
+    class SizeOfCache<T> where T : struct
     {
         /// <summary>
         /// The size of the struct in bytes.
         /// </summary>
-        public static int size { get; }
+        public static int Size { get; }
 
         static SizeOfCache()
         {
             var t = typeof(T).IsEnum ? Enum.GetUnderlyingType(typeof(T)) : typeof(T);
-            size = Marshal.SizeOf(t);
+            Size = Marshal.SizeOf(t);
         }
     }
 }

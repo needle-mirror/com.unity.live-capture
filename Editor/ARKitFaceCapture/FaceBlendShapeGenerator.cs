@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using UnityEditor;
 
-namespace Unity.LiveCapture.ARKitFaceCapture
+namespace Unity.LiveCapture.ARKitFaceCapture.Editor
 {
     /// <summary>
     /// Generates the fields for <see cref="FaceBlendShapePose"/> from each enum value in <see cref="FaceBlendShape"/>.
@@ -44,10 +44,10 @@ namespace {typeof(FaceBlendShapePose).Namespace}
         /// <summary>
         /// The number of supported blend shapes.
         /// </summary>
-        public const int shapeCount = {FaceBlendShapePose.shapes.Length};
+        public const int ShapeCount = {FaceBlendShapePose.Shapes.Length};
 ");
 
-            foreach (var name in FaceBlendShapePose.shapes)
+            foreach (var name in FaceBlendShapePose.Shapes)
             {
                 generator.AppendLine($"        /// <inheritdoc cref=\"{nameof(FaceBlendShape)}.{name}\"/>");
                 generator.AppendLine($"        public float {name};");
@@ -59,14 +59,14 @@ namespace {typeof(FaceBlendShapePose).Namespace}
             switch (index)
             {{");
 
-            foreach (var name in FaceBlendShapePose.shapes)
+            foreach (var name in FaceBlendShapePose.Shapes)
             {
                 generator.AppendLine($"                case {(int)name}: return {name};");
             }
 
             generator.AppendLine(
                 $@"            }}
-            throw new IndexOutOfRangeException($""Blend shape index {{index}} out of valid range [0, {{shapeCount}}]."");
+            throw new IndexOutOfRangeException($""Blend shape index {{index}} out of valid range [0, {{ShapeCount}}]."");
         }}
 
         void SetValue(int index, float value)
@@ -74,24 +74,26 @@ namespace {typeof(FaceBlendShapePose).Namespace}
             switch (index)
             {{");
 
-            foreach (var name in FaceBlendShapePose.shapes)
+            foreach (var name in FaceBlendShapePose.Shapes)
             {
                 generator.AppendLine($"                case {(int)name}: {name} = value; return;");
             }
 
             generator.AppendLine(
                 $@"            }}
-            throw new IndexOutOfRangeException($""Blend shape index {{index}} out of valid range [0, {{shapeCount}}]."");
+            throw new IndexOutOfRangeException($""Blend shape index {{index}} out of valid range [0, {{ShapeCount}}]."");
         }}
 
         /// <summary>
         /// Horizontally mirrors the face pose.
         /// </summary>
-        /// <remarks>ARKit's ARKit's default blend shapes are set so that 'right' would be the right side when viewing from the front.</remarks>
+        /// <remarks>
+        /// ARKit's default blend shapes are set so that 'right' indicates the right side of the face when viewing from the front.
+        /// </remarks>
         public void FlipHorizontally()
         {{");
 
-            foreach (var name in FaceBlendShapePose.shapes)
+            foreach (var name in FaceBlendShapePose.Shapes)
             {
                 var str = name.ToString();
 
@@ -104,7 +106,7 @@ namespace {typeof(FaceBlendShapePose).Namespace}
                     generator.AppendLine($"            var temp{name} = {name};");
                 }
             }
-            foreach (var name in FaceBlendShapePose.shapes)
+            foreach (var name in FaceBlendShapePose.Shapes)
             {
                 var str = name.ToString();
 

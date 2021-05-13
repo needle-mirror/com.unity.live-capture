@@ -7,7 +7,7 @@ namespace Unity.LiveCapture.Networking.Discovery
     /// <summary>
     /// A class that announces the availability of a server on the network.
     /// </summary>
-    public class DiscoveryServer : DiscoveryBase
+    class DiscoveryServer : DiscoveryBase
     {
         /// <summary>
         /// The time to wait after sending a discovery broadcast before sending another.
@@ -55,7 +55,7 @@ namespace Unity.LiveCapture.Networking.Discovery
 
             // Create the server discover packet, which consists of the server information followed
             // by the end points clients can connect to.
-            var size = SizeOfCache<ServerData>.size + sizeof(byte) + (uniqueEndPoints.Length * SizeOfCache<EndPointData>.size);
+            var size = SizeOfCache<ServerData>.Size + sizeof(byte) + (uniqueEndPoints.Length * SizeOfCache<EndPointData>.Size);
             m_DiscoveryPacket = CreatePacket(PacketType.Discovery, size, out var offset);
 
             offset = m_DiscoveryPacket.WriteStruct(ref serverConfiguration, offset);
@@ -86,8 +86,8 @@ namespace Unity.LiveCapture.Networking.Discovery
         {
             // Send a message informing clients the server is no longer available
             // so they don't need to wait for the timeout to realize it is lost.
-            var packet = CreatePacket(PacketType.Shutdown, SizeOfCache<ShutdownData>.size, out var offset);
-            packet.WriteStruct(new ShutdownData(m_ServerConfiguration.id), offset);
+            var packet = CreatePacket(PacketType.Shutdown, SizeOfCache<ShutdownData>.Size, out var offset);
+            packet.WriteStruct(new ShutdownData(m_ServerConfiguration.ID), offset);
             Broadcast(packet, true);
         }
 
@@ -103,17 +103,17 @@ namespace Unity.LiveCapture.Networking.Discovery
         /// <inheritdoc />
         protected override void OnDataReceived(byte[] packet, PacketHeader header, int dataSize, int dataOffset)
         {
-            switch (header.type)
+            switch (header.Type)
             {
                 case PacketType.Request:
                 {
-                    if (dataSize != SizeOfCache<RequestData>.size)
+                    if (dataSize != SizeOfCache<RequestData>.Size)
                         return;
 
                     var data = packet.ReadStruct<RequestData>(dataOffset);
 
                     // only consider request packets from a matching product
-                    if (data.productName != m_ServerConfiguration.productName)
+                    if (data.ProductName != m_ServerConfiguration.ProductName)
                         return;
 
                     BroadcastDiscovery();

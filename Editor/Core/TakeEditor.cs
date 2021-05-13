@@ -3,39 +3,45 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.Timeline;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     [CustomEditor(typeof(Take), true)]
-    class TakeEditor : Editor
+    class TakeEditor : UnityEditor.Editor
     {
         static class Contents
         {
-            public static string unknown = "Unknow";
-            public static string overrideStr = "Override";
-            public static GUIContent frameRate = EditorGUIUtility.TrTextContent("Frame Rate", "The frame rate used during the recording.");
-            public static GUIContent sceneNumber = EditorGUIUtility.TrTextContent("Scene Number", "The number associated with the scene where the take was captured.");
-            public static GUIContent shotName = EditorGUIUtility.TrTextContent("Shot Name", "The name of the shot where the take was captured.");
-            public static GUIContent takeNumber = EditorGUIUtility.TrTextContent("Take Number", "The number associated with the take.");
-            public static GUIContent description = EditorGUIUtility.TrTextContent("Description", "The description of the shot where the take was captured.");
-            public static GUIContent metadata = EditorGUIUtility.TrTextContent("Metadata", "Metadata associated with the recorded contents.");
+            public static string Unknown = "Unknown";
+            public static string OverrideStr = "Override";
+            public static GUIContent FrameRate = EditorGUIUtility.TrTextContent("Frame Rate", "The frame rate used during the recording.");
+            public static GUIContent SceneNumber = EditorGUIUtility.TrTextContent("Scene Number", "The number associated with the scene where the take was captured.");
+            public static GUIContent ShotName = EditorGUIUtility.TrTextContent("Shot Name", "The name of the shot where the take was captured.");
+            public static GUIContent TakeNumber = EditorGUIUtility.TrTextContent("Take Number", "The number associated with the take.");
+            public static GUIContent Description = EditorGUIUtility.TrTextContent("Description", "The description of the shot where the take was captured.");
+            public static GUIContent Rating = EditorGUIUtility.TrTextContent("Rating", "The rating of the take.");
+            public static GUIContent Screenshot = EditorGUIUtility.TrTextContent("Screenshot", "The screenshot at the beginning of the take.");
+            public static GUIContent Metadata = EditorGUIUtility.TrTextContent("Metadata", "Metadata associated with the recorded contents.");
         }
 
-        SerializedProperty m_SceneNumberProp;
-        SerializedProperty m_ShotNameProp;
-        SerializedProperty m_TakeNumberProp;
-        SerializedProperty m_DescriptionProp;
-        SerializedProperty m_FrameRateProp;
-        SerializedProperty m_MetadataEntriesProp;
+        SerializedProperty m_SceneNumber;
+        SerializedProperty m_ShotName;
+        SerializedProperty m_TakeNumber;
+        SerializedProperty m_Description;
+        SerializedProperty m_Rating;
+        SerializedProperty m_FrameRate;
+        SerializedProperty m_Screenshot;
+        SerializedProperty m_MetadataEntries;
         Dictionary<TrackAsset, string> m_NameCache = new Dictionary<TrackAsset, string>();
 
         void OnEnable()
         {
-            m_SceneNumberProp = serializedObject.FindProperty("m_SceneNumber");
-            m_ShotNameProp = serializedObject.FindProperty("m_ShotName");
-            m_TakeNumberProp = serializedObject.FindProperty("m_TakeNumber");
-            m_DescriptionProp = serializedObject.FindProperty("m_Description");
-            m_FrameRateProp = serializedObject.FindProperty("m_FrameRate");
-            m_MetadataEntriesProp = serializedObject.FindProperty("m_MetadataEntries");
+            m_SceneNumber = serializedObject.FindProperty("m_SceneNumber");
+            m_ShotName = serializedObject.FindProperty("m_ShotName");
+            m_TakeNumber = serializedObject.FindProperty("m_TakeNumber");
+            m_Description = serializedObject.FindProperty("m_Description");
+            m_Rating = serializedObject.FindProperty("m_Rating");
+            m_FrameRate = serializedObject.FindProperty("m_FrameRate");
+            m_Screenshot = serializedObject.FindProperty("m_Screenshot");
+            m_MetadataEntries = serializedObject.FindProperty("m_MetadataEntries");
 
             BuildCache();
         }
@@ -64,15 +70,18 @@ namespace Unity.LiveCapture
         {
             serializedObject.Update();
 
+            EditorGUILayout.PropertyField(m_Rating, Contents.Rating);
+
             using (new EditorGUI.DisabledGroupScope(true))
             {
-                EditorGUILayout.PropertyField(m_FrameRateProp, Contents.frameRate);
-                EditorGUILayout.PropertyField(m_SceneNumberProp, Contents.sceneNumber);
-                EditorGUILayout.PropertyField(m_ShotNameProp, Contents.shotName);
-                EditorGUILayout.PropertyField(m_TakeNumberProp, Contents.takeNumber);
-                EditorGUILayout.PropertyField(m_DescriptionProp, Contents.description);
+                EditorGUILayout.PropertyField(m_FrameRate, Contents.FrameRate);
+                EditorGUILayout.PropertyField(m_SceneNumber, Contents.SceneNumber);
+                EditorGUILayout.PropertyField(m_ShotName, Contents.ShotName);
+                EditorGUILayout.PropertyField(m_TakeNumber, Contents.TakeNumber);
+                EditorGUILayout.PropertyField(m_Description, Contents.Description);
+                EditorGUILayout.PropertyField(m_Screenshot, Contents.Screenshot);
 
-                DrawMetadata(m_MetadataEntriesProp);
+                DrawMetadata(m_MetadataEntries);
             }
 
             serializedObject.ApplyModifiedProperties();
@@ -80,9 +89,9 @@ namespace Unity.LiveCapture
 
         void DrawMetadata(SerializedProperty metadataEntriesProp)
         {
-            metadataEntriesProp.isExpanded = EditorGUILayout.Foldout(metadataEntriesProp.isExpanded, Contents.metadata);
+            metadataEntriesProp.isExpanded = EditorGUILayout.Foldout(metadataEntriesProp.isExpanded, Contents.Metadata);
 
-            if (m_MetadataEntriesProp.isExpanded)
+            if (m_MetadataEntries.isExpanded)
             {
                 using var _ = new EditorGUI.IndentLevelScope();
 
@@ -101,7 +110,7 @@ namespace Unity.LiveCapture
 
                         if (!m_NameCache.TryGetValue(parent, out actorName))
                         {
-                            actorName = Contents.unknown;
+                            actorName = Contents.Unknown;
                         }
                     }
 
@@ -109,7 +118,7 @@ namespace Unity.LiveCapture
 
                     if (isOverride)
                     {
-                        overrideStr = $" ({Contents.overrideStr})";
+                        overrideStr = $" ({Contents.OverrideStr})";
                     }
 
                     var label = new GUIContent($"{track.name}{overrideStr} - {actorName}");

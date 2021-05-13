@@ -16,7 +16,7 @@ namespace Unity.LiveCapture.VirtualCamera
             if (baseCamera.cameraType == CameraType.SceneView)
                 return;
 
-            if (FocusPlaneMap.instance.TryGetInstance(baseCamera, out var focusPlane))
+            if (FocusPlaneMap.Instance.TryGetInstance(baseCamera, out var focusPlane))
             {
                 if (focusPlane.isActiveAndEnabled)
                 {
@@ -26,7 +26,7 @@ namespace Unity.LiveCapture.VirtualCamera
                     if (focusPlane.TryGetRenderTarget(out RTHandle targetHandle))
                     {
                         CoreUtils.SetRenderTarget(ctx.cmd, targetHandle);
-                        CoreUtils.DrawFullScreen(ctx.cmd, focusPlane.renderMaterial);
+                        CoreUtils.DrawFullScreen(ctx.cmd, focusPlane.RenderMaterial);
                     }
                 }
             }

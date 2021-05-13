@@ -5,18 +5,28 @@ using UnityEngine;
 namespace Unity.LiveCapture.VirtualCamera
 {
     /// <summary>
-    /// Contains the the Damping data.
+    /// Contains the damping data.
     /// </summary>
     [Serializable]
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct Damping : IEquatable<Damping>
+    struct Damping : IEquatable<Damping>
     {
+        /// <summary>
+        /// A rig that applies no damping.
+        /// </summary>
+        public static readonly Damping Default = new Damping
+        {
+            Enabled = false,
+            Body = Vector3.one,
+            Aim = 1
+        };
+
         /// <summary>
         /// Enable or disable the damping.
         /// </summary>
         [Tooltip("Enable or disable damping.")]
         [MarshalAs(UnmanagedType.U1)]
-        public bool enabled;
+        public bool Enabled;
 
         /// <summary>
         /// Time in seconds for the camera to reach reach the target position.
@@ -25,7 +35,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// Values should not be negative. Typical values would range between 0 and 3.
         /// </remarks>
         [Tooltip("Time in seconds for the camera to reach reach the target position.")]
-        public Vector3 body;
+        public Vector3 Body;
 
         /// <summary>
         /// Time in seconds for the camera to catch up with the target rotation.
@@ -34,23 +44,13 @@ namespace Unity.LiveCapture.VirtualCamera
         /// Values should not be negative. Typical values would range between 0 and 3.
         /// </remarks>
         [Tooltip("Time in seconds for the camera to catch up with the target rotation.")]
-        public float aim;
-
-        /// <summary>
-        /// A rig that applies no damping.
-        /// </summary>
-        public static readonly Damping Default = new Damping()
-        {
-            enabled = false,
-            body = Vector3.one,
-            aim = 1
-        };
+        public float Aim;
 
         /// <summary>
         /// Determines whether the two specified Damping are equal.
         /// </summary>
-        /// <param name="a"> The first Damping.</param>
-        /// <param name="b"> The second Damping.</param>
+        /// <param name="a">The first Damping.</param>
+        /// <param name="b">The second Damping.</param>
         /// <returns>
         /// true if the specified Damping are equal; otherwise, false.
         /// </returns>
@@ -62,8 +62,8 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// Determines whether the two specified Damping are different.
         /// </summary>
-        /// <param name="a"> The first Damping.</param>
-        /// <param name="b"> The second Damping.</param>
+        /// <param name="a">The first Damping.</param>
+        /// <param name="b">The second Damping.</param>
         /// <returns>
         /// true if the specified Damping are different; otherwise, false.
         /// </returns>
@@ -75,7 +75,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// Determines whether the specified object is equal to the current Damping.
         /// </summary>
-        /// <param name="obj"> The object to compare with the current Damping.</param>
+        /// <param name="obj">The object to compare with the current Damping.</param>
         /// <returns>
         /// true if the specified object is equal to the current Damping; otherwise, false.
         /// </returns>
@@ -87,9 +87,9 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         public bool Equals(Damping other)
         {
-            return enabled == other.enabled &&
-                body == other.body &&
-                aim == other.aim;
+            return Enabled == other.Enabled &&
+                Body == other.Body &&
+                Aim == other.Aim;
         }
 
         /// <summary>
@@ -100,10 +100,10 @@ namespace Unity.LiveCapture.VirtualCamera
         /// </returns>
         public override int GetHashCode()
         {
-            int hashCode = -273304878;
-            hashCode = hashCode * -1521134295 + enabled.GetHashCode();
-            hashCode = hashCode * -1521134295 + body.GetHashCode();
-            hashCode = hashCode * -1521134295 + aim.GetHashCode();
+            var hashCode = -273304878;
+            hashCode = hashCode * -1521134295 + Enabled.GetHashCode();
+            hashCode = hashCode * -1521134295 + Body.GetHashCode();
+            hashCode = hashCode * -1521134295 + Aim.GetHashCode();
             return hashCode;
         }
     }

@@ -10,36 +10,41 @@ using UnityEngine;
 namespace Unity.LiveCapture.Networking
 {
     /// <summary>
-    /// Handles sending and receiving message for a single socket. This class is thread safe.
+    /// Handles sending and receiving message for a single socket.
     /// </summary>
-    public class NetworkSocket : IDisposable
+    /// <remarks>
+    /// This class is thread safe.
+    /// </remarks>
+    class NetworkSocket : IDisposable
     {
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         struct PacketHeader
         {
-            public static readonly int k_Size = Marshal.SizeOf<PacketHeader>();
+            public static readonly int Size = Marshal.SizeOf<PacketHeader>();
 
-            public Guid senderID;
-            public Packet.Type type;
-            public int dataLength;
+            public Guid SenderID;
+            public Packet.Type Type;
+            public int DataLength;
         }
 
         class SendState
         {
-            public Packet packet;
+            public Packet Packet;
         }
 
         class ReceiveState
         {
-            public int messageLength;
-            public int bytesReceived;
+            public int MessageLength;
+            public int BytesReceived;
         }
 
         /// <summary>
-        /// The limit is (2^16 - 1) - 20 byte IP header - 8 byte UDP header. To avoid fragmenting packets
-        /// which increases risk of packet loss, we could enforce packet sizes to be less than the MTU of
-        /// ethernet (1500 bytes) or wifi (2312 bytes).
+        /// The limit is (2^16 - 1) - 20 byte IP header - 8 byte UDP header.
         /// </summary>
+        /// <remarks>
+        /// To avoid fragmenting packets which increases risk of packet loss, we could enforce packet sizes to be less than the MTU of
+        /// ethernet (1500 bytes) or wifi (2312 bytes).
+        /// </remarks>
         const int k_UdpMessageSizeMax = ushort.MaxValue - 20 - 8;
 
         /// <summary>
@@ -67,7 +72,7 @@ namespace Unity.LiveCapture.Networking
         /// <summary>
         /// The address and port the socket is bound to.
         /// </summary>
-        internal Socket socket
+        internal Socket Socket
         {
             get
             {
@@ -81,7 +86,7 @@ namespace Unity.LiveCapture.Networking
         /// <summary>
         /// The address and port the socket is bound to.
         /// </summary>
-        internal IPEndPoint localEndPoint
+        internal IPEndPoint LocalEndPoint
         {
             get
             {
@@ -96,7 +101,7 @@ namespace Unity.LiveCapture.Networking
         /// The remote address and port the socket is communicating with. Will be null
         /// if this socket communicates with many remotes.
         /// </summary>
-        internal IPEndPoint remoteEndPoint
+        internal IPEndPoint RemoteEndPoint
         {
             get
             {
@@ -118,7 +123,7 @@ namespace Unity.LiveCapture.Networking
         /// <summary>
         /// Has the socket been closed.
         /// </summary>
-        public bool isDisposed => m_Disposed;
+        public bool IsDisposed => m_Disposed;
 
         /// <summary>
         /// Creates a new <see cref="NetworkSocket"/> instance.
@@ -227,7 +232,7 @@ namespace Unity.LiveCapture.Networking
                     var queue = remoteMessages.Value;
 
                     while (queue.Count > 0)
-                        queue.Dequeue().message.Dispose();
+                        queue.Dequeue().Message.Dispose();
                 }
 
                 m_ReceivedPackets.Clear();
@@ -245,7 +250,7 @@ namespace Unity.LiveCapture.Networking
 
             lock (m_ConnectionLock)
             {
-                m_RemoteIDToConnection[connection.remote.id] = connection;
+                m_RemoteIDToConnection[connection.Remote.ID] = connection;
                 m_ReceivedPackets.Add(connection, new Queue<Packet>());
             }
         }
@@ -264,13 +269,13 @@ namespace Unity.LiveCapture.Networking
                 // When a new connection is formed to a remote before the previous
                 // connection is deregistered, we need to ensure not to remove the
                 // new connection
-                if (m_RemoteIDToConnection[connection.remote.id] == connection)
-                    m_RemoteIDToConnection.Remove(connection.remote.id);
+                if (m_RemoteIDToConnection[connection.Remote.ID] == connection)
+                    m_RemoteIDToConnection.Remove(connection.Remote.ID);
 
                 if (m_ReceivedPackets.TryGetValue(connection, out var queue))
                 {
                     while (queue.Count > 0)
-                        queue.Dequeue().message.Dispose();
+                        queue.Dequeue().Message.Dispose();
 
                     m_ReceivedPackets.Remove(connection);
                 }
@@ -289,40 +294,40 @@ namespace Unity.LiveCapture.Networking
                 if (m_Disposed)
                     throw new ObjectDisposedException(nameof(NetworkSocket));
 
-                var message = packet.message;
-                var data = message.data;
+                var message = packet.Message;
+                var data = message.Data;
 
                 if (!m_IsTcp)
                 {
-                    var maxLength = k_UdpMessageSizeMax - PacketHeader.k_Size;
+                    var maxLength = k_UdpMessageSizeMax - PacketHeader.Size;
 
                     if (data.Length > maxLength)
                         throw new ArgumentException($"Message is {data.Length} bytes long but messages using {nameof(ChannelType.UnreliableUnordered)} are limited to {maxLength} bytes.");
                 }
 
-                var count = PacketHeader.k_Size + (int)data.Length;
+                var count = PacketHeader.Size + (int)data.Length;
                 var buffer = s_BufferPool.Get(count);
 
                 var header = new PacketHeader
                 {
-                    senderID = m_Network.id,
-                    type = packet.type,
-                    dataLength = (int)data.Length,
+                    SenderID = m_Network.ID,
+                    Type = packet.PacketType,
+                    DataLength = (int)data.Length,
                 };
 
                 buffer.WriteStruct(ref header);
                 data.Seek(0, SeekOrigin.Begin);
-                data.Read(buffer, PacketHeader.k_Size, header.dataLength);
+                data.Read(buffer, PacketHeader.Size, header.DataLength);
 
-                var remote = message.remote;
+                var remote = message.Remote;
                 var endPoint = default(EndPoint);
                 switch (m_ChannelType)
                 {
                     case ChannelType.ReliableOrdered:
-                        endPoint = remote.tcpEndPoint;
+                        endPoint = remote.TcpEndPoint;
                         break;
                     case ChannelType.UnreliableUnordered:
-                        endPoint = remote.udpEndPoint;
+                        endPoint = remote.UdpEndPoint;
                         break;
                 }
 
@@ -340,7 +345,7 @@ namespace Unity.LiveCapture.Networking
                     {
                         s_BufferPool.Release(buffer);
 
-                        packet.message.Dispose();
+                        packet.Message.Dispose();
                     }
                 }
                 else
@@ -353,7 +358,7 @@ namespace Unity.LiveCapture.Networking
                     }
 
                     var state = args.UserToken as SendState;
-                    state.packet = packet;
+                    state.Packet = packet;
 
                     args.SetBuffer(buffer, 0, count);
                     args.RemoteEndPoint = endPoint;
@@ -374,7 +379,7 @@ namespace Unity.LiveCapture.Networking
             }
             catch
             {
-                packet.message.Dispose();
+                packet.Message.Dispose();
                 throw;
             }
         }
@@ -392,7 +397,7 @@ namespace Unity.LiveCapture.Networking
                 s_BufferPool.Release(args.Buffer);
                 s_SendArgsPool.Add(args);
 
-                state.packet.message.Dispose();
+                state.Packet.Message.Dispose();
             }
         }
 
@@ -460,7 +465,7 @@ namespace Unity.LiveCapture.Networking
             lock (m_ConnectionLock)
             {
                 if (!m_ReceivedPackets.TryGetValue(connection, out var queue))
-                    throw new ArgumentException($"Connection to remote {connection.remote} is not registered.", nameof(connection));
+                    throw new ArgumentException($"Connection to remote {connection.Remote} is not registered.", nameof(connection));
 
                 while (queue.Count > 0)
                     packets.Enqueue(queue.Dequeue());
@@ -473,13 +478,13 @@ namespace Unity.LiveCapture.Networking
 
             // clear the state to prepare for receiving a new message
             var state = args.UserToken as ReceiveState;
-            state.bytesReceived = 0;
-            state.messageLength = -1;
+            state.BytesReceived = 0;
+            state.MessageLength = -1;
 
             // Ensure we don't read past the header when using a stream protocol until we
             // know how much data to expect. This way we don't read into any following messages.
             if (m_IsTcp)
-                args.SetBuffer(args.Buffer, 0, PacketHeader.k_Size);
+                args.SetBuffer(args.Buffer, 0, PacketHeader.Size);
 
             ContinueReceive(args);
         }
@@ -540,30 +545,30 @@ namespace Unity.LiveCapture.Networking
                     // We must not assume the entire message has arrived yet, messages can be received in fragments
                     // of any size when using a stream socket type. First we need to receive the header so we know
                     // how much following data to read.
-                    state.bytesReceived += args.BytesTransferred;
+                    state.BytesReceived += args.BytesTransferred;
 
-                    if (state.bytesReceived != state.messageLength)
+                    if (state.BytesReceived != state.MessageLength)
                     {
-                        if (state.bytesReceived < PacketHeader.k_Size)
+                        if (state.BytesReceived < PacketHeader.Size)
                         {
-                            args.SetBuffer(args.Buffer, state.bytesReceived, PacketHeader.k_Size - state.bytesReceived);
+                            args.SetBuffer(args.Buffer, state.BytesReceived, PacketHeader.Size - state.BytesReceived);
                         }
-                        else if (state.messageLength < 0)
+                        else if (state.MessageLength < 0)
                         {
-                            state.messageLength = PacketHeader.k_Size + args.Buffer.ReadStruct<PacketHeader>().dataLength;
+                            state.MessageLength = PacketHeader.Size + args.Buffer.ReadStruct<PacketHeader>().DataLength;
 
                             var buffer = args.Buffer;
-                            if (buffer.Length < state.messageLength)
+                            if (buffer.Length < state.MessageLength)
                             {
-                                buffer = new byte[state.messageLength];
-                                Buffer.BlockCopy(args.Buffer, 0, buffer, 0, state.bytesReceived);
+                                buffer = new byte[state.MessageLength];
+                                Buffer.BlockCopy(args.Buffer, 0, buffer, 0, state.BytesReceived);
                             }
 
-                            args.SetBuffer(buffer, state.bytesReceived, state.messageLength - state.bytesReceived);
+                            args.SetBuffer(buffer, state.BytesReceived, state.MessageLength - state.BytesReceived);
                         }
                         else
                         {
-                            args.SetBuffer(args.Buffer, state.bytesReceived, state.messageLength - state.bytesReceived);
+                            args.SetBuffer(args.Buffer, state.BytesReceived, state.MessageLength - state.BytesReceived);
                         }
 
                         ContinueReceive(args);
@@ -573,36 +578,36 @@ namespace Unity.LiveCapture.Networking
 
                 var header = args.Buffer.ReadStruct<PacketHeader>();
 
-                if (header.type == Packet.Type.Initialization)
+                if (header.Type == Packet.Type.Initialization)
                 {
                     if (m_OnInitialized == null)
                         throw new Exception($"An initialization message was received but no initialization function was provided.");
 
-                    var offset = PacketHeader.k_Size;
+                    var offset = PacketHeader.Size;
                     var versionData = args.Buffer.ReadStruct<VersionData>(offset);
 
                     var version = versionData.GetVersion();
-                    if (version != m_Network.protocolVersion)
-                        throw new Exception($"Cannot initialize connection, there is a protocol version mismatch (local={m_Network.protocolVersion} remote={version}).");
+                    if (version != m_Network.ProtocolVersion)
+                        throw new Exception($"Cannot initialize connection, there is a protocol version mismatch (local={m_Network.ProtocolVersion} remote={version}).");
 
                     offset += Marshal.SizeOf<VersionData>();
                     var remoteData = args.Buffer.ReadStruct<RemoteData>(offset);
 
-                    var remote = new Remote(remoteData.id, remoteData.GetTcpEndPoint(), remoteData.GetUdpEndPoint());
+                    var remote = new Remote(remoteData.ID, remoteData.GetTcpEndPoint(), remoteData.GetUdpEndPoint());
                     m_OnInitialized(remote);
                 }
                 else
                 {
                     lock (m_ConnectionLock)
                     {
-                        if (m_RemoteIDToConnection.TryGetValue(header.senderID, out var connection) &&
+                        if (m_RemoteIDToConnection.TryGetValue(header.SenderID, out var connection) &&
                             m_ReceivedPackets.TryGetValue(connection, out var queue))
                         {
-                            var message = Message.Get(connection.remote, m_ChannelType, header.dataLength);
-                            var packet = new Packet(message, header.type);
+                            var message = Message.Get(connection.Remote, m_ChannelType, header.DataLength);
+                            var packet = new Packet(message, header.Type);
 
-                            var data = packet.message.data;
-                            data.Write(args.Buffer, PacketHeader.k_Size, header.dataLength);
+                            var data = packet.Message.Data;
+                            data.Write(args.Buffer, PacketHeader.Size, header.DataLength);
                             data.Seek(0, SeekOrigin.Begin);
 
                             queue.Enqueue(packet);

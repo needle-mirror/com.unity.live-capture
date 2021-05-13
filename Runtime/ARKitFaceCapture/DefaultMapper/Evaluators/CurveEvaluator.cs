@@ -10,7 +10,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
     /// An <see cref="IEvaluator"/> that uses an animation curve to define a custom function.
     /// </summary>
     [CreateAssetMenu(fileName = "NewCurveEvaluator", menuName = "Live Capture/ARKit Face Capture/Evaluator/Curve", order = 5)]
-    public class CurveEvaluator : EvaluatorPreset
+    class CurveEvaluator : EvaluatorPreset
     {
         /// <inheritdoc cref="CurveEvaluator"/>
         [Serializable]
@@ -28,7 +28,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
 #if UNITY_EDITOR
             static class Contents
             {
-                public static readonly GUIContent curve = new GUIContent("Curve", "The curve defining a custom evaluation function. It is expected to map values in the domain [0, 1].");
+                public static readonly GUIContent Curve = new GUIContent("Curve", "The curve defining a custom evaluation function. It is expected to map values in the domain [0, 1].");
             }
 
             /// <inheritdoc/>
@@ -40,7 +40,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             /// <inheritdoc/>
             public void OnGUI(Rect rect)
             {
-                m_Curve = EditorGUI.CurveField(rect, Contents.curve, m_Curve);
+                m_Curve = EditorGUI.CurveField(rect, Contents.Curve, m_Curve);
             }
 
 #endif
@@ -50,6 +50,6 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         Impl m_Evaluator = new Impl();
 
         /// <inheritdoc />
-        public override IEvaluator evaluator => m_Evaluator;
+        public override IEvaluator Evaluator => m_Evaluator;
     }
 }

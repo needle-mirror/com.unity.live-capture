@@ -24,22 +24,22 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         /// <summary>
         /// The ARKit blend shape that influences the mesh blend shape associated with this binding.
         /// </summary>
-        public FaceBlendShape location => m_Location;
+        public FaceBlendShape Location => m_Location;
 
         /// <summary>
         /// The index of the mesh blend shape influenced by this binding.
         /// </summary>
-        public int shapeIndex => m_ShapeIndex;
+        public int ShapeIndex => m_ShapeIndex;
 
         /// <summary>
         /// The properties that control how mapped value is applied.
         /// </summary>
-        public BindingConfig config => m_Config;
+        public BindingConfig Config => m_Config;
 
         /// <summary>
         /// Is this binding shown in the inspector.
         /// </summary>
-        public bool isExpanded => m_IsExpanded;
+        public bool IsExpanded => m_IsExpanded;
 
         /// <summary>
         /// Creates a new <see cref="Binding"/> instance.

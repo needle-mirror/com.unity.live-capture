@@ -9,13 +9,14 @@ namespace Unity.LiveCapture.Networking.Protocols
     /// The base class for message used to receive data from a remote.
     /// </summary>
     /// <typeparam name="T">The type of data to send.</typeparam>
-    public abstract class DataReceiver<T> : MessageBase, IDataReceiver
+    abstract class DataReceiver<T> : MessageBase, IDataReceiver
     {
         /// <summary>
         /// The flags used to configure how data is sent.
         /// </summary>
         protected readonly DataOptions m_Options;
 
+        readonly int m_Version;
         readonly List<Action<T>> m_Handlers = new List<Action<T>>();
 
         /// <summary>
@@ -26,13 +27,40 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// <param name="options">The flags used to configure how data is sent.</param>
         protected DataReceiver(string id, ChannelType channel, DataOptions options) : base(id, channel)
         {
+            m_Version = DataSender<T>.k_Version;
             m_Options = options;
         }
 
         /// <inheritdoc/>
         protected DataReceiver(Stream stream) : base(stream)
         {
-            m_Options = stream.ReadStruct<DataOptions>();
+            m_Version = stream.ReadStruct<int>();
+
+            switch (m_Version)
+            {
+                case 0:
+                    m_Options = stream.ReadStruct<DataOptions>();
+                    break;
+                default:
+                    throw new Exception($"{nameof(DataReceiver<T>)} version is not supported by this application version.");
+            }
+        }
+
+        /// <inheritdoc />
+        internal override void Serialize(Stream stream)
+        {
+            base.Serialize(stream);
+
+            stream.WriteStruct(m_Version);
+
+            switch (m_Version)
+            {
+                case 0:
+                    stream.WriteStruct(m_Options);
+                    break;
+                default:
+                    throw new Exception($"{nameof(DataReceiver<T>)} version is not supported by this application version.");
+            }
         }
 
         /// <summary>
@@ -81,14 +109,6 @@ namespace Unity.LiveCapture.Networking.Protocols
                     Debug.LogException(e);
                 }
             }
-        }
-
-        /// <inheritdoc />
-        internal override void Serialize(Stream stream)
-        {
-            base.Serialize(stream);
-
-            stream.WriteStruct(m_Options);
         }
 
         /// <summary>

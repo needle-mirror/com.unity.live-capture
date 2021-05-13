@@ -325,11 +325,6 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                         // RTP over UDP mode
                         // Create a pair of UDP sockets - One is for the Video, one is for the RTCP
                         udp_pair = new UDPSocket(50000, 51000); // give a range of 500 pairs (1000 addresses) to try incase some address are in use
-                        udp_pair.DataReceived += (object local_sender, RtspChunkEventArgs local_e) =>
-                        {
-                            // RTCP data received
-                            Console.WriteLine("RTCP data received " + local_sender.ToString() + " " + local_e.ToString());
-                        };
                         udp_pair.Start(); // start listening for data on the UDP ports
 
                         // Pass the Port of the two sockets back in the reply
@@ -783,14 +778,6 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                     // Only process Sessions in Play Mode
                     if (connection.play == false) continue;
 
-                    String connection_type = "";
-                    if (connection.video_client_transport.LowerTransport == Messages.RtspTransport.LowerTransportType.TCP) connection_type = "TCP";
-                    if (connection.video_client_transport.LowerTransport == Messages.RtspTransport.LowerTransportType.UDP
-                        && connection.video_client_transport.IsMulticast == false) connection_type = "UDP";
-                    if (connection.video_client_transport.LowerTransport == Messages.RtspTransport.LowerTransportType.UDP
-                        && connection.video_client_transport.IsMulticast == true) connection_type = "Multicast";
-                    Console.WriteLine("Sending video session " + connection.video_session_id + " " + connection_type + " Timestamp(ns)=" + timeStampNs + ". RTP timestamp=" + rtp_timestamp + ". Sequence=" + connection.video_sequence_number);
-
                     // There could be more than 1 RTP packet (if the data is fragmented)
                     Boolean write_error = false;
                     foreach (byte[] rtp_packet in rtp_packets)
@@ -819,7 +806,6 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                             }
                             catch
                             {
-                                Console.WriteLine("Error writing to listener " + connection.listener.RemoteAdress);
                                 write_error = true;
                                 break; // exit out of foreach loop
                             }
@@ -915,7 +901,6 @@ namespace Unity.LiveCapture.VideoStreaming.Server
             }
 
             //Debug.Log(current_rtp_count + " RTSP clients connected. " + current_rtp_play_count + " RTSP clients in PLAY mode");
-
             return current_rtp_play_count > 0;
         }
 

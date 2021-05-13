@@ -16,7 +16,9 @@ apiRules:
       # inherited Object methods
       uidRegex: ^(Microsoft)
   - exclude:
-      uidRegex: ^(Unity.VirtualProduction.VideoStreaming.Server)
+      uidRegex: ^(Unity.LiveCapture.CompanionApp)
+  - exclude:
+      uidRegex: ^(Unity.LiveCapture.CompanionApp.Editor)
   - exclude:
       # inherited Object methods
       uidRegex: ^(Tests)

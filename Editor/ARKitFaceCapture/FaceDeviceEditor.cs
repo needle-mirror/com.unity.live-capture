@@ -1,8 +1,8 @@
-using Unity.LiveCapture.CompanionApp;
+using Unity.LiveCapture.CompanionApp.Editor;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture.ARKitFaceCapture
+namespace Unity.LiveCapture.ARKitFaceCapture.Editor
 {
     [CustomEditor(typeof(FaceDevice))]
     class FaceDeviceEditor : CompanionAppDeviceEditor<IFaceClient>
@@ -18,13 +18,13 @@ namespace Unity.LiveCapture.ARKitFaceCapture
 
             m_Device = target as FaceDevice;
 
-            m_LiveLinkChannels = serializedObject.FindProperty("m_LiveLink.channels");
+            m_LiveLinkChannels = serializedObject.FindProperty("m_LiveLink.Channels");
         }
 
         protected override void OnDeviceGUI()
         {
             DoClientGUI();
-            DoActorGUI(m_Device.actor, (actor) => m_Device.actor = actor);
+            DoActorGUI(m_Device.Actor, (actor) => m_Device.Actor = actor);
 
             serializedObject.Update();
 

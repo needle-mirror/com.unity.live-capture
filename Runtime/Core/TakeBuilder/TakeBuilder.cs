@@ -7,37 +7,75 @@ using UnityEngine.Timeline;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+
 using UnityObject = UnityEngine.Object;
 
 namespace Unity.LiveCapture
 {
     class TakeBuilder : ITakeBuilder, IDisposable
     {
-        internal class Wildcards
+        internal static class Wildcards
         {
-            public const string kScene = "<Scene>";
-            public const string kName = "<Name>";
-            public const string kShot = "<Shot>";
-            public const string kTake = "<Take>";
-            public const string kTimecode = "<Timecode>";
+            public const string Scene = "<Scene>";
+            public const string Name = "<Name>";
+            public const string Shot = "<Shot>";
+            public const string Take = "<Take>";
+            public const string Timecode = "<Timecode>";
         }
+
+        static string TakeNameFormat => LiveCaptureSettings.Instance.TakeNameFormat;
+        static string AssetNameFormat => LiveCaptureSettings.Instance.AssetNameFormat;
 
         WildcardFormatter m_WildcardFormatter;
         IExposedPropertyTable m_Resolver;
         string m_ContentsDirectory;
-        string m_AssetNameFormat;
         Take m_Take;
 
-        public Take take => m_Take;
+        public Take Take => m_Take;
 
         /// <summary>
         /// The directory that stores the take content data, like the recorded clips.
         /// </summary>
-        public string contentsDirectory => m_ContentsDirectory;
+        public string ContentsDirectory => m_ContentsDirectory;
+
+        internal static string GetAssetName(
+            int sceneNumber,
+            string shotName,
+            int takeNumber)
+        {
+            return GetAssetName(
+                new WildcardFormatter(),
+                sceneNumber,
+                shotName,
+                takeNumber);
+        }
+
+        static string GetAssetName(
+            WildcardFormatter formatter,
+            int sceneNumber,
+            string shotName,
+            int takeNumber)
+        {
+            var sceneNumberStr = sceneNumber.ToString("D3");
+            var takeNumberStr = takeNumber.ToString("D3");
+
+            formatter.AddReplacement(Wildcards.Scene, sceneNumberStr);
+            formatter.AddReplacement(Wildcards.Shot, shotName);
+            formatter.AddReplacement(Wildcards.Take, takeNumberStr);
+
+            var assetName = formatter.Format(TakeNameFormat);
+            assetName = FileNameFormatter.Instance.Format(assetName);
+
+            if (string.IsNullOrEmpty(assetName))
+            {
+                assetName = $"[{sceneNumberStr}] {shotName} [{takeNumberStr}]";
+            }
+
+            return assetName;
+        }
 
         public TakeBuilder(
-            string takeNameFormat,
-            string assetNameFormat,
+            double duration,
             int sceneNumber,
             string shotName,
             int takeNumber,
@@ -45,6 +83,7 @@ namespace Unity.LiveCapture
             string directory,
             Take iterationBase,
             FrameRate frameRate,
+            Texture2D screenshot,
             IExposedPropertyTable resolver)
         {
 #if UNITY_EDITOR
@@ -53,32 +92,17 @@ namespace Unity.LiveCapture
                 throw new ArgumentNullException(nameof(resolver));
             }
 
-            shotName = FileNameFormatter.instance.Format(shotName);
+            shotName = FileNameFormatter.Instance.Format(shotName);
 
             if (string.IsNullOrEmpty(shotName))
             {
                 throw new InvalidDataException("Shot name is invalid or empty");
             }
 
-            m_AssetNameFormat = assetNameFormat;
             m_Resolver = resolver;
-
-            var sceneNumberStr = sceneNumber.ToString("D3");
-            var takeNumberStr = takeNumber.ToString("D3");
-
             m_WildcardFormatter = new WildcardFormatter();
-            m_WildcardFormatter.AddReplacement(Wildcards.kScene, sceneNumberStr);
-            m_WildcardFormatter.AddReplacement(Wildcards.kShot, shotName);
-            m_WildcardFormatter.AddReplacement(Wildcards.kTake, takeNumberStr);
 
-            var assetName = m_WildcardFormatter.Format(takeNameFormat);
-            assetName = FileNameFormatter.instance.Format(assetName);
-
-            if (string.IsNullOrEmpty(assetName))
-            {
-                assetName = $"[{sceneNumberStr}] {shotName} [{takeNumberStr}]";
-            }
-
+            var assetName = GetAssetName(m_WildcardFormatter, sceneNumber, shotName, takeNumber);
             var assetPath = $"{directory}/{assetName}.asset";
             var exists = AssetDatabase.LoadMainAssetAtPath(assetPath) != null;
 
@@ -91,7 +115,6 @@ namespace Unity.LiveCapture
             m_ContentsDirectory = Path.GetDirectoryName(assetPath) + "/" + shotName;
 
             Directory.CreateDirectory(m_ContentsDirectory);
-            AssetDatabase.Refresh();
 
             if (iterationBase == null)
             {
@@ -102,7 +125,7 @@ namespace Unity.LiveCapture
                 AssetDatabase.AddObjectToAsset(timeline, m_Take);
                 AssetDatabase.SetMainObject(m_Take, assetPath);
 
-                m_Take.timeline = timeline;
+                m_Take.Timeline = timeline;
             }
             else
             {
@@ -111,12 +134,29 @@ namespace Unity.LiveCapture
                 m_Take = AssetDatabase.LoadAssetAtPath<Take>(assetPath);
             }
 
-            m_Take.sceneNumber = sceneNumber;
-            m_Take.shotName = shotName;
-            m_Take.takeNumber = takeNumber;
-            m_Take.description = description;
-            m_Take.frameRate = frameRate;
-            m_Take.timeline.name = m_Take.name;
+            m_Take.SceneNumber = sceneNumber;
+            m_Take.ShotName = shotName;
+            m_Take.TakeNumber = takeNumber;
+            m_Take.Description = description;
+            m_Take.FrameRate = frameRate;
+            m_Take.Screenshot = SaveAsPNG(screenshot, assetName, m_ContentsDirectory);
+
+            {
+                var timeline = m_Take.Timeline;
+
+                timeline.name = m_Take.name;
+                timeline.editorSettings.fps = frameRate.AsFloat();
+
+                if (duration > 0d)
+                {
+                    timeline.durationMode = TimelineAsset.DurationMode.FixedLength;
+                    timeline.fixedDuration = duration;
+                }
+                else
+                {
+                    timeline.durationMode = TimelineAsset.DurationMode.BasedOnClips;
+                }
+            }
 #endif
         }
 
@@ -124,7 +164,6 @@ namespace Unity.LiveCapture
         {
 #if UNITY_EDITOR
             AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
 
             m_Take = null;
             m_Resolver = null;
@@ -189,8 +228,9 @@ namespace Unity.LiveCapture
 
                 if (partentClip != null)
                 {
-                    var duration = partentClip.duration;
+                    var duration = Math.Max(partentClip.duration, clip.duration);
 
+                    partentClip.duration = duration;
                     clip.duration = duration;
                 }
             }
@@ -224,7 +264,6 @@ namespace Unity.LiveCapture
         /// Creates a new track without binding.
         /// </summary>
         /// <param name="name">The name of the track.</param>
-        /// <param name="parent">The track to set as parent.</param>
         public T CreateTrack<T>(string name) where T : TrackAsset, new()
         {
             return CreateTrackWithParent<T>(name, null);
@@ -235,7 +274,6 @@ namespace Unity.LiveCapture
         /// </summary>
         /// <param name="name">The name of the track.</param>
         /// <param name="binding">The binding to use for the new track.</param>
-        /// <param name="parent">The track to set as parent.</param>
         public T CreateTrack<T>(string name, ITakeBinding binding) where T : TrackAsset, new()
         {
             var track = CreateTrack<T>(name);
@@ -257,9 +295,9 @@ namespace Unity.LiveCapture
         /// </returns>
         public IEnumerable<T> GetTracks<T>() where T : TrackAsset, new()
         {
-            return m_Take.timeline.GetRootTracks()
-                .Where(t => t is T)
-                .Select(t => t as T);
+            return m_Take.Timeline
+                .GetRootTracks()
+                .OfType<T>();
         }
 
         /// <summary>
@@ -275,9 +313,9 @@ namespace Unity.LiveCapture
         /// </returns>
         public IEnumerable<T> GetTracks<T>(ITakeBinding binding) where T : TrackAsset, new()
         {
-            return m_Take.bindingEntries
-                .Where(e => e.track is T && e.binding.Equals(binding))
-                .Select(e => e.track as T);
+            return m_Take.BindingEntries
+                .Where(e => e.Track is T && e.Binding.Equals(binding))
+                .Select(e => e.Track as T);
         }
 
         /// <summary>
@@ -311,10 +349,10 @@ namespace Unity.LiveCapture
                 throw new Exception($"Can't save assets of type {typeof(T)}");
             }
 
-            m_WildcardFormatter.AddReplacement(Wildcards.kName, name);
+            m_WildcardFormatter.AddReplacement(Wildcards.Name, name);
 
-            var assetName = m_WildcardFormatter.Format(m_AssetNameFormat);
-            assetName = FileNameFormatter.instance.Format(assetName);
+            var assetName = m_WildcardFormatter.Format(AssetNameFormat);
+            assetName = FileNameFormatter.Instance.Format(assetName);
 
             if (string.IsNullOrEmpty(assetName))
             {
@@ -333,7 +371,7 @@ namespace Unity.LiveCapture
         {
             if (m_Take == null)
             {
-                throw new ObjectDisposedException($"{nameof(Take)} is invalid or has been disposed.");
+                throw new ObjectDisposedException($"{nameof(LiveCapture.Take)} is invalid or has been disposed.");
             }
 
             if (m_Resolver == null)
@@ -346,12 +384,27 @@ namespace Unity.LiveCapture
         {
             CheckDisposed();
 
-            var timeline = m_Take.timeline;
+            var timeline = m_Take.Timeline;
             var track = timeline.CreateTrack<T>(parent, name);
 
             track.locked = true;
 
             return track;
+        }
+
+        Texture2D SaveAsPNG(Texture2D texture, string filename, string directory)
+        {
+#if UNITY_EDITOR
+            if (texture != null)
+            {
+                var assetPath = Screenshot.SaveAsPNG(texture, filename, directory);
+
+                AssetDatabase.ImportAsset(assetPath);
+
+                return AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
+            }
+#endif
+            return null;
         }
     }
 }

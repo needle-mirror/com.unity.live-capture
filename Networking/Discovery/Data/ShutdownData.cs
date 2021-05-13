@@ -14,7 +14,7 @@ namespace Unity.LiveCapture.Networking.Discovery
         /// <summary>
         /// The unique identifier of the server instance.
         /// </summary>
-        public Guid id => m_Id;
+        public Guid ID => m_Id;
 
         /// <summary>
         /// Creates a new <see cref="ShutdownData"/> instance.

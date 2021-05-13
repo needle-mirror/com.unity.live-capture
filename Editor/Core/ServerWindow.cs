@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
+    using Editor = UnityEditor.Editor;
+
     /// <summary>
     /// The main window used to interact with live capture.
     /// </summary>
@@ -14,14 +16,16 @@ namespace Unity.LiveCapture
 
         static class Contents
         {
-            public static readonly GUILayoutOption[] largeButtonOptions =
+            public static readonly GUILayoutOption[] LargeButtonOptions =
             {
                 GUILayout.Width(230f),
                 GUILayout.Height(24f)
             };
-            public static readonly GUIContent windowTitle = EditorGUIUtility.TrTextContent("Connections");
-            public static readonly GUIContent firewallConfigureLabel = EditorGUIUtility.TrTextContent("Configure Firewall", "Add rules to the firewall that enable Unity to receive connections on private or work networks.");
-            public static readonly GUIContent createServerLabel = EditorGUIUtility.TrTextContent("Create Server", "Create a Server of the selected type.");
+            static string iconPath = "Packages/com.unity.live-capture/Editor/Core/Icons";
+            public static readonly Texture2D icon = EditorGUIUtility.Load($"{iconPath}/d_LiveCaptureConnectionWindow@64.png") as Texture2D;
+            public static readonly GUIContent WindowTitle = EditorGUIUtility.TrTextContent("Connections", icon);
+            public static readonly GUIContent FirewallConfigureLabel = EditorGUIUtility.TrTextContent("Configure Firewall", "Add rules to the firewall that enable Unity to receive connections on private or work networks.");
+            public static readonly GUIContent CreateServerLabel = EditorGUIUtility.TrTextContent("Create Server", "Create a Server of the selected type.");
         }
 
         static IEnumerable<(Type, CreateServerMenuItemAttribute[])> s_CreateServerMenuItems;
@@ -36,16 +40,16 @@ namespace Unity.LiveCapture
         {
             var window = GetWindow<ServerWindow>();
 
-            window.titleContent = Contents.windowTitle;
+            window.titleContent = Contents.WindowTitle;
             window.minSize = k_WindowSize;
         }
 
         void OnEnable()
         {
             Undo.undoRedoPerformed += Repaint;
-            ServerManager.serverChanged += Repaint;
+            ServerManager.ServerChanged += Repaint;
 
-            if (FirewallUtility.isSupported)
+            if (FirewallUtility.IsSupported)
             {
                 s_FirewallConfigured = FirewallUtility.IsConfigured();
             }
@@ -54,7 +58,7 @@ namespace Unity.LiveCapture
         void OnDisable()
         {
             Undo.undoRedoPerformed -= Repaint;
-            ServerManager.serverChanged -= Repaint;
+            ServerManager.ServerChanged -= Repaint;
 
             if (m_Editor != null)
                 DestroyImmediate(m_Editor);
@@ -73,7 +77,7 @@ namespace Unity.LiveCapture
 
         void DoFirewallGUI()
         {
-            if (FirewallUtility.isSupported && !s_FirewallConfigured)
+            if (FirewallUtility.IsSupported && !s_FirewallConfigured)
             {
                 EditorGUILayout.HelpBox("The firewall is not configured optimally for Live Capture. You may experience difficulty connecting devices to Unity.", MessageType.Warning);
 
@@ -81,7 +85,7 @@ namespace Unity.LiveCapture
                 {
                     GUILayout.FlexibleSpace();
 
-                    if (GUILayout.Button(Contents.firewallConfigureLabel, Contents.largeButtonOptions))
+                    if (GUILayout.Button(Contents.FirewallConfigureLabel, Contents.LargeButtonOptions))
                     {
                         s_FirewallConfigured = FirewallUtility.ConfigureFirewall();
                     }
@@ -95,7 +99,7 @@ namespace Unity.LiveCapture
 
         void DoServersGUI()
         {
-            foreach (var server in ServerManager.instance.servers)
+            foreach (var server in ServerManager.Instance.Servers)
             {
                 DoServerGUI(server);
             }
@@ -146,16 +150,16 @@ namespace Unity.LiveCapture
             {
                 GUILayout.FlexibleSpace();
 
-                if (GUILayout.Button(Contents.createServerLabel, Contents.largeButtonOptions))
+                if (GUILayout.Button(Contents.CreateServerLabel, Contents.LargeButtonOptions))
                 {
                     if (s_CreateServerMenuItems == null)
                     {
                         s_CreateServerMenuItems = AttributeUtility.GetAllTypes<CreateServerMenuItemAttribute>();
                     }
 
-                    var menu = MenuUtility.CreateMenu(s_CreateServerMenuItems, (t) => !ServerManager.instance.HasServer(t), (type, attribute) =>
+                    var menu = MenuUtility.CreateMenu(s_CreateServerMenuItems, (t) => !ServerManager.Instance.HasServer(t), (type, attribute) =>
                     {
-                        ServerManager.instance.CreateServer(type);
+                        ServerManager.Instance.CreateServer(type);
                     });
 
                     menu.ShowAsContext();

@@ -6,19 +6,21 @@ namespace Unity.LiveCapture
     class TakeRecorderPlayable : PlayableBehaviour
     {
         Playable m_Playable;
-        public TakeRecorder takeRecorder { get; set; }
-        public bool playing { get; private set; }
+
+        public TakeRecorder TakeRecorder { get; set; }
+        public bool Playing { get; private set; }
 
         public void Play()
         {
-            if (!playing)
+            var slate = TakeRecorder.GetActiveSlate();
+
+            if (!Playing && slate != null)
             {
-                playing = true;
+                Playing = true;
 
                 SetDuration(m_Playable);
 
-                var slate = takeRecorder.slate;
-                var duration = slate.duration;
+                var duration = slate.Duration;
 
                 if (duration == 0)
                 {
@@ -26,7 +28,7 @@ namespace Unity.LiveCapture
                 }
                 else
                 {
-                    m_Playable.SetTime(slate.time);
+                    m_Playable.SetTime(TakeRecorder.GetPreviewTime());
                 }
 
                 var graph = m_Playable.GetGraph();
@@ -38,15 +40,15 @@ namespace Unity.LiveCapture
 
         public void Stop()
         {
-            if (playing)
+            if (Playing)
             {
-                playing = false;
+                Playing = false;
 
                 var graph = m_Playable.GetGraph();
 
                 graph.Stop();
 
-                takeRecorder.OnPreviewEnded();
+                TakeRecorder.OnPreviewEnded();
             }
         }
 
@@ -65,29 +67,33 @@ namespace Unity.LiveCapture
 
         public override void PrepareFrame(Playable playable, FrameData info)
         {
-            if (!playing)
+            if (!Playing)
             {
                 SetDuration(playable);
             }
 
             var time = playable.GetTime();
-            var slate = takeRecorder.slate;
 
             if (playable.IsDone())
             {
-                slate.time = 0d;
+                TakeRecorder.SetPreviewTimeInternal(0d);
                 Stop();
             }
             else
             {
-                slate.time = time;
+                TakeRecorder.SetPreviewTimeInternal(time);
             }
         }
 
         void SetDuration(Playable playable)
         {
-            var slate = takeRecorder.slate;
-            var duration = slate.duration;
+            var slate = TakeRecorder.GetActiveSlate();
+            var duration = 0d;
+
+            if (slate != null)
+            {
+                duration = slate.Duration;
+            }
 
             if (duration == 0)
             {

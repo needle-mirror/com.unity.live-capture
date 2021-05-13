@@ -15,7 +15,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The maximum supported subframe resolution.
         /// </summary>
-        public const int k_MaxResolution = ushort.MaxValue;
+        public const int MaxResolution = ushort.MaxValue;
 
         /// <summary>
         /// The default resolution of the subframe value.
@@ -25,7 +25,7 @@ namespace Unity.LiveCapture
         /// multiple of 80, 100, and 2048, which allows for exact precision when using those values or smaller
         /// powers of 2.
         /// </remarks>
-        public const int k_DefaultResolution = 51200;
+        public const int DefaultResolution = 51200;
 
         [SerializeField]
         ushort m_Subframe;
@@ -33,20 +33,20 @@ namespace Unity.LiveCapture
         ushort m_Resolution;
 
         /// <summary>
-        /// The subframe this value represents within the frame.
+        /// The subframe within the frame.
         /// </summary>
         /// <remarks>
         /// This value is in the range [0, <see name="resolution"/> - 1].
         /// </remarks>
-        public int subframe => Mathf.Clamp(m_Subframe, 0, resolution - 1);
+        public int Value => Mathf.Clamp(m_Subframe, 0, Resolution - 1);
 
         /// <summary>
         /// The number of possible subframe values in the frame.
         /// </summary>
         /// <remarks>
-        /// This value is in the range [1, <see cref="k_MaxResolution"/>]
+        /// This value is in the range [1, <see cref="MaxResolution"/>]
         /// </remarks>
-        public int resolution => Mathf.Clamp(m_Resolution, 1, k_MaxResolution);
+        public int Resolution => Mathf.Clamp(m_Resolution, 1, MaxResolution);
 
         /// <summary>
         /// Creates a new <see cref="Subframe"/> instance.
@@ -57,7 +57,7 @@ namespace Unity.LiveCapture
         /// the subframe value is treated as zero.</param>
         public Subframe(int subframe, int resolution)
         {
-            var divisor = Mathf.Clamp(resolution, 1, k_MaxResolution);
+            var divisor = Mathf.Clamp(resolution, 1, MaxResolution);
 
             m_Subframe = (ushort)Mathf.Clamp(subframe, 0, divisor - 1);
             m_Resolution = (ushort)divisor;
@@ -70,7 +70,8 @@ namespace Unity.LiveCapture
         /// It is clamped to the range [0, 1].</param>
         /// <param name="resolution">The number of possible subframe values in the frame. If this value is not greater than zero,
         /// the subframe value is treated as zero.</param>
-        public static Subframe FromFloat(float subframe, int resolution = k_DefaultResolution)
+        /// <returns>A new <see cref="Subframe"/> that represents the given frame time.</returns>
+        public static Subframe FromFloat(float subframe, int resolution = DefaultResolution)
         {
             return FromDouble(subframe, resolution);
         }
@@ -82,7 +83,8 @@ namespace Unity.LiveCapture
         /// It is clamped to the range [0, 1].</param>
         /// <param name="resolution">The number of possible subframe values in the frame. If this value is not greater than zero,
         /// the subframe value is treated as zero.</param>
-        public static Subframe FromDouble(double subframe, int resolution = k_DefaultResolution)
+        /// <returns>A new <see cref="Subframe"/> that represents the given frame time.</returns>
+        public static Subframe FromDouble(double subframe, int resolution = DefaultResolution)
         {
             return new Subframe(
                 (int)Math.Min(Math.Max(Math.Round(subframe * resolution), 0.0), int.MaxValue),
@@ -96,7 +98,7 @@ namespace Unity.LiveCapture
         /// <returns>The subframe value in the range [0, 1].</returns>
         public float AsFloat()
         {
-            return (float)subframe / resolution;
+            return (float)Value / Resolution;
         }
 
         /// <summary>
@@ -105,7 +107,7 @@ namespace Unity.LiveCapture
         /// <returns>The subframe value in the range [0, 1].</returns>
         public double AsDouble()
         {
-            return (double)subframe / resolution;
+            return (double)Value / Resolution;
         }
 
         /// <summary>
@@ -167,8 +169,8 @@ namespace Unity.LiveCapture
         {
             unchecked
             {
-                var hashCode = subframe;
-                hashCode = (hashCode * 397) ^ resolution;
+                var hashCode = Value;
+                hashCode = (hashCode * 397) ^ Resolution;
                 return hashCode;
             }
         }
@@ -255,8 +257,8 @@ namespace Unity.LiveCapture
             // For comparisons we use the exact value of the subframe without using floating point math using the classic change of base
             // formula. Care must by taken to ensure that the multiplied values cannot overflow by casting to a type big enough to contain
             // the result. For safety, we could use the checked keyword, but there is a performance cost.
-            v0 = (uint)s0.subframe * (uint)s1.resolution;
-            v1 = (uint)s1.subframe * (uint)s0.resolution;
+            v0 = (uint)s0.Value * (uint)s1.Resolution;
+            v1 = (uint)s1.Value * (uint)s0.Resolution;
         }
     }
 }

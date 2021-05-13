@@ -48,32 +48,32 @@ namespace Unity.LiveCapture
         /// <summary>
         /// Was this timecode generated taking into account drop frame calculations.
         /// </summary>
-        public bool isDropFrame => m_IsDropFrame != 0;
+        public bool IsDropFrame => m_IsDropFrame != 0;
 
         /// <summary>
         /// The number of elapsed hours.
         /// </summary>
-        public int hours => m_Hours;
+        public int Hours => m_Hours;
 
         /// <summary>
         /// The number of elapsed minutes in the current hour.
         /// </summary>
-        public int minutes => m_Minutes;
+        public int Minutes => m_Minutes;
 
         /// <summary>
         /// The number of elapsed seconds in the current minute.
         /// </summary>
-        public int seconds => m_Seconds;
+        public int Seconds => m_Seconds;
 
         /// <summary>
         /// The number of elapsed frames in the current second.
         /// </summary>
-        public int frames => m_Frames;
+        public int Frames => m_Frames;
 
         /// <summary>
         /// The time within the frame.
         /// </summary>
-        public Subframe subframe => m_Subframe;
+        public Subframe Subframe => m_Subframe;
 
         /// <summary>
         /// Constructs a new <see cref="Timecode"/> from a given time.
@@ -154,14 +154,14 @@ namespace Unity.LiveCapture
         /// </returns>
         public static Timecode FromFrameTime(FrameRate frameRate, FrameTime frameTime)
         {
-            if (!frameRate.isValid)
+            if (!frameRate.IsValid)
             {
                 return default;
             }
 
-            var frameNumber = frameTime.frameNumber;
+            var frameNumber = frameTime.FrameNumber;
 
-            if (frameRate.isDropFrame)
+            if (frameRate.IsDropFrame)
             {
                 // skip the first few frames of each minute, except for each tenth minute
                 var fps = (double)frameRate;
@@ -200,12 +200,12 @@ namespace Unity.LiveCapture
 
             return new Timecode
             {
-                m_IsDropFrame = (byte)(frameRate.isDropFrame ? 1 : 0),
+                m_IsDropFrame = (byte)(frameRate.IsDropFrame ? 1 : 0),
                 m_Hours = (sbyte)hours,
                 m_Minutes = (sbyte)minutes,
                 m_Seconds = (sbyte)seconds,
                 m_Frames = frames,
-                m_Subframe = frameTime.subframe,
+                m_Subframe = frameTime.Subframe,
             };
         }
 
@@ -222,7 +222,7 @@ namespace Unity.LiveCapture
                 m_Minutes = m_Minutes,
                 m_Seconds = m_Seconds,
                 m_Frames = m_Frames,
-                m_Subframe = new Subframe(0, m_Subframe.resolution),
+                m_Subframe = new Subframe(0, m_Subframe.Resolution),
             };
         }
 
@@ -239,7 +239,7 @@ namespace Unity.LiveCapture
                 m_Minutes = m_Minutes,
                 m_Seconds = m_Seconds,
                 m_Frames = m_Frames,
-                m_Subframe = Subframe.FromFloat(0.5f, m_Subframe.resolution),
+                m_Subframe = Subframe.FromFloat(0.5f, m_Subframe.Resolution),
             };
         }
 
@@ -265,7 +265,7 @@ namespace Unity.LiveCapture
         /// </returns>
         public FrameTime ToFrameTime(FrameRate frameRate)
         {
-            if (!frameRate.isValid)
+            if (!frameRate.IsValid)
             {
                 return default;
             }
@@ -276,15 +276,15 @@ namespace Unity.LiveCapture
             var framesPerHour = framesPerMinute * 60;
 
             var frameNumber =
-                hours * framesPerHour +
-                minutes * framesPerMinute +
-                seconds * framesPerSecond +
-                frames;
+                Hours * framesPerHour +
+                Minutes * framesPerMinute +
+                Seconds * framesPerSecond +
+                Frames;
 
-            if (frameRate.isDropFrame)
+            if (frameRate.IsDropFrame)
             {
                 var framesToDropPerMinute = (int)Math.Ceiling(fps / 15.0);
-                var totalMinutes = (hours * 60) + minutes;
+                var totalMinutes = (Hours * 60) + Minutes;
                 var minutesFramesWereDropped = totalMinutes - (totalMinutes / 10);
 
                 frameNumber -= framesToDropPerMinute * minutesFramesWereDropped;
@@ -395,7 +395,7 @@ namespace Unity.LiveCapture
                 s_StringBuilder.Clear();
             }
 
-            if (hours < 0 || minutes < 0 || seconds < 0 || frames < 0)
+            if (Hours < 0 || Minutes < 0 || Seconds < 0 || Frames < 0)
             {
                 s_StringBuilder.Append('-');
             }
@@ -405,7 +405,7 @@ namespace Unity.LiveCapture
             s_StringBuilder.AppendFormat("{0:D2}", Mathf.Abs(m_Minutes));
             s_StringBuilder.Append(':');
             s_StringBuilder.AppendFormat("{0:D2}", Mathf.Abs(m_Seconds));
-            s_StringBuilder.Append(isDropFrame ? ';' : ':');
+            s_StringBuilder.Append(IsDropFrame ? ';' : ':');
             s_StringBuilder.AppendFormat("{0:D2}", Mathf.Abs(m_Frames));
 
             return s_StringBuilder.ToString();

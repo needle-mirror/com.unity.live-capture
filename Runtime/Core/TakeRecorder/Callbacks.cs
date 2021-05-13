@@ -5,11 +5,11 @@ namespace Unity.LiveCapture
 {
     static class Callbacks
     {
-        public static event Action<ISlate, PlayableDirector> seekOccurred = delegate {};
+        public static event Action<ISlate, PlayableDirector> SeekOccurred = delegate {};
 
         internal static void InvokeSeekOccurred(ISlate slate, PlayableDirector director)
         {
-            seekOccurred.Invoke(slate, director);
+            SeekOccurred.Invoke(slate, director);
         }
     }
 }

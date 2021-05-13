@@ -43,7 +43,7 @@ namespace Unity.LiveCapture.Networking
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe int WriteStruct<T>(this byte[] buffer, ref T data, int offset = 0) where T : struct
         {
-            var size = SizeOfCache<T>.size;
+            var size = SizeOfCache<T>.Size;
 
             fixed(byte* ptr = &buffer[offset])
             {
@@ -105,7 +105,7 @@ namespace Unity.LiveCapture.Networking
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe T ReadStruct<T>(this byte[] buffer, int offset, out int nextOffset) where T : struct
         {
-            nextOffset = offset + SizeOfCache<T>.size;
+            nextOffset = offset + SizeOfCache<T>.Size;
 
             fixed(byte* ptr = &buffer[offset])
             {

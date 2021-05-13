@@ -1,17 +1,20 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     /// <summary>
-    /// Default Inspector for <see cref="LiveCaptureDevice"/>.
+    /// The default Inspector for <see cref="LiveCaptureDevice"/>.
     /// </summary>
+    /// <remarks>
+    /// Inherit from this class when implementing the editor for a custom device.
+    /// </remarks>
     [CustomEditor(typeof(LiveCaptureDevice), true)]
-    public class LiveCaptureDeviceEditor : Editor
+    public class LiveCaptureDeviceEditor : UnityEditor.Editor
     {
         static class Contents
         {
-            public static readonly GUIContent takeRecorderNotFound = EditorGUIUtility.TrTextContent($"{nameof(TakeRecorder)} not found. " +
+            public static readonly GUIContent TakeRecorderNotFound = EditorGUIUtility.TrTextContent($"{nameof(TakeRecorder)} not found. " +
                 $"Place the device as a child of a {nameof(TakeRecorder)} component in the hierarchy.");
         }
 
@@ -51,7 +54,7 @@ namespace Unity.LiveCapture
 
             if (device.GetTakeRecorder() == null)
             {
-                EditorGUILayout.HelpBox(Contents.takeRecorderNotFound.text, MessageType.Warning);
+                EditorGUILayout.HelpBox(Contents.TakeRecorderNotFound.text, MessageType.Warning);
             }
         }
     }

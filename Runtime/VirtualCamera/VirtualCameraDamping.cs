@@ -15,19 +15,19 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
         /// <returns>The damped position.</returns>
         public static Pose Calculate(Pose lastPose, Pose input, Damping damping, float deltaTime)
         {
-            if (!damping.enabled)
+            if (!damping.Enabled)
                 return input;
 
             var current = lastPose;
             var targetOrientation = input.rotation;
             var dampedOrientation = targetOrientation;
-            if (deltaTime >= 0 && damping.aim > 0)
+            if (deltaTime >= 0 && damping.Aim > 0)
             {
                 var relative = (Quaternion.Inverse(current.rotation) * targetOrientation).eulerAngles;
                 for (var i = 0; i < 3; ++i)
                     if (relative[i] > 180)
                         relative[i] -= 360;
-                relative = Damp(relative, Vector3.one * damping.aim, deltaTime);
+                relative = Damp(relative, Vector3.one * damping.Aim, deltaTime);
                 dampedOrientation = current.rotation * Quaternion.Euler(relative);
             }
 
@@ -36,10 +36,10 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
             var worldOffset = targetPosition - currentPosition;
 
             // Adjust for damping, which is done in camera-offset-local coords
-            if (deltaTime >= 0 && (damping.body.x > 0 || damping.body.y > 0 || damping.body.z > 0))
+            if (deltaTime >= 0 && (damping.Body.x > 0 || damping.Body.y > 0 || damping.Body.z > 0))
             {
                 var localOffset = Quaternion.Inverse(dampedOrientation) * worldOffset;
-                localOffset = Damp(localOffset, damping.body, deltaTime);
+                localOffset = Damp(localOffset, damping.Body, deltaTime);
                 worldOffset = dampedOrientation * localOffset;
             }
             current.position = currentPosition + worldOffset;

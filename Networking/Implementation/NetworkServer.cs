@@ -9,12 +9,12 @@ namespace Unity.LiveCapture.Networking
     /// <summary>
     /// A server capable of connecting to many <see cref="NetworkClient"/> instances.
     /// </summary>
-    public class NetworkServer : NetworkBase
+    class NetworkServer : NetworkBase
     {
         class AcceptState
         {
-            public Socket listener;
-            public NetworkSocket udp;
+            public Socket Listener;
+            public NetworkSocket Udp;
         }
 
         // The size of the tcp backlog, which limits the number of connections which can be in queue
@@ -34,7 +34,7 @@ namespace Unity.LiveCapture.Networking
         /// <remarks>
         /// Returns -1 if the server is not running.
         /// </remarks>
-        public int port => isRunning ? m_Port : -1;
+        public int Port => IsRunning ? m_Port : -1;
 
         /// <summary>
         /// The local end points on the server that remotes connect to.
@@ -42,7 +42,7 @@ namespace Unity.LiveCapture.Networking
         /// <remarks>
         /// The list will be empty if the server is not running.
         /// </remarks>
-        public IReadOnlyList<IPEndPoint> endPoints => m_EndPoints;
+        public IReadOnlyList<IPEndPoint> EndPoints => m_EndPoints;
 
         /// <summary>
         /// Starts up the server.
@@ -65,7 +65,7 @@ namespace Unity.LiveCapture.Networking
                 Debug.Log($"Server: {portMessage}");
             }
 
-            if (isRunning)
+            if (IsRunning)
             {
                 if (m_Port == port)
                     return true;
@@ -139,7 +139,7 @@ namespace Unity.LiveCapture.Networking
                 var udp = new NetworkSocket(this, socket, true);
                 m_UdpSockets.Add(udp);
 
-                state.udp = udp;
+                state.Udp = udp;
 
                 socket.Bind(localEndPoint);
             }
@@ -159,7 +159,7 @@ namespace Unity.LiveCapture.Networking
                 var socket = NetworkUtilities.CreateSocket(ProtocolType.Tcp);
                 m_Listeners.Add(socket);
 
-                state.listener = socket;
+                state.Listener = socket;
 
                 socket.Bind(localEndPoint);
                 socket.Listen(k_MaxPendingConnections);
@@ -180,14 +180,14 @@ namespace Unity.LiveCapture.Networking
 
             try
             {
-                var socket = state.listener.EndAccept(result);
+                var socket = state.Listener.EndAccept(result);
 
                 var tcp = default(NetworkSocket);
                 tcp = new NetworkSocket(this, socket, false, (remote) =>
                 {
-                    new Connection(this, tcp, state.udp, remote);
+                    new Connection(this, tcp, state.Udp, remote);
                 });
-                DoHandshake(tcp, state.udp);
+                DoHandshake(tcp, state.Udp);
             }
             catch (ObjectDisposedException)
             {
@@ -200,7 +200,7 @@ namespace Unity.LiveCapture.Networking
                 Debug.LogError($"Server: Failed to accept connection. {e}");
             }
 
-            state.listener.BeginAccept(OnAccept, state);
+            state.Listener.BeginAccept(OnAccept, state);
         }
     }
 }

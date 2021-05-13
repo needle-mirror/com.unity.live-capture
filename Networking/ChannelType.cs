@@ -3,7 +3,7 @@ namespace Unity.LiveCapture.Networking
     /// <summary>
     /// The communication channels which may be supported by the networking implementation.
     /// </summary>
-    public enum ChannelType : byte
+    enum ChannelType : byte
     {
         /// <summary>
         /// A channel with reliable and ordered delivery of packets. Messages sent on this

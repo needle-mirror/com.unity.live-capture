@@ -11,16 +11,16 @@ namespace Unity.LiveCapture.VirtualCamera
     /// </summary>
     [ExecuteAlways]
     [AddComponentMenu("")]
-    public class FocusReticle : MonoBehaviour
+    class FocusReticle : MonoBehaviour
     {
         const float k_ScaleAnimationDuration = 0.3f;
 
-        /// <summary>
-        /// Invoked on completion of the animation. Can be used to deactivate the reticle gameObject for example.
-        /// </summary>
-        public event Action animationComplete = delegate {};
-
         Image m_ReticleImage;
+
+        /// <summary>
+        /// Invoked on completion of the animation. Can be used to deactivate the reticle GameObject for example.
+        /// </summary>
+        public event Action AnimationComplete = delegate {};
 
         void Awake()
         {
@@ -33,12 +33,12 @@ namespace Unity.LiveCapture.VirtualCamera
         /// </summary>
         public void ResetAnimation()
         {
-            m_ReticleImage.color = m_ReticleImage.color + Color.black;
+            m_ReticleImage.color += Color.black;
             m_ReticleImage.transform.localScale = Vector3.one;
         }
 
         /// <summary>
-        /// Animates the focus reticle following a fade-in and optionaly fade-out pattern.
+        /// Animates the focus reticle following a fade-in and optionally fade-out pattern.
         /// </summary>
         /// <param name="hideOnComplete">whether or not the animation should fade out automatically after having faded in.</param>
         /// <returns></returns>
@@ -79,7 +79,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 }
             }
 
-            animationComplete.Invoke();
+            AnimationComplete.Invoke();
         }
     }
 }

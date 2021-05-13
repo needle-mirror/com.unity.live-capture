@@ -9,22 +9,22 @@ namespace Unity.LiveCapture.VirtualCamera
     /// </summary>
     [Serializable]
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct VideoStreamState : IEquatable<VideoStreamState>
+    struct VideoStreamState : IEquatable<VideoStreamState>
     {
         /// <summary>
         /// Is the video streaming server active.
         /// </summary>
-        public bool isRunning;
+        public bool IsRunning;
 
         /// <summary>
         /// The port the video streaming server is listening on.
         /// </summary>
-        public int port;
+        public int Port;
 
         /// <inheritdoc/>
         public bool Equals(VideoStreamState other)
         {
-            return isRunning == other.isRunning && port == other.port;
+            return IsRunning == other.IsRunning && Port == other.Port;
         }
 
         /// <summary>
@@ -49,8 +49,8 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             unchecked
             {
-                var hashCode = isRunning.GetHashCode();
-                hashCode = (hashCode * 397) ^ port.GetHashCode();
+                var hashCode = IsRunning.GetHashCode();
+                hashCode = (hashCode * 397) ^ Port.GetHashCode();
                 return hashCode;
             }
         }
@@ -63,7 +63,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// </returns>
         public override string ToString()
         {
-            return $"(IsRunning {isRunning}, Port {port})";
+            return $"(IsRunning {IsRunning}, Port {Port})";
         }
 
         /// <summary>

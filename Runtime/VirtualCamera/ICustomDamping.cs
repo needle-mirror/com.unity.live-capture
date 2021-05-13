@@ -3,7 +3,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// <summary>
     /// Implement this interface if you use a class that has to override the virtual camera damping.
     /// </summary>
-    public interface ICustomDamping
+    interface ICustomDamping
     {
         /// <summary>
         /// Sets damping data.

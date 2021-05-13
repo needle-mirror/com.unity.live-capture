@@ -1,14 +1,11 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.LiveCapture.VirtualCamera
+namespace Unity.LiveCapture.VirtualCamera.Editor
 {
     /// <summary>
-    /// Draw a field to be read-only on the unity inspector.
+    /// Draw a field as read-only in the unity inspector.
     /// </summary>
-    /// <remarks>
-    /// Field will also be tinted to tell the user it's read only
-    /// </remarks>
     [CustomPropertyDrawer(typeof(ReadOnly))]
     class ReadOnlyDrawer : PropertyDrawer
     {

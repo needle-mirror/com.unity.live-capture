@@ -8,7 +8,7 @@ namespace Unity.LiveCapture.CompanionApp
     /// <summary>
     /// A class used to communicate with with the Unity editor from the companion apps.
     /// </summary>
-    public abstract class CompanionAppHost
+    abstract class CompanionAppHost
     {
         /// <summary>
         /// The protocol used when communicating with the host.
@@ -22,22 +22,26 @@ namespace Unity.LiveCapture.CompanionApp
         readonly EventSender m_StopPlayerSender;
         readonly EventSender m_PausePlayerSender;
         readonly DataSender<double> m_PlayerTimeSender;
-        readonly JsonSender<SerializableGuid> m_SetSelectedTakeSender;
+        readonly BinarySender<SerializableGuid> m_SetSelectedTakeSender;
+        readonly JsonSender<TakeDescriptor> m_SetTakeDataSender;
+        readonly BinarySender<SerializableGuid> m_DeleteTakeSender;
+        readonly BinarySender<SerializableGuid> m_SetIterationBaseSender;
+        readonly EventSender m_ClearIterationBase;
 
         /// <summary>
         /// An event invoked when the server state has been modified.
         /// </summary>
-        public event Action<ServerState> serverStateReceived;
+        public event Action<ServerState> ServerStateReceived;
 
         /// <summary>
         /// An event invoked when the player state has been modified.
         /// </summary>
-        public event Action<PlayerState> playerStateReceived;
+        public event Action<PlayerState> PlayerStateReceived;
 
         /// <summary>
         /// An event invoked when the slate descriptor has been modified.
         /// </summary>
-        public event Action<SlateDescriptor> slateDescriptorReceived;
+        public event Action<SlateDescriptor> SlateDescriptorReceived;
 
         /// <summary>
         /// Creates a new <see cref="CompanionAppHost"/> instance.
@@ -50,30 +54,34 @@ namespace Unity.LiveCapture.CompanionApp
             m_Protocol = new Protocol(stream);
             m_Protocol.SetNetwork(network, remote);
 
-            m_ServerModeSender = BinarySender<ServerMode>.Get(m_Protocol, CompanionAppMessages.ToServer.k_SetMode);
-            m_StartRecordingSender = EventSender.Get(m_Protocol, CompanionAppMessages.ToServer.k_StartRecording);
-            m_StopRecordingSender = EventSender.Get(m_Protocol, CompanionAppMessages.ToServer.k_StopRecording);
-            m_StartPlayerSender = EventSender.Get(m_Protocol, CompanionAppMessages.ToServer.k_PlayerStart);
-            m_StopPlayerSender = EventSender.Get(m_Protocol, CompanionAppMessages.ToServer.k_PlayerStop);
-            m_PausePlayerSender = EventSender.Get(m_Protocol, CompanionAppMessages.ToServer.k_PlayerPause);
-            m_PlayerTimeSender = BinarySender<double>.Get(m_Protocol, CompanionAppMessages.ToServer.k_PlayerSetTime);
-            m_SetSelectedTakeSender = JsonSender<SerializableGuid>.Get(m_Protocol, CompanionAppMessages.ToServer.k_SetSelectedTake);
+            m_ServerModeSender = BinarySender<ServerMode>.Get(m_Protocol, CompanionAppMessages.ToServer.SetMode);
+            m_StartRecordingSender = EventSender.Get(m_Protocol, CompanionAppMessages.ToServer.StartRecording);
+            m_StopRecordingSender = EventSender.Get(m_Protocol, CompanionAppMessages.ToServer.StopRecording);
+            m_StartPlayerSender = EventSender.Get(m_Protocol, CompanionAppMessages.ToServer.PlayerStart);
+            m_StopPlayerSender = EventSender.Get(m_Protocol, CompanionAppMessages.ToServer.PlayerStop);
+            m_PausePlayerSender = EventSender.Get(m_Protocol, CompanionAppMessages.ToServer.PlayerPause);
+            m_PlayerTimeSender = BinarySender<double>.Get(m_Protocol, CompanionAppMessages.ToServer.PlayerSetTime);
+            m_SetSelectedTakeSender = BinarySender<SerializableGuid>.Get(m_Protocol, CompanionAppMessages.ToServer.SetSelectedTake);
+            m_SetTakeDataSender = JsonSender<TakeDescriptor>.Get(m_Protocol, CompanionAppMessages.ToServer.SetTakeData);
+            m_DeleteTakeSender = BinarySender<SerializableGuid>.Get(m_Protocol, CompanionAppMessages.ToServer.DeleteTake);
+            m_SetIterationBaseSender = BinarySender<SerializableGuid>.Get(m_Protocol, CompanionAppMessages.ToServer.SetIterationBase);
+            m_ClearIterationBase = EventSender.Get(m_Protocol, CompanionAppMessages.ToServer.ClearIterationBase);
 
-            EventReceiver.Get(m_Protocol, CompanionAppMessages.ToClient.k_Initialize).AddHandler(() =>
+            EventReceiver.Get(m_Protocol, CompanionAppMessages.ToClient.Initialize).AddHandler(() =>
             {
                 Initialize();
             });
-            BinaryReceiver<ServerState>.Get(m_Protocol, CompanionAppMessages.ToClient.k_ServerState).AddHandler((state) =>
+            BinaryReceiver<ServerState>.Get(m_Protocol, CompanionAppMessages.ToClient.ServerState).AddHandler((state) =>
             {
-                serverStateReceived?.Invoke(state);
+                ServerStateReceived?.Invoke(state);
             });
-            BinaryReceiver<PlayerState>.Get(m_Protocol, CompanionAppMessages.ToClient.k_PlayerState).AddHandler((state) =>
+            BinaryReceiver<PlayerState>.Get(m_Protocol, CompanionAppMessages.ToClient.PlayerState).AddHandler((state) =>
             {
-                playerStateReceived?.Invoke(state);
+                PlayerStateReceived?.Invoke(state);
             });
-            JsonReceiver<SlateDescriptor>.Get(m_Protocol, CompanionAppMessages.ToClient.k_SlateDescriptor).AddHandler((descriptor) =>
+            JsonReceiver<SlateDescriptor>.Get(m_Protocol, CompanionAppMessages.ToClient.SlateDescriptor).AddHandler((descriptor) =>
             {
-                slateDescriptorReceived?.Invoke(descriptor);
+                SlateDescriptorReceived?.Invoke(descriptor);
             });
         }
 
@@ -150,6 +158,41 @@ namespace Unity.LiveCapture.CompanionApp
         public void SetSelectedTake(SerializableGuid guid)
         {
             m_SetSelectedTakeSender.Send(guid);
+        }
+
+        /// <summary>
+        /// Requests to change take metadata.
+        /// </summary>
+        /// <param name="descriptor">The take descriptor containing the new metadata to set.</param>
+        public void SetTakeData(TakeDescriptor descriptor)
+        {
+            m_SetTakeDataSender.Send(descriptor);
+        }
+
+        /// <summary>
+        /// Requests to delete a take using its guid.
+        /// </summary>
+        /// <param name="guid">The guid of the take to delete.</param>
+        public void DeleteTake(SerializableGuid guid)
+        {
+            m_DeleteTakeSender.Send(guid);
+        }
+
+        /// <summary>
+        /// Requests to set a take as an iteration base using its guid.
+        /// </summary>
+        /// <param name="guid">The guid of the take to set as iteration base.</param>
+        public void SetIterationBase(SerializableGuid guid)
+        {
+            m_SetIterationBaseSender.Send(guid);
+        }
+
+        /// <summary>
+        /// Requests to clear the current iteration base.
+        /// </summary>
+        public void ClearIterationBase()
+        {
+            m_ClearIterationBase.Send();
         }
     }
 }

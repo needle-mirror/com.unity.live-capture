@@ -31,22 +31,22 @@ namespace Unity.LiveCapture.VirtualCamera
                     break;
         }
 
-        public void SetPhysicalCameraProperties(Lens lens, CameraBody cameraBody)
+        public void SetPhysicalCameraProperties(Lens lens, LensIntrinsics intrinsics, CameraBody cameraBody)
         {
             foreach (var component in m_Components)
-                if (component.SetPhysicalCameraProperties(lens, cameraBody))
+                if (component.SetPhysicalCameraProperties(lens, intrinsics, cameraBody))
                     break;
         }
 
         /// <summary>
         /// A utility to update Camera properties based on lens and camera body data.
         /// </summary>
-        internal static void UpdateCamera(Camera camera, Lens lens, CameraBody cameraBody)
+        internal static void UpdateCamera(Camera camera, Lens lens, LensIntrinsics intrinsics, CameraBody cameraBody)
         {
             camera.gateFit = Camera.GateFitMode.Overscan;
-            camera.sensorSize = cameraBody.sensorSize;
-            camera.lensShift = lens.lensShift;
-            camera.focalLength = lens.focalLength;
+            camera.sensorSize = cameraBody.SensorSize;
+            camera.lensShift = intrinsics.LensShift;
+            camera.focalLength = lens.FocalLength;
         }
     }
 }

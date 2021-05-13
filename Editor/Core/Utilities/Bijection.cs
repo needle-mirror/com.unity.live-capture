@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Unity.LiveCapture
+namespace Unity.LiveCapture.Editor
 {
     /// <summary>
     /// A bidirectional one-to-one mapping between two sets of values.
@@ -58,12 +58,12 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The mapping from <typeparamref name="T0"/> values to <typeparamref name="T1"/> values.
         /// </summary>
-        public Indexer<T0, T1> forward { get; private set; }
+        public Indexer<T0, T1> Forward { get; }
 
         /// <summary>
         /// The mapping from <typeparamref name="T1"/> values to <typeparamref name="T0"/> values.
         /// </summary>
-        public Indexer<T1, T0> reverse { get; private set; }
+        public Indexer<T1, T0> Reverse { get; }
 
         /// <summary>
         /// The number of mappings in the bijection.
@@ -78,8 +78,8 @@ namespace Unity.LiveCapture
         /// </summary>
         public Bijection()
         {
-            forward = new Indexer<T0, T1>(m_Forward);
-            reverse = new Indexer<T1, T0>(m_Reverse);
+            Forward = new Indexer<T0, T1>(m_Forward);
+            Reverse = new Indexer<T1, T0>(m_Reverse);
         }
 
         /// <summary>

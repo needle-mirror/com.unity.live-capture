@@ -7,29 +7,64 @@ namespace Unity.LiveCapture.CompanionApp
     /// Class that stores information of a slate. The client uses this information to build its UI.
     /// </summary>
     [Serializable]
-    public class SlateDescriptor
+    class SlateDescriptor
     {
+        /// <summary>
+        /// The number associated with the scene to record.
+        /// </summary>
+        public int SceneNumber;
+
+        /// <summary>
+        /// The name of the shot stored in the slate.
+        /// </summary>
+        public string ShotName;
+
+        /// <summary>
+        /// The number associated with the take to record.
+        /// </summary>
+        public int TakeNumber;
+
+        /// <summary>
+        /// The description of the shot stored in the slate.
+        /// </summary>
+        public string Description;
+
+        /// <summary>
+        /// The duration of the slate in seconds.
+        /// </summary>
+        public double Duration;
+
         /// <summary>
         /// The index of the selected take in the take list.
         /// </summary>
-        public int selectedTake = -1;
+        public int SelectedTake = -1;
+
+        /// <summary>
+        /// The index of the iteration base in the take list.
+        /// </summary>
+        public int IterationBase = -1;
 
         /// <summary>
         /// The list of available takes in the slate.
         /// </summary>
-        public TakeDescriptor[] takes;
+        public TakeDescriptor[] Takes;
 
         internal static SlateDescriptor Create(ISlate slate)
         {
             var descriptor = new SlateDescriptor();
 #if UNITY_EDITOR
-            var takes = AssetDatabaseUtility.GetAssetsAtPath<Take>(slate.directory);
-            descriptor.selectedTake = takes.IndexOf(slate.take);
-            descriptor.takes = takes.Select(take => new TakeDescriptor()
+            if (slate != null)
             {
-                guid = SerializableGuid.FromString(AssetDatabaseUtility.GetAssetGUID(take)),
-                name = take.name
-            }).ToArray();
+                var takes = AssetDatabaseUtility.GetAssetsAtPath<Take>(slate.Directory);
+                descriptor.SceneNumber = slate.SceneNumber;
+                descriptor.ShotName = slate.ShotName;
+                descriptor.TakeNumber = slate.TakeNumber;
+                descriptor.Description = slate.Description;
+                descriptor.Duration = slate.Duration;
+                descriptor.SelectedTake = takes.IndexOf(slate.Take);
+                descriptor.IterationBase = takes.IndexOf(slate.IterationBase);
+                descriptor.Takes = takes.Select(take => TakeDescriptor.Create(take)).ToArray();
+            }
 #endif
             return descriptor;
         }

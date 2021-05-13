@@ -12,7 +12,7 @@ namespace Unity.LiveCapture.Networking
     /// <summary>
     /// A class containing methods for common networking related operations.
     /// </summary>
-    public static class NetworkUtilities
+    static class NetworkUtilities
     {
         static readonly ConcurrentDictionary<IPAddress, uint> s_AddressBits = new ConcurrentDictionary<IPAddress, uint>();
 

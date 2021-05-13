@@ -15,7 +15,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
     /// all skinned meshes relative to the <see cref="FaceActor"/> components are consistent between the rigs.
     /// </remarks>
     [CreateAssetMenu(fileName = "NewFaceMapper", menuName = "Live Capture/ARKit Face Capture/Mapper")]
-    public class DefaultFaceMapper : FaceMapper
+    class DefaultFaceMapper : FaceMapper
     {
         internal enum EyeMovementDriverType
         {
@@ -80,8 +80,12 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         float m_EyeSmoothing = 0.1f;
 
         [SerializeField]
-        [Tooltip("The head transform to drive.")]
-        string m_Head = string.Empty;
+        [Tooltip("The head transform to drive position.")]
+        string m_HeadPosition = string.Empty;
+
+        [SerializeField]
+        [Tooltip("The head transform to drive rotation.")]
+        string m_HeadRotation = string.Empty;
 
         [SerializeField]
         [Tooltip("The amount of smoothing to apply to head movement. " +
@@ -91,69 +95,69 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
 
         struct BlendShapeData
         {
-            public int useCount;
-            public float weight;
+            public int UseCount;
+            public float Weight;
         }
 
         struct BindingData
         {
-            public readonly int shapeIndex;
-            public readonly BindingConfig config;
-            public float lastWeight;
+            public readonly int ShapeIndex;
+            public readonly BindingConfig Config;
+            public float LastWeight;
 
             public BindingData(int shapeIndex, BindingConfig config)
             {
-                this.shapeIndex = shapeIndex;
-                this.config = config;
-                lastWeight = 0f;
+                ShapeIndex = shapeIndex;
+                Config = config;
+                LastWeight = 0f;
             }
         }
 
         readonly struct MappingData
         {
-            public readonly FaceBlendShape location;
-            public readonly BindingData[] bindings;
+            public readonly FaceBlendShape Location;
+            public readonly BindingData[] Bindings;
 
             public MappingData(FaceBlendShape location, BindingData[] bindings)
             {
-                this.location = location;
-                this.bindings = bindings;
+                Location = location;
+                Bindings = bindings;
             }
         }
 
         readonly struct RendererData
         {
-            public readonly SkinnedMeshRenderer renderer;
-            public readonly BlendShapeData[] blendShapeData;
-            public readonly MappingData[] mappings;
+            public readonly SkinnedMeshRenderer Renderer;
+            public readonly BlendShapeData[] BlendShapeData;
+            public readonly MappingData[] Mappings;
 
             public RendererData(FaceActor actor, RendererMapping rendererMapping)
             {
-                var target = actor == null ? null : actor.transform.Find(rendererMapping.path);
-                renderer = target == null ? null : target.GetComponent<SkinnedMeshRenderer>();
-                var mesh = renderer == null ? null : renderer.sharedMesh;
+                var target = actor == null ? null : actor.transform.Find(rendererMapping.Path);
+                Renderer = target == null ? null : target.GetComponent<SkinnedMeshRenderer>();
+                var mesh = Renderer == null ? null : Renderer.sharedMesh;
 
                 if (mesh == null)
                 {
-                    blendShapeData = new BlendShapeData[0];
-                    mappings = new MappingData[0];
+                    BlendShapeData = new BlendShapeData[0];
+                    Mappings = new MappingData[0];
                     return;
                 }
 
-                mappings = rendererMapping.bindings
-                    .Where(b => b.shapeIndex >= 0 && b.shapeIndex < mesh.blendShapeCount)
-                    .ToLookup(b => b.location, b => (b.shapeIndex, b.config))
+                Mappings = rendererMapping.Bindings
+                    .Where(b => b.ShapeIndex >= 0 && b.ShapeIndex < mesh.blendShapeCount)
+                    .ToLookup(b => b.Location, b => (shapeIndex: b.ShapeIndex, config: b.Config))
                     .Select(m => new MappingData(m.Key, m.Select(b => new BindingData(b.shapeIndex, b.config)).ToArray()))
                     .ToArray();
 
-                blendShapeData = new BlendShapeData[mesh.blendShapeCount];
+                BlendShapeData = new BlendShapeData[mesh.blendShapeCount];
 
                 // count how many face shapes influence each blend shape on the mesh
-                foreach (var mapping in mappings)
+                foreach (var mapping in Mappings)
                 {
-                    foreach (var binding in mapping.bindings)
+                    foreach (var binding in mapping.Bindings)
                     {
-                        blendShapeData[binding.shapeIndex].useCount++;
+                        BlendShapeData[binding.ShapeIndex].UseCount++;
                     }
                 }
             }
@@ -164,7 +168,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             readonly Dictionary<string, Transform> m_Bones = new Dictionary<string, Transform>();
             readonly List<RendererData> m_Renderers = new List<RendererData>();
 
-            public IEnumerable<RendererData> renderers => m_Renderers;
+            public IEnumerable<RendererData> Renderers => m_Renderers;
 
             public Cache(FaceActor actor, IEnumerable<RendererMapping> maps)
             {
@@ -195,7 +199,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             for (var i = 0; i < m_Maps.Count;)
             {
                 var rendererMapping = m_Maps[i];
-                var path = rendererMapping.path;
+                var path = rendererMapping.Path;
 
                 if (!string.IsNullOrEmpty(path) && usedPaths.Contains(path))
                 {
@@ -217,70 +221,106 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         }
 
         /// <inheritdoc />
-        public override void ApplyBlendShapesToRig(FaceActor actor, FaceMapperCache cache, ref FacePose pose, bool continuous)
+        public override void ApplyBlendShapesToRig(
+            FaceActor actor,
+            FaceMapperCache cache,
+            ref FaceBlendShapePose pose,
+            bool continuous
+        )
         {
             if (actor == null)
                 return;
 
             var c = cache as Cache;
 
-            foreach (var data in c.renderers)
+            foreach (var data in c.Renderers)
             {
                 // ensure the references are still valid
-                if (data.renderer == null || data.renderer.sharedMesh == null)
+                if (data.Renderer == null || data.Renderer.sharedMesh == null)
                     continue;
 
                 // clear the blend shape values
-                for (var i = 0; i < data.blendShapeData.Length; i++)
-                    data.blendShapeData[i].weight = 0f;
+                for (var i = 0; i < data.BlendShapeData.Length; i++)
+                    data.BlendShapeData[i].Weight = 0f;
 
                 // Compute the new weights. We sum the weights from all influences to get the final
                 // result. It may be better to let the user select from multiple techniques instead.
-                for (var i = 0; i < data.mappings.Length; i++)
+                for (var i = 0; i < data.Mappings.Length; i++)
                 {
-                    var mapping = data.mappings[i];
-                    var bindings = mapping.bindings;
-                    var value = pose.blendShapes.GetValue(mapping.location);
+                    var mapping = data.Mappings[i];
+                    var bindings = mapping.Bindings;
+                    var value = pose.GetValue(mapping.Location);
 
-                    for (var j = 0; j < mapping.bindings.Length; j++)
+                    for (var j = 0; j < mapping.Bindings.Length; j++)
                     {
                         var binding = bindings[j];
-                        var config = binding.config;
+                        var config = binding.Config;
                         var weight = config.GetEvaluator().Evaluate(value);
 
                         if (continuous)
-                            weight = Mathf.Lerp(weight, binding.lastWeight, config.smoothing);
+                            weight = Mathf.Lerp(weight, binding.LastWeight, config.Smoothing);
 
-                        data.blendShapeData[binding.shapeIndex].weight += weight;
-                        data.mappings[i].bindings[j].lastWeight = weight;
+                        data.BlendShapeData[binding.ShapeIndex].Weight += weight;
+                        data.Mappings[i].Bindings[j].LastWeight = weight;
                     }
                 }
 
                 // apply the blend shape weights to the skinned mesh
-                for (var i = 0; i < data.blendShapeData.Length; i++)
+                for (var i = 0; i < data.BlendShapeData.Length; i++)
                 {
-                    if (data.blendShapeData[i].useCount > 0)
-                        data.renderer.SetBlendShapeWeight(i, data.blendShapeData[i].weight);
+                    if (data.BlendShapeData[i].UseCount > 0)
+                        data.Renderer.SetBlendShapeWeight(i, data.BlendShapeData[i].Weight);
                 }
             }
         }
 
         /// <inheritdoc />
-        public override void ApplyHeadRotationToRig(FaceActor actor, FaceMapperCache cache, ref FacePose pose, bool continuous)
+        public override void ApplyHeadPositionToRig(
+            FaceActor actor,
+            FaceMapperCache cache,
+            ref Vector3 headPosition,
+            bool continuous
+        )
         {
             if (actor == null)
                 return;
 
             var c = cache as Cache;
 
-            if (!string.IsNullOrEmpty(m_Head) && c.TryGetBone(actor, m_Head, out var head))
+            if (!string.IsNullOrEmpty(m_HeadPosition) && c.TryGetBone(actor, m_HeadPosition, out var head))
             {
-                head.localRotation = continuous ? Quaternion.Slerp(pose.headOrientation, head.localRotation, m_HeadSmoothing) : pose.headOrientation;
+                head.localPosition = continuous ? Vector3.Lerp(headPosition, head.localPosition, m_HeadSmoothing) : headPosition;
             }
         }
 
         /// <inheritdoc />
-        public override void ApplyEyeRotationToRig(FaceActor actor, FaceMapperCache cache, ref FacePose pose, bool continuous)
+        public override void ApplyHeadRotationToRig(
+            FaceActor actor,
+            FaceMapperCache cache,
+            ref Quaternion headOrientation,
+            bool continuous
+        )
+        {
+            if (actor == null)
+                return;
+
+            var c = cache as Cache;
+
+            if (!string.IsNullOrEmpty(m_HeadRotation) && c.TryGetBone(actor, m_HeadRotation, out var head))
+            {
+                head.localRotation = continuous ? Quaternion.Slerp(headOrientation, head.localRotation, m_HeadSmoothing) : headOrientation;
+            }
+        }
+
+        /// <inheritdoc />
+        public override void ApplyEyeRotationToRig(
+            FaceActor actor,
+            FaceMapperCache cache,
+            ref FaceBlendShapePose pose,
+            ref Quaternion leftEyeRotation,
+            ref Quaternion rightEyeRotation,
+            bool continuous
+        )
         {
             if (actor == null)
                 return;
@@ -293,8 +333,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                 {
                     case EyeMovementDriverType.BlendShapes:
                     {
-                        var leftEyeH = pose.blendShapes.GetValue(FaceBlendShape.EyeLookInLeft) - pose.blendShapes.GetValue(FaceBlendShape.EyeLookOutLeft);
-                        var leftEyeV = pose.blendShapes.GetValue(FaceBlendShape.EyeLookUpLeft) - pose.blendShapes.GetValue(FaceBlendShape.EyeLookDownLeft);
+                        var leftEyeH = pose.GetValue(FaceBlendShape.EyeLookInLeft) - pose.GetValue(FaceBlendShape.EyeLookOutLeft);
+                        var leftEyeV = pose.GetValue(FaceBlendShape.EyeLookUpLeft) - pose.GetValue(FaceBlendShape.EyeLookDownLeft);
 
                         var leftEyeYaw = Quaternion.AngleAxis(leftEyeH * m_EyeAngleRange.x + m_EyeAngleOffset.x, Vector3.up);
                         var leftEyePitch = Quaternion.AngleAxis(leftEyeV * m_EyeAngleRange.y + m_EyeAngleOffset.y, Vector3.left);
@@ -306,7 +346,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                     }
                     case EyeMovementDriverType.EyeTracking:
                     {
-                        var targetRotation = continuous ? Quaternion.Slerp(pose.leftEyeOrientation, leftEye.localRotation, m_EyeSmoothing) : pose.leftEyeOrientation;
+                        var targetRotation = continuous ? Quaternion.Slerp(leftEyeRotation, leftEye.localRotation, m_EyeSmoothing) : leftEyeRotation;
 
                         var offsetXRotation = Quaternion.AngleAxis(m_EyeAngleOffset.x, Vector3.up);
                         var offsetYRotation = Quaternion.AngleAxis(m_EyeAngleOffset.y, Vector3.left);
@@ -326,8 +366,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                 {
                     case EyeMovementDriverType.BlendShapes:
                     {
-                        var rightEyeH = pose.blendShapes.GetValue(FaceBlendShape.EyeLookInRight) - pose.blendShapes.GetValue(FaceBlendShape.EyeLookOutRight);
-                        var rightEyeV = pose.blendShapes.GetValue(FaceBlendShape.EyeLookUpRight) - pose.blendShapes.GetValue(FaceBlendShape.EyeLookDownRight);
+                        var rightEyeH = pose.GetValue(FaceBlendShape.EyeLookInRight) - pose.GetValue(FaceBlendShape.EyeLookOutRight);
+                        var rightEyeV = pose.GetValue(FaceBlendShape.EyeLookUpRight) - pose.GetValue(FaceBlendShape.EyeLookDownRight);
 
                         var rightEyeYaw = Quaternion.AngleAxis(rightEyeH * m_EyeAngleRange.x + m_EyeAngleOffset.x, Vector3.down);
                         var rightEyePitch = Quaternion.AngleAxis(rightEyeV * m_EyeAngleRange.y + m_EyeAngleOffset.y, Vector3.left);
@@ -339,7 +379,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                     }
                     case EyeMovementDriverType.EyeTracking:
                     {
-                        var targetRotation = continuous ? Quaternion.Slerp(pose.rightEyeOrientation, rightEye.localRotation, m_EyeSmoothing) : pose.rightEyeOrientation;
+                        var targetRotation = continuous ? Quaternion.Slerp(rightEyeRotation, rightEye.localRotation, m_EyeSmoothing) : rightEyeRotation;
 
                         var offsetXRotation = Quaternion.AngleAxis(m_EyeAngleOffset.x, Vector3.down);
                         var offsetYRotation = Quaternion.AngleAxis(m_EyeAngleOffset.y, Vector3.left);

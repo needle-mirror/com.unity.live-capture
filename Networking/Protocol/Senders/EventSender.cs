@@ -8,7 +8,7 @@ namespace Unity.LiveCapture.Networking.Protocols
     /// <summary>
     /// A message used to send events to a remote.
     /// </summary>
-    public sealed class EventSender : MessageBase
+    sealed class EventSender : MessageBase
     {
         /// <summary>
         /// Creates a new <see cref="EventSender"/> instance.
@@ -30,7 +30,7 @@ namespace Unity.LiveCapture.Networking.Protocols
         {
             try
             {
-                protocol.SendMessage(this);
+                Protocol.SendMessage(this);
             }
             catch (Exception e)
             {
@@ -39,7 +39,7 @@ namespace Unity.LiveCapture.Networking.Protocols
         }
 
         /// <inheritdoc />
-        internal override MessageBase GetInverse() => new EventReceiver(id);
+        internal override MessageBase GetInverse() => new EventReceiver(ID);
 
         /// <summary>
         /// Gets a <see cref="EventSender"/> from a protocol by ID.

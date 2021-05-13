@@ -5,12 +5,15 @@ using UnityEngine.Timeline;
 namespace Unity.LiveCapture
 {
     /// <summary>
-    /// Playable Asset class for <see cref="SlateTrack"/>
+    /// Playable Asset class for <see cref="TakeRecorderTrack"/>
     /// </summary>
-    public class SlatePlayableAsset : PlayableAsset, ITimelineClipAsset
+    class SlatePlayableAsset : PlayableAsset, ITimelineClipAsset, ISlate
     {
+        const double k_Tick = 0.016666666d;
         const string k_DefaultDirectory = "Assets/Takes";
 
+        [SerializeField]
+        TimelineClip m_Clip;
         [SerializeField]
         int m_SceneNumber = 1;
         [SerializeField]
@@ -24,55 +27,72 @@ namespace Unity.LiveCapture
         [SerializeField]
         Take m_IterationBase;
 
-        internal TimelineClip clip { get; set; }
+        internal TimelineClip Clip
+        {
+            get => m_Clip;
+            set => m_Clip = value;
+        }
 
-        internal PlayableDirector director { get; set; }
+        internal PlayableDirector Director { get; set; }
 
-        internal SlateDatabase slateDatabase { get; set; }
+        internal double Start
+        {
+            get => m_Clip.start;
+        }
 
-        internal int sceneNumber
+        public Object UnityObject => this;
+
+        public int SceneNumber
         {
             get => m_SceneNumber;
             set => m_SceneNumber = value;
         }
 
-        internal int takeNumber
+        public string ShotName
+        {
+            get => m_Clip.displayName;
+            set => m_Clip.displayName = value;
+        }
+
+        public int TakeNumber
         {
             get => m_TakeNumber;
             set => m_TakeNumber = value;
         }
 
-        internal string description
+        public string Description
         {
             get => m_Description;
             set => m_Description = value;
         }
 
-        internal string directory
+        public string Directory
         {
             get => m_Directory;
             set => m_Directory = value;
         }
 
-        internal Take take
+        public Take Take
         {
             get => m_Take;
             set => m_Take = value;
         }
 
-        internal Take iterationBase
+        public Take IterationBase
         {
             get => m_IterationBase;
             set => m_IterationBase = value;
         }
 
+        public double Duration => m_Clip.duration - k_Tick;
+
         /// <summary>
         /// Describes the timeline features supported by a clip.
         /// </summary>
-        public ClipCaps clipCaps => ClipCaps.Extrapolation;
+        ClipCaps ITimelineClipAsset.clipCaps => ClipCaps.Extrapolation;
 
         /// <summary>
-        ///   <para>Injects SlatePlayables into the given graph.</para>
+        /// Injects SlatePlayables into the given graph.
         /// </summary>
         /// <param name="graph">The graph to inject playables into.</param>
         /// <param name="owner">The game object which initiated the build.</param>
@@ -81,26 +101,22 @@ namespace Unity.LiveCapture
         /// </returns>
         public override Playable CreatePlayable(PlayableGraph graph, GameObject owner)
         {
-            if (slateDatabase != null)
+            if (Director != null)
             {
-                var takePlayerDirector = slateDatabase.GetComponent<PlayableDirector>();
-                var directorControlPlayable = DirectorControlPlayable.Create(graph, takePlayerDirector);
+                var directorControlPlayable = DirectorControlPlayable.Create(graph, Director);
                 var playable = ScriptPlayable<SlatePlayable>.Create(graph);
-                var slate = playable.GetBehaviour();
+                var slatePlayable = playable.GetBehaviour();
 
-                slate.asset = this;
-                slate.SetSlateDatabase(slateDatabase);
-                slate.director = director;
+                slatePlayable.Asset = this;
+                directorControlPlayable.SetDuration(Duration);
 
                 playable.AddInput(directorControlPlayable, 0, 1f);
                 playable.SetPropagateSetTime(true);
 
                 return playable;
             }
-            else
-            {
-                return Playable.Null;
-            }
+
+            return Playable.Null;
         }
     }
 }

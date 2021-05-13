@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 
 namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
@@ -26,12 +25,12 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         /// <summary>
         /// The transform path from the <see cref="FaceActor"/> component to the target SkinnedMeshRenderer component.
         /// </summary>
-        public string path => m_Path;
+        public string Path => m_Path;
 
         /// <summary>
         /// The blend shape mappings for this renderer.
         /// </summary>
-        public Binding[] bindings => m_Bindings;
+        public Binding[] Bindings => m_Bindings;
 
         /// <summary>
         /// Fixes or reports issues in the mapping to ensure it is correctly defined.
@@ -41,9 +40,9 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         {
             var usedKeys = new HashSet<(FaceBlendShape, int)>();
 
-            foreach (var binding in bindings)
+            foreach (var binding in Bindings)
             {
-                var key = (binding.location, binding.shapeIndex);
+                var key = (location : binding.Location, shapeIndex : binding.ShapeIndex);
 
                 if (usedKeys.Contains(key))
                 {
@@ -56,6 +55,6 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         }
 
         /// <inheritdoc />
-        public override string ToString() => Path.GetFileName(path);
+        public override string ToString() => System.IO.Path.GetFileName(Path);
     }
 }

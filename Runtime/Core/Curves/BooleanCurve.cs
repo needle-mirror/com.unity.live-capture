@@ -11,19 +11,19 @@ namespace Unity.LiveCapture
         readonly FloatCurve m_Curve;
 
         /// <inheritdoc/>
-        public string relativePath { get; private set; }
+        public string RelativePath { get; }
 
         /// <inheritdoc/>
-        public string propertyName { get; private set; }
+        public string PropertyName { get; }
 
         /// <inheritdoc/>
-        public Type bindingType { get; private set; }
+        public Type BindingType { get; }
 
         /// <inheritdoc/>
-        public FrameRate frameRate
+        public FrameRate FrameRate
         {
-            get => m_Curve.frameRate;
-            set => m_Curve.frameRate = value;
+            get => m_Curve.FrameRate;
+            set => m_Curve.FrameRate = value;
         }
 
         int m_FrameNumber;
@@ -37,9 +37,9 @@ namespace Unity.LiveCapture
         /// <param name="bindingType">The type of component this curve is applied to.</param>
         public BooleanCurve(string relativePath, string propertyName, Type bindingType)
         {
-            this.relativePath = relativePath;
-            this.propertyName = propertyName;
-            this.bindingType = bindingType;
+            RelativePath = relativePath;
+            PropertyName = propertyName;
+            BindingType = bindingType;
 
             m_Curve = new FloatCurve(relativePath, propertyName, bindingType);
         }
@@ -73,16 +73,16 @@ namespace Unity.LiveCapture
 
         void MakeConstant()
         {
-            var frameCount = m_Curve.animationCurve.length;
+            var frameCount = m_Curve.AnimationCurve.length;
 
             for (var i = m_FrameNumber; i < frameCount; ++i)
             {
-                var keyframe = m_Curve.animationCurve[i];
+                var keyframe = m_Curve.AnimationCurve[i];
 
                 keyframe.inTangent = float.PositiveInfinity;
                 keyframe.outTangent = float.PositiveInfinity;
 
-                m_Curve.animationCurve.MoveKey(i, keyframe);
+                m_Curve.AnimationCurve.MoveKey(i, keyframe);
 
                 ++m_FrameNumber;
             }

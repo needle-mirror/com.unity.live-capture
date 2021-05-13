@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Unity.LiveCapture
@@ -10,14 +9,17 @@ namespace Unity.LiveCapture
     public interface ITakeRecorder
     {
         /// <summary>
-        /// The selected slate to use for recording.
-        /// </summary>
-        ISlate slate { get; }
-
-        /// <summary>
         /// The frame rate to use for recording.
         /// </summary>
-        FrameRate frameRate { get; set; }
+        FrameRate FrameRate { get; set; }
+
+        /// <summary>
+        /// The selected slate to use for recording.
+        /// </summary>
+        /// <returns>
+        /// The selected slate.
+        /// </returns>
+        ISlate GetActiveSlate();
 
         /// <summary>
         /// Indicates whether the take recorder is ready for recording.
@@ -70,9 +72,25 @@ namespace Unity.LiveCapture
         void PausePreview();
 
         /// <summary>
+        /// Returns the current playback time of the selected take.
+        /// </summary>
+        /// <returns>The current time in seconds.</returns>
+        double GetPreviewTime();
+
+        /// <summary>
         /// Changes the current playback time of the selected take.
         /// </summary>
         /// <param name="time">The current time in seconds.</param>
         void SetPreviewTime(double time);
+    }
+
+    interface ITakeRecorderInternal : ITakeRecorder
+    {
+        /// <summary>
+        /// Changes the current playback time of the slate.
+        /// </summary>
+        /// <param name="slate">The slate.</param>
+        /// <param name="time">The current time in seconds.</param>
+        void SetPreviewTime(ISlate slate, double time);
     }
 }

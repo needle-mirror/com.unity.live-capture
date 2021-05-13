@@ -6,20 +6,20 @@ namespace Unity.LiveCapture.CompanionApp
     /// <summary>
     /// The message sent by a client to the server immediately upon connecting.
     /// </summary>
-    public class ClientInitialization
+    class ClientInitialization
     {
-        /// <inheritdoc cref="IClient.name"/>
-        public string name;
+        /// <inheritdoc cref="ICompanionAppClient.Name"/>
+        public string Name;
 
-        /// <inheritdoc cref="IClient.id"/>
-        public string id;
+        /// <inheritdoc cref="ICompanionAppClientInternal.ID"/>
+        public string ID;
 
         /// <summary>
         /// The type of client that has connected to the server.
         /// </summary>
-        public string type;
+        public string Type;
 
-        /// <inheritdoc cref="ICompanionAppClient.screenResolution"/>
-        public Vector2Int screenResolution;
+        /// <inheritdoc cref="ICompanionAppClientInternal.ScreenResolution"/>
+        public Vector2Int ScreenResolution;
     }
 }

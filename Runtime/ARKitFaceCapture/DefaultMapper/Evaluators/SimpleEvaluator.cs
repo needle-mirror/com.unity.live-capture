@@ -10,7 +10,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
     /// An <see cref="IEvaluator"/> that uses a mostly linear evaluation function.
     /// </summary>
     [CreateAssetMenu(fileName = "NewSimpleEvaluator", menuName = "Live Capture/ARKit Face Capture/Evaluator/Simple", order = 0)]
-    public class SimpleEvaluator : EvaluatorPreset
+    class SimpleEvaluator : EvaluatorPreset
     {
         /// <inheritdoc cref="SimpleEvaluator"/>
         [Serializable]
@@ -70,13 +70,13 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
 #if UNITY_EDITOR
             static class Contents
             {
-                public static readonly GUIContent multiplier = new GUIContent("Multiplier", "The scaling coefficient applied to the blend shape value. " +
+                public static readonly GUIContent Multiplier = new GUIContent("Multiplier", "The scaling coefficient applied to the blend shape value. " +
                     "Larger values make the character more expressive.");
-                public static readonly GUIContent offset = new GUIContent("Offset", "Offsets the zero value of the blend shape. " +
+                public static readonly GUIContent Offset = new GUIContent("Offset", "Offsets the zero value of the blend shape. " +
                     "Non-zero values will change the face's resting pose.");
-                public static readonly GUIContent max = new GUIContent("Max", "The maximum value the blend shape can reach. " +
+                public static readonly GUIContent Max = new GUIContent("Max", "The maximum value the blend shape can reach. " +
                     "Values larger than 100 allow the blend shape to go past its default extremes, while smaller values constrain them.");
-                public static readonly GUIContent clamping = new GUIContent("Clamping", "Controls how the evaluated blend shape value should behave as it reaches the maximum value. " +
+                public static readonly GUIContent Clamping = new GUIContent("Clamping", "Controls how the evaluated blend shape value should behave as it reaches the maximum value. " +
                     "Soft clamping will ease near the max value, while hard clamping will not.");
             }
 
@@ -90,16 +90,16 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             public void OnGUI(Rect rect)
             {
                 rect.height = EditorGUIUtility.singleLineHeight;
-                m_Multiplier = EditorGUI.Slider(rect, Contents.multiplier, m_Multiplier, 0f, 200f);
+                m_Multiplier = EditorGUI.Slider(rect, Contents.Multiplier, m_Multiplier, 0f, 200f);
 
                 GUIUtils.NextLine(ref rect);
-                m_Offset = EditorGUI.Slider(rect, Contents.offset, m_Offset, -200f, 200f);
+                m_Offset = EditorGUI.Slider(rect, Contents.Offset, m_Offset, -200f, 200f);
 
                 GUIUtils.NextLine(ref rect);
-                m_Max = EditorGUI.Slider(rect, Contents.max, m_Max, 0f, 200f);
+                m_Max = EditorGUI.Slider(rect, Contents.Max, m_Max, 0f, 200f);
 
                 GUIUtils.NextLine(ref rect);
-                m_Clamping = (Clamping)EditorGUI.EnumPopup(rect, Contents.clamping, m_Clamping);
+                m_Clamping = (Clamping)EditorGUI.EnumPopup(rect, Contents.Clamping, m_Clamping);
             }
 
 #endif
@@ -109,6 +109,6 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         Impl m_Evaluator = new Impl();
 
         /// <inheritdoc />
-        public override IEvaluator evaluator => m_Evaluator;
+        public override IEvaluator Evaluator => m_Evaluator;
     }
 }

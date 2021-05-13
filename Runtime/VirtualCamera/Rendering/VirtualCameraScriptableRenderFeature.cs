@@ -14,13 +14,13 @@ namespace Unity.LiveCapture.VirtualCamera
     /// </remarks>
     class VirtualCameraScriptableRenderFeature : ScriptableRendererFeature
     {
-        UrpFilmFormatPass m_UrpFilmFormatPass;
+        UrpFrameLinesPass m_UrpFrameLinesPass;
         UrpFocusPlaneRenderPass m_UrpFocusPlaneRenderPass;
         UrpFocusPlaneComposePass m_UrpFocusPlaneComposePass;
 
         public override void Create()
         {
-            m_UrpFilmFormatPass = new UrpFilmFormatPass { renderPassEvent = RenderPassEvent.AfterRendering };
+            m_UrpFrameLinesPass = new UrpFrameLinesPass { renderPassEvent = RenderPassEvent.AfterRendering };
             m_UrpFocusPlaneRenderPass = new UrpFocusPlaneRenderPass { renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing };
             m_UrpFocusPlaneComposePass = new UrpFocusPlaneComposePass { renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing };
         }
@@ -29,20 +29,20 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             var camera = renderingData.cameraData.camera;
 
-            if (FilmFormatMap.instance.TryGetInstance(camera, out var filmFormat))
+            if (FrameLinesMap.Instance.TryGetInstance(camera, out var frameLines))
             {
-                if (filmFormat.ShouldRender())
+                if (frameLines.ShouldRender())
                 {
-                    renderer.EnqueuePass(m_UrpFilmFormatPass);
+                    renderer.EnqueuePass(m_UrpFrameLinesPass);
                 }
             }
 
-            if (FocusPlaneMap.instance.TryGetInstance(camera, out var focusPlane))
+            if (FocusPlaneMap.Instance.TryGetInstance(camera, out var focusPlane))
             {
                 if (focusPlane.isActiveAndEnabled)
                 {
                     focusPlane.AllocateTargetIfNeeded(camera.pixelWidth, camera.pixelHeight);
-                    m_UrpFocusPlaneRenderPass.source = renderer.cameraColorTarget;
+                    m_UrpFocusPlaneRenderPass.Source = renderer.cameraColorTarget;
                     renderer.EnqueuePass(m_UrpFocusPlaneRenderPass);
                     renderer.EnqueuePass(m_UrpFocusPlaneComposePass);
                 }

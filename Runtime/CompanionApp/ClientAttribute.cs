@@ -7,15 +7,15 @@ namespace Unity.LiveCapture.CompanionApp
     /// is instantiated when the companion app connects to the server.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-    public class ClientAttribute : Attribute
+    class ClientAttribute : Attribute
     {
         /// <summary>
         /// The name used to identify this client type.
         /// </summary>
         /// <remarks>
-        /// This should match a <see cref="ClientInitialization.type"/> received from the companion app.
+        /// This should match a <see cref="ClientInitialization.Type"/> received from the companion app.
         /// </remarks>
-        public string type { get; }
+        public string Type { get; }
 
         /// <summary>
         /// Creates a new <see cref="ClientAttribute"/> instance.
@@ -23,7 +23,7 @@ namespace Unity.LiveCapture.CompanionApp
         /// <param name="type">The name used to identify this client type.</param>
         public ClientAttribute(string type)
         {
-            this.type = type;
+            Type = type;
         }
     }
 }

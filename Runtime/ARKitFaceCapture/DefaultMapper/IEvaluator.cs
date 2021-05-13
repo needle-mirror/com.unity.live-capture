@@ -4,7 +4,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
     /// Takes the value of a <see cref="FaceBlendShape"/> from a pose and computes the
     /// influence for a blend shape on a skinned mesh.
     /// </summary>
-    public interface IEvaluator : IDrawable
+    interface IEvaluator : IDrawable
     {
         /// <summary>
         /// Compute the skinned mesh blend shape influence.
