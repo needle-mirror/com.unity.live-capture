@@ -18,6 +18,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             Curve,
         }
 
+        [SerializeField, Tooltip("Whether the smoothing value set on this binding overrides the default value for the mapper.")]
+        bool m_OverrideSmoothing;
         [SerializeField]
         float m_Smoothing = 0.1f;
         [SerializeField]
@@ -33,6 +35,11 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         /// The amount of smoothing to apply to the blend shape value, with a value in the range [0, 1].
         /// </summary>
         public float Smoothing => m_Smoothing;
+
+        /// <summary>
+        /// Whether the smoothing set on this binding overrides the global value.
+        /// </summary>
+        public bool OverrideSmoothing => m_OverrideSmoothing;
 
         /// <summary>
         /// Creates a new <see cref="BindingConfig"/> instance.
@@ -65,6 +72,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
 #if UNITY_EDITOR
         static class Contents
         {
+            public static readonly GUIContent OverrideSmoothing = new GUIContent("Override Smoothing", "Whether the smoothing value set on this binding overrides the default value for the mapper.");
             public static readonly GUIContent Smoothing = new GUIContent("Smoothing", "The amount of smoothing to apply to the blend shape value. " +
                 "It can help reduce jitter in the face capture, but it will also smooth out fast motions.");
             public static readonly GUIContent EvaluatorPreset = new GUIContent("Evaluator Preset", "A preset evaluation function to use. " +
@@ -75,7 +83,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         /// <inheritdoc/>
         public float GetHeight()
         {
-            var height = (2 * EditorGUIUtility.singleLineHeight) + (1 * EditorGUIUtility.standardVerticalSpacing);
+            const int lines = 3;
+            var height = (lines * EditorGUIUtility.singleLineHeight) + ((lines - 1) * EditorGUIUtility.standardVerticalSpacing);
 
             if (m_EvaluatorPreset == null)
             {
@@ -92,7 +101,15 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             var line = rect;
             line.height = EditorGUIUtility.singleLineHeight;
 
-            m_Smoothing = EditorGUI.Slider(line, Contents.Smoothing, m_Smoothing, 0f, 1f);
+            m_OverrideSmoothing = EditorGUI.Toggle(line, Contents.OverrideSmoothing, m_OverrideSmoothing);
+            GUIUtils.NextLine(ref line);
+
+            using (new EditorGUI.DisabledScope(!m_OverrideSmoothing))
+            {
+                EditorGUI.indentLevel++;
+                m_Smoothing = EditorGUI.Slider(line, Contents.Smoothing, m_Smoothing, 0f, 1f);
+                EditorGUI.indentLevel--;
+            }
 
             GUIUtils.NextLine(ref line);
             m_EvaluatorPreset = EditorGUI.ObjectField(line, Contents.EvaluatorPreset, m_EvaluatorPreset, typeof(EvaluatorPreset), false) as EvaluatorPreset;

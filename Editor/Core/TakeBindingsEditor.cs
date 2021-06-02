@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Playables;
 using UnityEditor;
 
 namespace Unity.LiveCapture.Editor
@@ -108,6 +109,8 @@ namespace Unity.LiveCapture.Editor
                         binding.SetValue(newValue, resolver);
 
                         EditorUtility.SetDirty(undoObject);
+
+                        TakePlayer.SetSceneBindings(resolver as PlayableDirector, entries);
                     }
                 }
             }

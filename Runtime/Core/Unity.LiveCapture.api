@@ -367,7 +367,7 @@ namespace Unity.LiveCapture
         public virtual void SetValue(UnityEngine.Object value, UnityEngine.IExposedPropertyTable resolver);
     }
 
-    [UnityEngine.AddComponentMenu(@"Live Capture/Take Recorder")] [UnityEngine.DefaultExecutionOrder(-10)] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.RequireComponent(typeof(UnityEngine.Playables.PlayableDirector))] public class TakeRecorder : UnityEngine.MonoBehaviour, Unity.LiveCapture.ITakeRecorder, Unity.LiveCapture.ITakeRecorderInternal
+    [UnityEngine.AddComponentMenu(@"Live Capture/Take Recorder")] [UnityEngine.DefaultExecutionOrder(-10)] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@1.0/manual/ref-component-take-recorder.html")] [UnityEngine.RequireComponent(typeof(UnityEngine.Playables.PlayableDirector))] public class TakeRecorder : UnityEngine.MonoBehaviour, Unity.LiveCapture.ITakeRecorder, Unity.LiveCapture.ITakeRecorderInternal
     {
         public virtual Unity.LiveCapture.FrameRate FrameRate { get; set; }
         public TakeRecorder() {}

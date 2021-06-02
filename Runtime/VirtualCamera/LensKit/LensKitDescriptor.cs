@@ -50,7 +50,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             var lensKit = default(LensKit);
 #if UNITY_EDITOR
-            lensKit = AssetDatabaseUtility.GetSubAssets<LensKit>(lensAsset).FirstOrDefault<LensKit>();
+            lensKit = AssetDatabaseUtility.GetSubAssets<LensKit>(lensAsset).FirstOrDefault();
 #endif
             return Create(lensKit, lensAsset);
         }

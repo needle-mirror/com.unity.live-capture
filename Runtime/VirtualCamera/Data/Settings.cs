@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
@@ -33,12 +34,13 @@ namespace Unity.LiveCapture.VirtualCamera
     }
 
     /// <summary>
-    /// A struct that transports the state of a virtual camera over the network.
+    /// A struct that contains the settings of a virtual camera.
     /// </summary>
     [Serializable]
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     struct Settings : IEquatable<Settings>
     {
+        internal const float k_MaxDamping = 1;
         internal const float k_MaxAbsFocusDistanceOffset = 0.3048f; // 12 inches
         internal const float k_MinAspectRatio = 0.3f;
         internal const float k_DefaultAspectRatio = 1.77f;
@@ -54,7 +56,7 @@ namespace Unity.LiveCapture.VirtualCamera
             ErgonomicTilt = 0,
             JoystickSensitivity = Vector3.one,
             PedestalSpace = Space.World,
-            CropAspect = k_DefaultAspectRatio
+            AspectRatio = k_DefaultAspectRatio
         };
 
         /// <summary>
@@ -123,9 +125,10 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// The aspect ratio of the crop mask.
         /// </summary>
+        [FormerlySerializedAs("CropAspect")]
         [AspectRatio]
         [Tooltip("The aspect ratio of the crop mask.")]
-        public float CropAspect;
+        public float AspectRatio;
 
         /// <summary>
         /// The current focusing behavior.
@@ -149,25 +152,22 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// Damping applied to the focus distance.
         /// </summary>
-        [HideInInspector]
         [Tooltip("Damping applied to the focus distance.")]
-        [Range(0, 1)]
+        [Range(0, k_MaxDamping)]
         public float FocusDistanceDamping;
 
         /// <summary>
         /// Damping applied to the focal length.
         /// </summary>
-        [HideInInspector]
         [Tooltip("Damping applied to the focal length.")]
-        [Range(0, 1)]
+        [Range(0, k_MaxDamping)]
         public float FocalLengthDamping;
 
         /// <summary>
         /// Damping applied to the aperture.
         /// </summary>
-        [HideInInspector]
         [Tooltip("Damping applied to the aperture.")]
-        [Range(0, 1)]
+        [Range(0, k_MaxDamping)]
         public float ApertureDamping;
 
         /// <summary>
@@ -179,8 +179,9 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// Whether or not to show the aspect ratio frame lines.
         /// </summary>
+        [FormerlySerializedAs("FrameLines")]
         [Tooltip("Whether or not to show the aspect ratio frame lines.")]
-        public bool FrameLines;
+        public bool AspectRatioLines;
 
         /// <summary>
         /// Whether or not to show the center marker.
@@ -205,9 +206,9 @@ namespace Unity.LiveCapture.VirtualCamera
             return $"(damping {Damping}, rotationLock {RotationLock}, positionLock {PositionLock}, " +
                 $"ergonomicTilt {ErgonomicTilt}, rebasing {Rebasing}, motionScale {MotionScale}, " +
                 $"focusMode {FocusMode}, joystickSensitivity {JoystickSensitivity}, pedestalSpace {PedestalSpace}, " +
-                $"autoHorizon {AutoHorizon}, reticlePosition {ReticlePosition}, cropAspect {CropAspect}, focusDistanceOffset{FocusDistanceOffset}), " +
+                $"autoHorizon {AutoHorizon}, reticlePosition {ReticlePosition}, aspectRatio {AspectRatio}, focusDistanceOffset{FocusDistanceOffset}), " +
                 $"focusDistanceDamping {FocusDistanceDamping}, focalLengthDamping {FocalLengthDamping}, apertureDamping {ApertureDamping}, " +
-                $"gateMask {GateMask}, focusPlane {FocusPlane}, frameLines {FrameLines}, centerMarker {CenterMarker}";
+                $"gateMask {GateMask}, focusPlane {FocusPlane}, frameLines {AspectRatioLines}, centerMarker {CenterMarker}";
         }
 
         /// <summary>
@@ -215,11 +216,13 @@ namespace Unity.LiveCapture.VirtualCamera
         /// </summary>
         public void Validate()
         {
-            CropAspect = Mathf.Max(k_MinAspectRatio, CropAspect);
+            AspectRatio = Mathf.Max(k_MinAspectRatio, AspectRatio);
             FocusDistanceOffset = Mathf.Clamp(FocusDistanceOffset, -k_MaxAbsFocusDistanceOffset, k_MaxAbsFocusDistanceOffset);
-            FocusDistanceDamping = Mathf.Clamp01(FocusDistanceDamping);
-            FocalLengthDamping = Mathf.Clamp01(FocalLengthDamping);
-            ApertureDamping = Mathf.Clamp01(ApertureDamping);
+            FocusDistanceDamping = Mathf.Clamp(FocusDistanceDamping, 0, k_MaxDamping);
+            FocalLengthDamping = Mathf.Clamp(FocalLengthDamping, 0, k_MaxDamping);
+            ApertureDamping = Mathf.Clamp(ApertureDamping, 0, k_MaxDamping);
+            ReticlePosition.x = Mathf.Clamp01(ReticlePosition.x);
+            ReticlePosition.y = Mathf.Clamp01(ReticlePosition.y);
         }
 
         /// <inheritdoc/>
@@ -236,14 +239,14 @@ namespace Unity.LiveCapture.VirtualCamera
                 && PedestalSpace == other.PedestalSpace
                 && AutoHorizon == other.AutoHorizon
                 && ReticlePosition == other.ReticlePosition
-                && CropAspect == other.CropAspect
+                && AspectRatio == other.AspectRatio
                 && FocusDistanceOffset == other.FocusDistanceOffset
                 && FocusDistanceDamping == other.FocusDistanceDamping
                 && FocalLengthDamping == other.FocalLengthDamping
                 && ApertureDamping == other.ApertureDamping
                 && GateMask == other.GateMask
                 && FocusPlane == other.FocusPlane
-                && FrameLines == other.FrameLines
+                && AspectRatioLines == other.AspectRatioLines
                 && CenterMarker == other.CenterMarker;
         }
 
@@ -280,14 +283,14 @@ namespace Unity.LiveCapture.VirtualCamera
                 hashCode = (hashCode * 397) ^ PedestalSpace.GetHashCode();
                 hashCode = (hashCode * 397) ^ AutoHorizon.GetHashCode();
                 hashCode = (hashCode * 397) ^ ReticlePosition.GetHashCode();
-                hashCode = (hashCode * 397) ^ CropAspect.GetHashCode();
+                hashCode = (hashCode * 397) ^ AspectRatio.GetHashCode();
                 hashCode = (hashCode * 397) ^ FocusDistanceOffset.GetHashCode();
                 hashCode = (hashCode * 397) ^ FocusDistanceDamping.GetHashCode();
                 hashCode = (hashCode * 397) ^ FocalLengthDamping.GetHashCode();
                 hashCode = (hashCode * 397) ^ ApertureDamping.GetHashCode();
                 hashCode = (hashCode * 397) ^ GateMask.GetHashCode();
                 hashCode = (hashCode * 397) ^ FocusPlane.GetHashCode();
-                hashCode = (hashCode * 397) ^ FrameLines.GetHashCode();
+                hashCode = (hashCode * 397) ^ AspectRatioLines.GetHashCode();
                 hashCode = (hashCode * 397) ^ CenterMarker.GetHashCode();
                 return hashCode;
             }

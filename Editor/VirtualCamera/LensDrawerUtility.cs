@@ -21,12 +21,12 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         public static void DoLensGUI(GUIContent label, SerializedProperty lensProperty, SerializedProperty intrinsicsProperty)
         {
-            var focalLength = lensProperty.FindPropertyRelative("FocalLength");
-            var focusDistance = lensProperty.FindPropertyRelative("FocusDistance");
-            var aperture = lensProperty.FindPropertyRelative("Aperture");
-            var focalLengthRange = intrinsicsProperty.FindPropertyRelative("FocalLengthRange").vector2Value;
-            var closeFocusDistance = intrinsicsProperty.FindPropertyRelative("CloseFocusDistance").floatValue;
-            var apertureRange = intrinsicsProperty.FindPropertyRelative("ApertureRange").vector2Value;
+            var focalLength = lensProperty.FindPropertyRelative("m_FocalLength");
+            var focusDistance = lensProperty.FindPropertyRelative("m_FocusDistance");
+            var aperture = lensProperty.FindPropertyRelative("m_Aperture");
+            var focalLengthRange = intrinsicsProperty.FindPropertyRelative("m_FocalLengthRange").vector2Value;
+            var closeFocusDistance = intrinsicsProperty.FindPropertyRelative("m_CloseFocusDistance").floatValue;
+            var apertureRange = intrinsicsProperty.FindPropertyRelative("m_ApertureRange").vector2Value;
 
             lensProperty.isExpanded = EditorGUILayout.Foldout(lensProperty.isExpanded, label, true);
 

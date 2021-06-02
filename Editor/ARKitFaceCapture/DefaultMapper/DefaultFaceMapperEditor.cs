@@ -12,6 +12,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
     [CustomEditor(typeof(DefaultFaceMapper))]
     class DefaultFaceMapperEditor : UnityEditor.Editor
     {
+        const string k_DefaultGlobalEvaluatorPath = "Packages/com.unity.live-capture/Runtime/ARKitFaceCapture/DefaultMapper/Default Evaluator.asset";
+
         static class Contents
         {
             public static readonly GUILayoutOption[] ButtonOptions =
@@ -22,7 +24,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
 
             public static readonly GUIContent EyesHeader = new GUIContent("Eyes");
             public static readonly GUIContent HeadHeader = new GUIContent("Head");
-            public static readonly GUIContent BlendShapesHeader = new GUIContent("Blend Shapes");
+            public static readonly GUIContent BlendShapesMappingHeader = new GUIContent("Blend Shape Mapping");
+            public static readonly GUIContent BlendShapesEvaluationHeader = new GUIContent("Blend Shape Evaluation");
             public static readonly GUIContent AddRenderer = new GUIContent("Add Renderer", "Add a renderer to control its blend shapes using face capture.");
             public static readonly GUIContent AddEmpty = new GUIContent("Empty");
             public static readonly GUIStyle RendererPathHeaderStyle = "RL FooterButton";
@@ -61,6 +64,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
         SerializedProperty m_HeadRotation;
         SerializedProperty m_HeadSmoothing;
 
+        SerializedProperty m_BlendShapeSmoothing;
+
         MappingDirection m_MappingDirection;
 
         void OnEnable()
@@ -80,6 +85,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
             m_HeadPosition = serializedObject.FindProperty("m_HeadPosition");
             m_HeadRotation = serializedObject.FindProperty("m_HeadRotation");
             m_HeadSmoothing = serializedObject.FindProperty("m_HeadSmoothing");
+
+            m_BlendShapeSmoothing = serializedObject.FindProperty("m_BlendShapeSmoothing");
 
             m_MappingDirection = m_InvertMappings.boolValue ? MappingDirection.BlendShapeToDriver : MappingDirection.DriverToBlendShape;
 
@@ -125,7 +132,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
                     DoHeadGUI(actor);
 
                     EditorGUILayout.Space();
-                    EditorGUILayout.LabelField(Contents.BlendShapesHeader, EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField(Contents.BlendShapesMappingHeader, EditorStyles.boldLabel);
 
                     DoRenderersGUI(actor);
 
@@ -156,7 +163,6 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
                 using (var change = new EditorGUI.ChangeCheckScope())
                 {
                     EditorGUILayout.PropertyField(m_ShapeMatchTolerance);
-                    EditorGUILayout.PropertyField(m_DefaultEvaluator);
 
                     m_MappingDirection = (MappingDirection)EditorGUILayout.EnumPopup(Contents.MappingDirection, m_MappingDirection);
                     m_InvertMappings.boolValue = (int)m_MappingDirection == 1;
@@ -164,6 +170,20 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
                     if (change.changed)
                         m_MappingLists.Clear();
                 }
+
+                EditorGUI.indentLevel--;
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField(Contents.BlendShapesEvaluationHeader, EditorStyles.boldLabel);
+                EditorGUI.indentLevel++;
+
+                EditorGUILayout.PropertyField(m_DefaultEvaluator);
+
+                if (m_DefaultEvaluator.objectReferenceValue == null)
+                {
+                    m_DefaultEvaluator.objectReferenceValue = AssetDatabase.LoadAssetAtPath(k_DefaultGlobalEvaluatorPath, typeof(EvaluatorPreset));
+                }
+
+                EditorGUILayout.PropertyField(m_BlendShapeSmoothing);
 
                 for (var i = 0; i < m_Maps.arraySize; ++i)
                 {

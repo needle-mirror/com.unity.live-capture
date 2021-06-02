@@ -15,6 +15,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
     /// all skinned meshes relative to the <see cref="FaceActor"/> components are consistent between the rigs.
     /// </remarks>
     [CreateAssetMenu(fileName = "NewFaceMapper", menuName = "Live Capture/ARKit Face Capture/Mapper")]
+    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-arkit-default-face-mapper" + Documentation.endURL)]
+    [DisallowMultipleComponent]
     class DefaultFaceMapper : FaceMapper
     {
         internal enum EyeMovementDriverType
@@ -92,6 +94,11 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
             "It can help reduce jitter in the face capture, but it will also smooth out fast motions.")]
         [Range(0f, 1f)]
         float m_HeadSmoothing = 0.1f;
+
+        [SerializeField]
+        [Tooltip("The amount of smoothing to apply to all blend shape values unless overriden.")]
+        [Range(0f, 1f)]
+        float m_BlendShapeSmoothing = 0.1f;
 
         struct BlendShapeData
         {
@@ -256,9 +263,10 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
                         var binding = bindings[j];
                         var config = binding.Config;
                         var weight = config.GetEvaluator().Evaluate(value);
+                        var smoothing = config.OverrideSmoothing ? config.Smoothing : m_BlendShapeSmoothing;
 
                         if (continuous)
-                            weight = Mathf.Lerp(weight, binding.LastWeight, config.Smoothing);
+                            weight = Mathf.Lerp(weight, binding.LastWeight, smoothing);
 
                         data.BlendShapeData[binding.ShapeIndex].Weight += weight;
                         data.Mappings[i].Bindings[j].LastWeight = weight;

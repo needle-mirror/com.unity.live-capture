@@ -20,9 +20,9 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         void GetProperties(SerializedProperty property)
         {
-            m_SensorSizeProp = property.FindPropertyRelative("SensorSize");
-            m_IsoProp = property.FindPropertyRelative("Iso");
-            m_ShutterSpeedProp = property.FindPropertyRelative("ShutterSpeed");
+            m_SensorSizeProp = property.FindPropertyRelative("m_SensorSize");
+            m_IsoProp = property.FindPropertyRelative("m_Iso");
+            m_ShutterSpeedProp = property.FindPropertyRelative("m_ShutterSpeed");
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)

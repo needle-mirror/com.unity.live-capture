@@ -10,6 +10,7 @@ namespace Unity.LiveCapture
     /// </summary>
     [TrackClipType(typeof(SlatePlayableAsset))]
     [TrackBindingType(typeof(TakeRecorder))]
+    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "take-system-setting-up-timeline" + Documentation.endURL)]
     class TakeRecorderTrack : TrackAsset
     {
 #if UNITY_EDITOR

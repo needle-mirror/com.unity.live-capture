@@ -1,7 +1,7 @@
 {
   "name": "com.unity.live-capture",
   "displayName": "Live Capture",
-  "version": "1.0.0-pre.400",
+  "version": "1.0.1-pre.465",
   "unity": "2020.3",
   "description": "Use the Live Capture package to connect to the Unity Virtual Camera and Unity Face Capture companion apps to capture and record camera motion and face performances.",
   "keywords": [
@@ -20,22 +20,17 @@
   },
   "samples": [
     {
-      "displayName": "HDRP Face Sample",
-      "description": "A simple face for demonstrating face mocap from ARKit in HDRP.",
-      "path": "Samples~/HDRP Face Sample"
-    },
-    {
-      "displayName": "URP Face Sample",
-      "description": "A simple face for demonstrating face mocap from ARKit in URP.",
-      "path": "Samples~/URP Face Sample"
+      "displayName": "ARKit Face Sample",
+      "description": "A simple face for demonstrating face mocap from ARKit. Requires material upgrade if using with URP or HDRP.",
+      "path": "Samples~/ARKit Face Sample"
     }
   ],
   "upmCi": {
-    "footprint": "ce727bdc3c8ad5e0f010d4ea8b82ee0832403615"
+    "footprint": "831b6584b99840a197ff4a52172f94c4c176da36"
   },
   "repository": {
     "url": "https://github.com/Unity-Technologies/VirtualProduction.git",
     "type": "git",
-    "revision": "abe80f6095004a2317e9baa08600aebfbdb1a902"
+    "revision": "05916fadbd9ddbf1d0c02e8c95c748b76a1a2107"
   }
 }

@@ -20,6 +20,8 @@ namespace Unity.LiveCapture.Editor
             bool Toggle(Rect position, bool value, GUIContent content);
             void LabelField(Rect position, GUIContent label);
             float GetSegmentWidth(PropertyDrawer drawer);
+            GUIContent BeginProperty(Rect position, GUIContent label, SerializedProperty property);
+            void EndProperty();
 
             float SingleLineHeight { get; }
             float StandardVerticalSpacing { get; }
@@ -42,6 +44,16 @@ namespace Unity.LiveCapture.Editor
             public float GetSegmentWidth(PropertyDrawer drawer)
             {
                 return (drawer.attribute as EnumButtonGroupAttribute).SegmentWidth;
+            }
+
+            public GUIContent BeginProperty(Rect position, GUIContent label, SerializedProperty property)
+            {
+                return EditorGUI.BeginProperty(position, label, property);
+            }
+
+            public void EndProperty()
+            {
+                EditorGUI.EndProperty();
             }
 
             public float SingleLineHeight => EditorGUIUtility.singleLineHeight;
@@ -280,6 +292,7 @@ namespace Unity.LiveCapture.Editor
         {
             var hasDescriptions = TryGetDescriptions(fieldInfo, out var descriptions);
 
+            label = m_Gui.BeginProperty(position, label, property);
             m_Gui.LabelField(new Rect(position.x, position.y, EditorGUIUtility.labelWidth, position.height), label);
 
             var enumValues = GetDisplayedEnumValues(property);
@@ -312,6 +325,7 @@ namespace Unity.LiveCapture.Editor
             }
 
             UpdatePropertyValue(property, enumValues);
+            m_Gui.EndProperty();
         }
 
         // Returns the local rect to draw an enum value.

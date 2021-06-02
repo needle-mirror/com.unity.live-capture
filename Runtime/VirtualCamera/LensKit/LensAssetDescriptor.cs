@@ -30,7 +30,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// The globally unique identifier of the take asset.
         /// </summary>
-        public SerializableGuid Guid
+        public Guid Guid
         {
             get => m_Guid;
             set => m_Guid = value;

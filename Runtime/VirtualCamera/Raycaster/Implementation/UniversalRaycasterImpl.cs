@@ -18,7 +18,7 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
             // "Missing Vulkan framebuffer attachment image?" errors on Linux + Vulkan.
             m_PlaceholderTarget = new RenderTexture(1, 1, 0);
             m_Camera.targetTexture = m_PlaceholderTarget;
-            
+
             RenderPipelineBridge.RequestRenderFeature<InjectionPointRenderFeature>();
             InjectionPointRenderPass.onExecute += OnExecute;
         }

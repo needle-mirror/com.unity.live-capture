@@ -10,6 +10,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     [AddComponentMenu("Live Capture/ARKit Face Capture/ARKit Face Actor")]
     [ExecuteAlways]
     [RequireComponent(typeof(Animator))]
+    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-arkit-face-actor" + Documentation.endURL)]
     public sealed class FaceActor : MonoBehaviour
     {
         internal static class PropertyNames

@@ -35,7 +35,9 @@ namespace Unity.LiveCapture.CompanionApp
             return client != null;
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// This function is called when the object becomes enabled and active.
+        /// </summary>
         protected virtual void OnEnable()
         {
             CompanionAppServer.ClientDisconnected += OnClientDisconnected;
@@ -52,7 +54,13 @@ namespace Unity.LiveCapture.CompanionApp
             }
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// This function is called when the behaviour becomes disabled.
+        /// </summary>
+        /// <remaks>
+        /// This is also called when the object is destroyed and can be used for any cleanup code.
+        ///  When scripts are reloaded after compilation has finished, OnDisable will be called, followed by an OnEnable after the script has been loaded.
+        /// </remaks>
         protected virtual void OnDisable()
         {
             CompanionAppServer.ClientDisconnected -= OnClientDisconnected;
@@ -64,7 +72,9 @@ namespace Unity.LiveCapture.CompanionApp
             }
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// This function is called when the behaviour gets destroyed.
+        /// </summary>
         protected override void OnDestroy()
         {
             base.OnDestroy();
@@ -196,6 +206,7 @@ namespace Unity.LiveCapture.CompanionApp
                 client.DeleteTake += ClientDeleteTake;
                 client.SetIterationBase += ClientSetIterationBase;
                 client.ClearIterationBase += ClientClearIterationBase;
+                client.TexturePreviewRequested += OnTexturePreviewRequested;
             }
         }
 
@@ -215,6 +226,7 @@ namespace Unity.LiveCapture.CompanionApp
                 client.DeleteTake -= ClientDeleteTake;
                 client.SetIterationBase -= ClientSetIterationBase;
                 client.ClearIterationBase -= ClientClearIterationBase;
+                client.TexturePreviewRequested -= OnTexturePreviewRequested;
             }
         }
 
@@ -233,12 +245,19 @@ namespace Unity.LiveCapture.CompanionApp
 
             if (takeRecorder != null)
             {
-                var slate = takeRecorder.GetActiveSlate();
-                var hasTimeline = slate != null;
-                var duration = hasTimeline ? slate.Duration : 0d;
-
-                SendPlayerState(takeRecorder.IsPreviewPlaying(), takeRecorder.GetPreviewTime(), duration, hasTimeline);
                 SendDeviceState(takeRecorder.IsLive());
+
+                var slate = takeRecorder.GetActiveSlate();
+                var take = slate != null ? slate.Take : null;
+
+                if (TryGetInternalClient(out var client))
+                {
+                    client.SendFrameRate(takeRecorder.IsLive() || take == null ? takeRecorder.FrameRate : take.FrameRate);
+                    client.SendHasSlate(slate != null);
+                    client.SendSlateDuration(slate != null ? slate.Duration : 0d);
+                    client.SendSlateIsPreviewing(takeRecorder.IsPreviewPlaying());
+                    client.SendSlatePreviewTime(takeRecorder.GetPreviewTime());
+                }
 
                 if (m_SlateChangeTracker.Changed(slate))
                 {
@@ -378,20 +397,6 @@ namespace Unity.LiveCapture.CompanionApp
             }
         }
 
-        void SendPlayerState(bool isPlaying, double time, double duration, bool hasTimeline)
-        {
-            if (TryGetInternalClient(out var client))
-            {
-                client.SendPlayerState(new PlayerState
-                {
-                    Playing = isPlaying,
-                    Time = time,
-                    Duration = duration,
-                    HasTimeline = hasTimeline,
-                });
-            }
-        }
-
         void SendSlateDescriptor()
         {
             var takeRecorder = GetTakeRecorder();
@@ -410,7 +415,7 @@ namespace Unity.LiveCapture.CompanionApp
             }
         }
 
-        void ClientSetSelectedTake(SerializableGuid guid)
+        void ClientSetSelectedTake(Guid guid)
         {
             var takeRecorder = GetTakeRecorder();
 
@@ -431,7 +436,7 @@ namespace Unity.LiveCapture.CompanionApp
             Refresh();
         }
 
-        void ClientDeleteTake(SerializableGuid guid)
+        void ClientDeleteTake(Guid guid)
         {
             m_TakeManager.DeleteTake(guid);
 
@@ -439,7 +444,7 @@ namespace Unity.LiveCapture.CompanionApp
             Refresh();
         }
 
-        void ClientSetIterationBase(SerializableGuid guid)
+        void ClientSetIterationBase(Guid guid)
         {
             var takeRecorder = GetTakeRecorder();
 
@@ -466,6 +471,16 @@ namespace Unity.LiveCapture.CompanionApp
 
                 SendSlateDescriptor(slate);
                 Refresh();
+            }
+        }
+
+        void OnTexturePreviewRequested(Guid guid)
+        {
+            var texture = m_TakeManager.GetAssetPreview<Texture2D>(guid);
+
+            if (texture != null && TryGetInternalClient(out var client))
+            {
+                client.SendTexturePreview(guid, texture);
             }
         }
 

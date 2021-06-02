@@ -1,7 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.Playables;
-using UnityObject = UnityEngine.Object;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
@@ -53,7 +51,7 @@ namespace Unity.LiveCapture.VirtualCamera
             set => m_CameraBody = value;
         }
 
-        public SerializableGuid Screenshot
+        public Guid Screenshot
         {
             get => m_Screenshot;
             set => m_Screenshot = value;

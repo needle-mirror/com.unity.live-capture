@@ -145,7 +145,11 @@ namespace Unity.LiveCapture
                 var timeline = m_Take.Timeline;
 
                 timeline.name = m_Take.name;
+#if TIMELINE_1_6_0_OR_NEWER
+                timeline.editorSettings.frameRate = frameRate.AsFloat();
+#else
                 timeline.editorSettings.fps = frameRate.AsFloat();
+#endif
 
                 if (duration > 0d)
                 {

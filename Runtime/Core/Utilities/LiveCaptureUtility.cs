@@ -1,4 +1,6 @@
+using System.Linq;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Unity.LiveCapture
 {
@@ -23,6 +25,36 @@ namespace Unity.LiveCapture
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Checks if a <see cref="LiveCaptureDevice" /> is live and the associated <see cref="TakeRecorder" /> is enabled
+        /// and has live mode set.
+        /// </summary>
+        /// <param name="device">The device to check.</param>
+        /// <returns>True if a device is live and its associated take recorder is live and enabled; false otherwise.</returns>
+        public static bool IsLiveActive(this LiveCaptureDevice device)
+        {
+            var takeRecorder = device.GetTakeRecorder() as ITakeRecorderInternal;
+
+            if (takeRecorder == null)
+            {
+                return false;
+            }
+
+            return takeRecorder.IsEnabled
+                && takeRecorder.IsLive()
+                && device.isActiveAndEnabled
+                && device.IsLive();
+        }
+
+        /// <summary>
+        /// Returns the camera that has the higher depth.
+        /// </summary>
+        /// <returns>The camera that has the higher depth, if any.</returns>
+        public static Camera GetTopCamera()
+        {
+            return Camera.allCameras.OrderByDescending(c => c.depth).FirstOrDefault();
         }
     }
 }

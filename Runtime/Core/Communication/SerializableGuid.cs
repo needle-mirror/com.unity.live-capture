@@ -36,6 +36,17 @@ namespace Unity.LiveCapture
         }
 
         /// <summary>
+        /// Gets the hash code for this instance.
+        /// </summary>
+        /// <returns>
+        /// The hash code for this instance.
+        /// </returns>
+        public override int GetHashCode()
+        {
+            return m_Guid.GetHashCode();
+        }
+
+        /// <summary>
         /// Returns a string that represents the current object.
         /// </summary>
         /// <returns>A string that represents the current object.</returns>
@@ -53,5 +64,19 @@ namespace Unity.LiveCapture
         {
             return m_Guid.Equals(other.m_Guid);
         }
+
+        /// <summary>
+        /// Converts a guid from <see cref="SerializableGuid"/> to System.Guid.
+        /// </summary>
+        /// <param name="guid">The value to convert.</param>
+        /// <returns>The guid represented as a System.Guid.</returns>
+        public static implicit operator Guid(SerializableGuid guid) => guid.m_Guid;
+
+        /// <summary>
+        /// Converts a guid from System.Guid to <see cref="SerializableGuid"/>.
+        /// </summary>
+        /// <param name="guid">The value to convert.</param>
+        /// <returns>The guid represented as a <see cref="SerializableGuid"/>.</returns>
+        public static implicit operator SerializableGuid(Guid guid) => new SerializableGuid() { m_Guid = guid };
     }
 }

@@ -79,7 +79,7 @@ namespace Unity.LiveCapture.Networking.Protocols
 
                         if (remoteTypeHash != localTypeHash)
                         {
-                            throw new Exception($"The hash for data type \"{dataType.FullName}\" does not match the received hash. There is likely a version miss-match.");
+                            Debug.LogWarning($"The hash for data type \"{dataType.FullName}\" does not match the received hash. There is likely a version miss-match.");
                         }
 
                         messageType = messageType.MakeGenericType(dataType);
@@ -197,7 +197,7 @@ namespace Unity.LiveCapture.Networking.Protocols
             if (s_TypeHashCache.TryGetValue(type, out var hash))
                 return hash;
 
-            hash = type.FullName.GetHashCode();
+            hash = HashString(type.FullName);
 
             if (type.IsPrimitive)
             {
@@ -210,7 +210,7 @@ namespace Unity.LiveCapture.Networking.Protocols
 
                 foreach (var value in Enum.GetValues(type))
                 {
-                    HashCombine(ref hash, value.ToString().GetHashCode());
+                    HashCombine(ref hash, HashString(value.ToString()));
                 }
             }
             else if (type.IsArray && type.HasElementType)
@@ -241,7 +241,7 @@ namespace Unity.LiveCapture.Networking.Protocols
                 foreach (var field in fields)
                 {
                     // check that the field names and types match
-                    HashCombine(ref hash, field.Name.GetHashCode());
+                    HashCombine(ref hash, HashString(field.Name));
                     HashCombine(ref hash, HashType(field.FieldType));
                 }
 
@@ -271,6 +271,26 @@ namespace Unity.LiveCapture.Networking.Protocols
         static int RotateLeft(int value, int count)
         {
             return (int)(((uint)value << count) | ((uint)value >> (32 - count)));
+        }
+
+        static unsafe int HashString(string str)
+        {
+            fixed(char* chPtr = str)
+            {
+                var num1 = 352654597;
+                var num2 = num1;
+                var numPtr = (int*)chPtr;
+                int length;
+                for (length = str.Length; length > 2; length -= 4)
+                {
+                    num1 = (num1 << 5) + num1 + (num1 >> 27) ^ *numPtr;
+                    num2 = (num2 << 5) + num2 + (num2 >> 27) ^ numPtr[1];
+                    numPtr += 2;
+                }
+                if (length > 0)
+                    num1 = (num1 << 5) + num1 + (num1 >> 27) ^ *numPtr;
+                return num1 + num2 * 1566083941;
+            }
         }
     }
 }

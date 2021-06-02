@@ -10,6 +10,7 @@ namespace Unity.LiveCapture.VirtualCamera
     [AddComponentMenu("Live Capture/Virtual Camera/Virtual Camera Actor")]
     [ExecuteAlways]
     [RequireComponent(typeof(Animator))]
+    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-virtual-camera-actor" + Documentation.endURL)]
     public class VirtualCameraActor : MonoBehaviour
     {
         [SerializeField]

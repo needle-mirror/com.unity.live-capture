@@ -1,14 +1,12 @@
 using System;
-using System.Runtime.InteropServices;
 using Unity.LiveCapture.CompanionApp;
 using UnityEngine;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
     /// <summary>
-    /// The payload sent over the network to transport camera pose samples.
+    /// A struct containing a pose sample.
     /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     struct PoseSample : ISample
     {
         float m_Timestamp;

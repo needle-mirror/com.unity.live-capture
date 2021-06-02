@@ -1,4 +1,4 @@
-# Getting Started
+# Getting started
 
 ## App
 
@@ -60,4 +60,5 @@ You are now ready to record Takes with your **Companion App**.
 **Notes**:
 
 1. Depends on the Post-Processing Stack V2. The feature will only be activated if `com.unity.postprocessing` is installed.
-2. At the moment Depth Of Field is only supported when using the basic Virtual Camera Actor (as opposed to the Cinemachine one).
+2. At the moment Depth Of Field is only supported when using the basic Virtual Camera Actor (as opposed to the Cinemachine variant).
+

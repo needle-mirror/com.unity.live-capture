@@ -3,7 +3,7 @@
 // make sure the XML doc file is present and located next to the scraped dll
 namespace Unity.LiveCapture.ARKitFaceCapture
 {
-    [UnityEngine.AddComponentMenu(@"Live Capture/ARKit Face Capture/ARKit Face Actor")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.RequireComponent(typeof(UnityEngine.Animator))] public sealed class FaceActor : UnityEngine.MonoBehaviour
+    [UnityEngine.AddComponentMenu(@"Live Capture/ARKit Face Capture/ARKit Face Actor")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@1.0/manual/ref-component-arkit-face-actor.html")] [UnityEngine.RequireComponent(typeof(UnityEngine.Animator))] public sealed class FaceActor : UnityEngine.MonoBehaviour
     {
         public UnityEngine.Animator Animator { get; }
         public Unity.LiveCapture.ARKitFaceCapture.FaceMapper Mapper { get; }
@@ -133,7 +133,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         public void SetValue(Unity.LiveCapture.ARKitFaceCapture.FaceBlendShape location, float value);
     }
 
-    [Unity.LiveCapture.CreateDeviceMenuItem(@"ARKit Face Device", 0)] [UnityEngine.AddComponentMenu(@"Live Capture/ARKit Face Capture/ARKit Face Device")] [UnityEngine.ExcludeFromPreset] public class FaceDevice : Unity.LiveCapture.CompanionApp.CompanionAppDevice<Unity.LiveCapture.ARKitFaceCapture.IFaceClient>
+    [Unity.LiveCapture.CreateDeviceMenuItem(@"ARKit Face Device", 0)] [UnityEngine.AddComponentMenu(@"Live Capture/ARKit Face Capture/ARKit Face Device")] [UnityEngine.ExcludeFromPreset] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@1.0/manual/ref-component-arkit-face-device.html")] public class FaceDevice : Unity.LiveCapture.CompanionApp.CompanionAppDevice<Unity.LiveCapture.ARKitFaceCapture.IFaceClient>
     {
         public Unity.LiveCapture.ARKitFaceCapture.FaceActor Actor { get; set; }
         public FaceDevice() {}

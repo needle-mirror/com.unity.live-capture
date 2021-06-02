@@ -1,4 +1,5 @@
 using System;
+using Unity.LiveCapture.ARKitFaceCapture.Networking;
 using Unity.LiveCapture.CompanionApp;
 using Unity.LiveCapture.Networking;
 using Unity.LiveCapture.Networking.Protocols;
@@ -41,10 +42,10 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         public FaceClient(NetworkBase network, Remote remote, ClientInitialization data)
             : base(network, remote, data)
         {
-            m_Protocol.Add(new BinaryReceiver<FaceSample>(FaceMessages.ToServer.FacePoseSample,
-                ChannelType.UnreliableUnordered)).AddHandler((pose) =>
+            m_Protocol.Add(new BinaryReceiver<FaceSampleV0>(FaceMessages.ToServer.FacePoseSample_V0,
+                ChannelType.UnreliableUnordered)).AddHandler(pose =>
                 {
-                    FacePoseSampleReceived?.Invoke(pose);
+                    FacePoseSampleReceived?.Invoke((FaceSample)pose);
                 });
         }
 

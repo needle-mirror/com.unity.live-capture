@@ -97,12 +97,17 @@ namespace Unity.LiveCapture
 
             m_Entries = m_Take.BindingEntries;
 
-            if (m_Entries == null)
+            SetSceneBindings(Director, m_Entries);
+        }
+
+        internal static void SetSceneBindings(PlayableDirector director, IEnumerable<TrackBindingEntry> entries)
+        {
+            if (entries == null || director == null)
             {
                 return;
             }
 
-            foreach (var entry in m_Entries)
+            foreach (var entry in entries)
             {
                 var track = entry.Track;
                 var binding = entry.Binding;
@@ -112,9 +117,9 @@ namespace Unity.LiveCapture
                     continue;
                 }
 
-                var value = binding.GetValue(Director);
+                var value = binding.GetValue(director);
 
-                Director.SetGenericBinding(track, value);
+                director.SetGenericBinding(track, value);
             }
         }
     }

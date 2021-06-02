@@ -87,6 +87,11 @@ namespace Unity.LiveCapture
     interface ITakeRecorderInternal : ITakeRecorder
     {
         /// <summary>
+        /// The enabled state of this take recorder.
+        /// </summary>
+        bool IsEnabled { get; }
+
+        /// <summary>
         /// Changes the current playback time of the slate.
         /// </summary>
         /// <param name="slate">The slate.</param>

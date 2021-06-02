@@ -14,8 +14,8 @@
 | __Timecode__           | Displays the timecode (hr:min:sec:frame) of the current recording session or clip |
 | __Focus Mode__         | Displays the current focus mode (Depth of Field Disabled, Manual Focus, Auto Focus, Spatial Focus) |
 | __Focus Distance__     | Displays the current focus distance in meters. This will display "N/A" when Focus Mode is "DoF Disabled" |
-| __Aperture__           | Displays the current T-stop (aperture)                       |
-| __Focual Length__      | Displays the current focal length in millimeters             |
+| __Aperture__           | Displays the current F-stop (aperture)                       |
+| __Focal Length__      | Displays the current focal length in millimeters              |
 | __AR Tracking Toggle__ | Tap to enable/disable AR tracking                            |
 | __Connection__         | Tap to open a connection window to connect or disconnect from a server |
 | __Help__               | Tap to enter Help Mode. In Help Mode, tapping any control will display a tooltip with more information about its functionality |

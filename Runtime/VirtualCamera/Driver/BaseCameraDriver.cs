@@ -62,11 +62,15 @@ namespace Unity.LiveCapture.VirtualCamera
                 impl.SetFocusDistance(lens.FocusDistance);
                 impl.SetPhysicalCameraProperties(lens, lensIntrinsics, cameraBody);
 
-                if (FocusPlaneMap.Instance.TryGetInstance(GetCamera(), out var focusPlane))
-                    focusPlane.SetFocusDistance(lens.FocusDistance);
+                var driverCamera = GetCamera();
+                if (driverCamera != null)
+                {
+                    if (FocusPlaneMap.Instance.TryGetInstance(driverCamera, out var focusPlane))
+                        focusPlane.SetFocusDistance(lens.FocusDistance);
 
-                if (FrameLinesMap.Instance.TryGetInstance(GetCamera(), out var frameLines))
-                    frameLines.CropAspect = m_VirtualCameraActor.CropAspect;
+                    if (FrameLinesMap.Instance.TryGetInstance(driverCamera, out var frameLines))
+                        frameLines.CropAspect = m_VirtualCameraActor.CropAspect;
+                }
 
                 m_CachedFocusDistanceEnabled = m_VirtualCameraActor.DepthOfFieldEnabled;
                 m_CachedFocusDistance = lens.FocusDistance;

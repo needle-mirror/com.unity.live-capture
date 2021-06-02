@@ -55,6 +55,16 @@ namespace Unity.LiveCapture.CompanionApp.Editor
         /// </summary>
         protected void DoClientGUI()
         {
+            var device = target as CompanionAppDevice<TClient>;
+
+            using (new EditorGUI.DisabledScope(device.GetTakeRecorder() == null))
+            {
+                DoClientGUIInternal();
+            }
+        }
+
+        void DoClientGUIInternal()
+        {
             // Display a dropdown that enables users to select which client is assigned to a device.
             // The first value in the dropdown allows users to clear the device.
             var device = target as CompanionAppDevice<TClient>;
@@ -96,22 +106,10 @@ namespace Unity.LiveCapture.CompanionApp.Editor
         /// <summary>
         /// Draws the actor selection field.
         /// </summary>
-        /// <param name="actor">The currently assigned actor.</param>
-        /// <param name="actorSelected">The action taken when an actor is selected.</param>
-        /// <typeparam name="T">The type of the actor field.</typeparam>
-        protected void DoActorGUI<T>(T actor, Action<T> actorSelected) where T : UnityEngine.Object
+        /// <param name="actor">The actor property.</param>
+        protected void DoActorGUI(SerializedProperty actor)
         {
-            using (var change = new EditorGUI.ChangeCheckScope())
-            {
-                var newActor = EditorGUILayout.ObjectField(Contents.ActorLabel, actor, typeof(T), true) as T;
-
-                if (change.changed)
-                {
-                    Undo.RegisterCompleteObjectUndo(target, "Inspector");
-                    actorSelected?.Invoke(newActor);
-                    EditorUtility.SetDirty(target);
-                }
-            }
+            EditorGUILayout.PropertyField(actor, Contents.ActorLabel);
         }
 
         /// <summary>

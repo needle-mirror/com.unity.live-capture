@@ -20,6 +20,11 @@ namespace Unity.LiveCapture
         /// <returns>The list of assets.</returns>
         public static List<T> GetAssetsAtPath<T>(string directory) where T : UnityObject
         {
+            if (string.IsNullOrEmpty(directory))
+            {
+                return new List<T>();
+            }
+
             directory = Path.GetDirectoryName($"{directory}/");
 
             if (!Directory.Exists(directory))

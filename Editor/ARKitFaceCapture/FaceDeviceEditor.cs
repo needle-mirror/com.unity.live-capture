@@ -10,6 +10,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.Editor
         static readonly string[] s_ExcludeProperties = { "m_Script", "m_Actor", "m_LiveLink" };
 
         FaceDevice m_Device;
+        SerializedProperty m_Actor;
         SerializedProperty m_LiveLinkChannels;
 
         protected override void OnEnable()
@@ -18,16 +19,17 @@ namespace Unity.LiveCapture.ARKitFaceCapture.Editor
 
             m_Device = target as FaceDevice;
 
+            m_Actor = serializedObject.FindProperty("m_Actor");
             m_LiveLinkChannels = serializedObject.FindProperty("m_LiveLink.Channels");
         }
 
         protected override void OnDeviceGUI()
         {
             DoClientGUI();
-            DoActorGUI(m_Device.Actor, (actor) => m_Device.Actor = actor);
 
             serializedObject.Update();
 
+            DoActorGUI(m_Actor);
             DoLiveLinkChannelsGUI(m_LiveLinkChannels);
             DrawPropertiesExcluding(serializedObject, s_ExcludeProperties);
 

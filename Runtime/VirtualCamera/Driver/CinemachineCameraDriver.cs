@@ -6,7 +6,8 @@ using Cinemachine;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
-    [AddComponentMenu("Live Capture/Virtual Camera/Cinemachine Camera Driver")]
+    [AddComponentMenu("")]
+    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-cinemachine-camera-driver" + Documentation.endURL)]
     class CinemachineCameraDriver : BaseCameraDriver, ICustomDamping
     {
 #if VP_CINEMACHINE_2_4_0

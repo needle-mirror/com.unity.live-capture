@@ -1,4 +1,20 @@
-# Virtual Camera Workflow
+# Virtual Camera workflows
+
+## Adding a Virtual Camera Device
+
+The **[Virtual Camera Device](ref-component-virtual-camera-device.md)** is responsible for updating and listening to the connected client device. It also updates the target **[Virtual Camera Actor](ref-component-virtual-camera-actor.md)** with the latest data received from the client.
+
+Click the **+** button from the **Capture Devices** list in the **Take Recorder** component and select **Virtual Camera Device**.
+
+## Adding a Virtual Camera Actor
+
+Add a **Virtual Camera Actor** by going to **Menu > GameObject > Create > Live Capture > Camera > Virtual Camera Actor**.
+
+## General
+
+**Saving and loading Virtual Camera Device settings**
+
+Easily save and load the settings in your **Virtual Camera Device** (e.g. damping, lens preset, etc.) using Unity's **[Presets](https://docs.unity3d.com/Manual/Presets.html)** system.
 
 **Starting camera position**
 
@@ -6,11 +22,7 @@ Position and orient the camera actor in the scene to configure the starting posi
 
 **Anchoring/Platforming**
 
-To anchor the camera to moving object (e.g. dolly cart, car, boat), parent the Actor game object in the scene to the moving object.
-
-**Repositioning in physical space**
-
-Disable AR tracking using the button in the top right to enter a state where tracker movement and rotation around the Y-axis in the physical environment does not translate to movement in the virtual scene, essentially "freezing" the virtual camera to allow the user to reposition in space.
+To anchor the camera to moving object (e.g. dolly cart, car, boat, etc.), parent the Actor game object in the scene to the moving object.
 
 **Control camera settings from the editor**
 

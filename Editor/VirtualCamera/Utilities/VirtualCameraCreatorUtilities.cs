@@ -19,6 +19,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         public static void CreateVirtualCameraActor()
         {
             var root = new GameObject("Virtual Camera Actor",
+                typeof(VirtualCameraActor),
                 typeof(PhysicalCameraDriver),
                 typeof(FrameLines)).transform;
             GameObjectUtility.EnsureUniqueNameForSibling(root.gameObject);

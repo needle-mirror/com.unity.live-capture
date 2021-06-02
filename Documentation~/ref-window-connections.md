@@ -6,7 +6,7 @@ To open this window, from the Unity Editor main menu, select Windows
 
 ![](images/ref-window-connections.png)
 
-## Configure Firewall
+### Configure Firewall
 
 Use the **Configure Firewall** button to automatically set up a dedicated inbound rule in your firewall so that you can connect apps from your local network with the current version of the Unity Editor you're using.
 
@@ -14,7 +14,7 @@ Use the **Configure Firewall** button to automatically set up a dedicated inboun
 
 See [how to setup your network](setup-network.md) if you encounter connection issues.
 
-## Companion App Server
+### Companion App Server
 
 | Button/Property | Function |
 |:---|:---|
@@ -23,17 +23,17 @@ See [how to setup your network](setup-network.md) if you encounter connection is
 | **Auto Start On Play** | Enable this option to automatically start the server when you enter the Play mode. |
 | **Port** | The server port number to use for the connection.<br />You can specify a different port number if you are already using the default one (9000) for other purposes. |
 
-## Available Interfaces
+### Available Interfaces
 
 The Available Interfaces section displays the list of all available IP addresses that correspond to the server on your network. You might need to specify one of these IP addresses in the client application interface if you need to perform a manual connection.
 
 >**Note:** Some of the displayed IP addresses might actually not allow you to connect the apps to the server.
 
-## Connected Clients
+### Connected Clients
 
 The Connected Clients section displays the list of all client apps that are currently connected to the server.
 
-## Create server
+### Create server
 
 Use the **Create Server** button and select **Companion App Server** to create a server if the Connections window doesn't display any server properties.
 

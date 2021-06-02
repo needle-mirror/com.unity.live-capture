@@ -1,13 +1,11 @@
 using System;
-using System.Runtime.InteropServices;
 using Unity.LiveCapture.CompanionApp;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
     /// <summary>
-    /// The payload sent over the network to transport a aperture samples.
+    /// A struct containing an aperture sample.
     /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     struct ApertureSample : ISample
     {
         float m_Timestamp;

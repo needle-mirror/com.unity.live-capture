@@ -1,6 +1,11 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Unity.LiveCapture
 {
@@ -41,11 +46,14 @@ namespace Unity.LiveCapture
         /// <returns>A new array of tuples containing types using the attribute and the attribute instances.</returns>
         public static (Type type, T[] attributes)[] GetAllTypes<T>(bool inherit = false) where T : Attribute
         {
-            return AppDomain.CurrentDomain.GetAssemblies().AsParallel()
-                .SelectMany(assembly => assembly.GetTypes())
-                .Select(type => (type, type.GetAttributes<T>(inherit)))
-                .Where(tuple => tuple.Item2.Length > 0)
-                .ToArray();
+#if UNITY_EDITOR
+            return TypeCache.GetTypesWithAttribute<T>()
+#else
+            return GetAllTypes()
+#endif
+                    .Select(type => (type, type.GetAttributes<T>(inherit)))
+                    .Where(tuple => tuple.Item2.Length > 0)
+                    .ToArray();
         }
 
         /// <summary>
@@ -57,12 +65,40 @@ namespace Unity.LiveCapture
         /// <returns>A new array of tuples containing methods using the attribute and the attribute instances.</returns>
         public static (MethodInfo method, T[] attributes)[] GetAllMethods<T>(BindingFlags methodFlags, bool inherit = false) where T : Attribute
         {
-            return AppDomain.CurrentDomain.GetAssemblies().AsParallel()
-                .SelectMany(assembly => assembly.GetTypes())
-                .SelectMany(type =>  type.GetMethods(methodFlags))
-                .Select(method => (method, method.GetAttributes<T>(inherit)))
-                .Where(tuple => tuple.Item2.Length > 0)
-                .ToArray();
+#if UNITY_EDITOR
+            return TypeCache.GetMethodsWithAttribute<T>()
+#else
+            return GetAllTypes().SelectMany(type => type.GetMethods(methodFlags))
+#endif
+                    .Select(method => (method, method.GetAttributes<T>(inherit)))
+                    .Where(tuple => tuple.Item2.Length > 0)
+                    .ToArray();
+        }
+
+        static Type[] GetAllTypes()
+        {
+            var allTypes = new ConcurrentBag<Type>();
+
+            Parallel.ForEach(AppDomain.CurrentDomain.GetAssemblies(), assembly =>
+            {
+                Type[] types;
+
+                try
+                {
+                    types = assembly.GetTypes();
+                }
+                catch (ReflectionTypeLoadException typeLoadException)
+                {
+                    types = typeLoadException.Types;
+                }
+
+                foreach (var type in types)
+                {
+                    allTypes.Add(type);
+                }
+            });
+
+            return allTypes.ToArray();
         }
     }
 }

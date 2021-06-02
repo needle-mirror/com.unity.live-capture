@@ -8,7 +8,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// The virtual camera data that can be recorded in a take and played back.
     /// </summary>
     [Flags]
-    enum VirtualCameraChannelFlags
+    enum VirtualCameraChannelFlags : int
     {
         [Description("No channel recorded.")]
         None = 0,
@@ -157,28 +157,28 @@ namespace Unity.LiveCapture.VirtualCamera
 
             animationJob.TransformHandle = animator.BindStreamTransform(transform);
 
-            animationJob.FocalLengthHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.FocalLength");
-            animationJob.FocalLengthRangeMinHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.FocalLengthRange.x");
-            animationJob.FocalLengthRangeMaxHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.FocalLengthRange.y");
+            animationJob.FocalLengthHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.m_FocalLength");
+            animationJob.FocalLengthRangeMinHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.m_FocalLengthRange.x");
+            animationJob.FocalLengthRangeMaxHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.m_FocalLengthRange.y");
 
-            animationJob.FocusDistanceHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.FocusDistance");
-            animationJob.CloseFocusDistanceHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.CloseFocusDistance");
+            animationJob.FocusDistanceHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.m_FocusDistance");
+            animationJob.CloseFocusDistanceHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.m_CloseFocusDistance");
 
-            animationJob.ApertureHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.Aperture");
-            animationJob.ApertureRangeMinHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.ApertureRange.x");
-            animationJob.ApertureRangeMaxHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.ApertureRange.y");
+            animationJob.ApertureHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.m_Aperture");
+            animationJob.ApertureRangeMinHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.m_ApertureRange.x");
+            animationJob.ApertureRangeMaxHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.m_ApertureRange.y");
 
-            animationJob.LensShiftXHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.LensShift.x");
-            animationJob.LensShiftYHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.LensShift.y");
-            animationJob.BladeCountHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.BladeCount");
-            animationJob.CurvatureXHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.Curvature.x");
-            animationJob.CurvatureYHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.Curvature.y");
-            animationJob.BarrelClippingHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.BarrelClipping");
-            animationJob.AnamorphismHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.Anamorphism");
-            animationJob.SensorSizeXHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.SensorSize.x");
-            animationJob.SensorSizeYHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.SensorSize.y");
-            animationJob.IsoHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.Iso");
-            animationJob.ShutterSpeedHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.ShutterSpeed");
+            animationJob.LensShiftXHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.m_LensShift.x");
+            animationJob.LensShiftYHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.m_LensShift.y");
+            animationJob.BladeCountHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.m_BladeCount");
+            animationJob.CurvatureXHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.m_Curvature.x");
+            animationJob.CurvatureYHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.m_Curvature.y");
+            animationJob.BarrelClippingHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.m_BarrelClipping");
+            animationJob.AnamorphismHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.m_Anamorphism");
+            animationJob.SensorSizeXHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.m_SensorSize.x");
+            animationJob.SensorSizeYHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.m_SensorSize.y");
+            animationJob.IsoHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.m_Iso");
+            animationJob.ShutterSpeedHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_CameraBody.m_ShutterSpeed");
 
             animationJob.DepthOfFieldEnabledHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_DepthOfField");
 

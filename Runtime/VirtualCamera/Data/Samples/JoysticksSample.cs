@@ -1,17 +1,16 @@
 using System;
-using System.Runtime.InteropServices;
 using Unity.LiveCapture.CompanionApp;
 using UnityEngine;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
     /// <summary>
-    /// The payload sent over the network to transport joysticks samples.
+    /// A struct containing a joystick position sample.
     /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     struct JoysticksSample : ISample
     {
         float m_Timestamp;
+
         /// <summary>
         /// The direction of the joysticks.
         /// </summary>

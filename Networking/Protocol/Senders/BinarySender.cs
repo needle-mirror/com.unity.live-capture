@@ -84,17 +84,20 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// </summary>
         /// <param name="protocol">The protocol to get the message from.</param>
         /// <param name="id">The ID of the message.</param>
-        /// <returns>The message instance.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="protocol"/>
-        /// or <paramref name="id"/> is null.</exception>
-        /// <exception cref="ArgumentException">Thrown if there is no message with the given ID,
-        /// or the message is not a <see cref="BinarySender{T}"/>.</exception>
-        public static BinarySender<T> Get(Protocol protocol, string id)
+        /// <param name="message">The returned message instance, or <see langword="default"/> if the message was not found.</param>
+        /// <returns><see langword="true"/> if the message was found, otherwise, <see langword="false"/>.</returns>
+        public static bool TryGet(Protocol protocol, string id, out BinarySender<T> message)
         {
-            if (protocol == null)
-                throw new ArgumentNullException(nameof(protocol));
-
-            return protocol.GetDataSender<T, BinarySender<T>>(id);
+            try
+            {
+                message = protocol.GetDataSender<T, BinarySender<T>>(id);
+                return true;
+            }
+            catch
+            {
+                message = default;
+                return false;
+            }
         }
     }
 }

@@ -3,10 +3,10 @@ using System;
 namespace Unity.LiveCapture.VirtualCamera
 {
     /// <summary>
-    /// 3D Axis flags. Useful to convert PositionAxis and RotationAxis.
+    /// An enum defining the 3D axes as flags.
     /// </summary>
     [Flags]
-    enum Axis
+    enum Axis : byte
     {
         /// <summary>
         /// No axis flags set.
@@ -27,10 +27,10 @@ namespace Unity.LiveCapture.VirtualCamera
     }
 
     /// <summary>
-    /// Position axis flags. Represents a camera rig position.
+    /// An enum defining the translation axes relative to a camera as flags.
     /// </summary>
     [Flags]
-    enum PositionAxis
+    enum PositionAxis : byte
     {
         /// <summary>
         /// No axis.
@@ -55,10 +55,10 @@ namespace Unity.LiveCapture.VirtualCamera
     }
 
     /// <summary>
-    /// Rotation axis flags. Represents a camera rig rotation.
+    /// An enum defining the rotation axes relative to a camera as flags.
     /// </summary>
     [Flags]
-    enum RotationAxis
+    enum RotationAxis : byte
     {
         /// <summary>
         /// No axis.

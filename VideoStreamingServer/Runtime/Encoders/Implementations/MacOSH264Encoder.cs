@@ -46,7 +46,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
         [DllImport(MacOSLib)]
         extern public unsafe static bool GetIsKeyFrame(IntPtr encoder);
     }
-    
+
     /// <summary>
     /// An encoder that can convert RGB or NV12 frames to H264 video.
     /// </summary>

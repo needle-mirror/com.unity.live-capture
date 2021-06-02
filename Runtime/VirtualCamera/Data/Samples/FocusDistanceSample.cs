@@ -1,13 +1,11 @@
 using System;
-using System.Runtime.InteropServices;
 using Unity.LiveCapture.CompanionApp;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
     /// <summary>
-    /// The payload sent over the network to transport a focus distance samples.
+    /// A struct containing a focus distance sample.
     /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     struct FocusDistanceSample : ISample
     {
         float m_Timestamp;

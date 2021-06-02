@@ -27,6 +27,7 @@ namespace Unity.LiveCapture.VirtualCamera
     [ExecuteAlways]
     [DisallowMultipleComponent]
     [AddComponentMenu("Live Capture/Virtual Camera/Focus Plane Renderer")]
+    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-focus-plane-renderer" + Documentation.endURL)]
     public class FocusPlaneRenderer : MonoBehaviour
     {
         [SerializeField, Tooltip("The camera to use to render the focus plane.")]

@@ -13,7 +13,7 @@ The Focus Plane component allows you to render a visualization of the focus plan
 | **Color** | The color of the focus plane. |
 | **Intersection Line Width** | The thickness of the intersection line between the focus plane and the scene geometry. |
 | **Background Opacity** | The opacity of the focus plane background. |
-| **Show Grid** | Show the focus plane grid overlay. |
+| **Grid** | Show the focus plane grid overlay. |
 | **Grid Opacity** | The opacity of the focus plane grid overlay. |
 
 ![Focus Plane Example](images/focus-plane-reference.png)
@@ -22,5 +22,6 @@ The Focus Plane component allows you to render a visualization of the focus plan
 ## Using Focus Plane in URP
 
 If you are using the Universal Render Pipeline (URP):
-- You must enable the `VirtualCameraScriptableRenderFeature` on the project's `UniversalRenderPipelineAsset`: select the **Add VirtualCameraScriptableRenderFeature render feature** button.
+- You must enable the `VirtualCameraScriptableRenderFeature` on the project's `UniversalRenderPipelineAsset` by clicking the **Add VirtualCameraScriptableRenderFeature render feature** button.
 - You must enable the **Camera Depth Texture** on the active renderer settings: press the **Activate Camera Depth Texture** button.
+

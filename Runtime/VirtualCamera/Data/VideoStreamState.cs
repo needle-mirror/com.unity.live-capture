@@ -1,14 +1,12 @@
 using System;
-using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
     /// <summary>
-    /// The struct used to transport the state of a video stream over the network.
+    /// The struct that stores the details of the video stream.
     /// </summary>
     [Serializable]
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     struct VideoStreamState : IEquatable<VideoStreamState>
     {
         /// <summary>

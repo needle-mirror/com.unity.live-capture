@@ -40,6 +40,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         }
 
         VirtualCameraDevice m_Device;
+        SerializedProperty m_Actor;
         SerializedProperty m_LiveLinkChannels;
         SerializedProperty m_Lens;
         SerializedProperty m_LensAsset;
@@ -55,6 +56,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
             m_Device = target as VirtualCameraDevice;
 
+            m_Actor = serializedObject.FindProperty("m_Actor");
             m_LiveLinkChannels = serializedObject.FindProperty("m_LiveLink.Channels");
             m_LensAsset = serializedObject.FindProperty("m_LensAsset");
             m_Lens = serializedObject.FindProperty("m_Lens");
@@ -69,10 +71,10 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         protected override void OnDeviceGUI()
         {
             DoClientGUI();
-            DoActorGUI(m_Device.Actor, (actor) => m_Device.Actor = actor);
 
             serializedObject.Update();
 
+            DoActorGUI(m_Actor);
             DoLiveLinkChannelsGUI(m_LiveLinkChannels);
             DoLensAssetField();
 
@@ -81,12 +83,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             EditorGUILayout.PropertyField(m_CameraBody, Contents.CameraBody);
             EditorGUILayout.PropertyField(m_Settings, Contents.Settings);
 
-            m_Snapshots.isExpanded = EditorGUILayout.Foldout(m_Snapshots.isExpanded, Contents.Snapshots, true);
-
-            if (m_Snapshots.isExpanded)
-            {
-                DoSnapshotsGUI();
-            }
+            DoSnapshotsGUI();
 
             serializedObject.ApplyModifiedProperties();
 
@@ -119,10 +116,10 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
                     element.FindPropertyRelative("m_FrameRate.m_Denominator").intValue,
                     element.FindPropertyRelative("m_FrameRate.m_IsDropFrame").boolValue);
                 var time = element.FindPropertyRelative("m_Time").doubleValue;
-                var focalLength = element.FindPropertyRelative("m_Lens.FocalLength").floatValue;
-                var aperture = element.FindPropertyRelative("m_Lens.Aperture").floatValue;
+                var focalLength = element.FindPropertyRelative("m_Lens.m_FocalLength").floatValue;
+                var aperture = element.FindPropertyRelative("m_Lens.m_Aperture").floatValue;
                 var lensAsset = element.FindPropertyRelative("m_LensAsset").objectReferenceValue;
-                var sensorSize = element.FindPropertyRelative("m_CameraBody.SensorSize").vector2Value;
+                var sensorSize = element.FindPropertyRelative("m_CameraBody.m_SensorSize").vector2Value;
                 var previewRect = new Rect(rect.x, rect.y + 2.5f, k_PreviewWidth, rect.height - 5f);
                 var propertiesRect = new Rect(previewRect.xMax + 5f, rect.y + 2f, rect.width - previewRect.width, rect.height);
 
@@ -225,12 +222,21 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         void DoSnapshotsGUI()
         {
+            var rect = EditorGUILayout.GetControlRect();
+            var label = EditorGUI.BeginProperty(rect, Contents.Snapshots, m_Snapshots);
+            m_Snapshots.isExpanded = EditorGUI.Foldout(rect, m_Snapshots.isExpanded, label, true);
+
+            if (!m_Snapshots.isExpanded)
+            {
+                return;
+            }
+
             m_List.DoGUILayout();
 
             using (new EditorGUILayout.HorizontalScope())
             using (new EditorGUI.DisabledScope(m_Device.IsRecording()))
             {
-                using (new EditorGUI.DisabledScope(!m_Device.IsLive()))
+                using (new EditorGUI.DisabledScope(!m_Device.IsLiveActive()))
                 {
                     if (GUILayout.Button(Contents.TakeSnapshot))
                     {
@@ -254,6 +260,8 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
                     EditorUtility.SetDirty(m_Device);
                 }
             }
+
+            EditorGUI.EndProperty();
         }
 
         void DoLensAssetField()
@@ -262,8 +270,8 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
             var asset = m_LensAsset.objectReferenceValue;
             var rect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight);
-
-            EditorGUI.LabelField(rect, Contents.LensAssetLabel);
+            var label = EditorGUI.BeginProperty(rect, Contents.LensAssetLabel, m_LensAsset);
+            EditorGUI.LabelField(rect, label);
 
             rect.x += EditorGUIUtility.labelWidth + 5;
             rect.width -= EditorGUIUtility.labelWidth + 5;
@@ -286,6 +294,8 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
                 menu.ShowAsContext();
             }
+
+            EditorGUI.EndProperty();
         }
 
         void SetLensPreset(LensAsset preset)

@@ -67,14 +67,14 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         {
             ++EditorGUI.indentLevel;
 
-            m_FocalLengthRangeProp = property.FindPropertyRelative("FocalLengthRange");
-            m_CloseFocusDistanceProp = property.FindPropertyRelative("CloseFocusDistance");
-            m_ApertureRangeProp = property.FindPropertyRelative("ApertureRange");
-            m_LensShiftProp = property.FindPropertyRelative("LensShift");
-            m_BladeCountProp = property.FindPropertyRelative("BladeCount");
-            m_CurvatureProp = property.FindPropertyRelative("Curvature");
-            m_BarrelClippingProp = property.FindPropertyRelative("BarrelClipping");
-            m_AnamorphismProp = property.FindPropertyRelative("Anamorphism");
+            m_FocalLengthRangeProp = property.FindPropertyRelative("m_FocalLengthRange");
+            m_CloseFocusDistanceProp = property.FindPropertyRelative("m_CloseFocusDistance");
+            m_ApertureRangeProp = property.FindPropertyRelative("m_ApertureRange");
+            m_LensShiftProp = property.FindPropertyRelative("m_LensShift");
+            m_BladeCountProp = property.FindPropertyRelative("m_BladeCount");
+            m_CurvatureProp = property.FindPropertyRelative("m_Curvature");
+            m_BarrelClippingProp = property.FindPropertyRelative("m_BarrelClipping");
+            m_AnamorphismProp = property.FindPropertyRelative("m_Anamorphism");
 
             EditorGUIUtility.wideMode = true;
 

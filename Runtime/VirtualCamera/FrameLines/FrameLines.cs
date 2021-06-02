@@ -22,6 +22,7 @@ namespace Unity.LiveCapture.VirtualCamera
     [DisallowMultipleComponent]
     [AddComponentMenu("Live Capture/Virtual Camera/Frame Lines")]
     [RequireComponent(typeof(Camera))]
+    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-frame-lines" + Documentation.endURL)]
     public class FrameLines : MonoBehaviour
     {
         // Name used for profiling.
@@ -53,19 +54,28 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// Whether or not to show the crop aspect ratio.
         /// </summary>
-        public bool ShowAspectRatio
+        public bool GateMaskEnabled
         {
-            get => m_Settings.RenderAspectRatio;
-            set => m_Settings.RenderAspectRatio = value;
+            get => m_Settings.GateMaskEnabled;
+            set => m_Settings.GateMaskEnabled = value;
+        }
+
+        /// <summary>
+        /// Whether or not to show the crop aspect ratio.
+        /// </summary>
+        public bool AspectRatioEnabled
+        {
+            get => m_Settings.AspectRatioLinesEnabled;
+            set => m_Settings.AspectRatioLinesEnabled = value;
         }
 
         /// <summary>
         /// Whether or not to show the center marker.
         /// </summary>
-        public bool ShowCenterMarker
+        public bool CenterMarkerEnabled
         {
-            get => m_Settings.RenderCenterMarker;
-            set => m_Settings.RenderCenterMarker = value;
+            get => m_Settings.CenterMarkerEnabled;
+            set => m_Settings.CenterMarkerEnabled = value;
         }
 
         /// <summary>
@@ -272,12 +282,22 @@ namespace Unity.LiveCapture.VirtualCamera
 
             m_FrameLinesDrawer.Clear();
 
-            // Gate mask letterbox.
-            m_FrameLinesDrawer.SetColor(new Color(0, 0, 0, m_Settings.GateMaskOpacity));
+            var showGateMask = m_Settings.GateMaskEnabled && m_Settings.GateMaskOpacity > 0f;
+            var showCropFill = m_Settings.AspectRatioLinesEnabled && m_Settings.AspectFillOpacity > 0f;
+            if (showGateMask || showCropFill)
+            {
+                var opacity = showGateMask ? m_Settings.GateMaskOpacity : m_Settings.AspectFillOpacity;
+                // Gate mask letterbox.
+                m_FrameLinesDrawer.SetColor(new Color(0, 0, 0, opacity));
 
-            DrawLetterBox(Vector2.one, gateViewSize);
+                DrawLetterBox(Vector2.one, gateViewSize);
+            }
+            else
+            {
+                m_FrameLinesDrawer.SetColor(new Color(0, 0, 0, 0f));
+            }
 
-            if (m_Settings.RenderAspectRatio)
+            if (m_Settings.AspectRatioLinesEnabled)
             {
                 var cropViewSize = ApplyAspectRatio(gateViewSize, screenAspect * gateViewSize.x / gateViewSize.y, m_Settings.AspectRatio);
 
@@ -291,15 +311,15 @@ namespace Unity.LiveCapture.VirtualCamera
                 m_FrameLinesDrawer.SetLineWidth(m_Settings.AspectLineWidth);
 
                 // Crop mask lines.
-                if (m_Settings.AspectMode != FrameLinesSettings.Mode.None)
+                if (m_Settings.AspectLineType != FrameLinesSettings.LineType.None)
                 {
-                    if (m_Settings.AspectMode == FrameLinesSettings.Mode.Box)
+                    if (m_Settings.AspectLineType == FrameLinesSettings.LineType.Box)
                     {
                         var cropRect = Rect.MinMaxRect(-cropViewSize.x, -cropViewSize.y, cropViewSize.x, cropViewSize.y);
 
                         m_FrameLinesDrawer.DrawBox(NdcToPixels(cropRect));
                     }
-                    else if (m_Settings.AspectMode == FrameLinesSettings.Mode.Corner)
+                    else if (m_Settings.AspectLineType == FrameLinesSettings.LineType.Corner)
                     {
                         var cropRect = Rect.MinMaxRect(-cropViewSize.x, -cropViewSize.y, cropViewSize.x, cropViewSize.y);
                         var pixelBox = NdcToPixels(cropRect);
@@ -310,20 +330,20 @@ namespace Unity.LiveCapture.VirtualCamera
                 }
             }
 
-            if (m_Settings.RenderCenterMarker)
+            if (m_Settings.CenterMarkerEnabled)
             {
                 m_FrameLinesDrawer.SetColor(m_Settings.AspectLineColor);
                 m_FrameLinesDrawer.SetLineWidth(m_Settings.AspectLineWidth);
 
                 // Marker.
-                if (m_Settings.CenterMarker == FrameLinesSettings.Marker.Cross)
+                if (m_Settings.CenterMarkerType == FrameLinesSettings.MarkerType.Cross)
                 {
                     var center = m_CameraPixelSize * .5f;
                     var inner = Mathf.Min(m_CameraPixelSize.x * .02f, m_CameraPixelSize.y * .02f);
                     var outer = Mathf.Min(m_CameraPixelSize.x * .06f, m_CameraPixelSize.y * .06f);
                     m_FrameLinesDrawer.DrawCross(center, inner, outer);
                 }
-                else if (m_Settings.CenterMarker == FrameLinesSettings.Marker.Dot)
+                else if (m_Settings.CenterMarkerType == FrameLinesSettings.MarkerType.Dot)
                 {
                     var center = m_CameraPixelSize * .5f;
                     var extent = Mathf.Max(2, Mathf.Min(m_CameraPixelSize.x * .02f, m_CameraPixelSize.y * .02f));

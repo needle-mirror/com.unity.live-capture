@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.1-pre.465] - 2021-06-02
+
+### Added
+- Component documentation links.
+- [Face Capture] Default evaluator asset.
+- [Face Capture] Global blend shape smoothing.
+- [Virtual Camera] Damping for lens values.
+- New lens presets and 1.78 aspect ratio
+
+### Changed
+- [Face Capture] Removed frame digit in time code
+- [Virtual Camera] Inspector is enabled when actor is not live.
+- Separate control for gate mask.
+- URP and HDRP face samples have been replaced by a single face sample for the built-in pipeline.
+- Improved documentation.   
+- App icons are back to the default Unity icon
+
+### Fixed
+- TakeRecorder binding is not refreshed without changing take selection.
+- [Face Capture] Screen diming interfers with UI.
+- [Virtual Camera] App doesn't properly reconnect to server.
+- Alignment for tracking faces was using gravity instead of camera world alignment.
+- Recording closes dialogs.
+- Reticle animation and click-through issue.
+- Flickering in the game view, especially when focus reticle was displayed.
+- Slider on mobile phone would sometimes open iOS notifications. 
+- [Virtual Camera] Could not exit preview mode on the device when entered from the editor.
+- [Virtual Camera] Lens and rig settings were hidden by default.
+- Thumbnails were identical for different snapshots. 
+- Changing lenses intrinsics did not refresh the client. 
+- Some properties could not be excluded from presets.
+- Error when adding a CinemachineCameraDriver.
+- App and servers connectivity issues on 2021.12.0a18 and above.
+- Warning in TakeBuilder.
+- First lens added in a new lens kit was "unnamed".
+
 ## [1.0.0-pre.400] - 2021-05-13
 
 ### Added
@@ -11,9 +47,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Warnings when importing the HDRP and URP face samples in the same project
-- [Virtual Camera App] Usage of the Resources folder.
+- [Virtual Camera] Usage of the Resources folder.
 - Documentation references to experimental package.
-- [Virtual Camera App] Focus Mode Display.
+- [Virtual Camera] Focus Mode Display.
 - [Face Capture App] Timecode layout.
 
 ## [1.0.0-pre.360] - 2021-05-12

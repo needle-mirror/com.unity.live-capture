@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace Unity.LiveCapture.VirtualCamera
@@ -8,7 +7,6 @@ namespace Unity.LiveCapture.VirtualCamera
     /// Contains the damping data.
     /// </summary>
     [Serializable]
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     struct Damping : IEquatable<Damping>
     {
         /// <summary>
@@ -25,7 +23,6 @@ namespace Unity.LiveCapture.VirtualCamera
         /// Enable or disable the damping.
         /// </summary>
         [Tooltip("Enable or disable damping.")]
-        [MarshalAs(UnmanagedType.U1)]
         public bool Enabled;
 
         /// <summary>

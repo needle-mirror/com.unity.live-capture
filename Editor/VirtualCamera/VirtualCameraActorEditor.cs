@@ -20,6 +20,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         SerializedProperty m_CameraBody;
         SerializedProperty m_DepthOfField;
         SerializedProperty m_CropAspect;
+        VirtualCameraActor m_Target;
 
         void OnEnable()
         {
@@ -28,11 +29,12 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             m_CameraBody = serializedObject.FindProperty("m_CameraBody");
             m_DepthOfField = serializedObject.FindProperty("m_DepthOfField");
             m_CropAspect = serializedObject.FindProperty("m_CropAspect");
+            m_Target = target as VirtualCameraActor;
         }
 
         public override void OnInspectorGUI()
         {
-            using (new EditorGUI.DisabledScope(true))
+            using (new EditorGUI.DisabledScope(IsLinked()))
             {
                 serializedObject.Update();
 
@@ -44,6 +46,19 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
                 serializedObject.ApplyModifiedProperties();
             }
+        }
+
+        bool IsLinked()
+        {
+            foreach (var device in VirtualCameraDevice.instances)
+            {
+                if (device.IsLiveActive() && device.Actor == m_Target)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

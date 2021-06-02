@@ -1,25 +1,11 @@
 using System;
+using Unity.LiveCapture.CompanionApp.Networking;
 using Unity.LiveCapture.Networking;
 using Unity.LiveCapture.Networking.Protocols;
 using UnityEngine;
 
 namespace Unity.LiveCapture.CompanionApp
 {
-    /// <summary>
-    /// An enum defining the modes a <see cref="CompanionAppDevice{TClient}"/> operates in.
-    /// </summary>
-    enum DeviceMode
-    {
-        /// <summary>
-        /// The device is configured to play recorded Takes.
-        /// </summary>
-        Playback,
-        /// <summary>
-        /// The device is configured to receive live data.
-        /// </summary>
-        LiveStream,
-    }
-
     /// <summary>
     /// The interface used to communicate with the companion app.
     /// </summary>
@@ -83,14 +69,14 @@ namespace Unity.LiveCapture.CompanionApp
         /// An event invoked when the client wants to set the playback time in the current <see cref="ISlate"/>.
         /// </summary>
         /// <remarks>
-        /// The event provides the time in seconds from the start of the Shot.
+        /// The event provides the time in seconds from the start of the Slate.
         /// </remarks>
         event Action<double> SetPlayerTime;
 
         /// <summary>
         /// An event invoked when the client requests the take to select.
         /// </summary>
-        event Action<SerializableGuid> SetSelectedTake;
+        event Action<Guid> SetSelectedTake;
 
         /// <summary>
         /// An event invoked when the client requests to rate a take.
@@ -100,17 +86,22 @@ namespace Unity.LiveCapture.CompanionApp
         /// <summary>
         /// An event invoked when the client requests to delete a take.
         /// </summary>
-        event Action<SerializableGuid> DeleteTake;
+        event Action<Guid> DeleteTake;
 
         /// <summary>
         /// An event invoked when the client requests to set a take as the iteration base.
         /// </summary>
-        event Action<SerializableGuid> SetIterationBase;
+        event Action<Guid> SetIterationBase;
 
         /// <summary>
         /// An event invoked when the client requests to operate without an iteration base.
         /// </summary>
         event Action ClearIterationBase;
+
+        /// <summary>
+        /// An event invoked when the client requests the preview texture of an asset.
+        /// </summary>
+        event Action<Guid> TexturePreviewRequested;
 
         /// <summary>
         /// Resets the client communication state.
@@ -130,16 +121,47 @@ namespace Unity.LiveCapture.CompanionApp
         void SendRecordingState(bool isRecording);
 
         /// <summary>
-        /// Sends the player state to the client.
+        /// Sends the take recorder frame rate to the client.
         /// </summary>
-        /// <param name="state">The state to send.</param>
-        void SendPlayerState(PlayerState state);
+        /// <param name="frameRate">The frame rate to send.</param>
+        void SendFrameRate(FrameRate frameRate);
+
+        /// <summary>
+        /// Sends if there a slate assigned to the device to the client.
+        /// </summary>
+        /// <param name="hasSlate">Is there a slate assigned to the device.</param>
+        void SendHasSlate(bool hasSlate);
+
+        /// <summary>
+        /// Sends the duration of the current slate to the client.
+        /// </summary>
+        /// <param name="duration">The duration of the current slate in seconds.</param>
+        void SendSlateDuration(double duration);
+
+        /// <summary>
+        /// Sends if a slate is currently being previewed to the client.
+        /// </summary>
+        /// <param name="isPreviewing">Is a slate currently being previewed.</param>
+        void SendSlateIsPreviewing(bool isPreviewing);
+
+        /// <summary>
+        /// Sends the slate preview time to the client.
+        /// </summary>
+        /// <param name="previewTime">The preview time in seconds.</param>
+        void SendSlatePreviewTime(double previewTime);
 
         /// <summary>
         /// Sends the available take list to the client.
         /// </summary>
         /// <param name="descriptor">The slate information to send.</param>
         void SendSlateDescriptor(SlateDescriptor descriptor);
+
+        /// <summary>
+        /// Sends the texture preview of an asset.
+        /// </summary>
+        /// <param name="guid">The guid of the asset.</param>
+        /// <param name="texture">The texture containing the preview of the asset.</param>
+        void SendTexturePreview(Guid guid, Texture2D texture);
     }
 
     /// <inheritdoc cref="ICompanionAppClient"/>
@@ -154,12 +176,17 @@ namespace Unity.LiveCapture.CompanionApp
         protected readonly Protocol m_Protocol;
 
         readonly EventSender m_InitializeSender;
-        readonly DataSender<ServerState> m_ServerStateSender;
-        readonly DataSender<PlayerState> m_PlayerStateSender;
-        readonly JsonSender<SlateDescriptor> m_SlateDescriptorSender;
-
-        bool m_IsRecording;
-        DeviceMode m_DeviceMode;
+        readonly BoolSender m_IsRecordingSender;
+        readonly DataSender<DeviceMode> m_DeviceModeSender;
+        readonly DataSender<FrameRate> m_FrameRateSender;
+        readonly BoolSender m_HasSlateSender;
+        readonly DataSender<double> m_SlateDurationSender;
+        readonly DataSender<double> m_SlatePreviewTimeSender;
+        readonly BoolSender m_SlateIsPreviewingSender;
+        readonly BinarySender<int> m_SlateSelectedTakeSender;
+        readonly BinarySender<int> m_SlateIterationBaseSender;
+        readonly JsonSender<TakeDescriptorArrayV0> m_SlateTakesSender;
+        readonly TextureSender m_TexturePreviewSender;
 
         /// <inheritdoc/>
         public string Name { get; }
@@ -192,19 +219,22 @@ namespace Unity.LiveCapture.CompanionApp
         public event Action<double> SetPlayerTime;
 
         /// <inheritdoc />
-        public event Action<SerializableGuid> SetSelectedTake;
+        public event Action<Guid> SetSelectedTake;
 
         /// <inheritdoc />
         public event Action<TakeDescriptor> SetTakeData;
 
         /// <inheritdoc />
-        public event Action<SerializableGuid> DeleteTake;
+        public event Action<Guid> DeleteTake;
 
         /// <inheritdoc />
-        public event Action<SerializableGuid> SetIterationBase;
+        public event Action<Guid> SetIterationBase;
 
         /// <inheritdoc />
         public event Action ClearIterationBase;
+
+        /// <inheritdoc />
+        public event Action<Guid> TexturePreviewRequested;
 
         /// <summary>
         /// Creates a new <see cref="CompanionAppClient"/> instance.
@@ -225,15 +255,23 @@ namespace Unity.LiveCapture.CompanionApp
             m_Protocol.SetNetwork(network, remote);
 
             m_InitializeSender = m_Protocol.Add(new EventSender(CompanionAppMessages.ToClient.Initialize));
-            m_ServerStateSender = m_Protocol.Add(new BinarySender<ServerState>(CompanionAppMessages.ToClient.ServerState));
-            m_PlayerStateSender = m_Protocol.Add(new BinarySender<PlayerState>(CompanionAppMessages.ToClient.PlayerState));
-            m_SlateDescriptorSender = m_Protocol.Add(new JsonSender<SlateDescriptor>(CompanionAppMessages.ToClient.SlateDescriptor));
+            m_TexturePreviewSender = m_Protocol.Add(new TextureSender(CompanionAppMessages.ToClient.TexturePreview));
+            m_IsRecordingSender = m_Protocol.Add(new BoolSender(CompanionAppMessages.ToClient.IsRecordingChanged));
+            m_DeviceModeSender = m_Protocol.Add(new BinarySender<DeviceMode>(CompanionAppMessages.ToClient.DeviceModeChanged));
+            m_FrameRateSender = m_Protocol.Add(new BinarySender<FrameRate>(CompanionAppMessages.ToClient.FrameRate));
+            m_HasSlateSender = m_Protocol.Add(new BoolSender(CompanionAppMessages.ToClient.HasSlateChanged));
+            m_SlateDurationSender = m_Protocol.Add(new BinarySender<double>(CompanionAppMessages.ToClient.SlateDurationChanged));
+            m_SlateIsPreviewingSender = m_Protocol.Add(new BoolSender(CompanionAppMessages.ToClient.SlateIsPreviewingChanged));
+            m_SlatePreviewTimeSender = m_Protocol.Add(new BinarySender<double>(CompanionAppMessages.ToClient.SlatePreviewTimeChanged));
+            m_SlateSelectedTakeSender = m_Protocol.Add(new BinarySender<int>(CompanionAppMessages.ToClient.SlateSelectedTake));
+            m_SlateIterationBaseSender = m_Protocol.Add(new BinarySender<int>(CompanionAppMessages.ToClient.SlateIterationBase));
+            m_SlateTakesSender = m_Protocol.Add(new JsonSender<TakeDescriptorArrayV0>(CompanionAppMessages.ToClient.SlateTakes_V0));
 
-            m_Protocol.Add(new BinaryReceiver<ServerMode>(CompanionAppMessages.ToServer.SetMode)).AddHandler((serverMode) =>
-            {
-                var mode = serverMode == ServerMode.LiveStream ? DeviceMode.LiveStream : DeviceMode.Playback;
-                SetDeviceMode?.Invoke(mode);
-            });
+            m_Protocol.Add(new BinaryReceiver<DeviceMode>(CompanionAppMessages.ToServer.SetDeviceMode,
+                ChannelType.ReliableOrdered, DataOptions.None)).AddHandler(deviceMode =>
+                {
+                    SetDeviceMode?.Invoke(deviceMode);
+                });
             m_Protocol.Add(new EventReceiver(CompanionAppMessages.ToServer.StartRecording)).AddHandler(() =>
             {
                 StartRecording?.Invoke();
@@ -254,32 +292,36 @@ namespace Unity.LiveCapture.CompanionApp
             {
                 PausePlayer?.Invoke();
             });
-            m_Protocol.Add(new BinaryReceiver<double>(CompanionAppMessages.ToServer.PlayerSetTime)).AddHandler((time) =>
+            m_Protocol.Add(new BinaryReceiver<double>(CompanionAppMessages.ToServer.PlayerSetTime)).AddHandler(time =>
             {
                 SetPlayerTime?.Invoke(time);
             });
             m_Protocol.Add(new BinaryReceiver<SerializableGuid>(CompanionAppMessages.ToServer.SetSelectedTake,
-                ChannelType.ReliableOrdered, DataOptions.None)).AddHandler((guid) =>
+                ChannelType.ReliableOrdered, DataOptions.None)).AddHandler(guid =>
                 {
                     SetSelectedTake?.Invoke(guid);
                 });
-            m_Protocol.Add(new JsonReceiver<TakeDescriptor>(CompanionAppMessages.ToServer.SetTakeData)).AddHandler((descriptor) =>
+            m_Protocol.Add(new JsonReceiver<TakeDescriptorV0>(CompanionAppMessages.ToServer.SetTakeData_V0)).AddHandler(take =>
             {
-                SetTakeData?.Invoke(descriptor);
+                SetTakeData?.Invoke((TakeDescriptor)take);
             });
             m_Protocol.Add(new BinaryReceiver<SerializableGuid>(CompanionAppMessages.ToServer.DeleteTake,
-                ChannelType.ReliableOrdered, DataOptions.None)).AddHandler((guid) =>
+                ChannelType.ReliableOrdered, DataOptions.None)).AddHandler(guid =>
                 {
                     DeleteTake?.Invoke(guid);
                 });
             m_Protocol.Add(new BinaryReceiver<SerializableGuid>(CompanionAppMessages.ToServer.SetIterationBase,
-                ChannelType.ReliableOrdered, DataOptions.None)).AddHandler((guid) =>
+                ChannelType.ReliableOrdered, DataOptions.None)).AddHandler(guid =>
                 {
                     SetIterationBase?.Invoke(guid);
                 });
             m_Protocol.Add(new EventReceiver(CompanionAppMessages.ToServer.ClearIterationBase)).AddHandler(() =>
             {
                 ClearIterationBase?.Invoke();
+            });
+            m_Protocol.Add(new BinaryReceiver<SerializableGuid>(CompanionAppMessages.ToServer.RequestTexturePreview)).AddHandler((guid) =>
+            {
+                TexturePreviewRequested?.Invoke(guid);
             });
         }
 
@@ -306,36 +348,57 @@ namespace Unity.LiveCapture.CompanionApp
         /// <inheritdoc />
         public void SendDeviceMode(DeviceMode deviceMode)
         {
-            m_DeviceMode = deviceMode;
-            SendServerState();
+            m_DeviceModeSender.Send(deviceMode);
         }
 
         /// <inheritdoc />
         public void SendRecordingState(bool isRecording)
         {
-            m_IsRecording = isRecording;
-            SendServerState();
-        }
-
-        void SendServerState()
-        {
-            m_ServerStateSender.Send(new ServerState
-            {
-                Recording = m_IsRecording,
-                Mode = m_DeviceMode == DeviceMode.LiveStream ? ServerMode.LiveStream : ServerMode.Playback,
-            });
+            m_IsRecordingSender.Send(isRecording);
         }
 
         /// <inheritdoc />
-        public void SendPlayerState(PlayerState state)
+        public void SendFrameRate(FrameRate frameRate)
         {
-            m_PlayerStateSender.Send(state);
+            m_FrameRateSender.Send(frameRate);
+        }
+
+        /// <inheritdoc />
+        public void SendHasSlate(bool hasSlate)
+        {
+            m_HasSlateSender.Send(hasSlate);
+        }
+
+        /// <inheritdoc />
+        public void SendSlateDuration(double duration)
+        {
+            m_SlateDurationSender.Send(duration);
+        }
+
+        /// <inheritdoc />
+        public void SendSlateIsPreviewing(bool isPreviewing)
+        {
+            m_SlateIsPreviewingSender.Send(isPreviewing);
+        }
+
+        /// <inheritdoc />
+        public void SendSlatePreviewTime(double previewTime)
+        {
+            m_SlatePreviewTimeSender.Send(previewTime);
         }
 
         /// <inheritdoc />
         public void SendSlateDescriptor(SlateDescriptor descriptor)
         {
-            m_SlateDescriptorSender.Send(descriptor);
+            m_SlateSelectedTakeSender.Send(descriptor.SelectedTake);
+            m_SlateIterationBaseSender.Send(descriptor.IterationBase);
+            m_SlateTakesSender.Send((TakeDescriptorArrayV0)descriptor.Takes);
+        }
+
+        /// <inheritdoc />
+        public void SendTexturePreview(Guid guid, Texture2D texture)
+        {
+            m_TexturePreviewSender.Send(new TextureData(texture, guid.ToString("N")));
         }
     }
 }

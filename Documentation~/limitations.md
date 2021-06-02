@@ -6,4 +6,4 @@
 * Spatial Focus Mode does not account for skinned mesh blend shapes.
 
 ## Performance
-* The solution works in both Edit Mode and Play Mode, but there can be performance issues in Edit Mode, particularly when using Depth of Field for focus.
+* The solution works in both Edit Mode and Play Mode, but there can be performance issues in Edit Mode, particularly when depth of field is enabled (i.e. any Focus Mode other than "Clear").

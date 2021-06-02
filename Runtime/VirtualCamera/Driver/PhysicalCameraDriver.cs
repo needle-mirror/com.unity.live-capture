@@ -15,8 +15,10 @@ using UnityEngine.Rendering.HighDefinition;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
+    [AddComponentMenu("")]
     [RequireComponent(typeof(Camera))]
-    [AddComponentMenu("Live Capture/Virtual Camera/Physical Camera Driver")]
+    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-physical-camera-driver" + Documentation.endURL)]
+    [ExcludeFromPreset]
     class PhysicalCameraDriver : BaseCameraDriver
     {
 #if HDRP_10_2_OR_NEWER

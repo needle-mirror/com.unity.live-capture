@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
@@ -30,8 +31,9 @@ namespace Unity.LiveCapture.VirtualCamera
         public float IntersectionLineWidth;
         [Tooltip("Opacity of the focus plane's background."), Range(0, 1)]
         public float BackgroundOpacity;
+        [FormerlySerializedAs("ShowGrid")]
         [Tooltip("Show the grid overlay.")]
-        public bool ShowGrid;
+        public bool Grid;
         [Tooltip("Opacity of the focus plane's grid overlay."), Range(0, 1)]
         public float GridOpacity;
 
@@ -48,9 +50,9 @@ namespace Unity.LiveCapture.VirtualCamera
             material.SetFloat(ShaderIDs._BackgroundOpacity, BackgroundOpacity);
 
             var isGridVisible = material.IsKeywordEnabled(k_UseGridKeyword);
-            if (isGridVisible != ShowGrid)
+            if (isGridVisible != Grid)
             {
-                if (ShowGrid)
+                if (Grid)
                 {
                     material.EnableKeyword(k_UseGridKeyword);
                 }
@@ -76,7 +78,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 hashCode = (hashCode * 397) ^ IntersectionLineWidth.GetHashCode();
                 hashCode = (hashCode * 397) ^ GridOpacity.GetHashCode();
                 hashCode = (hashCode * 397) ^ BackgroundOpacity.GetHashCode();
-                hashCode = (hashCode * 397) ^ ShowGrid.GetHashCode();
+                hashCode = (hashCode * 397) ^ Grid.GetHashCode();
                 return hashCode;
             }
         }
@@ -89,7 +91,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 IntersectionLineWidth == other.IntersectionLineWidth &&
                 GridOpacity == other.GridOpacity &&
                 BackgroundOpacity == other.BackgroundOpacity &&
-                ShowGrid == other.ShowGrid;
+                Grid == other.Grid;
         }
 
         public override bool Equals(object obj)

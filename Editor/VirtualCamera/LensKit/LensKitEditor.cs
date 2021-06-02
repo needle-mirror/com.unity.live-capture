@@ -216,6 +216,10 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             {
                 EditorUtility.CopySerialized(selectedLens, lens);
             }
+            else
+            {
+                lens.name = LensAsset.GenerateName(lens);
+            }
 
             lens.hideFlags = HideFlags.HideInHierarchy;
 

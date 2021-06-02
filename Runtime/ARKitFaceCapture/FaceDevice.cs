@@ -14,6 +14,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     [ExcludeFromPreset]
     [CreateDeviceMenuItemAttribute("ARKit Face Device")]
     [AddComponentMenu("Live Capture/ARKit Face Capture/ARKit Face Device")]
+    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-arkit-face-device" + Documentation.endURL)]
     public class FaceDevice : CompanionAppDevice<IFaceClient>
     {
         [SerializeField]
@@ -32,15 +33,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         public FaceActor Actor
         {
             get => m_Actor;
-            set
-            {
-                if (m_Actor != value)
-                {
-                    m_Actor = value;
-                    m_LiveLink.SetAnimator(null);
-                    Refresh();
-                }
-            }
+            set => m_Actor = value;
         }
 
         bool TryGetInternalClient(out IFaceClientInternal client)

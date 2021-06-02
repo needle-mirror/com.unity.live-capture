@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace Unity.LiveCapture.VirtualCamera
@@ -8,7 +7,6 @@ namespace Unity.LiveCapture.VirtualCamera
     /// Contains all the parameters needed to configure a physical camera lens.
     /// </summary>
     [Serializable]
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Lens : IEquatable<Lens>
     {
         const float k_DefaultFocalLength = 50f;
@@ -25,21 +23,40 @@ namespace Unity.LiveCapture.VirtualCamera
             Aperture = k_DefaultAperture,
         };
 
+        [SerializeField]
+        float m_FocalLength;
+        [SerializeField]
+        float m_FocusDistance;
+        [SerializeField]
+        float m_Aperture;
+
         /// <summary>
         /// The focal length in millimeters.
         /// </summary>
-        public float FocalLength;
+        public float FocalLength
+        {
+            get => m_FocalLength;
+            set => m_FocalLength = value;
+        }
 
         /// <summary>
         /// The focus distance in meters.
         /// </summary>
-        public float FocusDistance;
+        public float FocusDistance
+        {
+            get => m_FocusDistance;
+            set => m_FocusDistance = value;
+        }
 
         /// <summary>
         /// The ratio of the f-stop or f-number aperture. The smaller the value is, the shallower the depth of field is
         /// and more light reaches the sensor.
         /// </summary>
-        public float Aperture;
+        public float Aperture
+        {
+            get => m_Aperture;
+            set => m_Aperture = value;
+        }
 
         /// <inheritdoc/>
         public bool Equals(Lens other)

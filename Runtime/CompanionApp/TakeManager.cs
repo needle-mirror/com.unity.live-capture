@@ -13,6 +13,7 @@ namespace Unity.LiveCapture.CompanionApp
         void DeleteTake(SerializableGuid guid);
         void SetIterationBase(ISlate slate, SerializableGuid guid);
         void ClearIterationBase(ISlate slate);
+        Texture2D GetAssetPreview<T>(Guid guid) where T : UnityEngine.Object;
     }
 
     class TakeManager : ITakeManager
@@ -96,6 +97,20 @@ namespace Unity.LiveCapture.CompanionApp
             }
 
             slate.IterationBase = null;
+        }
+
+        public Texture2D GetAssetPreview<T>(Guid guid) where T : UnityEngine.Object
+        {
+            var texture = default(Texture2D);
+#if UNITY_EDITOR
+            var asset = AssetDatabaseUtility.LoadAssetWithGuid<T>(guid.ToString("N"));
+
+            if (asset != null)
+            {
+                texture = AssetPreview.GetAssetPreview(asset);
+            }
+#endif
+            return texture;
         }
     }
 }

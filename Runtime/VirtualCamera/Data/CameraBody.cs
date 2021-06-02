@@ -18,7 +18,6 @@ namespace Unity.LiveCapture.VirtualCamera
     /// Contains all the parameters needed to model a physical camera body.
     /// </summary>
     [Serializable]
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct CameraBody : IEquatable<CameraBody>
     {
         static readonly Vector2 k_DefaultSensorSize = new Vector2(24.89f, 18.66f);
@@ -40,22 +39,45 @@ namespace Unity.LiveCapture.VirtualCamera
         /// </summary>
         public static Vector2 DefaultSensorSize => k_DefaultSensorSize;
 
-        /// <summary>
-        /// Set the size, in millimeters, of the real-world camera sensor.
-        /// </summary>
-        [SensorSize]
-        public Vector2 SensorSize;
+        [SerializeField, SensorSize]
+        Vector2 m_SensorSize;
+        [SerializeField]
+        int m_Iso;
+        [SerializeField]
+        float m_ShutterSpeed;
 
         /// <summary>
-        /// Set the sensibility of the real-world camera sensor. Higher values increase the Camera's sensitivity to
-        /// light and result in faster exposure times.
+        /// Set the size of the real-world camera sensor in millimeters.
         /// </summary>
-        public int Iso;
+        public Vector2 SensorSize
+        {
+            get => m_SensorSize;
+            set => m_SensorSize = value;
+        }
 
         /// <summary>
-        /// Sets the exposure time, in seconds for the camera. Lower values result in less exposed pictures.
+        /// Set the sensitivity of the real-world camera sensor.
         /// </summary>
-        public float ShutterSpeed;
+        /// <remarks>
+        /// Higher values increase the camera's sensitivity to light and result in faster exposure times.
+        /// </remarks>
+        public int Iso
+        {
+            get => m_Iso;
+            set => m_Iso = value;
+        }
+
+        /// <summary>
+        /// Sets the exposure time for the camera in seconds.
+        /// </summary>
+        /// <remarks>
+        /// Lower values result in less exposed pictures.
+        /// </remarks>
+        public float ShutterSpeed
+        {
+            get => m_ShutterSpeed;
+            set => m_ShutterSpeed = value;
+        }
 
         /// <inheritdoc/>
         public bool Equals(CameraBody other)

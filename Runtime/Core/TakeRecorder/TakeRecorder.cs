@@ -23,6 +23,7 @@ namespace Unity.LiveCapture
     [ExcludeFromPreset]
     [RequireComponent(typeof(PlayableDirector))]
     [AddComponentMenu("Live Capture/Take Recorder")]
+    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-take-recorder" + Documentation.endURL)]
     public class TakeRecorder : MonoBehaviour, ITakeRecorderInternal
     {
         [SerializeField, HideInInspector]
@@ -71,6 +72,9 @@ namespace Unity.LiveCapture
         {
             GetEffectiveSlatePlayer().SetTime(slate, time);
         }
+
+        /// <inheritdoc/>
+        bool ITakeRecorderInternal.IsEnabled => isActiveAndEnabled;
 
         internal int GetSlateCount()
         {
@@ -591,12 +595,7 @@ namespace Unity.LiveCapture
         {
             DisposeScreenshot();
 
-            var camera = Camera.main;
-
-            if (camera == null && Camera.allCamerasCount > 0)
-            {
-                camera = Camera.allCameras[0];
-            }
+            var camera = LiveCaptureUtility.GetTopCamera();
 
             if (camera != null)
             {

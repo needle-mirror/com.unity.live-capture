@@ -11,10 +11,10 @@ namespace Unity.LiveCapture.VirtualCamera
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct LensIntrinsics : IEquatable<LensIntrinsics>
     {
-        const int k_DefaultBladeCount = 9;
-        const float k_DefaultMinCurvature = 2f;
+        const int k_DefaultBladeCount = 11;
+        const float k_DefaultMinCurvature = 1f;
         const float k_DefaultMaxCurvature = 30f;
-        const float k_DefaultBarrelClipping = 0.25f;
+        const float k_DefaultBarrelClipping = 0f;
         const float k_DefaultAnamorphism = 0f;
         const float k_DefaultCloseFocusDistance = 0.3f;
         static readonly Vector2 k_DefaultFocalLengthRange = new Vector2(18f, 75f);
@@ -35,10 +35,38 @@ namespace Unity.LiveCapture.VirtualCamera
             Anamorphism = k_DefaultAnamorphism,
         };
 
+        [SerializeField]
+        Vector2 m_FocalLengthRange;
+
+        [SerializeField]
+        float m_CloseFocusDistance;
+
+        [SerializeField]
+        Vector2 m_ApertureRange;
+
+        [SerializeField]
+        Vector2 m_LensShift;
+
+        [SerializeField]
+        int m_BladeCount;
+
+        [SerializeField]
+        Vector2 m_Curvature;
+
+        [SerializeField]
+        float m_BarrelClipping;
+
+        [SerializeField]
+        float m_Anamorphism;
+
         /// <summary>
         /// Range of the focal length of the lens.
         /// </summary>
-        public Vector2 FocalLengthRange;
+        public Vector2 FocalLengthRange
+        {
+            get => m_FocalLengthRange;
+            set => m_FocalLengthRange = value;
+        }
 
         /// <summary>
         /// The lens close focus distance.
@@ -46,12 +74,20 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <remarks>
         /// The close focus distance represents the minimal focus distance supported by the lens.
         /// </remarks>>
-        public float CloseFocusDistance;
+        public float CloseFocusDistance
+        {
+            get => m_CloseFocusDistance;
+            set => m_CloseFocusDistance = value;
+        }
 
         /// <summary>
         /// Range of the aperture of the lens.
         /// </summary>
-        public Vector2 ApertureRange;
+        public Vector2 ApertureRange
+        {
+            get => m_ApertureRange;
+            set => m_ApertureRange = value;
+        }
 
         /// <summary>
         /// The horizontal and vertical shift from the center.
@@ -62,12 +98,20 @@ namespace Unity.LiveCapture.VirtualCamera
         /// correct distortion that occurs when the camera is at an angle to the subject (for example, converging parallel
         /// lines). Shift the lens along either axis to make the camera frustum oblique.
         /// </remarks>
-        public Vector2 LensShift;
+        public Vector2 LensShift
+        {
+            get => m_LensShift;
+            set => m_LensShift = value;
+        }
 
         /// <summary>
         /// Number of diaphragm blades the Camera uses to form the aperture.
         /// </summary>
-        public int BladeCount;
+        public int BladeCount
+        {
+            get => m_BladeCount;
+            set => m_BladeCount = value;
+        }
 
         /// <summary>
         /// Maps an aperture range to blade curvature.
@@ -78,19 +122,31 @@ namespace Unity.LiveCapture.VirtualCamera
         /// fully-curved, perfectly-circular bokeh, and the maximum value results in fully-shaped bokeh with visible
         /// aperture blades.
         /// </remarks>
-        public Vector2 Curvature;
+        public Vector2 Curvature
+        {
+            get => m_Curvature;
+            set => m_Curvature = value;
+        }
 
         /// <summary>
         /// The strength of the “cat eye” effect. You can see this effect on bokeh as a result of lens shadowing
         /// (distortion along the edges of the frame).
         /// </summary>
-        public float BarrelClipping;
+        public float BarrelClipping
+        {
+            get => m_BarrelClipping;
+            set => m_BarrelClipping = value;
+        }
 
         /// <summary>
         /// Stretch the sensor to simulate an anamorphic look. Positive values distort the Camera vertically, negative
         /// will distort the Camera horizontally.
         /// </summary>
-        public float Anamorphism;
+        public float Anamorphism
+        {
+            get => m_Anamorphism;
+            set => m_Anamorphism = value;
+        }
 
         /// <summary>
         /// Determines whether the specified LensIntrinsics is equal to the current LensIntrinsics.

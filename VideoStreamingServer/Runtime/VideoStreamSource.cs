@@ -381,6 +381,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 var height = resolution.y;
 
                 RenderTexture capturedTexture = null;
+                var restore = RenderTexture.active;
 
                 switch (encoderFormat)
                 {
@@ -419,6 +420,8 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                     state.EnqueueFrame(request, width, height, encoderFormat);
                     RenderTexture.ReleaseTemporary(capturedTexture);
                 }
+
+                RenderTexture.active = restore;
             }
 
             Profiler.EndSample();

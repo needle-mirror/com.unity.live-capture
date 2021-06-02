@@ -10,15 +10,29 @@ namespace Unity.LiveCapture.VirtualCamera
     [Serializable]
     public struct SensorPreset : IEquatable<SensorPreset>
     {
+        [SerializeField, Tooltip("The name of the sensor preset.")]
+        string m_Name;
+
+        [SerializeField, Tooltip("The width and height of sensor in mm.")]
+        Vector2 m_SensorSize;
+
         /// <summary>
         /// The name of the preset.
         /// </summary>
-        public string Name;
+        public string Name
+        {
+            get => m_Name;
+            set => m_Name = value;
+        }
 
         /// <summary>
         /// The size of the sensor in the preset.
         /// </summary>
-        public Vector2 SensorSize;
+        public Vector2 SensorSize
+        {
+            get => m_SensorSize;
+            set => m_SensorSize = value;
+        }
 
         /// <summary>
         /// Determines whether the specified SensorPreset is equal to the current SensorPreset.
@@ -89,6 +103,8 @@ namespace Unity.LiveCapture.VirtualCamera
     /// Asset that stores lists of presets for sensor sizes.
     /// </summary>
     [CreateAssetMenu(fileName = "Sensor Presets", menuName = "Live Capture/Virtual Camera/Sensor Presets", order = 1)]
+    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-asset-sensor-presets" + Documentation.endURL)]
+    [ExcludeFromPreset]
     public class SensorPresets : ScriptableObject
     {
         [SerializeField]

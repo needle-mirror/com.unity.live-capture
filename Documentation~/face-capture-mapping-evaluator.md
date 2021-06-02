@@ -5,6 +5,7 @@
 | Field            | Description                                                  |
 | ---------------- | ------------------------------------------------------------ |
 | +/-              | Add or remove a binding. Note that there can be more than one blendshape bound to a single ARKit input value. |
+| Override Smoothing        | Enable to override the smoothing value set by the mapper. |
 | Smoothing        | The amount of smoothing to apply to the blend shape value. It can help reduce jitter in the face capture, but it will also smooth out fast motions. |
 | Evaluator Preset | A preset evaluation function to use. If none is assigned, a new function must be configured for this blendshape. |
 | Type             | The type of evaluation function to use when a preset is not assigned. This can be either **Simple** or **Curve**. |

@@ -1,27 +1,33 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
     [Serializable]
     struct FrameLinesSettings : IEquatable<FrameLinesSettings>
     {
-        public enum Mode
+        public enum LineType
         {
             None,
             Box,
             Corner
         }
 
-        public enum Marker
+        public enum MarkerType
         {
             Cross,
             Dot
         }
 
-        public bool RenderAspectRatio;
+        [FormerlySerializedAs("RenderGateMask")]
+        public bool GateMaskEnabled;
 
-        public bool RenderCenterMarker;
+        [FormerlySerializedAs("RenderAspectRatio")]
+        public bool AspectRatioLinesEnabled;
+
+        [FormerlySerializedAs("RenderCenterMarker")]
+        public bool CenterMarkerEnabled;
 
         [Range(0, 1)]
         public float GateMaskOpacity;
@@ -29,7 +35,8 @@ namespace Unity.LiveCapture.VirtualCamera
         [AspectRatio]
         public float AspectRatio;
 
-        public Mode AspectMode;
+        [FormerlySerializedAs("AspectMode")]
+        public LineType AspectLineType;
 
         public Color AspectLineColor;
 
@@ -39,21 +46,22 @@ namespace Unity.LiveCapture.VirtualCamera
         [Range(0, 1)]
         public float AspectFillOpacity;
 
-        public Marker CenterMarker;
+        public MarkerType CenterMarkerType;
 
         public static FrameLinesSettings GetDefault()
         {
             return new FrameLinesSettings
             {
-                RenderAspectRatio = true,
-                RenderCenterMarker = true,
-                GateMaskOpacity = .5f,
+                GateMaskEnabled = true,
+                AspectRatioLinesEnabled = true,
+                CenterMarkerEnabled = true,
+                GateMaskOpacity = 1f,
                 AspectRatio = Settings.k_DefaultAspectRatio,
-                AspectMode = Mode.Corner,
+                AspectLineType = LineType.Corner,
                 AspectLineColor = Color.cyan,
                 AspectLineWidth = 3,
-                AspectFillOpacity = .2f,
-                CenterMarker = Marker.Cross,
+                AspectFillOpacity = 0f,
+                CenterMarkerType = MarkerType.Cross,
             };
         }
 
@@ -67,15 +75,16 @@ namespace Unity.LiveCapture.VirtualCamera
 
         public bool Equals(FrameLinesSettings other)
         {
-            return RenderAspectRatio == other.RenderAspectRatio
-                && RenderCenterMarker == other.RenderCenterMarker
+            return GateMaskEnabled == other.GateMaskEnabled
+                && AspectRatioLinesEnabled == other.AspectRatioLinesEnabled
+                && CenterMarkerEnabled == other.CenterMarkerEnabled
                 && GateMaskOpacity == other.GateMaskOpacity
                 && AspectRatio == other.AspectRatio
-                && AspectMode == other.AspectMode
+                && AspectLineType == other.AspectLineType
                 && AspectLineColor == other.AspectLineColor
                 && AspectLineWidth == other.AspectLineWidth
                 && AspectFillOpacity == other.AspectFillOpacity
-                && CenterMarker == other.CenterMarker;
+                && CenterMarkerType == other.CenterMarkerType;
         }
 
         public override bool Equals(object obj)
@@ -93,15 +102,16 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             unchecked
             {
-                var hashCode = RenderAspectRatio.GetHashCode();
-                hashCode = (hashCode * 397) ^ RenderCenterMarker.GetHashCode();
+                var hashCode = AspectRatioLinesEnabled.GetHashCode();
+                hashCode = (hashCode * 397) ^ GateMaskEnabled.GetHashCode();
+                hashCode = (hashCode * 397) ^ CenterMarkerEnabled.GetHashCode();
                 hashCode = (hashCode * 397) ^ GateMaskOpacity.GetHashCode();
                 hashCode = (hashCode * 397) ^ AspectRatio.GetHashCode();
-                hashCode = (hashCode * 397) ^ AspectMode.GetHashCode();
+                hashCode = (hashCode * 397) ^ AspectLineType.GetHashCode();
                 hashCode = (hashCode * 397) ^ AspectLineColor.GetHashCode();
                 hashCode = (hashCode * 397) ^ AspectLineWidth.GetHashCode();
                 hashCode = (hashCode * 397) ^ AspectFillOpacity.GetHashCode();
-                hashCode = (hashCode * 397) ^ CenterMarker.GetHashCode();
+                hashCode = (hashCode * 397) ^ CenterMarkerType.GetHashCode();
                 return hashCode;
             }
         }

@@ -144,7 +144,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             var reticle = Instantiate(prefab, gameObject.transform);
 
             // Since we use constant physical size with default settings we apply scaling to the reticle.
-            reticle.transform.localScale = Vector3.one * .25f;
+            reticle.transform.localScale = Vector3.one * .5f;
             m_FocusReticle = reticle.GetComponent<FocusReticle>();
             Assert.IsNotNull(m_FocusReticle, $"Could not fetch {nameof(FocusReticle)} component from prefab.");
         }
