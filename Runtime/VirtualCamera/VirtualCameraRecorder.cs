@@ -6,8 +6,8 @@ namespace Unity.LiveCapture.VirtualCamera
     {
         ICurve[] m_Curves =
         {
-            new Vector3Curve(string.Empty, "m_LocalPosition", typeof(Transform)),
-            new EulerCurve(string.Empty, "m_LocalEuler", typeof(Transform)),
+            new Vector3Curve(string.Empty, "m_LocalPosition", typeof(VirtualCameraActor)),
+            new EulerCurve(string.Empty, "m_LocalEulerAngles", typeof(VirtualCameraActor)),
             new FloatCurve(string.Empty, "m_Lens.m_FocalLength", typeof(VirtualCameraActor)),
             new FloatCurve(string.Empty, "m_Lens.m_FocusDistance", typeof(VirtualCameraActor)),
             new FloatCurve(string.Empty, "m_Lens.m_Aperture", typeof(VirtualCameraActor)),
@@ -21,6 +21,8 @@ namespace Unity.LiveCapture.VirtualCamera
             new FloatCurve(string.Empty, "m_LensIntrinsics.m_BarrelClipping", typeof(VirtualCameraActor)),
             new FloatCurve(string.Empty, "m_LensIntrinsics.m_Anamorphism", typeof(VirtualCameraActor)),
             new FloatCurve(string.Empty, "m_CropAspect", typeof(VirtualCameraActor)),
+            new BooleanCurve(string.Empty, "m_LocalPositionEnabled", typeof(VirtualCameraActor)),
+            new BooleanCurve(string.Empty, "m_LocalEulerAnglesEnabled", typeof(VirtualCameraActor)),
         };
 
         /// <summary>
@@ -157,6 +159,24 @@ namespace Unity.LiveCapture.VirtualCamera
         public void RecordCropAspect(float sample)
         {
             GetCurve<float>(14).AddKey(Time, sample);
+        }
+
+        /// <summary>
+        /// Records the local position enabled state.
+        /// </summary>
+        /// <param name="sample">The state to record</param>
+        public void RecordLocalPositionEnabled(bool sample)
+        {
+            GetCurve<bool>(15).AddKey(Time, sample);
+        }
+
+        /// <summary>
+        /// Records the local euler angles enabled state.
+        /// </summary>
+        /// <param name="sample">The state to record</param>
+        public void RecordLocalEulerAnglesEnabled(bool sample)
+        {
+            GetCurve<bool>(16).AddKey(Time, sample);
         }
 
         /// <summary>

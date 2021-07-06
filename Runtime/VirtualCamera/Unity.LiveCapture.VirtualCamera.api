@@ -41,8 +41,16 @@ namespace Unity.LiveCapture.VirtualCamera
         public bool AspectRatioEnabled { get; set; }
         public bool CenterMarkerEnabled { get; set; }
         public float CropAspect { get; set; }
+        public Unity.LiveCapture.VirtualCamera.GateFit GateFit { get; set; }
         public bool GateMaskEnabled { get; set; }
         public FrameLines() {}
+    }
+
+    public enum GateFit
+    {
+        [Unity.LiveCapture.Description(@"The sensor gate fits completely inside the resolution gate.")] public const Unity.LiveCapture.VirtualCamera.GateFit Fill = 0;
+        [Unity.LiveCapture.Description(@"The render frame fits completely inside the resolution gate.")] public const Unity.LiveCapture.VirtualCamera.GateFit Overscan = 1;
+        public byte value__;
     }
 
     public interface IVirtualCameraClient : Unity.LiveCapture.CompanionApp.ICompanionAppClient
@@ -134,6 +142,7 @@ namespace Unity.LiveCapture.VirtualCamera
         public UnityEngine.Pose Pose { get; }
         public VirtualCameraDevice() {}
         public virtual void BuildLiveLink(UnityEngine.Playables.PlayableGraph graph);
+        protected virtual string GetAssetName();
         protected virtual void OnClientAssigned();
         protected virtual void OnClientUnassigned();
         protected virtual void OnDisable();

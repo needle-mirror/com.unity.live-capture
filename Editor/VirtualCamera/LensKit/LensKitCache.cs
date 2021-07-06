@@ -32,8 +32,9 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         {
             foreach (var modification in modifications)
             {
-                if (modification.currentValue.target is LensKit ||
-                    modification.currentValue.target is LensAsset)
+                if (modification.currentValue != null &&
+                    (modification.currentValue.target is LensKit ||
+                    modification.currentValue.target is LensAsset))
                 {
                     SetDirty();
 

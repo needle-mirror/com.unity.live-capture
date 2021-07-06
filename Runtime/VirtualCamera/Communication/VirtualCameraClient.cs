@@ -141,6 +141,11 @@ namespace Unity.LiveCapture.VirtualCamera
         event Action<float> CropAspectReceived;
 
         /// <summary>
+        /// An event invoked when the client sets the gate fit of the camera.
+        /// </summary>
+        event Action<GateFit> GateFitReceived;
+
+        /// <summary>
         /// An event invoked when the client sets whether the gate mask should be visible.
         /// </summary>
         event Action<bool> ShowGateMaskReceived;
@@ -270,6 +275,7 @@ namespace Unity.LiveCapture.VirtualCamera
         readonly BinarySender<Vector2> m_FocusReticlePositionSender;
         readonly BinarySender<float> m_FocusDistanceOffsetSender;
         readonly BinarySender<float> m_CropAspectSender;
+        readonly BinarySender<GateFit> m_GateFitSender;
         readonly BoolSender m_ShowGateMaskSender;
         readonly BoolSender m_ShowFrameLinesSender;
         readonly BoolSender m_ShowCenterMarkerSender;
@@ -329,6 +335,8 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc />
         public event Action<float> CropAspectReceived;
         /// <inheritdoc />
+        public event Action<GateFit> GateFitReceived;
+        /// <inheritdoc />
         public event Action<bool> ShowGateMaskReceived;
         /// <inheritdoc />
         public event Action<bool> ShowFrameLinesReceived;
@@ -378,6 +386,7 @@ namespace Unity.LiveCapture.VirtualCamera
             m_FocusReticlePositionSender = m_Protocol.Add(new BinarySender<Vector2>(VirtualCameraMessages.ToClient.FocusReticlePosition));
             m_FocusDistanceOffsetSender = m_Protocol.Add(new BinarySender<float>(VirtualCameraMessages.ToClient.FocusDistanceOffset));
             m_CropAspectSender = m_Protocol.Add(new BinarySender<float>(VirtualCameraMessages.ToClient.CropAspect));
+            m_GateFitSender = m_Protocol.Add(new BinarySender<GateFit>(VirtualCameraMessages.ToClient.GateFit));
             m_ShowGateMaskSender = m_Protocol.Add(new BoolSender(VirtualCameraMessages.ToClient.ShowGateMask));
             m_ShowFrameLinesSender = m_Protocol.Add(new BoolSender(VirtualCameraMessages.ToClient.ShowFrameLines));
             m_ShowCenterMarkerSender = m_Protocol.Add(new BoolSender(VirtualCameraMessages.ToClient.ShowCenterMarker));
@@ -484,6 +493,10 @@ namespace Unity.LiveCapture.VirtualCamera
             {
                 CropAspectReceived?.Invoke(aspect);
             });
+            m_Protocol.Add(new BinaryReceiver<GateFit>(VirtualCameraMessages.ToServer.GateFit)).AddHandler(gateFit =>
+            {
+                GateFitReceived?.Invoke(gateFit);
+            });
             m_Protocol.Add(new BoolReceiver(VirtualCameraMessages.ToServer.ShowGateMask)).AddHandler(show =>
             {
                 ShowGateMaskReceived?.Invoke(show);
@@ -569,6 +582,7 @@ namespace Unity.LiveCapture.VirtualCamera
             m_FocusReticlePositionSender.Send(state.ReticlePosition);
             m_FocusDistanceOffsetSender.Send(state.FocusDistanceOffset);
             m_CropAspectSender.Send(state.AspectRatio);
+            m_GateFitSender.Send(state.GateFit);
             m_ShowGateMaskSender.Send(state.GateMask);
             m_ShowFrameLinesSender.Send(state.AspectRatioLines);
             m_ShowCenterMarkerSender.Send(state.CenterMarker);

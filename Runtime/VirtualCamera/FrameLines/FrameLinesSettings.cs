@@ -20,6 +20,8 @@ namespace Unity.LiveCapture.VirtualCamera
             Dot
         }
 
+        public GateFit GateFit;
+
         [FormerlySerializedAs("RenderGateMask")]
         public bool GateMaskEnabled;
 
@@ -75,7 +77,8 @@ namespace Unity.LiveCapture.VirtualCamera
 
         public bool Equals(FrameLinesSettings other)
         {
-            return GateMaskEnabled == other.GateMaskEnabled
+            return GateFit == other.GateFit
+                && GateMaskEnabled == other.GateMaskEnabled
                 && AspectRatioLinesEnabled == other.AspectRatioLinesEnabled
                 && CenterMarkerEnabled == other.CenterMarkerEnabled
                 && GateMaskOpacity == other.GateMaskOpacity
@@ -102,7 +105,8 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             unchecked
             {
-                var hashCode = AspectRatioLinesEnabled.GetHashCode();
+                var hashCode = GateFit.GetHashCode();
+                hashCode = (hashCode * 397) ^ AspectRatioLinesEnabled.GetHashCode();
                 hashCode = (hashCode * 397) ^ GateMaskEnabled.GetHashCode();
                 hashCode = (hashCode * 397) ^ CenterMarkerEnabled.GetHashCode();
                 hashCode = (hashCode * 397) ^ GateMaskOpacity.GetHashCode();

@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.1-pre.525] - 2021-07-06
+
+### Added
+  - [Face Capture] Audio and Video recording options.
+  - Fill gate fit mode for frame lines.  
+  
+### Changed
+  - [Companion apps] Minimum iOS version is now 14.5.
+  - Rename "Review" to "Playback".
+  - Custom Pass Manager is not editable anymore.
+  - Networking memory allocations improvements. 
+
+### Fixed
+ - [Virtual Camera] It was easy to accidentally open the system menus or close the app.
+ - Null references in virtual camera metadata inspector.
+ - Warning thrown when attempting to track non-readable meshes.
+ - [Virtual Camera] Non-responsive when scrolling settings.
+ - Firewall configuration would sometimes freeze Unity.
+ - Protocol warnings in 2021.2.
+ - RendererList compilation error in 2021.2.0b2 and up.
+
 ## [1.0.1-pre.465] - 2021-06-02
 
 ### Added

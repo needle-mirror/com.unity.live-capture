@@ -2,8 +2,12 @@
 using System;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
+#if UNITY_2021_2_OR_NEWER
+using UnityEngine.Rendering.RendererUtils;
+#else
+using UnityEngine.Experimental.Rendering;
+#endif
 
 namespace Unity.LiveCapture.VirtualCamera.Raycasting
 {
@@ -73,7 +77,7 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
             return m_PickingMaterial;
         }
 
-        static void DrawRenderers(ScriptableRenderContext context, Camera camera, ShaderTagId[] shaderTags, Material material = null, int pass = 0)
+        static void DrawRenderers(ScriptableRenderContext context, CommandBuffer cmd, Camera camera, ShaderTagId[] shaderTags, Material material = null, int pass = 0)
         {
             if (camera.TryGetCullingParameters(false, out var cullingParameters))
             {
@@ -90,6 +94,17 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
                     overrideMaterialPassIndex = pass
                 };
 
+#if UNITY_2021_2_OR_NEWER
+                var rendererList = context.CreateRendererList(rendererListDesc);
+                if (rendererList.isValid)
+                {
+                    CoreUtils.DrawRendererList(context, cmd, rendererList);
+                }
+                else
+                {
+                    Debug.LogError("Invalid renderer list!", camera.gameObject);
+                }
+#else
                 var rendererList = RendererList.Create(rendererListDesc);
 
                 if (rendererList.isValid)
@@ -108,6 +123,7 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
                 {
                     Debug.LogError("Invalid renderer list!", camera.gameObject);
                 }
+#endif
             }
         }
 
@@ -124,9 +140,9 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
 
             // Render scene.
             if (isPickingActive)
-                DrawRenderers(context, camera, GetShaderTagsObjectId(), GetPickingMaterial(), 0);
+                DrawRenderers(context, cmd, camera, GetShaderTagsObjectId(), GetPickingMaterial(), 0);
             else
-                DrawRenderers(context, camera, k_ShaderTagsDepthOnly);
+                DrawRenderers(context, cmd, camera, k_ShaderTagsDepthOnly);
 
             cmd.Blit(m_DepthTexture.colorBuffer, m_DepthAsColorTexture.colorBuffer);
             context.ExecuteCommandBuffer(cmd);

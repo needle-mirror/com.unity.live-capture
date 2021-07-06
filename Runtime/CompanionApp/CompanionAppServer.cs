@@ -299,7 +299,18 @@ namespace Unity.LiveCapture.CompanionApp
             try
             {
                 var streamReader = new StreamReader(message.Data, Encoding.UTF8);
-                var data = JsonUtility.FromJson<ClientInitialization>(streamReader.ReadToEnd());
+                var json = streamReader.ReadToEnd();
+                var data = default(ClientInitialization);
+
+                try
+                {
+                    data = JsonUtility.FromJson<ClientInitialization>(json);
+                }
+                catch (Exception)
+                {
+                    Debug.LogError($"{nameof(CompanionAppServer)} failed to initialize client connection! Could not parse JSON: {json}");
+                    return;
+                }
 
                 if (!s_TypeToClientType.TryGetValue(data.Type, out var clientType))
                 {

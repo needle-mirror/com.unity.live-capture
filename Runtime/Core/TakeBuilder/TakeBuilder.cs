@@ -14,19 +14,7 @@ namespace Unity.LiveCapture
 {
     class TakeBuilder : ITakeBuilder, IDisposable
     {
-        internal static class Wildcards
-        {
-            public const string Scene = "<Scene>";
-            public const string Name = "<Name>";
-            public const string Shot = "<Shot>";
-            public const string Take = "<Take>";
-            public const string Timecode = "<Timecode>";
-        }
-
-        static string TakeNameFormat => LiveCaptureSettings.Instance.TakeNameFormat;
-        static string AssetNameFormat => LiveCaptureSettings.Instance.AssetNameFormat;
-
-        WildcardFormatter m_WildcardFormatter;
+        readonly TakeNameFormatter m_Formatter = new TakeNameFormatter();
         IExposedPropertyTable m_Resolver;
         string m_ContentsDirectory;
         Take m_Take;
@@ -44,34 +32,20 @@ namespace Unity.LiveCapture
             int takeNumber)
         {
             return GetAssetName(
-                new WildcardFormatter(),
+                new TakeNameFormatter(),
                 sceneNumber,
                 shotName,
                 takeNumber);
         }
 
         static string GetAssetName(
-            WildcardFormatter formatter,
+            TakeNameFormatter formatter,
             int sceneNumber,
             string shotName,
             int takeNumber)
         {
-            var sceneNumberStr = sceneNumber.ToString("D3");
-            var takeNumberStr = takeNumber.ToString("D3");
-
-            formatter.AddReplacement(Wildcards.Scene, sceneNumberStr);
-            formatter.AddReplacement(Wildcards.Shot, shotName);
-            formatter.AddReplacement(Wildcards.Take, takeNumberStr);
-
-            var assetName = formatter.Format(TakeNameFormat);
-            assetName = FileNameFormatter.Instance.Format(assetName);
-
-            if (string.IsNullOrEmpty(assetName))
-            {
-                assetName = $"[{sceneNumberStr}] {shotName} [{takeNumberStr}]";
-            }
-
-            return assetName;
+            formatter.ConfigureTake(sceneNumber, shotName, takeNumber);
+            return formatter.GetTakeName();
         }
 
         public TakeBuilder(
@@ -100,9 +74,8 @@ namespace Unity.LiveCapture
             }
 
             m_Resolver = resolver;
-            m_WildcardFormatter = new WildcardFormatter();
 
-            var assetName = GetAssetName(m_WildcardFormatter, sceneNumber, shotName, takeNumber);
+            var assetName = GetAssetName(m_Formatter, sceneNumber, shotName, takeNumber);
             var assetPath = $"{directory}/{assetName}.asset";
             var exists = AssetDatabase.LoadMainAssetAtPath(assetPath) != null;
 
@@ -353,15 +326,8 @@ namespace Unity.LiveCapture
                 throw new Exception($"Can't save assets of type {typeof(T)}");
             }
 
-            m_WildcardFormatter.AddReplacement(Wildcards.Name, name);
-
-            var assetName = m_WildcardFormatter.Format(AssetNameFormat);
-            assetName = FileNameFormatter.Instance.Format(assetName);
-
-            if (string.IsNullOrEmpty(assetName))
-            {
-                assetName = name;
-            }
+            m_Formatter.ConfigureAsset(name);
+            var assetName = m_Formatter.GetAssetName();
 
             var path = $"{m_ContentsDirectory}/{assetName}.{extension}";
 

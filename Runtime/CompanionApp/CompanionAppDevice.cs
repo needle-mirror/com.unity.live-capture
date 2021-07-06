@@ -25,8 +25,10 @@ namespace Unity.LiveCapture.CompanionApp
         bool m_Live;
         bool m_Recording;
         TClient m_Client;
-        SlateChangeTracker m_SlateChangeTracker = new SlateChangeTracker();
-        ITakeManager m_TakeManager = new TakeManager();
+        readonly SlateChangeTracker m_SlateChangeTracker = new SlateChangeTracker();
+        readonly TakeNameFormatter m_TakeNameFormatter = new TakeNameFormatter();
+        string m_LastAssetName;
+        readonly ITakeManager m_TakeManager = new TakeManager();
 
         bool TryGetInternalClient(out ICompanionAppClientInternal client)
         {
@@ -248,7 +250,12 @@ namespace Unity.LiveCapture.CompanionApp
                 SendDeviceState(takeRecorder.IsLive());
 
                 var slate = takeRecorder.GetActiveSlate();
+                var slateChanged = m_SlateChangeTracker.Changed(slate);
                 var take = slate != null ? slate.Take : null;
+
+                var assetName = GetAssetName();
+                var assetNameChanged = assetName != m_LastAssetName;
+                m_LastAssetName = assetName;
 
                 if (TryGetInternalClient(out var client))
                 {
@@ -257,14 +264,28 @@ namespace Unity.LiveCapture.CompanionApp
                     client.SendSlateDuration(slate != null ? slate.Duration : 0d);
                     client.SendSlateIsPreviewing(takeRecorder.IsPreviewPlaying());
                     client.SendSlatePreviewTime(takeRecorder.GetPreviewTime());
+
+                    if (slateChanged || assetNameChanged)
+                    {
+                        m_TakeNameFormatter.ConfigureTake(slate.SceneNumber, slate.ShotName, slate.TakeNumber);
+                        m_TakeNameFormatter.ConfigureAsset(GetAssetName());
+
+                        client.SendNextTakeName(m_TakeNameFormatter.GetTakeName());
+                        client.SendNextAssetName(m_TakeNameFormatter.GetAssetName());
+                    }
                 }
 
-                if (m_SlateChangeTracker.Changed(slate))
+                if (slateChanged)
                 {
                     SendSlateDescriptor(slate);
                 }
             }
         }
+
+        /// <summary>
+        /// Gets the name used for the take asset name.
+        /// </summary>
+        protected virtual string GetAssetName() { return name; }
 
         /// <summary>
         /// The device calls this method when a new client is assigned.

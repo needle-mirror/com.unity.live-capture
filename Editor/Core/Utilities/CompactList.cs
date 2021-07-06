@@ -58,6 +58,7 @@ namespace Unity.LiveCapture.Editor
             public readonly GUIContent MenuButton = EditorGUIUtility.TrIconContent("_Menu", "List menu");
             public readonly GUIContent MoveUpIcon = EditorGUIUtility.TrTextContent("\u25B2", "Move selection up");
             public readonly GUIContent MoveDownIcon = EditorGUIUtility.TrTextContent("\u25BC", "Move selection down");
+            public readonly GUIContent NoneListItemLabel = EditorGUIUtility.TrTextContent("List is empty");
             public readonly GUIStyle ControlButton = new GUIStyle("RL FooterButton")
             {
                 fontSize = 10,
@@ -161,6 +162,11 @@ namespace Unity.LiveCapture.Editor
             public void DrawListItem(CompactList list, Rect rect, int index, bool selected, bool focused)
             {
                 EditorGUI.LabelField(rect, TempContent(GetItemName(list, index)));
+            }
+
+            public void DrawNoneListItem(CompactList list, Rect rect)
+            {
+                EditorGUI.LabelField(rect, Default.NoneListItemLabel);
             }
 
             string GetItemName(CompactList list, int index)
@@ -461,6 +467,15 @@ namespace Unity.LiveCapture.Editor
         /// <para>The fourth parameter indicates if this item is currently selected and has keyboard focus.</para>
         /// </remarks>
         public Action<Rect, int, bool, bool> DrawListItemCallback;
+
+        /// <summary>
+        /// A callback that overrides the GUI to display when the list is empty.
+        /// </summary>
+        /// <remarks>
+        /// Does not fire when the list is displaying search results.
+        /// <para>The parameter contains the position to draw the element GUI in.</para>
+        /// </remarks>
+        public Action<Rect> DrawNoneListItemCallback;
 
         /// <summary>
         /// A callback that overrides the GUI for the selected element that is drawn beneath the list.
@@ -791,6 +806,7 @@ namespace Unity.LiveCapture.Editor
             Profiler.BeginSample($"{nameof(CompactList)}.{nameof(DoListItems)}()");
 
             var itemCount = FilterList();
+            var drawNoneListItem = itemCount == 0;
 
             // don't draw over the list box border
             var scrollRect = rect;
@@ -799,7 +815,7 @@ namespace Unity.LiveCapture.Editor
 
             // determine how much space is needed for the list
             var listRect = scrollRect;
-            listRect.height = ItemHeight * itemCount;
+            listRect.height = drawNoneListItem ? EditorGUIUtility.singleLineHeight : ItemHeight * itemCount;
 
             // if the list is larger the scroll box we need to make room for the scroll bar
             var showScrollbar = listRect.yMax > scrollRect.yMax;
@@ -861,7 +877,27 @@ namespace Unity.LiveCapture.Editor
                     }
                 }
 
-                ProcessListItemInteraction(listRect, itemCount);
+                if (!drawNoneListItem)
+                {
+                    ProcessListItemInteraction(listRect, itemCount);
+                }
+                else if (!IsSearchActive)
+                {
+                    var itemContentRect = new Rect(listRect)
+                    {
+                        xMin = listRect.xMin + Defaults.ItemPadding,
+                        xMax = listRect.xMax - Defaults.ItemPadding,
+                    };
+
+                    if (DrawNoneListItemCallback == null)
+                    {
+                        Default.DrawNoneListItem(this, itemContentRect);
+                    }
+                    else
+                    {
+                        DrawNoneListItemCallback(itemContentRect);
+                    }
+                }
 
                 var lastScrollPosition = m_ScrollPosition;
                 m_ScrollPosition = scroll.scrollPosition.y;

@@ -24,6 +24,57 @@ namespace Unity.LiveCapture.VirtualCamera
         [SerializeField, AspectRatio]
         float m_CropAspect = Settings.k_DefaultAspectRatio;
 
+        [SerializeField]
+        Vector3 m_LocalPosition;
+        [SerializeField]
+        Vector3 m_LocalEulerAngles;
+        [SerializeField]
+        bool m_LocalPositionEnabled;
+        [SerializeField]
+        bool m_LocalEulerAnglesEnabled;
+
+        /// <summary>
+        /// Local position driven by an animation clip. This property was added
+        /// because position and rotation can't be animated separately in the
+        /// transform during root motion.
+        /// </summary>
+        /// <remarks>
+        /// The value is valid while <see cref="LocalPositionEnabled"/> is true.
+        /// </remarks>
+        internal Vector3 LocalPosition => m_LocalPosition;
+
+        /// <summary>
+        /// Local rotation driven by an animation clip. This property was added
+        /// because position and rotation can't be animated separately in the
+        /// transform during root motion.
+        /// </summary>
+        /// <remarks>
+        /// The value is valid while <see cref="LocalEulerAnglesEnabled"/> is true.
+        /// </remarks>
+        internal Vector3 LocalEulerAngles => m_LocalEulerAngles;
+
+        /// <summary>
+        /// Is true in the LateUpdate stage if the an animation clip is
+        /// driving this actor's position.
+        /// </summary>
+        internal bool LocalPositionEnabled
+        {
+            get => m_LocalPositionEnabled;
+            // Keep setter internal
+            set => m_LocalPositionEnabled = value;
+        }
+
+        /// <summary>
+        /// Is true in the LateUpdate stage if the an animation clip is
+        /// driving this actor's rotation.
+        /// </summary>
+        internal bool LocalEulerAnglesEnabled
+        {
+            get => m_LocalEulerAnglesEnabled;
+            // Keep setter internal
+            set => m_LocalEulerAnglesEnabled = value;
+        }
+
         /// <summary>
         /// The Animator component used by the device for playing takes on this actor.
         /// </summary>

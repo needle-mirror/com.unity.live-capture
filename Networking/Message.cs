@@ -93,7 +93,7 @@ namespace Unity.LiveCapture.Networking
             // small data streams won't use much memory.
             if (m_Data.Capacity > k_LargeMessageSize)
             {
-                m_Data.Dispose();
+                s_Memory.FreeStream(m_Data);
                 m_Data = null;
             }
             else
@@ -140,8 +140,8 @@ namespace Unity.LiveCapture.Networking
             message.m_ChannelType = channelType;
             message.m_Disposed = false;
 
-            if (message.m_Data == null)
-                message.m_Data = s_Memory.GetStream(Guid.NewGuid(), null, dataCapacity);
+            if (message.m_Data == null || !(message.Data.CanRead && message.Data.CanWrite))
+                message.m_Data = s_Memory.GetStream(dataCapacity);
             else
                 message.m_Data.Capacity = dataCapacity;
 

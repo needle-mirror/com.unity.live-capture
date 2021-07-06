@@ -48,6 +48,12 @@ namespace Unity.LiveCapture.VirtualCamera
             Initialize();
         }
 
+        void Update()
+        {
+            m_VirtualCameraActor.LocalPositionEnabled = false;
+            m_VirtualCameraActor.LocalEulerAnglesEnabled = false;
+        }
+
         void LateUpdate()
         {
             if (TryGetImplementation(out var impl))
@@ -56,6 +62,16 @@ namespace Unity.LiveCapture.VirtualCamera
                 var lens = m_VirtualCameraActor.Lens;
                 var lensIntrinsics = m_VirtualCameraActor.LensIntrinsics;
                 var cameraBody = m_VirtualCameraActor.CameraBody;
+
+                if (m_VirtualCameraActor.LocalPositionEnabled)
+                {
+                    m_VirtualCameraActor.transform.localPosition = m_VirtualCameraActor.LocalPosition;
+                }
+
+                if (m_VirtualCameraActor.LocalEulerAnglesEnabled)
+                {
+                    m_VirtualCameraActor.transform.localEulerAngles = m_VirtualCameraActor.LocalEulerAngles;
+                }
 
                 lens.Validate(lensIntrinsics);
                 impl.EnableDepthOfField(m_VirtualCameraActor.DepthOfFieldEnabled);

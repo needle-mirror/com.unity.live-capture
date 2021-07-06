@@ -52,6 +52,7 @@ namespace Unity.LiveCapture.Editor
             if (FirewallUtility.IsSupported)
             {
                 s_FirewallConfigured = FirewallUtility.IsConfigured();
+                FirewallUtility.FirewallConfigured += OnFirewallConfigured;
             }
         }
 
@@ -60,8 +61,18 @@ namespace Unity.LiveCapture.Editor
             Undo.undoRedoPerformed -= Repaint;
             ServerManager.ServerChanged -= Repaint;
 
+            if (FirewallUtility.IsSupported)
+            {
+                FirewallUtility.FirewallConfigured -= OnFirewallConfigured;
+            }
+
             if (m_Editor != null)
                 DestroyImmediate(m_Editor);
+        }
+
+        static void OnFirewallConfigured(bool successful)
+        {
+            s_FirewallConfigured = successful;
         }
 
         void OnGUI()
@@ -87,7 +98,7 @@ namespace Unity.LiveCapture.Editor
 
                     if (GUILayout.Button(Contents.FirewallConfigureLabel, Contents.LargeButtonOptions))
                     {
-                        s_FirewallConfigured = FirewallUtility.ConfigureFirewall();
+                        FirewallUtility.ConfigureFirewall();
                     }
 
                     GUILayout.FlexibleSpace();

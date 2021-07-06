@@ -49,7 +49,7 @@ namespace Unity.LiveCapture.Networking
             {
                 UnsafeUtility.MemClear(ptr, size);
 
-                if (typeof(T).IsEnum)
+                if (typeof(T).IsEnum || UnsafeUtility.IsBlittable<T>())
                 {
                     UnsafeUtility.CopyStructureToPtr(ref data, ptr);
                 }
@@ -78,7 +78,7 @@ namespace Unity.LiveCapture.Networking
         {
             fixed(byte* ptr = &buffer[offset])
             {
-                if (typeof(T).IsEnum)
+                if (typeof(T).IsEnum || UnsafeUtility.IsBlittable<T>())
                 {
                     UnsafeUtility.CopyPtrToStructure(ptr, out T value);
                     return value;
@@ -109,7 +109,7 @@ namespace Unity.LiveCapture.Networking
 
             fixed(byte* ptr = &buffer[offset])
             {
-                if (typeof(T).IsEnum)
+                if (typeof(T).IsEnum || UnsafeUtility.IsBlittable<T>())
                 {
                     UnsafeUtility.CopyPtrToStructure(ptr, out T value);
                     return value;

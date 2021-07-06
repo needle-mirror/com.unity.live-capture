@@ -138,6 +138,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         public Unity.LiveCapture.ARKitFaceCapture.FaceActor Actor { get; set; }
         public FaceDevice() {}
         public virtual void BuildLiveLink(UnityEngine.Playables.PlayableGraph graph);
+        protected virtual string GetAssetName();
         protected virtual void OnClientAssigned();
         protected virtual void OnClientUnassigned();
         protected virtual void OnDisable();

@@ -79,9 +79,9 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             var channelsProp = property.FindPropertyRelative("m_Channels");
             var cameraBodyProp = property.FindPropertyRelative("m_CameraBody");
             var channels = (VirtualCameraChannelFlags)channelsProp.enumValueIndex;
-            var sensorSize = cameraBodyProp.FindPropertyRelative("SensorSize").vector2Value;
-            var isoProp = cameraBodyProp.FindPropertyRelative("Iso");
-            var shutterSpeedProp = cameraBodyProp.FindPropertyRelative("ShutterSpeed");
+            var sensorSize = cameraBodyProp.FindPropertyRelative("m_SensorSize").vector2Value;
+            var isoProp = cameraBodyProp.FindPropertyRelative("m_Iso");
+            var shutterSpeedProp = cameraBodyProp.FindPropertyRelative("m_ShutterSpeed");
             var lensAsset = property.FindPropertyRelative("m_LensAsset");
             var cropMask = property.FindPropertyRelative("m_CropAspect");
             var sensorSizes = SensorPresetsCache.GetSensorSizes();
@@ -110,7 +110,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
             if (channels.HasFlag(VirtualCameraChannelFlags.FocalLength))
             {
-                var prop = lensProp.FindPropertyRelative("FocalLength");
+                var prop = lensProp.FindPropertyRelative("m_FocalLength");
 
                 position.y += position.height + 2f;
                 position.height = EditorGUIUtility.singleLineHeight;
@@ -119,7 +119,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
             if (channels.HasFlag(VirtualCameraChannelFlags.FocusDistance))
             {
-                var prop = lensProp.FindPropertyRelative("FocusDistance");
+                var prop = lensProp.FindPropertyRelative("m_FocusDistance");
 
                 position.y += position.height + 2f;
                 position.height = EditorGUIUtility.singleLineHeight;
@@ -128,7 +128,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
             if (channels.HasFlag(VirtualCameraChannelFlags.Aperture))
             {
-                var prop = lensProp.FindPropertyRelative("Aperture");
+                var prop = lensProp.FindPropertyRelative("m_Aperture");
 
                 position.y += position.height + 2f;
                 position.height = EditorGUIUtility.singleLineHeight;

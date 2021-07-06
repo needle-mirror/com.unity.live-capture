@@ -43,7 +43,6 @@ namespace Unity.LiveCapture.VirtualCamera
         /// </summary>
         internal static void UpdateCamera(Camera camera, Lens lens, LensIntrinsics intrinsics, CameraBody cameraBody)
         {
-            camera.gateFit = Camera.GateFitMode.Overscan;
             camera.sensorSize = cameraBody.SensorSize;
             camera.lensShift = intrinsics.LensShift;
             camera.focalLength = lens.FocalLength;

@@ -28,6 +28,7 @@ namespace Unity.LiveCapture.Editor
             public static readonly GUIContent DescriptionLabel = EditorGUIUtility.TrTextContent("Description", "The description of the shot.");
             public static readonly GUIContent DirectoryLabel = EditorGUIUtility.TrTextContent("Directory", "The directory where the Takes are stored.");
             public static readonly GUIContent TakesLabel = EditorGUIUtility.TrTextContent("Takes", "The available Takes in the selected directory.");
+            public static readonly GUIContent NoTakesLabel = EditorGUIUtility.TrTextContent("No takes available in directory", "No Takes available in the selected directory.");
             public static readonly GUIContent Take = EditorGUIUtility.TrTextContent("Take", "The Take to play.");
             public static GUIStyle TextAreaStyle = new GUIStyle(EditorStyles.textArea) { wordWrap = true };
         }
@@ -327,6 +328,7 @@ namespace Unity.LiveCapture.Editor
                     DoSetBaseButtonGUI(rect2, element);
                 }
             };
+            m_TakeList.DrawNoneListItemCallback = rect => EditorGUI.LabelField(rect, Contents.NoTakesLabel);
 
             m_TakeList.OnSelectCallback += OnSelectCallback;
         }

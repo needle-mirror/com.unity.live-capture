@@ -30,6 +30,14 @@ namespace Unity.LiveCapture.Editor
         }
 
         /// <summary>
+        /// An event invoked when the firewall has been configured.
+        /// </summary>
+        /// <remarks>
+        /// The Boolean indicates if all the firewall rules already existed or were successfully added.
+        /// </remarks>
+        public static event Action<bool> FirewallConfigured;
+
+        /// <summary>
         /// Checks if the firewall rules needed to permit Unity to freely communicate exist.
         /// </summary>
         /// <returns>True if all the rules exist.</returns>
@@ -61,7 +69,14 @@ namespace Unity.LiveCapture.Editor
             {
                 using (var process = Process.Start(info))
                 {
-                    process.WaitForExit();
+                    var hasExited = process.WaitForExit(2000);
+
+                    if (!hasExited)
+                    {
+                        process.Kill();
+                        Debug.LogWarning($"Failed to get firewall rules, netsh did not exit successfully.");
+                        return false;
+                    }
 
                     var output = process.StandardOutput.ReadToEnd();
 
@@ -72,7 +87,7 @@ namespace Unity.LiveCapture.Editor
                         case 1: // no matching rules found. Not in the docs, found this out experimentally
                             return false;
                         default: // assume there is an error otherwise
-                            Debug.LogError($"Failed to get firewall rule with exit code {process.ExitCode:X}: ({output})!");
+                            Debug.LogError($"Failed to get firewall rules with exit code {process.ExitCode:X}: ({output})!");
                             return false;
                     }
                 }
@@ -88,19 +103,24 @@ namespace Unity.LiveCapture.Editor
         }
 
         /// <summary>
-        /// Adds firewall rules that permit Unity to freely communicate.
+        /// Adds firewall rules that permit Unity to freely communicate over the network.
         /// </summary>
-        /// <returns>True if all the rules existed or were successfully added.</returns>
-        public static bool ConfigureFirewall()
+        /// <remarks>
+        /// This will invoke the <see cref="FirewallConfigured"/> event once completed, as the configuration may
+        /// take place asynchronously.
+        /// </remarks>
+        public static void ConfigureFirewall()
         {
             if (!IsSupported)
             {
                 Debug.LogWarning("Automatic firewall configuration is not supported on this editor platform.");
-                return false;
+                FirewallConfigured?.Invoke(false);
+                return;
             }
             if (IsConfigured())
             {
-                return true;
+                FirewallConfigured?.Invoke(true);
+                return;
             }
 
 #if UNITY_EDITOR_WIN
@@ -130,27 +150,36 @@ namespace Unity.LiveCapture.Editor
 
             try
             {
-                using (var process = Process.Start(info))
+                var process = new Process
                 {
-                    process.WaitForExit();
+                    StartInfo = info,
+                    EnableRaisingEvents = true,
+                };
 
+                process.Exited += (sender, eventArgs) =>
+                {
                     switch (process.ExitCode)
                     {
                         case 0: // success
-                            return true;
+                            FirewallConfigured?.Invoke(true);
+                            break;
                         default: // assume there is an error otherwise
                             Debug.LogError($"Failed to add firewall rules!");
-                            return false;
+                            FirewallConfigured?.Invoke(false);
+                            break;
                     }
-                }
+                    process.Dispose();
+                };
+
+                process.Start();
             }
             catch (Exception e)
             {
                 Debug.LogError($"Failed to configure firewall: {e}");
-                return false;
+                FirewallConfigured?.Invoke(false);
             }
 #else
-            return false;
+            FirewallConfigured?.Invoke(false);
 #endif
         }
 

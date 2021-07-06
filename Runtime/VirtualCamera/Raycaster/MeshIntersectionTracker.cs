@@ -422,10 +422,6 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (!mesh.isReadable)
             {
-                Debug.LogWarning(
-                    $"Cannot track intersection with {nameof(Mesh)} '{mesh.name}' since it is not readable. " +
-                    $"Read/Write must be enabled in import settings. Make sure the {nameof(GameObject)} is not marked 'static'.");
-
                 triangle = Vector3Int.zero;
                 barycentricCoordinates = Vector2.zero;
                 return false;

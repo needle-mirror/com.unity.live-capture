@@ -1,24 +1,27 @@
 using System.Collections.Generic;
+using System.Text;
 
 namespace Unity.LiveCapture
 {
-    class WildcardFormatter
+    abstract class WildcardFormatter
     {
-        Dictionary<string, string> m_Replacements = new Dictionary<string, string>();
+        protected readonly Dictionary<string, string> m_Replacements = new Dictionary<string, string>();
+        readonly StringBuilder m_StringBuilder = new StringBuilder(256);
 
-        public void AddReplacement(string pattern, string replacement)
+        protected string Format(string str)
         {
-            m_Replacements[pattern] = replacement;
-        }
+            m_StringBuilder.Clear();
+            m_StringBuilder.Append(str);
 
-        public string Format(string name)
-        {
             foreach (var pair in m_Replacements)
             {
-                name = name.Replace(pair.Key, pair.Value);
+                if (pair.Value != null)
+                {
+                    m_StringBuilder.Replace(pair.Key, pair.Value);
+                }
             }
 
-            return name;
+            return m_StringBuilder.ToString();
         }
     }
 }

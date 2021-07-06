@@ -8,7 +8,7 @@ namespace Unity.LiveCapture.Editor
         [MenuItem("GameObject/Live Capture/Take Recorder", false, 10)]
         public static void CreateTakeRecorder()
         {
-            var name = "TakeRecorder";
+            var name = "Take Recorder";
             var undoName = "Create Take Recorder";
             var selectedTransform = Selection.activeTransform;
             var go = new GameObject(name, typeof(TakeRecorder));

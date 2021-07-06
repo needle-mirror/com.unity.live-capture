@@ -82,6 +82,16 @@ namespace Unity.LiveCapture.CompanionApp
         public event Action<TakeDescriptor[]> SlateTakesReceived;
 
         /// <summary>
+        /// An event invoked when the name the take recorder will use for the next take has changed.
+        /// </summary>
+        public event Action<string> NextTakeNameReceived;
+
+        /// <summary>
+        /// An event invoked when the name the device will use for the next recording has changed.
+        /// </summary>
+        public event Action<string> NextAssetNameReceived;
+
+        /// <summary>
         /// An event invoked when a texture preview is received.
         /// </summary>
         public event Action<Guid, Texture2D> TexturePreviewReceived;
@@ -183,6 +193,20 @@ namespace Unity.LiveCapture.CompanionApp
                 slateTakesChanged.AddHandler(takes =>
                 {
                     SlateTakesReceived?.Invoke((TakeDescriptor[])takes);
+                });
+            }
+            if (StringReceiver.TryGet(m_Protocol, CompanionAppMessages.ToClient.NextTakeName, out var nextTakeNameChanged))
+            {
+                nextTakeNameChanged.AddHandler(name =>
+                {
+                    NextTakeNameReceived?.Invoke(name);
+                });
+            }
+            if (StringReceiver.TryGet(m_Protocol, CompanionAppMessages.ToClient.NextAssetName, out var nextAssetNameChanged))
+            {
+                nextAssetNameChanged.AddHandler(name =>
+                {
+                    NextAssetNameReceived?.Invoke(name);
                 });
             }
             if (TextureReceiver.TryGet(m_Protocol, CompanionAppMessages.ToClient.TexturePreview, out var texturePreviewReceived))

@@ -1,7 +1,7 @@
 {
   "name": "com.unity.live-capture",
   "displayName": "Live Capture",
-  "version": "1.0.1-pre.465",
+  "version": "1.0.1-pre.525",
   "unity": "2020.3",
   "description": "Use the Live Capture package to connect to the Unity Virtual Camera and Unity Face Capture companion apps to capture and record camera motion and face performances.",
   "keywords": [
@@ -26,11 +26,11 @@
     }
   ],
   "upmCi": {
-    "footprint": "831b6584b99840a197ff4a52172f94c4c176da36"
+    "footprint": "a77bcbd1ab5a4f22affcbfe75b947c1ccacd6fa1"
   },
   "repository": {
     "url": "https://github.com/Unity-Technologies/VirtualProduction.git",
     "type": "git",
-    "revision": "05916fadbd9ddbf1d0c02e8c95c748b76a1a2107"
+    "revision": "9f65dce0aa81a9fbcfcdd67ad1fc336990a04b3d"
   }
 }

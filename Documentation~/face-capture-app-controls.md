@@ -21,6 +21,8 @@ Access the settings by pressing the gear icon.
 | **Camera Passthrough**           | Show/hide the camera feed from the device's camera. |
 | **Auto Hide UI**          | If enabled, the UI controls will fade away while not being interacted with. Touch the screen to show the UI at any point. |
 | **Recording Countdown Options** | Toggle whether or not there is a recording countdown and the delay, or pre-roll, between pressing the record button and the actual start of recording in seconds. |
+| **Save Video File** | If enabled, video is captured from the front facing camera while recording and saved as a mp4 file. |
+| **Save Audio File** | If enabled, audio is captured from the microphone while recording and saved as a wav file. |
 
 
 

@@ -37,6 +37,7 @@ namespace Unity.LiveCapture.VirtualCamera
         readonly BinarySender<Vector2> m_FocusReticlePositionSender;
         readonly BinarySender<float> m_FocusDistanceOffsetSender;
         readonly BinarySender<float> m_CropAspectSender;
+        readonly BinarySender<GateFit> m_GateFitSender;
         readonly BoolSender m_ShowGateMaskSender;
         readonly BoolSender m_ShowFrameLinesSender;
         readonly BoolSender m_ShowCenterMarkerSender;
@@ -524,6 +525,10 @@ namespace Unity.LiveCapture.VirtualCamera
             if (m_CropAspectSender != null)
             {
                 m_CropAspectSender.Send(settings.AspectRatio);
+            }
+            if (m_GateFitSender != null)
+            {
+                m_GateFitSender.Send(settings.GateFit);
             }
             if (m_ShowGateMaskSender != null)
             {

@@ -199,7 +199,7 @@ namespace Unity.LiveCapture.Networking.Protocols
 
             hash = HashString(type.FullName);
 
-            if (type.IsPrimitive)
+            if (type.IsPrimitive || type == typeof(string))
             {
                 // just the type name is sufficient, since primitives are always the same in any runtime
             }

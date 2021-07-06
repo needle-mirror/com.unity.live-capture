@@ -231,6 +231,7 @@ namespace Unity.LiveCapture.VirtualCamera
             var currentCamera = GetCamera();
             if (currentCamera != null && FrameLinesMap.Instance.TryGetInstance(currentCamera, out var frameLines))
             {
+                frameLines.GateFit = settings.GateFit;
                 frameLines.GateMaskEnabled = settings.GateMask;
                 frameLines.AspectRatioEnabled = settings.AspectRatioLines;
                 frameLines.CenterMarkerEnabled = settings.CenterMarker;
@@ -513,8 +514,10 @@ namespace Unity.LiveCapture.VirtualCamera
 
         void UpdateLiveLink(Lens lens)
         {
+            var eulerAngles = m_Rig.Pose.rotation.eulerAngles;
+
             var changed = m_LiveLink.Position != m_Rig.Pose.position
-                || m_LiveLink.Rotation != m_Rig.Pose.rotation
+                || m_LiveLink.EulerAngles != eulerAngles
                 || m_LiveLink.Lens != lens
                 || m_LiveLink.LensIntrinsics != m_LensIntrinsics
                 || m_LiveLink.DepthOfFieldEnabled != IsDepthOfFieldEnabled()
@@ -530,7 +533,7 @@ namespace Unity.LiveCapture.VirtualCamera
             m_LiveLink.SetAnimator(animator);
             m_LiveLink.SetActive(IsLive());
             m_LiveLink.Position = m_Rig.Pose.position;
-            m_LiveLink.Rotation = m_Rig.Pose.rotation;
+            m_LiveLink.EulerAngles = eulerAngles;
             m_LiveLink.Lens = lens;
             m_LiveLink.LensIntrinsics = m_LensIntrinsics;
             m_LiveLink.CameraBody = m_CameraBody;
@@ -670,6 +673,12 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
         /// <inheritdoc/>
+        protected override string GetAssetName()
+        {
+            return m_Actor != null ? m_Actor.name : name;
+        }
+
+        /// <inheritdoc/>
         protected override void OnClientAssigned()
         {
             Register();
@@ -722,6 +731,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 client.FocusReticlePositionReceived += OnFocusReticlePositionReceived;
                 client.FocusDistanceOffsetReceived += OnFocusDistanceOffsetReceived;
                 client.CropAspectReceived += OnCropAspectReceived;
+                client.GateFitReceived += OnGateFitReceived;
                 client.ShowGateMaskReceived += OnShowGateMaskReceived;
                 client.ShowFrameLinesReceived += OnShowFrameLinesReceived;
                 client.ShowCenterMarkerReceived += OnShowCenterMarkerReceived;
@@ -763,6 +773,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 client.FocusReticlePositionReceived -= OnFocusReticlePositionReceived;
                 client.FocusDistanceOffsetReceived -= OnFocusDistanceOffsetReceived;
                 client.CropAspectReceived -= OnCropAspectReceived;
+                client.GateFitReceived -= OnGateFitReceived;
                 client.ShowGateMaskReceived -= OnShowGateMaskReceived;
                 client.ShowFrameLinesReceived -= OnShowFrameLinesReceived;
                 client.ShowCenterMarkerReceived -= OnShowCenterMarkerReceived;
@@ -1059,6 +1070,13 @@ namespace Unity.LiveCapture.VirtualCamera
             Settings = settings;
         }
 
+        void OnGateFitReceived(GateFit gateFit)
+        {
+            var settings = Settings;
+            settings.GateFit = gateFit;
+            Settings = settings;
+        }
+
         void OnShowGateMaskReceived(bool show)
         {
             var settings = Settings;
@@ -1136,6 +1154,16 @@ namespace Unity.LiveCapture.VirtualCamera
             m_Recorder.RecordEnableDepthOfField(IsDepthOfFieldEnabled());
             m_Recorder.RecordLensIntrinsics(m_LensIntrinsics);
             m_Recorder.RecordCropAspect(m_Settings.AspectRatio);
+
+            if (m_Recorder.Channels.HasFlag(VirtualCameraChannelFlags.Position))
+            {
+                m_Recorder.RecordLocalPositionEnabled(true);
+            }
+
+            if (m_Recorder.Channels.HasFlag(VirtualCameraChannelFlags.Rotation))
+            {
+                m_Recorder.RecordLocalEulerAnglesEnabled(true);
+            }
 
             RecordSmoothDampedLens();
         }

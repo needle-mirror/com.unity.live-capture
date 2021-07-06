@@ -34,6 +34,23 @@ namespace Unity.LiveCapture.VirtualCamera
     }
 
     /// <summary>
+    /// The gate fit modes available for a virtual camera.
+    /// </summary>
+    public enum GateFit : byte
+    {
+        /// <summary>
+        /// The sensor gate fits completely inside the resolution gate.
+        /// </summary>
+        [Description("The sensor gate fits completely inside the resolution gate.")]
+        Fill = 0,
+        /// <summary>
+        /// The render frame fits completely inside the resolution gate.
+        /// </summary>
+        [Description("The render frame fits completely inside the resolution gate.")]
+        Overscan = 1,
+    }
+
+    /// <summary>
     /// A struct that contains the settings of a virtual camera.
     /// </summary>
     [Serializable]
@@ -56,7 +73,8 @@ namespace Unity.LiveCapture.VirtualCamera
             ErgonomicTilt = 0,
             JoystickSensitivity = Vector3.one,
             PedestalSpace = Space.World,
-            AspectRatio = k_DefaultAspectRatio
+            AspectRatio = k_DefaultAspectRatio,
+            GateFit = GateFit.Fill
         };
 
         /// <summary>
@@ -171,6 +189,13 @@ namespace Unity.LiveCapture.VirtualCamera
         public float ApertureDamping;
 
         /// <summary>
+        /// The gate fit mode.
+        /// </summary>
+        [Tooltip("The gate fit mode.")]
+        [EnumButtonGroup(80f)]
+        public GateFit GateFit;
+
+        /// <summary>
         /// Whether or not to show the gate mask.
         /// </summary>
         [Tooltip("Whether or not to show the gate mask.")]
@@ -244,6 +269,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 && FocusDistanceDamping == other.FocusDistanceDamping
                 && FocalLengthDamping == other.FocalLengthDamping
                 && ApertureDamping == other.ApertureDamping
+                && GateFit == other.GateFit
                 && GateMask == other.GateMask
                 && FocusPlane == other.FocusPlane
                 && AspectRatioLines == other.AspectRatioLines
@@ -288,6 +314,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 hashCode = (hashCode * 397) ^ FocusDistanceDamping.GetHashCode();
                 hashCode = (hashCode * 397) ^ FocalLengthDamping.GetHashCode();
                 hashCode = (hashCode * 397) ^ ApertureDamping.GetHashCode();
+                hashCode = (hashCode * 397) ^ GateFit.GetHashCode();
                 hashCode = (hashCode * 397) ^ GateMask.GetHashCode();
                 hashCode = (hashCode * 397) ^ FocusPlane.GetHashCode();
                 hashCode = (hashCode * 397) ^ AspectRatioLines.GetHashCode();

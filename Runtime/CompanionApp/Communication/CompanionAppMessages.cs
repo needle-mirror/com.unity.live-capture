@@ -20,6 +20,8 @@ namespace Unity.LiveCapture.CompanionApp
             public const string SlateSelectedTake = k_Base + "SlateSelectedTake";
             public const string SlateIterationBase = k_Base + "SlateIterationBase";
             public const string SlateTakes_V0 = k_Base + "SlateTakes_V0";
+            public const string NextTakeName = k_Base + "NextTakeName";
+            public const string NextAssetName = k_Base + "NextAssetName";
             public const string TexturePreview = k_Base + "TexturePreview";
         }
 

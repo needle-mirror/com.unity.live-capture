@@ -10,8 +10,9 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
     {
         static class Contents
         {
-            public static readonly GUIContent GateMaskLabel = EditorGUIUtility.TrTextContent("Gate Mask", "Whether or not to show the gate mask.");
-            public static readonly GUIContent GateMaskOpacityLabel = EditorGUIUtility.TrTextContent("Opacity", "The opacity of the film gate mask.");
+            public static readonly GUIContent GateFitLabel = EditorGUIUtility.TrTextContent("Gate Fit", "The gate fit used by the camera.");
+            public static readonly GUIContent GateMaskLabel = EditorGUIUtility.TrTextContent("Gate Mask", "Whether or not to show the sensor gate mask.");
+            public static readonly GUIContent GateMaskOpacityLabel = EditorGUIUtility.TrTextContent("Opacity", "The opacity of the sensor gate mask.");
             public static readonly GUIContent AspectRatioLabel = EditorGUIUtility.TrTextContent("Aspect Ratio", "The aspect ratio of the crop.");
             public static readonly GUIContent ShowAspectRatioLabel = EditorGUIUtility.TrTextContent("Aspect Ratio Lines", "Whether or not to show the crop aspect ratio.");
             public static readonly GUIContent AspectModeLabel = EditorGUIUtility.TrTextContent("Type", "The render mode of the crop lines.");
@@ -24,6 +25,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         SerializedProperty m_SettingsProp;
         SerializedProperty m_ShowGateMaskProp;
+        SerializedProperty m_GateFitProp;
         SerializedProperty m_ShowAspectRatioLinesProp;
         SerializedProperty m_ShowCenterMarkerProp;
         SerializedProperty m_GateMaskOpacityProp;
@@ -37,6 +39,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         void OnEnable()
         {
             m_SettingsProp = serializedObject.FindProperty("m_Settings");
+            m_GateFitProp = m_SettingsProp.FindPropertyRelative("GateFit");
             m_ShowGateMaskProp = m_SettingsProp.FindPropertyRelative("GateMaskEnabled");
             m_ShowAspectRatioLinesProp = m_SettingsProp.FindPropertyRelative("AspectRatioLinesEnabled");
             m_ShowCenterMarkerProp = m_SettingsProp.FindPropertyRelative("CenterMarkerEnabled");
@@ -55,6 +58,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
             using (var change = new EditorGUI.ChangeCheckScope())
             {
+                EditorGUILayout.PropertyField(m_GateFitProp, Contents.GateFitLabel);
                 EditorGUILayout.PropertyField(m_ShowGateMaskProp, Contents.GateMaskLabel);
 
                 var showGateMask = m_ShowGateMaskProp.boolValue;

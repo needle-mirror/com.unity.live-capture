@@ -50,6 +50,14 @@ namespace Unity.LiveCapture.VirtualCamera
 #if HDRP_10_2_OR_NEWER
         CustomPassManager.Handle<HdrpFrameLinesPass> m_CustomPassHandle;
 #endif
+        /// <summary>
+        /// The gate fit mode.
+        /// </summary>
+        public GateFit GateFit
+        {
+            get => m_Settings.GateFit;
+            set => m_Settings.GateFit = value;
+        }
 
         /// <summary>
         /// Whether or not to show the crop aspect ratio.
@@ -212,7 +220,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         void UpdateCamera()
         {
-            m_Camera.gateFit = Camera.GateFitMode.Overscan;
+            m_Camera.gateFit = m_Settings.GateFit == GateFit.Overscan ? Camera.GateFitMode.Overscan : Camera.GateFitMode.Fill;
 
             m_CameraPixelSize = new Vector2(m_Camera.pixelWidth, m_Camera.pixelHeight);
 
@@ -275,32 +283,42 @@ namespace Unity.LiveCapture.VirtualCamera
             m_CachedScreenAspect = screenAspect;
             m_CachedSettings = m_Settings;
 
-            // We start with a (1, 1) view size, we'll shrink it down according to gate and crop.
-            // Coordinates are computed in NDC space.
-
-            var gateViewSize = ApplyAspectRatio(Vector2.one, screenAspect, gateAspect);
-
             m_FrameLinesDrawer.Clear();
 
-            var showGateMask = m_Settings.GateMaskEnabled && m_Settings.GateMaskOpacity > 0f;
-            var showCropFill = m_Settings.AspectRatioLinesEnabled && m_Settings.AspectFillOpacity > 0f;
-            if (showGateMask || showCropFill)
-            {
-                var opacity = showGateMask ? m_Settings.GateMaskOpacity : m_Settings.AspectFillOpacity;
-                // Gate mask letterbox.
-                m_FrameLinesDrawer.SetColor(new Color(0, 0, 0, opacity));
+            // We start with a (1, 1) view size, we'll shrink it down according to gate and crop.
+            // Coordinates are computed in NDC space.
+            Vector2 gateViewSize;
+            Vector2 cropViewSize;
 
-                DrawLetterBox(Vector2.one, gateViewSize);
+            // The sensor gate mask is only visible using overscan.
+            if (m_Settings.GateFit == GateFit.Overscan)
+            {
+                gateViewSize = ApplyAspectRatio(Vector2.one, screenAspect, gateAspect);
+                // The crop mask is evaluated within the sensor gate.
+                cropViewSize = ApplyAspectRatio(gateViewSize, screenAspect * gateViewSize.x / gateViewSize.y, m_Settings.AspectRatio);
+
+                // In case the sensor gate mask is disabled but the crop mask is visible, render the sensor gate mask with the crop mask's opacity,
+                // which amounts to having the crop mask cover the sensor gate mask area so that is reaches the edges of the screen.
+                var showGateMask = m_Settings.GateMaskEnabled && m_Settings.GateMaskOpacity > 0f;
+                var showCropFill = m_Settings.AspectRatioLinesEnabled && m_Settings.AspectFillOpacity > 0f;
+                if (showGateMask || showCropFill)
+                {
+                    var opacity = showGateMask ? m_Settings.GateMaskOpacity : m_Settings.AspectFillOpacity;
+                    // Gate mask letterbox.
+                    m_FrameLinesDrawer.SetColor(new Color(0, 0, 0, opacity));
+
+                    DrawLetterBox(Vector2.one, gateViewSize);
+                }
             }
             else
             {
-                m_FrameLinesDrawer.SetColor(new Color(0, 0, 0, 0f));
+                // The sensor gate is ignored while evaluating the crop mask.
+                gateViewSize = Vector2.one;
+                cropViewSize = ApplyAspectRatio(Vector2.one, screenAspect, m_Settings.AspectRatio);
             }
 
             if (m_Settings.AspectRatioLinesEnabled)
             {
-                var cropViewSize = ApplyAspectRatio(gateViewSize, screenAspect * gateViewSize.x / gateViewSize.y, m_Settings.AspectRatio);
-
                 // Crop mask letterbox.
                 m_FrameLinesDrawer.SetColor(new Color(0, 0, 0, m_Settings.AspectFillOpacity));
 

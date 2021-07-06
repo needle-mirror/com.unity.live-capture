@@ -68,7 +68,15 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (s_Instance == null)
             {
-                s_Instance = FindObjectOfType<CustomPassManager>();
+                var instances = Resources.FindObjectsOfTypeAll<CustomPassManager>();
+                if (instances.Length == 1)
+                {
+                    s_Instance = instances[0];
+                }
+                else if (instances.Length > 1)
+                {
+                    throw new InvalidOperationException($"Multiple instances of {nameof(CustomPassManager)} detected, expected at most one.");
+                }
             }
 
             if (s_Instance == null)
@@ -76,6 +84,12 @@ namespace Unity.LiveCapture.VirtualCamera
                 var gameObject = AdditionalCoreUtils.CreateEmptyGameObject();
                 gameObject.name = "Virtual Camera Custom Pass Manager";
                 s_Instance = gameObject.AddComponent<CustomPassManager>();
+            }
+
+            if (!s_Instance.isActiveAndEnabled)
+            {
+                Debug.LogWarning($"{nameof(CustomPassManager)} component held by \"{s_Instance.gameObject.name}\" gameObject" +
+                    " should be active and enabled for Live Capture rendering features to work properly.");
             }
 
             return s_Instance;
@@ -101,7 +115,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
             var newVolume = gameObject.AddComponent<CustomPassVolume>();
             newVolume.injectionPoint = injectionPoint;
-            newVolume.hideFlags = hideFlags;
+            newVolume.hideFlags = HideFlags.HideInInspector;
             return newVolume;
         }
 

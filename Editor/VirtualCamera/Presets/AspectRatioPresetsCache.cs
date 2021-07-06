@@ -38,7 +38,8 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         {
             foreach (var modification in modifications)
             {
-                if (modification.currentValue.target is AspectRatioPresets)
+                if (modification.currentValue != null &&
+                    modification.currentValue.target is AspectRatioPresets)
                 {
                     SetDirty();
 

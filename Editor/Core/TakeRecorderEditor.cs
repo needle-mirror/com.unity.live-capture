@@ -13,8 +13,8 @@ namespace Unity.LiveCapture.Editor
         static class Contents
         {
             public static readonly GUIContent LiveToggleContent = EditorGUIUtility.TrTextContent("", "Toggle the live state of the device.");
-            public static readonly GUIContent LiveButtonContent = EditorGUIUtility.TrTextContent("Live", "Set live mode.");
-            public static readonly GUIContent PreviewButtonContent = EditorGUIUtility.TrTextContent("Preview", "Set preview mode.");
+            public static readonly GUIContent LiveButtonContent = EditorGUIUtility.TrTextContent("Live", "Set to live mode for previewing and recording takes.");
+            public static readonly GUIContent PreviewButtonContent = EditorGUIUtility.TrTextContent("Playback", "Set to playback mode for reviewing takes.");
             public static readonly GUIContent StartRecordingLabel = EditorGUIUtility.TrTextContentWithIcon("Start Recording", "Start recording a new Take.", "Animation.Record");
             public static readonly GUIContent StopRecordingLabel = EditorGUIUtility.TrTextContentWithIcon("Stop Recording", "Stop the ongoing recording.", "Animation.Record");
             public static readonly GUIContent PlayPreviewLabel = EditorGUIUtility.TrTextContentWithIcon("Start Preview", "Start previewing the selected Take.", "PlayButton");

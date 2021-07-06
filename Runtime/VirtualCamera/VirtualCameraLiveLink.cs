@@ -37,7 +37,14 @@ namespace Unity.LiveCapture.VirtualCamera
     /// </summary>
     struct VirtualCameraLiveLinkJob : IAnimationJob
     {
-        public TransformStreamHandle TransformHandle;
+        public PropertyStreamHandle PositionXHandle;
+        public PropertyStreamHandle PositionYHandle;
+        public PropertyStreamHandle PositionZHandle;
+        public PropertyStreamHandle PositionEnabledHandle;
+        public PropertyStreamHandle EulerAnglesXHandle;
+        public PropertyStreamHandle EulerAnglesYHandle;
+        public PropertyStreamHandle EulerAnglesZHandle;
+        public PropertyStreamHandle EulerAnglesEnabledHandle;
         public PropertyStreamHandle FocalLengthHandle;
         public PropertyStreamHandle FocalLengthRangeMinHandle;
         public PropertyStreamHandle FocalLengthRangeMaxHandle;
@@ -62,7 +69,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         public VirtualCameraChannelFlags Channels;
         public Vector3 Position;
-        public Quaternion Rotation;
+        public Vector3 EulerAngles;
         public Lens Lens;
         public LensIntrinsics LensIntrinsics;
         public CameraBody CameraBody;
@@ -71,19 +78,27 @@ namespace Unity.LiveCapture.VirtualCamera
 
         public void ProcessRootMotion(AnimationStream stream)
         {
-            if (Channels.HasFlag(VirtualCameraChannelFlags.Position))
-            {
-                TransformHandle.SetLocalPosition(stream, Position);
-            }
 
-            if (Channels.HasFlag(VirtualCameraChannelFlags.Rotation))
-            {
-                TransformHandle.SetLocalRotation(stream, Rotation);
-            }
         }
 
         public void ProcessAnimation(AnimationStream stream)
         {
+            if (Channels.HasFlag(VirtualCameraChannelFlags.Position))
+            {
+                PositionXHandle.SetFloat(stream, Position.x);
+                PositionYHandle.SetFloat(stream, Position.y);
+                PositionZHandle.SetFloat(stream, Position.z);
+                PositionEnabledHandle.SetBool(stream, true);
+            }
+
+            if (Channels.HasFlag(VirtualCameraChannelFlags.Rotation))
+            {
+                EulerAnglesXHandle.SetFloat(stream, EulerAngles.x);
+                EulerAnglesYHandle.SetFloat(stream, EulerAngles.y);
+                EulerAnglesZHandle.SetFloat(stream, EulerAngles.z);
+                EulerAnglesEnabledHandle.SetBool(stream, true);
+            }
+
             if (Channels.HasFlag(VirtualCameraChannelFlags.FocalLength))
             {
                 FocalLengthHandle.SetFloat(stream, Lens.FocalLength);
@@ -133,7 +148,7 @@ namespace Unity.LiveCapture.VirtualCamera
         public VirtualCameraChannelFlags Channels = VirtualCameraChannelFlags.All;
 
         public Vector3 Position { get; set; }
-        public Quaternion Rotation { get; set; }
+        public Vector3 EulerAngles { get; set; }
         public Lens Lens { get; set; }
         public LensIntrinsics LensIntrinsics { get; set; }
         public CameraBody CameraBody { get; set; }
@@ -150,12 +165,20 @@ namespace Unity.LiveCapture.VirtualCamera
             var animationJob = new VirtualCameraLiveLinkJob();
 
             animationJob.Position = Position;
-            animationJob.Rotation = Rotation;
+            animationJob.EulerAngles = EulerAngles;
             animationJob.Lens = Lens;
             animationJob.CameraBody = CameraBody;
             animationJob.DepthOfFieldEnabled = DepthOfFieldEnabled;
 
-            animationJob.TransformHandle = animator.BindStreamTransform(transform);
+            animationJob.PositionXHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LocalPosition.x");
+            animationJob.PositionYHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LocalPosition.y");
+            animationJob.PositionZHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LocalPosition.z");
+            animationJob.PositionEnabledHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LocalPositionEnabled");
+
+            animationJob.EulerAnglesXHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LocalEulerAngles.x");
+            animationJob.EulerAnglesYHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LocalEulerAngles.y");
+            animationJob.EulerAnglesZHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LocalEulerAngles.z");
+            animationJob.EulerAnglesEnabledHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LocalEulerAnglesEnabled");
 
             animationJob.FocalLengthHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_Lens.m_FocalLength");
             animationJob.FocalLengthRangeMinHandle = animator.BindStreamProperty(transform, typeof(VirtualCameraActor), "m_LensIntrinsics.m_FocalLengthRange.x");
@@ -192,7 +215,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             data.Channels = Channels;
             data.Position = Position;
-            data.Rotation = Rotation;
+            data.EulerAngles = EulerAngles;
             data.Lens = Lens;
             data.LensIntrinsics = LensIntrinsics;
             data.CameraBody = CameraBody;

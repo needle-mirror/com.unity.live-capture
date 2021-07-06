@@ -34,6 +34,7 @@ namespace Unity.LiveCapture.VirtualCamera
             public const string FocusReticlePosition = k_Base + "FocusReticlePosition";
             public const string FocusDistanceOffset = k_Base + "FocusDistanceOffset";
             public const string CropAspect = k_Base + "CropAspect";
+            public const string GateFit = k_Base + "GateFit";
             public const string ShowGateMask = k_Base + "ShowGateMask";
             public const string ShowFrameLines = k_Base + "ShowFrameLines";
             public const string ShowCenterMarker = k_Base + "ShowCenterMarker";
@@ -73,6 +74,7 @@ namespace Unity.LiveCapture.VirtualCamera
             public const string FocusReticlePosition = k_Base + "FocusReticlePosition";
             public const string FocusDistanceOffset = k_Base + "FocusDistanceOffset";
             public const string CropAspect = k_Base + "CropAspect";
+            public const string GateFit = k_Base + "GateFit";
             public const string ShowGateMask = k_Base + "ShowGateMask";
             public const string ShowFrameLines = k_Base + "ShowFrameLines";
             public const string ShowCenterMarker = k_Base + "ShowCenterMarker";

@@ -12,7 +12,7 @@ namespace Unity.LiveCapture.CompanionApp.Networking
 
         public static explicit operator TakeDescriptorArrayV0(TakeDescriptor[] takes)
         {
-            var result = default(TakeDescriptorV0[]);
+            TakeDescriptorV0[] result;
 
             if (takes == null)
             {
@@ -31,7 +31,7 @@ namespace Unity.LiveCapture.CompanionApp.Networking
 
         public static explicit operator TakeDescriptor[](TakeDescriptorArrayV0 takes)
         {
-            if (takes == null ||  takes.m_Takes == null)
+            if (takes == null || takes.m_Takes == null)
             {
                 return new TakeDescriptor[0];
             }

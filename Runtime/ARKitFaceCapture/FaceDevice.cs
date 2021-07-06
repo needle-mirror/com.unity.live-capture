@@ -73,6 +73,12 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             }
         }
 
+        /// <inheritdoc/>
+        protected override string GetAssetName()
+        {
+            return m_Actor != null ? m_Actor.name : name;
+        }
+
         /// <inheritdoc />
         protected override void OnClientAssigned()
         {
