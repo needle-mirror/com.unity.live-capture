@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Unity.LiveCapture.Editor;
 using UnityEditor;
@@ -12,6 +13,8 @@ namespace Unity.LiveCapture.CompanionApp.Editor
         static class Contents
         {
             public static readonly GUIContent ActorLabel = EditorGUIUtility.TrTextContent("Actor", "The actor currently assigned to this device.");
+            public static GUIContent ActorCreateNew = EditorGUIUtility.TrTextContent("Create & Assign New Actor", "Create a new actor in the scene and assign it to this device.");
+            public static string ActorCreateNewUndo = L10n.Tr("Create & Assign New Actor");
             public static readonly GUIContent ChannelsLabel = EditorGUIUtility.TrTextContent("Channels", "The channels that will be recorded in the next take.");
             public static readonly GUIContent NotAssignedLabel = EditorGUIUtility.TrTextContent("None");
             public static readonly GUIContent ClientAssignLabel = EditorGUIUtility.TrTextContent("Client Device", "The remote device to capture recordings from. Only compatible connected devices are shown.");
@@ -110,6 +113,48 @@ namespace Unity.LiveCapture.CompanionApp.Editor
         protected void DoActorGUI(SerializedProperty actor)
         {
             EditorGUILayout.PropertyField(actor, Contents.ActorLabel);
+        }
+
+        /// <summary>
+        /// Draws the actor create &amp; assign button.
+        /// </summary>
+        /// <param name="actor">The actor property.</param>
+        /// <param name="menuItems">
+        /// Pairs of labels and callbacks to display in a dropdown menu on click.
+        /// Each pair should correspond to an actor type supported by the device.
+        /// </param>
+        /// <remarks>
+        /// If there's only one element in menuItems, no dropdown menu is shown
+        /// and that entry's callback is called immediately instead.
+        /// </remarks>
+        protected void DoActorCreateGUI(SerializedProperty actor, IEnumerable<(GUIContent label, Func<UnityEngine.Object> createActor)> menuItems)
+        {
+            if (GUILayout.Button(Contents.ActorCreateNew))
+            {
+                if (menuItems.Count() == 1)
+                {
+                    AssignNewActor(actor, menuItems.First().createActor());
+                }
+                else
+                {
+                    var menu = new GenericMenu();
+                    foreach (var (label, createActor) in menuItems)
+                    {
+                        menu.AddItem(label, false, () => AssignNewActor(actor, createActor()));
+                    }
+                    menu.ShowAsContext();
+                }
+            }
+        }
+
+        void AssignNewActor(SerializedProperty actor, UnityEngine.Object newActor)
+        {
+            actor.objectReferenceValue = newActor;
+            actor.serializedObject.ApplyModifiedProperties();
+
+            // Overwrite selection in case it has changed
+            var device = target as CompanionAppDevice<TClient>;
+            Selection.activeObject = device.gameObject;
         }
 
         /// <summary>

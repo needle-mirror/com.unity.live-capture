@@ -98,9 +98,9 @@ namespace Unity.LiveCapture.VirtualCamera
         public RotationAxis RotationLock;
 
         /// <summary>
-        /// Force roll angle to be zero.
+        /// Force roll angle to be zero. Roll must be locked for this to take effect.
         /// </summary>
-        [Tooltip("Force roll angle to be zero.")]
+        [Tooltip("Force roll angle to be zero. Roll must be locked for this to take effect.")]
         public bool AutoHorizon;
 
         /// <summary>

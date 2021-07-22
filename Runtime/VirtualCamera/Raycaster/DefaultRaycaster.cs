@@ -9,6 +9,8 @@ namespace Unity.LiveCapture.VirtualCamera
     /// </summary>
     class DefaultRaycaster : IRaycaster
     {
+        static readonly Vector2 k_Bounds = new Vector2(0.1f, 1000);
+
         GraphicsRaycaster m_GraphicsRaycaster;
 
         /// <summary>
@@ -28,9 +30,9 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         public bool Raycast(Camera camera, Vector2 normalizedPosition, out float distance)
         {
-            if (CanPerformRaycast(camera, normalizedPosition, out var ray, out var bounds))
+            if (CanPerformRaycast(camera, normalizedPosition, out var ray))
             {
-                if (m_GraphicsRaycaster.Raycast(ray.origin, ray.direction, out var hit, bounds.x, bounds.y))
+                if (m_GraphicsRaycaster.Raycast(ray.origin, ray.direction, out var hit, k_Bounds.x, k_Bounds.y))
                 {
                     distance = GetDistance(camera.transform, hit);
                     return true;
@@ -44,9 +46,9 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         public bool Raycast(Camera camera, Vector2 normalizedPosition, out Ray ray, out GameObject gameObject, out RaycastHit hit)
         {
-            if (CanPerformRaycast(camera, normalizedPosition, out ray, out var bounds))
+            if (CanPerformRaycast(camera, normalizedPosition, out ray))
             {
-                if (m_GraphicsRaycaster.Raycast(ray.origin, ray.direction, out hit, out gameObject, bounds.x, bounds.y))
+                if (m_GraphicsRaycaster.Raycast(ray.origin, ray.direction, out hit, out gameObject, k_Bounds.x, k_Bounds.y))
                 {
                     hit.distance = GetDistance(camera.transform, hit);
                     return true;
@@ -58,7 +60,7 @@ namespace Unity.LiveCapture.VirtualCamera
             return false;
         }
 
-        bool CanPerformRaycast(Camera camera, Vector2 normalizedPosition, out Ray ray, out Vector2 bounds)
+        bool CanPerformRaycast(Camera camera, Vector2 normalizedPosition, out Ray ray)
         {
             if (m_GraphicsRaycaster == null)
             {
@@ -69,12 +71,10 @@ namespace Unity.LiveCapture.VirtualCamera
             {
                 var screenPosition = new Vector2(camera.pixelWidth * normalizedPosition.x, camera.pixelHeight * normalizedPosition.y);
                 ray = camera.ScreenPointToRay(screenPosition);
-                bounds = LensLimits.FocusDistance;
                 return true;
             }
 
             ray = default;
-            bounds = default;
             return false;
         }
 

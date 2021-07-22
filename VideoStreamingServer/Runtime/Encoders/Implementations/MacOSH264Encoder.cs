@@ -1,12 +1,6 @@
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
 using System.Runtime.InteropServices;
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
-using Unity.LiveCapture.VideoStreaming.Server;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -101,6 +95,11 @@ namespace Unity.LiveCapture.VideoStreaming.Server
             /// Gets the encoder supported format.
             /// </summary>
             public EncoderFormat encoderFormat;
+
+            /// <summary>
+            /// Should the encoder expect SRGB textures.
+            /// </summary>
+            public bool useSRGB;
         }
 
         /// <summary>
@@ -182,6 +181,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
             m_SettingsID.settings = settings;
             m_SettingsID.encoderId = ++m_Counter;
             m_SettingsID.encoderFormat = encoderFormat;
+            m_SettingsID.useSRGB = QualitySettings.activeColorSpace != ColorSpace.Gamma;
 
             if (m_CommandBuffer != null)
                 DisposeCommandBuffer();

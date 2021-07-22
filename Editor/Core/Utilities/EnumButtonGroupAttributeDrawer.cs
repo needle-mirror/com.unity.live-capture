@@ -235,8 +235,8 @@ namespace Unity.LiveCapture.Editor
         void UpdateLayout(int entryCount, out float rowWidth, out int columns, out int rows)
         {
             var segmentWidth = m_Gui.GetSegmentWidth(this);
-            rowWidth = m_Gui.CurrentViewWidth - m_Gui.LabelWidth - 40;
-            columns = Mathf.FloorToInt(rowWidth / segmentWidth);
+            rowWidth = Mathf.Max(0, m_Gui.CurrentViewWidth - m_Gui.LabelWidth - 40);
+            columns = Mathf.Max(1, Mathf.FloorToInt(rowWidth / segmentWidth));
             rows = Mathf.CeilToInt((float)entryCount / columns);
         }
 

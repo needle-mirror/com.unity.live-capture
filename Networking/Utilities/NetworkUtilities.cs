@@ -58,6 +58,61 @@ namespace Unity.LiveCapture.Networking
         }
 
         /// <summary>
+        /// Gets the interface used to communicate with the specified remote.
+        /// </summary>
+        /// <param name="remoteEndPoint">The end point to connect to.</param>
+        /// <returns>The IP address of the interface to use.</returns>
+        public static IPAddress GetRoutingInterface(IPEndPoint remoteEndPoint)
+        {
+            // The routing table is the most correct method to determine the interface to use, but
+            // in case there is an error we call back to an alternate method that is less reliable.
+            try
+            {
+                return QueryRoutingInterface(null, remoteEndPoint);
+            }
+            catch (Exception)
+            {
+                return FindClosestAddresses(remoteEndPoint).localAddress;
+            }
+        }
+
+        /// <summary>
+        /// Looks up the interface used to communicate with the specified remote from the routing table.
+        /// </summary>
+        /// <param name="socket">The socket used for the lookup query. If null, a temporary socket is used.</param>
+        /// <param name="remoteEndPoint">The end point to connect to.</param>
+        /// <returns>The IP address of the interface to use.</returns>
+        public static IPAddress QueryRoutingInterface(Socket socket, IPEndPoint remoteEndPoint)
+        {
+            var address = remoteEndPoint.Serialize();
+
+            var remoteAddrBytes = new byte[address.Size];
+            var localAddrBytes = new byte[address.Size];
+
+            for (var i = 0; i < address.Size; i++)
+            {
+                remoteAddrBytes[i] = address[i];
+            }
+
+            if (socket != null)
+            {
+                socket.IOControl(IOControlCode.RoutingInterfaceQuery, remoteAddrBytes, localAddrBytes);
+            }
+            else
+            {
+                using var tempSocket = CreateSocket(ProtocolType.Udp);
+                tempSocket.IOControl(IOControlCode.RoutingInterfaceQuery, remoteAddrBytes, localAddrBytes);
+            }
+
+            for (var i = 0; i < address.Size; i++)
+            {
+                address[i] = localAddrBytes[i];
+            }
+
+            return ((IPEndPoint)remoteEndPoint.Create(address)).Address;
+        }
+
+        /// <summary>
         /// Finds the local IP address and remote IP address that share the largest prefix.
         /// </summary>
         /// <remarks>

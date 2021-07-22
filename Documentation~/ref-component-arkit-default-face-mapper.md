@@ -53,3 +53,9 @@ The system will attempt to auto-match ARKit input values to blendshapes using th
 
 14. This inspector also exposes properties used to process the incoming value before applying it to the blendshape. Learn more about them in the [Mapping Evaluator section](face-capture-mapping-evaluator.md).
 
+## Retargeting
+
+A **Default Face Mapper** asset may be shared by different character rigs, with a few constraints.
+
+* The paths from the **Face Actor** component to the transforms or meshes used in the mapper must be the same across the different characters. Therefore, character rigs should try to have consistent structure and naming conventions.
+* If a rig does not have one of the transforms or meshes used in the mapper at the expected path, that part of the mapping will not be applied.

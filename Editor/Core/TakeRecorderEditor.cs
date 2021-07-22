@@ -20,6 +20,7 @@ namespace Unity.LiveCapture.Editor
             public static readonly GUIContent PlayPreviewLabel = EditorGUIUtility.TrTextContentWithIcon("Start Preview", "Start previewing the selected Take.", "PlayButton");
             public static readonly GUIContent StopPreviewLabel = EditorGUIUtility.TrTextContentWithIcon("Stop Preview", "Stop the ongoing playback.", "PauseButton");
             public static readonly GUIContent FrameRateLabel = EditorGUIUtility.TrTextContent("Frame Rate", "The frame rate to use for recording.");
+            public static readonly GUIContent ProjectSettingsButton = EditorGUIUtility.TrTextContent("Open Project Settings", "Open the Take System project settings.");
             public static readonly string ExternalSlateMsg = EditorGUIUtility.TrTextContent("Slate data provided externally using a Timeline track.").text;
             public static readonly GUIStyle ButtonToggleStyle = "Button";
             public static readonly string UndoSetLive = "Toggle Live Mode";
@@ -149,6 +150,10 @@ namespace Unity.LiveCapture.Editor
             EditorGUILayout.Space();
 
             DoDevicesGUI();
+
+            EditorGUILayout.Space();
+
+            DoSettingsLinkGUI();
         }
 
         void DoExternalPrevewMsg()
@@ -243,6 +248,14 @@ namespace Unity.LiveCapture.Editor
             m_DeviceList.DoLayoutList();
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        void DoSettingsLinkGUI()
+        {
+            if (GUILayout.Button(Contents.ProjectSettingsButton))
+            {
+                LiveCaptureSettingsProvider.Open();
+            }
         }
 
         void DoRecordButton()

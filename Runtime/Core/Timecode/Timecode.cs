@@ -154,7 +154,7 @@ namespace Unity.LiveCapture
         /// </returns>
         public static Timecode FromFrameTime(FrameRate frameRate, FrameTime frameTime)
         {
-            if (!frameRate.IsValid)
+            if (!frameRate.IsValid || frameRate.Numerator == 0)
             {
                 return default;
             }

@@ -24,23 +24,37 @@ namespace Unity.LiveCapture.VideoStreaming.Server
         /// <summary>
         /// Initializes a new instance of the <see cref="UDPSocket"/> class.
         /// Creates two new UDP sockets using the start and end Port range
+        /// <param name="startPort">Lower end of port number range</param>
+        /// <param name="endPort">Upper end of port number range (exclusive)</param>
+        /// <param name="localIPAddress">(Optional) IP address to bind the socket to.</param>
         /// </summary>
-        public UDPSocket(int start_port, int end_port)
+        public UDPSocket(int startPort, int endPort, IPAddress localIPAddress = null)
         {
             is_multicast = false;
 
             // open a pair of UDP sockets - one for data (video or audio) and one for the status channel (RTCP messages)
-            data_port = start_port;
-            control_port = start_port + 1;
+            data_port = startPort;
+            control_port = startPort + 1;
 
             bool ok = false;
-            while (ok == false && (control_port < end_port))
+            while (ok == false && (control_port < endPort))
             {
                 // Video/Audio port must be odd and command even (next one)
                 try
                 {
-                    data_socket = new UdpClient(data_port);
-                    control_socket = new UdpClient(control_port);
+                    if (localIPAddress != null)
+                    {
+                        // Bind to specified address
+                        data_socket = new UdpClient(new IPEndPoint(localIPAddress, data_port));
+                        control_socket = new UdpClient(new IPEndPoint(localIPAddress, control_port));
+                    }
+                    else
+                    {
+                        // Bind to any address
+                        data_socket = new UdpClient(data_port);
+                        control_socket = new UdpClient(control_port);
+                    }
+
                     ok = true;
                 }
                 catch (SocketException)
@@ -59,7 +73,8 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 if (ok)
                 {
                     data_socket.Client.ReceiveBufferSize = 100 * 1024;
-                    data_socket.Client.SendBufferSize = 65535; // default is 8192. Make it as large as possible for large RTP packets which are not fragmented
+                    data_socket.Client.SendBufferSize =
+                        65535; // default is 8192. Make it as large as possible for large RTP packets which are not fragmented
 
                     control_socket.Client.DontFragment = false;
                 }
@@ -70,7 +85,8 @@ namespace Unity.LiveCapture.VideoStreaming.Server
         /// Initializes a new instance of the <see cref="UDPSocket"/> class.
         /// Used with Multicast mode with the Multicast Address and Port
         /// </summary>
-        public UDPSocket(String data_multicast_address, int data_multicast_port, String control_multicast_address, int control_multicast_port)
+        public UDPSocket(String data_multicast_address, int data_multicast_port, String control_multicast_address,
+            int control_multicast_port)
         {
             is_multicast = true;
 
@@ -96,7 +112,8 @@ namespace Unity.LiveCapture.VideoStreaming.Server
 
 
                 data_socket.Client.ReceiveBufferSize = 100 * 1024;
-                data_socket.Client.SendBufferSize = 65535; // default is 8192. Make it as large as possible for large RTP packets which are not fragmented
+                data_socket.Client.SendBufferSize =
+                    65535; // default is 8192. Make it as large as possible for large RTP packets which are not fragmented
 
 
                 control_socket.Client.DontFragment = false;
@@ -148,6 +165,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 data_socket.DropMulticastGroup(data_mcast_addr);
                 control_socket.DropMulticastGroup(control_mcast_addr);
             }
+
             data_socket.Close();
             control_socket.Close();
         }
@@ -190,7 +208,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                     Messages.RtspChunk currentMessage = new Messages.RtspData();
                     // aMessage.SourcePort = ??
                     currentMessage.Data = frame;
-                    ((Messages.RtspData)currentMessage).Channel = data_port;
+                    ((Messages.RtspData) currentMessage).Channel = data_port;
 
 
                     OnDataReceived(new RtspChunkEventArgs(currentMessage));

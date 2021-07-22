@@ -16,7 +16,6 @@ namespace Unity.LiveCapture.VirtualCamera
 
         DepthOfField m_DepthOfField;
         Camera m_Camera;
-        UniversalAdditionalCameraData m_UniversalCameraData;
 
         /// <summary>
         /// Configure the driver component based on a Camera instance.
@@ -27,11 +26,7 @@ namespace Unity.LiveCapture.VirtualCamera
             m_Camera = camera;
             Assert.IsNotNull(m_Camera, $"{nameof(UrpCameraDriverComponent)} expects a GameObject holding a Camera.");
 
-            m_UniversalCameraData = m_Camera.GetComponent<UniversalAdditionalCameraData>();
-            // It can be that the additional camera data has not been added yet.
-            if (m_UniversalCameraData == null)
-                m_UniversalCameraData = m_Camera.gameObject.AddComponent<UniversalAdditionalCameraData>();
-            m_UniversalCameraData.renderPostProcessing = false;
+            m_Camera.GetUniversalAdditionalCameraData().renderPostProcessing = false;
 
             m_DepthOfField = VolumeComponentUtility.GetOrAddVolumeComponent<DepthOfField>(m_Camera.gameObject, false);
             VolumeComponentUtility.UpdateParameterIfNeeded(m_DepthOfField.mode, DepthOfFieldMode.Bokeh);
@@ -45,7 +40,7 @@ namespace Unity.LiveCapture.VirtualCamera
         public bool EnableDepthOfField(bool value)
         {
             // So far DoF is the only post process we support on URP
-            m_UniversalCameraData.renderPostProcessing = value;
+            m_Camera.GetUniversalAdditionalCameraData().renderPostProcessing = value;
             m_DepthOfField.active = value;
             return true;
         }

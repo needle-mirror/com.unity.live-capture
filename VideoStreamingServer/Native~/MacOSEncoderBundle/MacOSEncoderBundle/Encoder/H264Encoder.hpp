@@ -51,7 +51,7 @@ public: // Methods
     H264Encoder(const MacOSEncoderSessionData& frameData, MetalGraphicsEncoderDevice* const device);
     ~H264Encoder();
     
-    void Initialize(bool allocateBuffers = true);
+    void Initialize(bool useSRGB, bool allocateBuffers = true);
     bool UpdateEncoderSessionData(const MacOSEncoderSessionData& other);
     bool EncodeFrame(void* frameSource, unsigned long long int timestamp);
     
@@ -71,6 +71,7 @@ private: // Members
     MetalGraphicsEncoderDevice* m_GraphicDevice;
     VTCompressionSessionRef     m_EncodingSession;
     bool                        m_SessionCreated;
+    bool                        m_UseSRGB;
     
     MacOSEncoderStatus          m_InitializationResult;
     MacOSEncoderSessionData     m_FrameData;

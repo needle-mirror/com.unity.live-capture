@@ -16,7 +16,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         /// Creates a new <see cref="VirtualCameraActor"/> with all the required components.
         /// </summary>
         [MenuItem("GameObject/Live Capture/Camera/Virtual Camera Actor", false, 10)]
-        public static void CreateVirtualCameraActor()
+        public static GameObject CreateVirtualCameraActor()
         {
             var root = new GameObject("Virtual Camera Actor",
                 typeof(VirtualCameraActor),
@@ -36,6 +36,8 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 #endif
 
             MatchToSceneView(root);
+
+            return root.gameObject;
         }
 
 #if VP_CINEMACHINE_2_4_0
@@ -43,7 +45,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         /// Creates a Cinemachine Camera Actor with all the required components.
         /// </summary>
         [MenuItem("GameObject/Live Capture/Camera/Cinemachine Camera Actor", false, 10)]
-        public static void CreateCinemachineCameraActor()
+        public static GameObject CreateCinemachineCameraActor()
         {
             var name = "Cinemachine Camera Actor";
             var undoName = $"Create {name}";
@@ -106,6 +108,8 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             driver.CinemachineVirtualCamera = virtualCamera;
 
             MatchToSceneView(root);
+
+            return root.gameObject;
         }
 
 #endif

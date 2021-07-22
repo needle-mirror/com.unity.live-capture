@@ -144,7 +144,7 @@ namespace Unity.LiveCapture
         /// </returns>
         public double ToSeconds(FrameRate frameRate)
         {
-            return frameRate.IsValid ? (double)this * frameRate.FrameInterval : default;
+            return frameRate.IsValid && frameRate.Numerator != 0 ? (double)this * frameRate.FrameInterval : default;
         }
 
         /// <summary>
@@ -254,7 +254,7 @@ namespace Unity.LiveCapture
         /// by the <see cref="FrameTime"/> type.</exception>
         public static FrameTime Remap(FrameTime frameTime, FrameRate srcRate, FrameRate dstRate)
         {
-            if (!srcRate.IsValid || !dstRate.IsValid)
+            if (!srcRate.IsValid || srcRate.Numerator == 0 || !dstRate.IsValid)
             {
                 return default;
             }

@@ -8,7 +8,7 @@ MonoImporter:
   - m_Camera: {instanceID: 0}
   - m_FormatPresets: {fileID: 11400000, guid: ab69bd094cc0442a0a13816c52703f23, type: 2}
   executionOrder: 0
-  icon: {instanceID: 0}
+  icon: {fileID: 2800000, guid: 062495b7c0aeee645b01878df6770356, type: 3}
   userData: 
   assetBundleName: 
   assetBundleVariant: 

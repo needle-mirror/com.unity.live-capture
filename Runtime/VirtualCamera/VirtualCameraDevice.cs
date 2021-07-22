@@ -26,7 +26,7 @@ namespace Unity.LiveCapture.VirtualCamera
     public class VirtualCameraDevice : CompanionAppDevice<IVirtualCameraClient>
     {
         const float k_Epsilon = 0.0001f;
-        const float k_MaxSpeed = 10e4f;
+        const float k_MaxSpeed = Mathf.Infinity;
 
         static List<VirtualCameraDevice> s_Instances = new List<VirtualCameraDevice>();
         internal static IEnumerable<VirtualCameraDevice> instances => s_Instances;
@@ -75,6 +75,7 @@ namespace Unity.LiveCapture.VirtualCamera
         bool m_LensIntrinsicsDirty;
         bool m_LastScreenAFRaycastIsValid;
         IScreenshotImpl m_ScreenshotImpl = new ScreenshotImpl();
+        bool m_ActorAlignRequested;
 
         internal VirtualCameraRecorder Recorder => m_Recorder;
 
@@ -192,6 +193,51 @@ namespace Unity.LiveCapture.VirtualCamera
                 m_Lens = m_LensAsset.DefaultValues;
                 m_InterpolatedLens = m_Lens;
             }
+
+            // Find & assign the first actor not already assigned to a device.
+            // Do nothing if there's multiple potential candidates.
+            if (m_Actor == null)
+            {
+                VirtualCameraActor validActor = null;
+                var actors = FindObjectsOfType(typeof(VirtualCameraActor));
+
+                foreach (var instance in actors)
+                {
+                    var actor = instance as VirtualCameraActor;
+
+                    // Actors from a different scene aren't a valid object reference
+                    if (actor.gameObject.scene == gameObject.scene)
+                    {
+                        var alreadyAssignedToADevice = false;
+
+                        foreach (var device in s_Instances)
+                        {
+                            if (device.m_Actor == actor)
+                            {
+                                alreadyAssignedToADevice = true;
+                                break;
+                            }
+                        }
+
+                        if (alreadyAssignedToADevice)
+                        {
+                            continue;
+                        }
+
+                        if (validActor == null)
+                        {
+                            validActor = actor;
+                        }
+                        else
+                        {
+                            validActor = null;
+                            break;
+                        }
+                    }
+                }
+
+                m_Actor = validActor;
+            }
         }
 
         /// <inheritdoc/>
@@ -215,9 +261,10 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             InitializeDriver();
 
+            // If actor has changed
             if (m_Actor != null && m_Actor.Animator != m_LiveLink.GetAnimator())
             {
-                InitializeLocalPose();
+                UpdateRigOriginFromActor();
             }
         }
 
@@ -457,6 +504,11 @@ namespace Unity.LiveCapture.VirtualCamera
             return m_VideoServer;
         }
 
+        internal void RequestAlignWithActor()
+        {
+            m_ActorAlignRequested = true;
+        }
+
         internal void SetOrigin(Pose pose)
         {
             var originRotation = Quaternion.Euler(0f, pose.rotation.eulerAngles.y, 0f);
@@ -566,6 +618,12 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         public override void UpdateDevice()
         {
+            if (m_ActorAlignRequested)
+            {
+                m_ActorAlignRequested = false;
+                UpdateRigOriginFromActor();
+            }
+
             ValidateLensIntrinsics();
             UpdateOverlaysIfNeeded(m_Settings);
             UpdateTimestampTracker();
@@ -688,7 +746,6 @@ namespace Unity.LiveCapture.VirtualCamera
             m_InterpolatedLens = m_Lens;
 
             m_PoseRigNeedsInitialize = true;
-            InitializeLocalPose();
             StartVideoServer();
 
             if (TryGetInternalClient(out var client))
@@ -828,11 +885,11 @@ namespace Unity.LiveCapture.VirtualCamera
             }
         }
 
-        internal void InitializeLocalPose()
+        void UpdateRigOriginFromActor()
         {
             if (m_Actor != null)
             {
-                m_Rig.WorldToLocal(new Pose(m_Actor.transform.localPosition, m_Actor.transform.localRotation));
+                SetOrigin(new Pose(m_Actor.transform.localPosition, m_Actor.transform.localRotation));
             }
         }
 

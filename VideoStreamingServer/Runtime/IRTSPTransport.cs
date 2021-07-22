@@ -14,10 +14,18 @@ namespace Unity.LiveCapture.VideoStreaming.Server
         System.IO.Stream GetStream();
 
         /// <summary>
-        /// Gets the remote address.
+        /// Gets the address of the remote endpoint.
         /// </summary>
         /// <value>The remote address.</value>
         string RemoteAddress
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Get the address of the local endpoint.
+        /// </summary>
+        string LocalAddress
         {
             get;
         }

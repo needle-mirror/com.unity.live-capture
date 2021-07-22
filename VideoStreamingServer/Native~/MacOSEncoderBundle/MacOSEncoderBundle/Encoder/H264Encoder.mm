@@ -37,8 +37,10 @@ namespace MacOsEncodingPlugin
         }
     }
     
-    void H264Encoder::Initialize(bool buffersAllocation)
+    void H264Encoder::Initialize(bool useSRGB, bool buffersAllocation)
     {
+        m_UseSRGB = useSRGB;
+        
         auto sessionCreated = createSession();
         auto buffersCreated = (buffersAllocation) ? allocateBuffers() : true;
         
@@ -421,12 +423,13 @@ namespace MacOsEncodingPlugin
             CVMetalTextureRef imageTexture;
             auto width = m_FrameData.width;
             auto height = m_FrameData.height;
+            auto format = m_UseSRGB ? MTLPixelFormatBGRA8Unorm_sRGB : MTLPixelFormatBGRA8Unorm;
             
             result = CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
                                                                textureCache,
                                                                m_PixelBuffers[i],
                                                                nullptr,
-                                                               MTLPixelFormatBGRA8Unorm_sRGB,
+                                                               format,
                                                                width,
                                                                height,
                                                                0,

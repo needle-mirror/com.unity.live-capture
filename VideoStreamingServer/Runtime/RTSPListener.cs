@@ -47,7 +47,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
         }
 
         /// <summary>
-        /// Gets the remote address.
+        /// Gets the address of the remote endpoint.
         /// </summary>
         /// <value>The remote adress.</value>
         public string RemoteAdress
@@ -57,6 +57,11 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 return _transport.RemoteAddress;
             }
         }
+
+        /// <summary>
+        /// Get the address of the local endpoint.
+        /// </summary>
+        public string LocalAddress => _transport.LocalAddress;
 
         /// <summary>
         /// Starts this instance.

@@ -4,6 +4,7 @@ using UnityEngine;
 namespace Unity.LiveCapture.VirtualCamera
 {
     [SettingFilePath("UserSettings/LiveCapture/VideoServerSettings.asset", SettingFilePathAttribute.Location.ProjectFolder)]
+    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-user-preferences-video-server" + Documentation.endURL)]
     class VideoServerSettings : SettingAsset<VideoServerSettings>
     {
         const float k_MinResolutionScale = 0.1f;

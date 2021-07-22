@@ -15,6 +15,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         static class Contents
         {
+            public static readonly GUIContent HelpMenuIcon = EditorGUIUtility.IconContent("_Help");
             public static readonly GUIContent SettingMenuIcon = EditorGUIUtility.IconContent("_Popup");
             public static readonly GUIContent ResetLabel = EditorGUIUtility.TrTextContent("Reset", "Reset to default.");
             public static readonly GUIContent EncoderLabel = EditorGUIUtility.TrTextContent("Encoder", "The preferred encoder to use for video streaming.");
@@ -70,6 +71,14 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         public override void OnTitleBarGUI()
         {
             m_SerializedObject.Update();
+
+            if (Help.HasHelpForObject(VideoServerSettings.Instance))
+            {
+                if (EditorGUILayout.DropdownButton(Contents.HelpMenuIcon, FocusType.Passive, EditorStyles.label))
+                {
+                    Help.ShowHelpForObject(VideoServerSettings.Instance);
+                }
+            }
 
             if (EditorGUILayout.DropdownButton(Contents.SettingMenuIcon, FocusType.Passive, EditorStyles.label))
             {

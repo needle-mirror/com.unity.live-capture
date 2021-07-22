@@ -13,6 +13,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
     class RtspTcpTransport : IRtspTransport, IDisposable
     {
         private IPEndPoint _currentEndPoint;
+        private IPEndPoint _localEndpoint;
         private TcpClient _RtspServerClient;
 
         /// <summary>
@@ -26,6 +27,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
             Contract.EndContractBlock();
 
             _currentEndPoint = (IPEndPoint)tcpConnection.Client.RemoteEndPoint;
+            _localEndpoint = (IPEndPoint)tcpConnection.Client.LocalEndPoint;
             _RtspServerClient = tcpConnection;
         }
 
@@ -61,6 +63,9 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 return string.Format(CultureInfo.InvariantCulture, "{0}:{1}", _currentEndPoint.Address, _currentEndPoint.Port);
             }
         }
+        
+        public string LocalAddress => string.Format(CultureInfo.InvariantCulture, "{0}:{1}", _localEndpoint.Address,
+            _localEndpoint.Port);
 
         /// <summary>
         /// Closes this instance.

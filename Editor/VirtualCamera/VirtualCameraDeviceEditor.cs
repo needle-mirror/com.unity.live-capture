@@ -3,6 +3,8 @@ using Unity.LiveCapture.Editor;
 using Unity.LiveCapture.CompanionApp.Editor;
 using UnityEditor;
 using UnityEngine;
+using System.Linq;
+using System.Collections.ObjectModel;
 
 namespace Unity.LiveCapture.VirtualCamera.Editor
 {
@@ -12,30 +14,50 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         static readonly float k_SnapshotElementHeight = 4f * (EditorGUIUtility.singleLineHeight + 2f) + 2f;
         static readonly float k_PreviewWidth = k_SnapshotElementHeight * 16f / 9f;
 
+        static readonly ReadOnlyCollection<(GUIContent label, Func<UnityEngine.Object> createActor)> k_ActorCreateMenuItems =
+            new ReadOnlyCollection<(GUIContent, Func<UnityEngine.Object>)>
+            (
+                new (GUIContent, Func<UnityEngine.Object>)[]
+                {
+                    (Contents.CreateVirtualCameraActor, CreateVirtualCameraActor),
+#if VP_CINEMACHINE_2_4_0
+                    (Contents.CreateCinemachineCameraActor, CreateCinemachineCameraActor)
+#endif
+                }
+            );
+
         public static class Contents
         {
             public static GUIContent None = EditorGUIUtility.TrTextContent("None");
+            public static string ActorWarningMessage = L10n.Tr("Device requires a Virtual Camera Actor target.");
+            public static GUIContent CreateVirtualCameraActor = EditorGUIUtility.TrTextContent("Virtual Camera Actor");
+            public static GUIContent CreateCinemachineCameraActor = EditorGUIUtility.TrTextContent("Cinemachine Camera Actor");
             public static GUIContent LensAssetLabel = EditorGUIUtility.TrTextContent("Lens Asset", "The asset that provides the lens intrinsics.");
             public static GUIContent CameraBody = EditorGUIUtility.TrTextContent("Camera Body", "The parameters of the camera's body.");
             public static GUIContent Settings = EditorGUIUtility.TrTextContent("Settings", "The settings of the device.");
             public static GUIContent VideoSettingsButton = EditorGUIUtility.TrTextContent("Open Video Settings", "Open the settings of the video server.");
-            public static GUIContent AlignWithActor = EditorGUIUtility.TrTextContent("Align With Actor", "Aligns the pose of the device with the actor when not live.");
-            public static string AlignWithActorUndo = L10n.Tr("Align With Actor");
             public static string Deleted = L10n.Tr("(deleted)");
             public static GUIContent Snapshots = EditorGUIUtility.TrTextContent("Snapshots", "The snapshots taken using this device.");
             public static GUIContent TakeSnapshot = EditorGUIUtility.TrTextContent("Take Snapshot", "Save the current position, lens and camera body while generating a screenshot.");
             public static GUIContent GotoLabel = EditorGUIUtility.TrTextContent("Go To", "Move the camera to the saved position.");
             public static GUIContent Load = EditorGUIUtility.TrTextContent("Load", "Move the camera to the saved position and restore the saved lens and the camera body.");
             public static string PreviewNotAvailable = L10n.Tr("Preview not available.");
-            public static GUIStyle CenteredLabel;
 
-            static Contents()
+            static GUIStyle s_CenteredLabel;
+            public static GUIStyle CenteredLabel
             {
-                CenteredLabel = new GUIStyle(GUI.skin.label)
+                get
                 {
-                    alignment = TextAnchor.MiddleCenter,
-                    wordWrap = true
-                };
+                    if (s_CenteredLabel == null)
+                    {
+                        s_CenteredLabel = new GUIStyle(GUI.skin.label)
+                        {
+                            alignment = TextAnchor.MiddleCenter,
+                            wordWrap = true
+                        };
+                    }
+                    return s_CenteredLabel;
+                }
             }
         }
 
@@ -75,8 +97,19 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             serializedObject.Update();
 
             DoActorGUI(m_Actor);
+            if (m_Actor.objectReferenceValue == null)
+            {
+                EditorGUILayout.HelpBox(Contents.ActorWarningMessage, MessageType.Warning);
+                DoActorCreateGUI(m_Actor, k_ActorCreateMenuItems);
+            }
+
             DoLiveLinkChannelsGUI(m_LiveLinkChannels);
             DoLensAssetField();
+
+            if (GUILayout.Button(Contents.VideoSettingsButton))
+            {
+                VideoServerSettingsProvider.Open();
+            }
 
             LensDrawerUtility.DoLensGUI(m_Lens, m_LensIntrinsics);
 
@@ -86,13 +119,6 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             DoSnapshotsGUI();
 
             serializedObject.ApplyModifiedProperties();
-
-            DoAlignWithActorGUI();
-
-            if (GUILayout.Button(Contents.VideoSettingsButton))
-            {
-                VideoServerSettingsProvider.Open();
-            }
         }
 
         void CreateList()
@@ -180,6 +206,27 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             {
                 m_Device.DeleteSnapshot(m_List.Index);
             };
+        }
+
+        static VirtualCameraActor CreateVirtualCameraActor()
+        {
+            return GetNewActor(VirtualCameraCreatorUtilities.CreateVirtualCameraActor());
+        }
+
+#if VP_CINEMACHINE_2_4_0
+        static VirtualCameraActor CreateCinemachineCameraActor()
+        {
+            return GetNewActor(VirtualCameraCreatorUtilities.CreateCinemachineCameraActor());
+        }
+#endif
+
+        static VirtualCameraActor GetNewActor(GameObject newGameObject)
+        {
+            EditorGUIUtility.PingObject(newGameObject);
+
+            var newActor = newGameObject.GetComponent<VirtualCameraActor>();
+            Debug.Assert(newActor != null);
+            return newActor;
         }
 
         string GetSensorName(Vector2 sensorSize)
@@ -305,25 +352,6 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             m_LensAsset.objectReferenceValue = preset;
 
             serializedObject.ApplyModifiedProperties();
-        }
-
-        void DoAlignWithActorGUI()
-        {
-            var takeRecorder = m_Device.GetTakeRecorder();
-            var isLive = takeRecorder != null && takeRecorder.IsLive() && m_Device.IsLive();
-            var disabled = m_Device.Actor == null || isLive;
-
-            using (new EditorGUI.DisabledGroupScope(disabled))
-            {
-                if (GUILayout.Button(Contents.AlignWithActor))
-                {
-                    Undo.RegisterCompleteObjectUndo(m_Device, Contents.AlignWithActorUndo);
-
-                    m_Device.InitializeLocalPose();
-
-                    EditorUtility.SetDirty(m_Device);
-                }
-            }
         }
     }
 }

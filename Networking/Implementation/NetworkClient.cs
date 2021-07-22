@@ -133,18 +133,12 @@ namespace Unity.LiveCapture.Networking
 
         bool StartInternal(IPEndPoint remoteEndPoint, int localPort)
         {
-            // Assign an IP/port so the server can know where to send messages. We should pick the local
-            // address that is most similar to the server address, since they should share the subnet
-            // portion of the address if they are on the same network. For the port we can let the system
-            // decide on a port if the user does not specify one.
-            var localEndPoint = new IPEndPoint(NetworkUtilities.FindClosestAddresses(remoteEndPoint).localAddress, localPort);
-
             // We create a new instance so that if the client is stopped we can safely modify the state
             // without worrying about it being modified by the EndConnect callback.
             m_ConnectState = new ConnectState
             {
                 RemoteEndPoint = remoteEndPoint,
-                LocalEndPoint = localEndPoint,
+                LocalEndPoint = new IPEndPoint(NetworkUtilities.GetRoutingInterface(remoteEndPoint), localPort),
             };
 
             if (!CreateUdpSocket(m_ConnectState))

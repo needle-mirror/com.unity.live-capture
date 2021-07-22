@@ -21,9 +21,8 @@ namespace Unity.LiveCapture.Editor
                 GUILayout.Width(230f),
                 GUILayout.Height(24f)
             };
-            static string iconPath = "Packages/com.unity.live-capture/Editor/Core/Icons";
-            public static readonly Texture2D icon = EditorGUIUtility.Load($"{iconPath}/d_LiveCaptureConnectionWindow@64.png") as Texture2D;
-            public static readonly GUIContent WindowTitle = EditorGUIUtility.TrTextContent("Connections", icon);
+            static readonly string k_IconPath = "Packages/com.unity.live-capture/Editor/Core/Icons";
+            public static readonly GUIContent WindowTitle = EditorGUIUtility.TrTextContentWithIcon("Connections", $"{k_IconPath}/LiveCaptureConnectionWindow@64.png");
             public static readonly GUIContent FirewallConfigureLabel = EditorGUIUtility.TrTextContent("Configure Firewall", "Add rules to the firewall that enable Unity to receive connections on private or work networks.");
             public static readonly GUIContent CreateServerLabel = EditorGUIUtility.TrTextContent("Create Server", "Create a Server of the selected type.");
         }
@@ -40,12 +39,13 @@ namespace Unity.LiveCapture.Editor
         {
             var window = GetWindow<ServerWindow>();
 
-            window.titleContent = Contents.WindowTitle;
             window.minSize = k_WindowSize;
         }
 
         void OnEnable()
         {
+            titleContent = Contents.WindowTitle;
+
             Undo.undoRedoPerformed += Repaint;
             ServerManager.ServerChanged += Repaint;
 

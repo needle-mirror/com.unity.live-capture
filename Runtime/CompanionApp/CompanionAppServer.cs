@@ -292,12 +292,13 @@ namespace Unity.LiveCapture.CompanionApp
 
         void InitializeClient(Message message)
         {
-            var remote = message.Remote;
-
-            m_Server.DeregisterMessageHandler(remote);
-
             try
             {
+                if (message.ChannelType != ChannelType.ReliableOrdered)
+                {
+                    return;
+                }
+
                 var streamReader = new StreamReader(message.Data, Encoding.UTF8);
                 var json = streamReader.ReadToEnd();
                 var data = default(ClientInitialization);
@@ -318,6 +319,7 @@ namespace Unity.LiveCapture.CompanionApp
                     return;
                 }
 
+                var remote = message.Remote;
                 var client = Activator.CreateInstance(clientType, m_Server, remote, data) as CompanionAppClient;
                 client.SendProtocol();
 

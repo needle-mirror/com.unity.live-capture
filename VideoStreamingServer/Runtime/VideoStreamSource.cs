@@ -387,7 +387,11 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 {
                     case EncoderFormat.R8G8B8:
                     {
-                        capturedTexture = RenderTexture.GetTemporary(width, height, 0, GraphicsFormat.B8G8R8A8_SRGB);
+                        var format = QualitySettings.activeColorSpace == ColorSpace.Gamma ?
+                            GraphicsFormat.B8G8R8A8_UNorm :
+                            GraphicsFormat.B8G8R8A8_SRGB;
+
+                        capturedTexture = RenderTexture.GetTemporary(width, height, 0, format);
 
                         var scale = new Vector2(1f, m_UsingLegacyRenderPipeline ? -1f : 1f);
                         var offset = new Vector2(0f, m_UsingLegacyRenderPipeline ? 1f : 0f);

@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.1-pre.570] - 2021-07-22
+
+### Added
+  - [Companion Apps] Privacy policy link
+  - Button to open project settings from Take Recorder  
+  - Help button in Video Server settings
+  - "Create & Assign New Actor" button
+  - New editor icons
+  
+### Changed
+  - Show reticle in manual mode.
+  - Virtual Camera Actor can be positioned manually.
+  - "Align with Actor" button removed.
+  - Damping related fields are grayed out when damping is disabled
+  - Auto Horizon option is grayed out when roll is enabled
+  - Improved network connectivity
+  - Blend shape values have sliders to modify them 
+  - Faster focus change when distance goes from infinity to something smaller and damping is enabled
+
+### Fixed
+  - AABB errors when using Virtual Camera with URP
+  - Divide by zero errors when resizing Virtual Camera device inspector
+  - [Virtual Camera] Reticle not showing on phone
+  - Crash when connecting a virtual camera app on MacOS
+  - [Virtual Camera] Reticle visible in playback mode on tablet
+  - Video streaming when multiple network interfaces are present
+  - Video streaming not working with the built-in render pipeline
+  - [Companion apps] Multiple issues with the connection view
+  - [Face Capture] Issue when using the "Flip Horizontally" option
+
 ## [1.0.1-pre.525] - 2021-07-06
 
 ### Added

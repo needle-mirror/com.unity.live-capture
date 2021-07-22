@@ -319,23 +319,29 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 if (transport.LowerTransport == Messages.RtspTransport.LowerTransportType.UDP
                     && transport.IsMulticast == false)
                 {
-                    Boolean udp_supported = true;
-                    if (udp_supported)
+                    // RTP over UDP mode.
+                    // Create a pair of UDP sockets - One is for the Video, one is for the RTCP.
+                    lock (rtsp_list)
                     {
-                        // RTP over UDP mode
-                        // Create a pair of UDP sockets - One is for the Video, one is for the RTCP
-                        udp_pair = new UDPSocket(50000, 51000); // give a range of 500 pairs (1000 addresses) to try incase some address are in use
-                        udp_pair.Start(); // start listening for data on the UDP ports
+                        foreach (RTSPConnection connection in rtsp_list)
+                        {
+                            if (connection.listener.RemoteAdress.Equals(listener.RemoteAdress))
+                            {
+                                // Give a range of 500 pairs (1000 addresses) to try incase some address are in use.
+                                // Also pass in the local IP address, so the socket is bound on the right interface
+                                var localAddress = IPAddress.Parse(connection.listener.LocalAddress.Split(':')[0]);
+                                udp_pair = new UDPSocket(50000, 51000, localAddress);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    udp_pair.Start(); // start listening for data on the UDP ports
 
-                        // Pass the Port of the two sockets back in the reply
-                        transport_reply.LowerTransport = Messages.RtspTransport.LowerTransportType.UDP;
-                        transport_reply.IsMulticast = false;
-                        transport_reply.ServerPort = new Messages.PortCouple(udp_pair.data_port, udp_pair.control_port);
-                    }
-                    else
-                    {
-                        transport_reply = null;
-                    }
+                    // Pass the Port of the two sockets back in the reply
+                    transport_reply.LowerTransport = Messages.RtspTransport.LowerTransportType.UDP;
+                    transport_reply.IsMulticast = false;
+                    transport_reply.ServerPort = new Messages.PortCouple(udp_pair.data_port, udp_pair.control_port);
                 }
 
                 if (transport.LowerTransport == Messages.RtspTransport.LowerTransportType.UDP

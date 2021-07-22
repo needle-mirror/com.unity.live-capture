@@ -97,6 +97,8 @@ namespace MacOsEncodingPlugin
             {
                 s_UnityGraphics = unityGraphics;
                 unityGraphics->RegisterDeviceEventCallback(OnGraphicsDeviceEvent);
+                
+                OnGraphicsDeviceEvent(kUnityGfxDeviceEventInitialize);
             }
         }
     }
@@ -206,7 +208,7 @@ namespace MacOsEncodingPlugin
         
         auto metalDevice = static_cast<MetalGraphicsEncoderDevice*>(s_GraphicsEncoderDevice);
         auto instanceEncoder = new H264Encoder(encoderData->settings, metalDevice);
-        instanceEncoder->Initialize();
+        instanceEncoder->Initialize(encoderData->useSRGB);
         
         s_EncoderMap.Add(encoderData->id, instanceEncoder);
     }

@@ -5,13 +5,22 @@ using UnityEngine.UI;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
+    interface IFocusReticle
+    {
+        void SetPosition(Vector2 position);
+        void SetActive(bool value);
+        event Action AnimationComplete;
+        void ResetAnimation();
+        IEnumerator Animate(bool hideOnComplete);
+    }
+
     /// <summary>
     /// A widget representing the focus reticle, featuring animation.
     /// It is both used on device and in the server's game view.
     /// </summary>
     [ExecuteAlways]
     [AddComponentMenu("")]
-    class FocusReticle : MonoBehaviour
+    class FocusReticle : MonoBehaviour, IFocusReticle
     {
         const float k_ScaleAnimationDuration = 0.3f;
 
@@ -25,6 +34,16 @@ namespace Unity.LiveCapture.VirtualCamera
         void Awake()
         {
             m_ReticleImage = transform.Find("Square").GetComponent<Image>();
+        }
+
+        public void SetActive(bool value)
+        {
+            gameObject.SetActive(value);
+        }
+
+        public void SetPosition(Vector2 position)
+        {
+            transform.position = position;
         }
 
         /// <summary>
