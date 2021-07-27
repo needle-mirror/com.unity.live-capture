@@ -10,7 +10,7 @@ After connecting to the companion app:
 
 ## Reviewing a recorded performance
 
-After recording a Take, tap the button in the bottom right to enter **Review Mode**.
+After recording a Take, tap the button in the bottom right to enter the **Playback** mode.
 
 ![Timeline Playback Control](images/review-button.png)
 

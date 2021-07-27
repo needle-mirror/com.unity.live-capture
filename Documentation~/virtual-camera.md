@@ -1,19 +1,12 @@
 # Using the Virtual Camera
 
-* [Getting started](virtual-camera-getting-started.md)
-* [Workflow](virtual-camera-workflow.md)
-* [App controls and settings](virtual-camera-app-controls.md)
-* [Virtual Camera Device](ref-component-virtual-camera-device.md)
+## Before you start
 
-## Requirements
+1. [Install the Live Capture package and the Unity Virtual Camera app](index.md#installation)
 
-* PC running Windows or OSX.
+2. [Make sure your network and your firewall are correctly set up](setup-network.md)
 
-* iPad with ARKit capabilities -- iPad Pro, iPad Air (3rd gen or later), iPad mini (5th gen or later), or iPad (5th gen or later).
-
-* Video streaming requires a PC running Windows 10 with a modern GPU (NVIDIA GTX 1060 or better is recommended though not required).
-
-**Note:** Currently the app functions on an iPhone with non-optimal layout.
+3. [Connect the Virtual Camera app to the Unity Editor](setup-connecting.md)
 
 ## Virtual Camera app features
 

@@ -19,7 +19,7 @@ The following is an example of the file structure of the recorded takes in Asset
 1. Open an unlocked Timeline window.
 2. Select the **Take Recorder** game object.
 3. Select an available **Take** from the list in the **Take Recorder** Inspector.
-4. Make sure the **Take Recorder** is in **Preview** mode instead of **Live**. Disable **Live** mode by clicking the **Preview** button in the **Take Recorder** component.
+4. Make sure the **Take Recorder** is in **Playback** mode instead of **Live**. Disable **Live** mode by clicking the **Playback** button in the **Take Recorder** component.
 5. Press the **Play** button in the Timeline or scrub the playhead.
 6. Press the **Live** button on the **Take Recorder** when you're ready to record again.
 

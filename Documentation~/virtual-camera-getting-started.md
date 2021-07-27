@@ -1,9 +1,5 @@
 # Getting started
 
-## App
-
-Install the Virtual Camera app [via Test Flight](setup-installing-app.md).
-
 ### Tracking tips
 
 * AR camera tracking involves image analysis, which requires a clear image. Patterned surfaces are best.
@@ -61,4 +57,3 @@ You are now ready to record Takes with your **Companion App**.
 
 1. Depends on the Post-Processing Stack V2. The feature will only be activated if `com.unity.postprocessing` is installed.
 2. At the moment Depth Of Field is only supported when using the basic Virtual Camera Actor (as opposed to the Cinemachine variant).
-

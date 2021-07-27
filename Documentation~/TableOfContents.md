@@ -1,7 +1,6 @@
 * [Overview](index.md)
 * Setup
   * [Network setup](setup-network.md)
-  * [Installing apps](setup-installing-app.md)
   * [Connecting App and Editor](setup-connecting.md)
   * [Connections window](ref-window-connections.md)
 * [Take System](take-system.md)

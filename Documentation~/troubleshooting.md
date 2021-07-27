@@ -14,10 +14,9 @@ If you still can't connect: on the app, switch to **Manual** mode and manually e
 ## ***I'm connected but nothing is happening in the editor***
 
 Ensure that:
-* There is a **TakeRecorder** object in your scene (**GameObject > Live Capture > Take Recorder**).
+* There is a **Take Recorder** object in your scene (**GameObject > Live Capture > Take Recorder**).
 * There is a device to handle incoming data streams by adding a device to **Capture Devices** on the **Take Recorder** component in your scene.
 * The device game object (e.g. "New VirtualCameraDevice") is a child of a game object with a **Take Recorder** component and the device is assigned in the **Capture Devices** list of the **Take Recorder**.
 * The toggle to the left of the device in the **Capture Devices** section of the **Take Recorder** component is enabled.
 * **Live** mode is enabled on the **Take Recorder**.
 * In the case of using the Virtual Camera or Face Capture apps, ensure that the device has an **Actor** assigned.
-

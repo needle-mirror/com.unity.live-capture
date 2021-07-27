@@ -1,15 +1,12 @@
 # Face Capture
 
-* [Getting started](face-capture-getting-started.md)
-* [Using ARKit Mapping Evaluators](face-capture-mapping-evaluator.md)
+## Before you start
 
-## Requirements
+1. [Install the Live Capture package and the Unity Face Capture app](index.md#installation)
 
-* PC running Windows or OSX
+2. [Make sure your network and your firewall are correctly set up](setup-network.md)
 
-* iPhone or iPad with [ARKit face tracking capabilities](https://support.apple.com/en-us/HT209183)
-
-**Note:** An iPhone is preferable to an iPad for ergonomics.
+3. [Connect the Face Capture app to the Unity Editor](setup-connecting.md)
 
 ## Features
 

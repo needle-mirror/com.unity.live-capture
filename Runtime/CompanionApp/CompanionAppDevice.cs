@@ -250,8 +250,9 @@ namespace Unity.LiveCapture.CompanionApp
                 SendDeviceState(takeRecorder.IsLive());
 
                 var slate = takeRecorder.GetActiveSlate();
+                var hasSlate = slate != null;
                 var slateChanged = m_SlateChangeTracker.Changed(slate);
-                var take = slate != null ? slate.Take : null;
+                var take = hasSlate ? slate.Take : null;
 
                 var assetName = GetAssetName();
                 var assetNameChanged = assetName != m_LastAssetName;
@@ -260,15 +261,17 @@ namespace Unity.LiveCapture.CompanionApp
                 if (TryGetInternalClient(out var client))
                 {
                     client.SendFrameRate(takeRecorder.IsLive() || take == null ? takeRecorder.FrameRate : take.FrameRate);
-                    client.SendHasSlate(slate != null);
-                    client.SendSlateDuration(slate != null ? slate.Duration : 0d);
+                    client.SendHasSlate(hasSlate);
+                    client.SendSlateDuration(hasSlate ? slate.Duration : 0d);
                     client.SendSlateIsPreviewing(takeRecorder.IsPreviewPlaying());
                     client.SendSlatePreviewTime(takeRecorder.GetPreviewTime());
 
                     if (slateChanged || assetNameChanged)
                     {
-                        m_TakeNameFormatter.ConfigureTake(slate.SceneNumber, slate.ShotName, slate.TakeNumber);
-                        m_TakeNameFormatter.ConfigureAsset(GetAssetName());
+                        if (hasSlate)
+                            m_TakeNameFormatter.ConfigureTake(slate.SceneNumber, slate.ShotName, slate.TakeNumber);
+                        else
+                            m_TakeNameFormatter.ConfigureTake(0, "Shot", 0);
 
                         client.SendNextTakeName(m_TakeNameFormatter.GetTakeName());
                         client.SendNextAssetName(m_TakeNameFormatter.GetAssetName());

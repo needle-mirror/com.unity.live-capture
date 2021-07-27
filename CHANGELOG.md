@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.1-pre.585] - 2021-07-27
+
+### Changed
+  - Update to the documentation
+
+### Fixed
+  - Null reference exception when a user resizes a clip inside a TakeRecorderTrack
+
 ## [1.0.1-pre.570] - 2021-07-22
 
 ### Added

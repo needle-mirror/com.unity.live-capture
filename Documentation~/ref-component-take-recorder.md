@@ -2,7 +2,7 @@
 
 The Take Recorder component is responsible for recording, managing, and playing back Live Capture takes.
 
-To use the Take Recorder component, you must create a dedicated TakeRecorder GameObject in your Scene Hierarchy: **Live Capture > Take Recorder**
+To use the Take Recorder component, you must create a dedicated Take Recorder GameObject in your Scene Hierarchy: **Live Capture > Take Recorder**
 
 ![Take Recorder Component](images/ref-component-take-recorder.png)
 
@@ -13,9 +13,9 @@ All controls and properties to record and play back Live Capture takes.
 | Control/property | Description |
 |:---|:---|
 | **Live** | Sets the Take Recorder in Live mode, which allows you to capture and record takes through connected apps. |
-| **Preview** | Sets the Take Recorder in Preview mode, which allows you to play back takes in the Unity Editor and on the connected apps. |
+| **Playback** | Sets the Take Recorder in Playback mode, which allows you to play back takes in the Unity Editor and on the connected apps. |
 | **Start/Stop Recording** | Allows you to start and stop the recording of a take according to the current connected apps.<br />This button is only available when you set the Take Recorder in Live mode.<br /><br />**Note:** When you start and stop a recording from a connected app, the status of this button updates accordingly in the Unity Editor. |
-| **Start/Stop Preview** | Allows you to start and stop playing back a take according to the current connected apps.<br />This button is only available when you set the Take Recorder in Preview mode.<br /><br />**Note:** When you start and stop playing back a take from a connected app, the status of this button updates accordingly in the Unity Editor. |
+| **Start/Stop Preview** | Allows you to start and stop playing back a take according to the current connected apps.<br />This button is only available when you set the Take Recorder in Playback mode.<br /><br />**Note:** When you start and stop playing back a take from a connected app, the status of this button updates accordingly in the Unity Editor. |
 
 ## Slate/take properties
 
