@@ -83,6 +83,7 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
             m_PushGlobalArgs[1] = m_UpdateShaderVariablesArgs[0];
             k_PushGlobalShaderVariablesMethodInfo.Invoke(null, m_PushGlobalArgs);
         }
+
 #endif
 
         void Render(ScriptableRenderContext context, HDCamera camera)
@@ -94,7 +95,7 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
 #if SET_GLOBAL_SHADER_VARIABLES
             SetGlobalShaderVariables(cmd, camera);
 #endif
-            
+
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
 

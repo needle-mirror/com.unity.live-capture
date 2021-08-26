@@ -23,9 +23,8 @@ To install the Live Capture package, follow the instructions in the [Package Man
 
 | Requirements |  |
 |---|---|
-| **Unity Editor**   | **Unity Editor 2020.3** or later version. |
+| **Unity Editor**   | **Unity Editor 2020.3.16f1** or later version. |
 | **Platform**       | Windows or macOS. |
-| **Hardware (GPU)** | • Virtual Camera video streaming requires a PC running Windows 10 with a modern GPU (NVIDIA GTX 1060 or better is recommended though not required).<br />• Face Capture requires no specific hardware. |
 
 <a name="install-app"></a>
 ### Installing the apps on your mobile device
@@ -35,7 +34,7 @@ The Unity Virtual Camera and Unity Face Capture apps are currently available on 
 | App name | Device requirements | Get the app |
 |:---|:---|:---|
 | **Unity Virtual Camera** | iPad or iPhone with:<br />• iOS 14.5 or higher<br />• ARKit capabilities (implied with the required iOS version)| [![Unity Virtual Camera](images/app-store-badge.png)](https://apps.apple.com/us/app/unity-virtual-camera/id1478175507) |
-| **Unity Face Capture** | iPhone or iPad with:<br />• iOS 14.6 or higher<br />• ARKit _face tracking_ capabilities (see the [list of supported devices](https://support.apple.com/en-us/HT209183)) | [![Unity Face Capture](images/app-store-badge.png)](https://apps.apple.com/us/app/unity-face-capture/id1544159771) |
+| **Unity Face Capture** | iPhone or iPad with:<br />• iOS 14.6 or higher<br />• ARKit _face tracking_ capabilities ([device supporting Face ID](https://support.apple.com/en-us/HT209183) **or** [device with an A12 Bionic chip](https://en.wikipedia.org/wiki/Apple_A12)) | [![Unity Face Capture](images/app-store-badge.png)](https://apps.apple.com/us/app/unity-face-capture/id1544159771) |
 
 ### Network requirements
 
@@ -47,4 +46,4 @@ The Unity Virtual Camera and Unity Face Capture apps are currently available on 
 
 * Your **firewall** must allow your Unity Editor program to get **inbound connections** from external apps of your local network.
 
-[Get more information on how to meet those network requirements](setup-network.md).
+[Get more information on how to meet those network requirements in Windows](setup-network.md).

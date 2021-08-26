@@ -10,14 +10,12 @@ namespace Unity.LiveCapture.VirtualCamera
     class UrpFocusPlaneImpl : IFocusPlaneImpl, IRenderTargetProvider<RenderTexture>
     {
         RenderTexture m_Target;
-        Material m_RenderMaterial;
         Material m_ComposeMaterial;
 
-        /// <inheritdoc/>
-        public Material RenderMaterial => m_RenderMaterial;
-
-        /// <inheritdoc/>
-        public Material ComposeMaterial => m_ComposeMaterial;
+        public UrpFocusPlaneImpl(Material composeMaterial)
+        {
+            m_ComposeMaterial = composeMaterial;
+        }
 
         /// <inheritdoc/>
         public bool TryGetRenderTarget<T>(out T target)
@@ -41,15 +39,12 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         public void Initialize()
         {
-            m_RenderMaterial = CoreUtils.CreateEngineMaterial("Hidden/LiveCapture/FocusPlane/Render/Urp");
-            m_ComposeMaterial = CoreUtils.CreateEngineMaterial("Hidden/LiveCapture/FocusPlane/Compose/Urp");
         }
 
         /// <inheritdoc/>
         public void Dispose()
         {
-            CoreUtils.Destroy(m_RenderMaterial);
-            CoreUtils.Destroy(m_ComposeMaterial);
+            m_ComposeMaterial = null;
 
             if (m_Target != null)
             {

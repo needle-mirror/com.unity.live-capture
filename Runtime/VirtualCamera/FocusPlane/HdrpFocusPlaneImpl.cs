@@ -14,15 +14,13 @@ namespace Unity.LiveCapture.VirtualCamera
         CustomPassManager.Handle<HdrpFocusPlaneRenderPass> m_RenderPassHandle;
         CustomPassManager.Handle<HdrpFocusPlaneComposePass> m_ComposePassHandle;
         RTHandle m_Target;
-        Material m_RenderMaterial;
         Material m_ComposeMaterial;
         bool m_InitializedTarget;
 
-        /// <inheritdoc/>
-        public Material RenderMaterial => m_RenderMaterial;
-
-        /// <inheritdoc/>
-        public Material ComposeMaterial => m_ComposeMaterial;
+        public HdrpFocusPlaneImpl(Material composeMaterial)
+        {
+            m_ComposeMaterial = composeMaterial;
+        }
 
         /// <inheritdoc/>
         public bool TryGetRenderTarget<T>(out T target)
@@ -46,8 +44,6 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         public void Initialize()
         {
-            m_RenderMaterial = CoreUtils.CreateEngineMaterial("Hidden/LiveCapture/FocusPlane/Render/Hdrp");
-            m_ComposeMaterial = CoreUtils.CreateEngineMaterial("Hidden/LiveCapture/FocusPlane/Compose/Hdrp");
             m_RenderPassHandle = new CustomPassManager.Handle<HdrpFocusPlaneRenderPass>(CustomPassInjectionPoint.BeforePostProcess);
             m_ComposePassHandle = new CustomPassManager.Handle<HdrpFocusPlaneComposePass>(CustomPassInjectionPoint.AfterPostProcess);
             m_RenderPassHandle.GetPass().name = FocusPlaneConsts.RenderProfilingSamplerLabel;
@@ -59,9 +55,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             m_RenderPassHandle.Dispose();
             m_ComposePassHandle.Dispose();
-
-            CoreUtils.Destroy(m_RenderMaterial);
-            CoreUtils.Destroy(m_ComposeMaterial);
+            m_ComposeMaterial = null;
 
             if (m_InitializedTarget)
             {

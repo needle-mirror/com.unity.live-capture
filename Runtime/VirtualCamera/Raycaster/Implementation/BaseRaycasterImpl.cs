@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 
@@ -86,6 +87,8 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
 
         CustomSampler m_RaycastSampler;
         CustomSampler m_PickingSampler;
+        Shader m_PickingShader;
+        Material m_PickingMaterial;
 
         /// <inheritdoc/>
         public virtual void Initialize()
@@ -147,6 +150,32 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
             AdditionalCoreUtils.DestroyIfNeeded(ref m_DepthTexture);
             AdditionalCoreUtils.DestroyIfNeeded(ref m_DepthAsColorTexture);
             AdditionalCoreUtils.DestroyIfNeeded(ref m_ColorTexture);
+            AdditionalCoreUtils.DestroyIfNeeded(ref m_PickingMaterial);
+        }
+
+        // Lazily instantiated since it will be invoked rarely if at all.
+        protected Shader GetPickingShader()
+        {
+            if (m_PickingShader == null)
+            {
+                m_PickingShader = Shader.Find("Hidden/LiveCapture/ObjectPicking");
+                Assert.IsNotNull(m_PickingShader);
+                Assert.IsTrue(m_PickingShader.isSupported);
+            }
+
+            return m_PickingShader;
+        }
+
+        // Lazily instantiated since it will be invoked rarely if at all.
+        protected Material GetPickingMaterial()
+        {
+            if (m_PickingMaterial == null)
+            {
+                m_PickingMaterial = new Material(GetPickingShader());
+                m_PickingMaterial.hideFlags = HideFlags.HideAndDontSave;
+            }
+
+            return m_PickingMaterial;
         }
 
         /// <inheritdoc/>

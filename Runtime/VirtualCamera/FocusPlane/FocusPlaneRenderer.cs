@@ -30,22 +30,61 @@ namespace Unity.LiveCapture.VirtualCamera
     [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-focus-plane-renderer" + Documentation.endURL)]
     public class FocusPlaneRenderer : MonoBehaviour
     {
+        class NullImpl : IFocusPlaneImpl
+        {
+            public void SetCamera(Camera camera)
+            {
+            }
+
+            public void Initialize()
+            {
+            }
+
+            public void Dispose()
+            {
+            }
+
+            public void Update()
+            {
+            }
+
+            public bool TryGetRenderTarget<T>(out T target)
+            {
+                target = default;
+                return false;
+            }
+
+            public bool AllocateTargetIfNeeded(int width, int height)
+            {
+                return false;
+            }
+        }
+
+        internal const string k_RenderShaderPath = "Hidden/LiveCapture/FocusPlane/Render";
+        internal const string k_ComposeShaderPath = "Hidden/LiveCapture/FocusPlane/Compose";
+
         [SerializeField, Tooltip("The camera to use to render the focus plane.")]
         Camera m_Camera;
         [SerializeField]
         FocusPlaneSettings m_Settings = FocusPlaneSettings.GetDefault();
 
+        Material m_RenderMaterial;
+        Material m_ComposeMaterial;
         FocusPlaneSettings m_CachedSettings;
 
 #pragma warning disable 649
         IFocusPlaneImpl m_Impl;
 #pragma warning restore 649
 
-        /// <inheritdoc cref="IFocusPlaneImpl.RenderMaterial" />
-        internal Material RenderMaterial => m_Impl.RenderMaterial;
+        /// <summary>
+        /// The material used to render the focus plane.
+        /// </summary>
+        internal Material RenderMaterial => m_RenderMaterial;
 
-        /// <inheritdoc cref="IFocusPlaneImpl.ComposeMaterial" />
-        internal Material ComposeMaterial => m_Impl.ComposeMaterial;
+        /// <summary>
+        /// The material used to blend the rasterized focus plane with the final frame.
+        /// </summary>
+        internal Material ComposeMaterial => m_ComposeMaterial;
 
         /// <inheritdoc cref="IFocusPlaneImpl.TryGetRenderTarget{T}" />
         internal bool TryGetRenderTarget<T>(out T target)
@@ -100,17 +139,31 @@ namespace Unity.LiveCapture.VirtualCamera
             // so that material properties get updated right away.
             m_CachedSettings.BackgroundOpacity += 1;
 
+            m_RenderMaterial = AdditionalCoreUtils.CreateEngineMaterial(k_RenderShaderPath);
+            m_ComposeMaterial = AdditionalCoreUtils.CreateEngineMaterial(k_ComposeShaderPath);
+
+            // Shaders require Unity 2020.3.16f1 or newer.
+            if (m_RenderMaterial == null || m_ComposeMaterial == null)
+            {
+                Debug.LogError(
+                    $"Could not create {nameof(FocusPlaneRenderer)} materials." +
+                    " Make sure that you are using Unity 2020.3.16f1 or higher.");
+
+                m_Impl = new NullImpl();
+                return;
+            }
+
 #if HDRP_10_2_OR_NEWER
             if (GraphicsSettings.renderPipelineAsset is HDRenderPipelineAsset)
             {
-                m_Impl = new HdrpFocusPlaneImpl();
+                m_Impl = new HdrpFocusPlaneImpl(m_ComposeMaterial);
             }
 #endif
 
 #if URP_10_2_OR_NEWER
             if (GraphicsSettings.renderPipelineAsset is UniversalRenderPipelineAsset)
             {
-                m_Impl = new UrpFocusPlaneImpl();
+                m_Impl = new UrpFocusPlaneImpl(m_ComposeMaterial);
             }
 #endif
 
@@ -119,7 +172,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 Assert.IsNull(GraphicsSettings.renderPipelineAsset,
                     $"{nameof(FocusPlaneRenderer)}: no SRP implementation, yet cannot default to legacy render pipeline.");
 
-                m_Impl = new LegacyFocusPlaneImpl();
+                m_Impl = new LegacyFocusPlaneImpl(m_RenderMaterial, m_ComposeMaterial);
             }
 
             m_Impl.Initialize();
@@ -129,6 +182,10 @@ namespace Unity.LiveCapture.VirtualCamera
         void OnDisable()
         {
             m_Impl.Dispose();
+            m_Impl = null;
+
+            AdditionalCoreUtils.DestroyIfNeeded(ref m_RenderMaterial);
+            AdditionalCoreUtils.DestroyIfNeeded(ref m_ComposeMaterial);
         }
 
         void OnValidate()
@@ -141,7 +198,10 @@ namespace Unity.LiveCapture.VirtualCamera
             if (m_Settings != m_CachedSettings)
             {
                 m_CachedSettings = m_Settings;
-                m_Settings.Apply(RenderMaterial);
+                if (m_RenderMaterial != null)
+                {
+                    m_Settings.Apply(m_RenderMaterial);
+                }
             }
 
             m_Impl.Update();

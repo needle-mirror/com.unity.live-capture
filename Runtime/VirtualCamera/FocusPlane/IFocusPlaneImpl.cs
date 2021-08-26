@@ -8,19 +8,8 @@ namespace Unity.LiveCapture.VirtualCamera
     interface IFocusPlaneImpl
     {
         /// <summary>
-        /// The material used to render the focus plane.
-        /// </summary>
-        Material RenderMaterial { get; }
-
-        /// <summary>
-        /// The material used to blend the rasterized focus plane with the final frame.
-        /// </summary>
-        Material ComposeMaterial { get; }
-
-        /// <summary>
         /// Set the camera to render the focus plane on.
         /// </summary>
-        /// <param name="camera">The camera.</param>
         void SetCamera(Camera camera);
 
         /// <summary>

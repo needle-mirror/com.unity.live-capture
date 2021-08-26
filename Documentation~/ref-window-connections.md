@@ -10,9 +10,11 @@ To open this window, from the Unity Editor main menu, select Windows
 
 Use the **Configure Firewall** button to automatically set up a dedicated inbound rule in your firewall so that you can connect apps from your local network with the current version of the Unity Editor you're using.
 
->**Note:** This button appears only if the Unity Editor detects that your firewall is not optimally configured for Live Capture.
+>**Note:**
+>* This feature is only available on Windows.
+>* The button appears only if the Unity Editor detects that your firewall is not optimally configured for Live Capture.
 
-See [how to setup your network](setup-network.md) if you encounter connection issues.
+See [how to setup your network on Windows](setup-network.md) if you encounter connection issues.
 
 ### Companion App Server
 

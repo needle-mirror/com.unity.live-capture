@@ -119,6 +119,20 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             DoSnapshotsGUI();
 
             serializedObject.ApplyModifiedProperties();
+
+#if URP_10_2_OR_NEWER
+            if (m_Device.Settings.FocusPlane)
+            {
+                RenderFeatureEditor<FocusPlaneRenderer, VirtualCameraScriptableRenderFeature>.OnInspectorGUI();
+            }
+            
+            if (m_Device.Settings.GateMask ||
+                m_Device.Settings.AspectRatioLines ||
+                m_Device.Settings.CenterMarker)
+            {
+                RenderFeatureEditor<FrameLines, VirtualCameraScriptableRenderFeature>.OnInspectorGUI();
+            }
+#endif
         }
 
         void CreateList()

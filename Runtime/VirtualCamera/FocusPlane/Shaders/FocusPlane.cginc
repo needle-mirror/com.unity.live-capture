@@ -26,7 +26,7 @@ float4 FocusPlane(float eyeSpaceDepth, float2 positionNDC, float screenAspect)
 
     float opacity = edge + _BackgroundOpacity * beyondDepthThreshold;
 
-#if defined(USE_GRID)
+    #if defined(USE_GRID)
     // Offset position so that scaling is centered, apply aspect so that the grid is regular.
     float2 scaled = (positionNDC - 0.5) * float2(screenAspect, 1) * _CellSize;
     float2 steps = abs(frac(scaled) - 0.5) * 2;
@@ -37,7 +37,7 @@ float4 FocusPlane(float eyeSpaceDepth, float2 positionNDC, float screenAspect)
     float grid = 1.0 - saturate(grid2.x * grid2.y);
     grid *= beyondDepthThreshold;
     opacity += grid * _GridOpacity;
-#endif
+    #endif
 
     return float4(_Color.rgb, _Color.a * opacity);
 }

@@ -8,7 +8,6 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
     class LegacyRaycasterImpl : BaseRaycasterImpl
     {
         CommandBuffer m_CommandBuffer;
-        Shader m_PickingShader;
 
         public override void Initialize()
         {
@@ -39,13 +38,7 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
 
             if (isPickingActive)
             {
-                if (m_PickingShader == null)
-                {
-                    m_PickingShader = Shader.Find("Hidden/LiveCapture/ObjectPickingLegacy");
-                    Assert.IsNotNull(m_PickingShader);
-                }
-
-                m_Camera.RenderWithShader(m_PickingShader, String.Empty);
+                m_Camera.RenderWithShader(GetPickingShader(), String.Empty);
             }
             else
             {

@@ -1,6 +1,6 @@
 * [Overview](index.md)
 * Setup
-  * [Network setup](setup-network.md)
+  * [Network setup on Windows](setup-network.md)
   * [Connecting App and Editor](setup-connecting.md)
   * [Connections window](ref-window-connections.md)
 * [Take System](take-system.md)

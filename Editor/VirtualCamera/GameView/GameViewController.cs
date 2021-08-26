@@ -7,26 +7,6 @@ using UnityEngine.Assertions;
 namespace Unity.LiveCapture.VirtualCamera.Editor
 {
     /// <summary>
-    /// A proxy to the VirtualCameraDevice, introduced for testability,
-    /// as well as decoupling from the VirtualCameraDevice API.
-    /// </summary>
-    interface IVirtualCameraDeviceProxy
-    {
-        /// <summary>
-        /// Sets the reticle position.
-        /// </summary>
-        /// <param name="normalizedPosition">Normalized position of the reticle.</param>
-        /// <returns>True if the reticle should be visible based on the current focus mode, false otherwise.</returns>
-        bool SetReticlePosition(Vector2 normalizedPosition);
-
-        /// <summary>
-        /// Returns the video stream preview resolution.
-        /// </summary>
-        /// <returns>The preview resolution.</returns>
-        Vector2 GetPreviewResolution();
-    }
-
-    /// <summary>
     /// Provides access to an IVirtualCameraDeviceProxy, introduced for testing purposes.
     /// </summary>
     interface ILiveCaptureBridge
@@ -41,33 +21,45 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
     }
 
     /// <summary>
-    /// Production implementation of IVirtualCameraDeviceProxy (as opposed to testing ones).
+    /// Proxy to a VirtualCameraDevice, exposes only the subset of the API needed by the reticle feature.
     /// </summary>
+    interface IVirtualCameraDeviceProxy
+    {
+        Vector2 ReticlePosition { get; set; }
+        FocusMode FocusMode { get; }
+        bool IsLive { get; }
+    }
+
     class VirtualCameraDeviceProxy : IVirtualCameraDeviceProxy
     {
-        // The VirtualCameraDevice accessed by this proxy.
-        public VirtualCameraDevice Device { get; set; }
+        VirtualCameraDevice m_Device;
 
-        /// <inheritdoc />
-        public bool SetReticlePosition(Vector2 normalizedPosition)
+        public VirtualCameraDevice Device
         {
-            Device.SetReticlePosition(normalizedPosition);
-            return Device.Settings.FocusMode != FocusMode.Clear;
+            set => m_Device = value;
         }
 
-        /// <inheritdoc />
-        public Vector2 GetPreviewResolution()
+        public Vector2 ReticlePosition
         {
-            return Device.GetVideoServer().GetResolution();
+            get => m_Device.Settings.ReticlePosition;
+            set => m_Device.SetReticlePosition(value);
+        }
+
+        public FocusMode FocusMode => m_Device.Settings.FocusMode;
+
+        public bool IsLive
+        {
+            get
+            {
+                var takeRecorder = m_Device.GetTakeRecorder();
+                return takeRecorder != null && takeRecorder.IsLive();
+            }
         }
     }
 
-    /// <summary>
-    /// Production implementation of ILiveCaptureBridge (as opposed to testing ones).
-    /// </summary>
     class LiveCaptureBridge : ILiveCaptureBridge
     {
-        static readonly VirtualCameraDeviceProxy k_Proxy = new VirtualCameraDeviceProxy();
+        readonly VirtualCameraDeviceProxy m_Proxy = new VirtualCameraDeviceProxy();
 
         /// <inheritdoc />
         public bool TryGetVirtualCameraDevice(out IVirtualCameraDeviceProxy proxy)
@@ -80,9 +72,8 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
                 if (videoServer.IsRunning && camera.isActiveAndEnabled)
                 {
-                    k_Proxy.Device = device;
-                    proxy = k_Proxy;
-
+                    m_Proxy.Device = device;
+                    proxy = m_Proxy;
                     return true;
                 }
             }
@@ -92,48 +83,61 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         }
     }
 
-    /// <summary>
-    /// Component responsible for managing the reticle UI and its animation.
-    /// </summary>
-    [ExecuteAlways]
-    class ReticleManager : MonoBehaviour
+    class FocusReticleControllerImplementation : BaseFocusReticleControllerImplementation
     {
-        const string k_FocusReticlePrefabPath = "Packages/com.unity.live-capture/Runtime/VirtualCamera/FocusReticle/FocusReticle.prefab";
-
-        public event Action<Vector2> OnMouseDown = delegate {};
-
-        FocusReticle m_FocusReticle;
-        Coroutine m_Animation;
         Canvas m_Canvas;
-        bool m_PendingMouseDown;
-        Vector2 m_MousePosition;
 
-        // Used for tests only
-        internal void SendMouseDown(Vector2 position)
+        public Canvas Canvas
         {
-            m_MousePosition = position;
-            m_PendingMouseDown = true;
+            set => m_Canvas = value;
         }
 
-        void OnGUI()
+        protected override void SetReticleActive(bool value)
         {
-            // Using IMGUI events saves us the hassle of dealing with multiple input systems.
-            if (Event.current.type == EventType.MouseDown)
-            {
-                m_PendingMouseDown = true;
-                m_MousePosition = Event.current.mousePosition;
+            base.SetReticleActive(value);
+            m_Canvas.enabled = value;
+        }
+    }
 
-                // Flip Y axis, IMGUI coords are zero at top.
-                m_MousePosition.y = Screen.height - m_MousePosition.y;
+    [ExecuteAlways]
+    class GameViewReticleController : MonoBehaviour
+    {
+        class CoordinatesTransform : BaseFocusReticleControllerImplementation.ICoordinatesTransform
+        {
+            public Vector2 ScreenSize;
+
+            public bool IsValid => ScreenSize.x * ScreenSize.y != 0;
+
+            public Vector2 NormalizeScreenPoint(Vector2 screenPoint)
+            {
+                if (!IsValid)
+                {
+                    throw new InvalidOperationException(
+                        $"{typeof(CoordinatesTransform).FullName}, invalid {nameof(ScreenSize)}: {ScreenSize}.");
+                }
+
+                return screenPoint / ScreenSize;
+            }
+
+            public Vector2 NormalizedToScreen(Vector2 normalizedPoint)
+            {
+                return normalizedPoint * ScreenSize;
             }
         }
+
+        const string k_FocusReticlePrefabPath = "Packages/com.unity.live-capture/Runtime/VirtualCamera/FocusReticle/FocusReticle.prefab";
+
+        public event Action<Vector2> OnReticlePositionChanged = delegate {};
+
+        readonly CoordinatesTransform m_CoordinatesTransform = new CoordinatesTransform();
+        readonly FocusReticleControllerImplementation m_FocusReticleControllerImplementation = new FocusReticleControllerImplementation();
 
         void Awake()
         {
             // Build UI.
-            m_Canvas = gameObject.AddComponent<Canvas>();
-            m_Canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            m_Canvas.enabled = false;
+            var canvas = gameObject.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.enabled = false;
 
             var scaler = gameObject.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPhysicalSize;
@@ -141,56 +145,88 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(k_FocusReticlePrefabPath);
             Assert.IsNotNull(prefab, $"Could not load Focus Reticle prefab at [{k_FocusReticlePrefabPath}]");
 
-            var reticle = Instantiate(prefab, gameObject.transform);
+            var reticleGO = Instantiate(prefab, gameObject.transform);
 
             // Since we use constant physical size with default settings we apply scaling to the reticle.
-            reticle.transform.localScale = Vector3.one * .5f;
-            m_FocusReticle = reticle.GetComponent<FocusReticle>();
-            Assert.IsNotNull(m_FocusReticle, $"Could not fetch {nameof(FocusReticle)} component from prefab.");
+            reticleGO.transform.localScale = Vector3.one * .5f;
+            var reticle = reticleGO.GetComponent<FocusReticle>();
+            Assert.IsNotNull(reticle, $"Could not fetch {nameof(FocusReticle)} component from prefab.");
+
+            m_FocusReticleControllerImplementation.Canvas = canvas;
+            m_FocusReticleControllerImplementation.FocusReticle = reticle;
+            m_FocusReticleControllerImplementation.CoordinatesTransform = m_CoordinatesTransform;
         }
 
         void OnEnable()
         {
-            m_FocusReticle.AnimationComplete += OnAnimationComplete;
+            m_FocusReticleControllerImplementation.Initialize();
         }
 
         void OnDisable()
         {
-            m_FocusReticle.AnimationComplete -= OnAnimationComplete;
-
-            if (m_Animation != null)
-            {
-                StopCoroutine(m_Animation);
-                m_Animation = null;
-            }
-
-            OnAnimationComplete();
+            m_FocusReticleControllerImplementation.Dispose();
         }
 
         void Update()
         {
-            if (m_PendingMouseDown)
-            {
-                OnMouseDown.Invoke(m_MousePosition);
-                m_PendingMouseDown = false;
-            }
+            // We need to be careful when updating the screen size,
+            // values returned by the static API will be correct during MonoBehaviour Update,
+            // but not necessarily during an Editor update for example.
+            m_CoordinatesTransform.ScreenSize = GameViewController.GetScreenSize();
         }
 
-        public void AnimateReticle(Vector2 position)
+        public void UpdateReticle(Vector2 position, FocusMode focusMode, bool visible)
         {
-            if (m_Animation != null)
-            {
-                StopCoroutine(m_Animation);
-            }
-
-            m_Canvas.enabled = true;
-            m_FocusReticle.transform.transform.position = position;
-            m_Animation = StartCoroutine(m_FocusReticle.Animate(true));
+            m_FocusReticleControllerImplementation.UpdateView(position, focusMode, visible);
         }
 
-        void OnAnimationComplete()
+        void OnGUI()
         {
-            m_Canvas.enabled = false;
+            ProcessEvent(Event.current.type, Event.current.mousePosition);
+        }
+
+        // Introduced for testing purposes.
+        internal void ProcessEvent(EventType type, Vector2 mousePosition)
+        {
+            // A valid screen size must have been assigned to the coordinates transform.
+            if (!m_CoordinatesTransform.IsValid)
+            {
+                return;
+            }
+
+            var updatePointerPosition = false;
+
+            switch (type)
+            {
+                case EventType.MouseDrag:
+                    m_FocusReticleControllerImplementation.IsDragging = true;
+                    m_FocusReticleControllerImplementation.PendingDrag = true;
+                    updatePointerPosition = true;
+                    break;
+                case EventType.MouseDown:
+                    m_FocusReticleControllerImplementation.PendingTap = true;
+                    updatePointerPosition = true;
+                    break;
+                case EventType.MouseUp:
+                case EventType.MouseLeaveWindow:
+                    m_FocusReticleControllerImplementation.IsDragging = false;
+                    break;
+            }
+
+            if (updatePointerPosition)
+            {
+                var lastPointerPosition = mousePosition;
+
+                // IMGUI coords are start at top, flip Y axis.
+                lastPointerPosition.y = m_CoordinatesTransform.ScreenSize.y - lastPointerPosition.y;
+
+                m_FocusReticleControllerImplementation.LastPointerPosition = lastPointerPosition;
+
+                if (m_FocusReticleControllerImplementation.ShouldSendPosition(out var position))
+                {
+                    OnReticlePositionChanged.Invoke(position);
+                }
+            }
         }
     }
 
@@ -206,7 +242,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         [SerializeReference]
         ILiveCaptureBridge m_CurrentBridge;
 
-        ReticleManager m_ReticleManager;
+        GameViewReticleController m_ReticleController;
         bool m_IsActive;
 
         public bool IsActive => m_IsActive;
@@ -216,6 +252,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         {
             AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+            EditorApplication.update += OnEditorUpdate;
         }
 
         static void OnPlayModeStateChanged(PlayModeStateChange playModeStateChange)
@@ -236,6 +273,19 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         static void OnBeforeAssemblyReload()
         {
             instance.Disable();
+        }
+
+        static void OnEditorUpdate()
+        {
+            instance.Update();
+        }
+
+        void Update()
+        {
+            if (m_IsActive && m_CurrentBridge.TryGetVirtualCameraDevice(out var device))
+            {
+                m_ReticleController.UpdateReticle(device.ReticlePosition, device.FocusMode, device.IsLive);
+            }
         }
 
         public void Enable()
@@ -271,55 +321,40 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         void InjectSceneUI()
         {
-            Assert.IsNull(m_ReticleManager);
-            var go = new GameObject(k_GameObjectName, typeof(ReticleManager));
+            Assert.IsNull(m_ReticleController);
+            var go = new GameObject(k_GameObjectName, typeof(GameViewReticleController));
             SetHideFlagsRecursively(go, HideFlags.HideAndDontSave);
-            m_ReticleManager = go.GetComponent<ReticleManager>();
-            m_ReticleManager.OnMouseDown += OnMouseDown;
+            m_ReticleController = go.GetComponent<GameViewReticleController>();
+            m_ReticleController.OnReticlePositionChanged += ReticlePositionChanged;
         }
 
         void DisposeSceneUI()
         {
-            Assert.IsNotNull(m_ReticleManager);
+            Assert.IsNotNull(m_ReticleController);
 
-            m_ReticleManager.OnMouseDown -= OnMouseDown;
+            m_ReticleController.OnReticlePositionChanged -= ReticlePositionChanged;
 
             if (Application.isPlaying)
             {
-                Destroy(m_ReticleManager.gameObject);
+                Destroy(m_ReticleController.gameObject);
             }
             else
             {
-                DestroyImmediate(m_ReticleManager.gameObject);
+                DestroyImmediate(m_ReticleController.gameObject);
             }
 
-            m_ReticleManager = null;
+            m_ReticleController = null;
         }
 
-        void OnMouseDown(Vector2 position)
+        void ReticlePositionChanged(Vector2 normalizedPosition)
         {
             Assert.IsTrue(m_IsActive);
 
-            if (m_CurrentBridge.TryGetVirtualCameraDevice(out var cameraDeviceProxy))
+            if (m_CurrentBridge.TryGetVirtualCameraDevice(out var device))
             {
-                var screenSize = GetScreenSize();
-                var normalizedPosition = position / screenSize;
-
-                if (cameraDeviceProxy.SetReticlePosition(normalizedPosition))
-                {
-                    if (cameraDeviceProxy.SetReticlePosition(normalizedPosition))
-                    {
-                        m_ReticleManager.AnimateReticle(position);
-                    }
-                }
+                device.ReticlePosition = normalizedPosition;
             }
         }
-
-        // Using Func to make our coordinate conversion code testable.
-        internal static Func<Vector2> GetScreenSize = () =>
-        {
-            return new Vector2(Screen.width, Screen.height);
-        };
 
         static void SetHideFlagsRecursively(GameObject gameObject, HideFlags hideFlags)
         {
@@ -329,5 +364,8 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
                 SetHideFlagsRecursively(child.gameObject, hideFlags);
             }
         }
+
+        // Using Func to make our coordinate conversion code testable.
+        internal static Func<Vector2> GetScreenSize = () => new Vector2(Screen.width, Screen.height);
     }
 }

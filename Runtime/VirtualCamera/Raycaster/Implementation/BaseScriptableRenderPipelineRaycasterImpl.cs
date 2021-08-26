@@ -1,7 +1,6 @@
 #if URP_10_2_OR_NEWER || HDRP_10_2_OR_NEWER
 using System;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 #if UNITY_2021_2_OR_NEWER
 using UnityEngine.Rendering.RendererUtils;
@@ -24,14 +23,6 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
         static readonly ShaderTagId[] k_ShaderTagsDepthOnly = { new ShaderTagId("DepthOnly") };
 
         ShaderTagId[] m_ShaderTagsObjectId;
-        Material m_PickingMaterial;
-
-        /// <inheritdoc/>
-        public override void Dispose()
-        {
-            base.Dispose();
-            AdditionalCoreUtils.DestroyIfNeeded(ref m_PickingMaterial);
-        }
 
         protected override void Render()
         {
@@ -61,20 +52,6 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
                     new ShaderTagId(GetPickingMaterial().GetPassName(0))
                 };
             return m_ShaderTagsObjectId;
-        }
-
-        // Lazily instantiated since it will be invoked rarely if at all.
-        Material GetPickingMaterial()
-        {
-            if (m_PickingMaterial == null)
-            {
-                var shader = Shader.Find("Hidden/LiveCapture/ObjectPickingSRP");
-                Assert.IsNotNull(shader);
-                m_PickingMaterial = new Material(shader);
-                m_PickingMaterial.hideFlags = HideFlags.HideAndDontSave;
-            }
-
-            return m_PickingMaterial;
         }
 
         static void DrawRenderers(ScriptableRenderContext context, CommandBuffer cmd, Camera camera, ShaderTagId[] shaderTags, Material material = null, int pass = 0)

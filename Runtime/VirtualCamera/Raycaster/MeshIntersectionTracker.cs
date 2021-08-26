@@ -422,6 +422,8 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (!mesh.isReadable)
             {
+                Debug.LogWarning($"Mesh \"{mesh.name}\" is not readable. Could not evaluate intersection with ray.");
+
                 triangle = Vector3Int.zero;
                 barycentricCoordinates = Vector2.zero;
                 return false;

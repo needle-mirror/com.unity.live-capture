@@ -1,4 +1,6 @@
-# Setting up your network and firewall
+# Setting up your network and firewall on Windows
+
+>**Note:** All instructions of this page apply to Windows only.
 
 To enable a proper connection of the Live Capture apps with the Unity Editor:
 

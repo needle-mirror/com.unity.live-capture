@@ -11,7 +11,8 @@ namespace Unity.LiveCapture.VirtualCamera
         void SetActive(bool value);
         event Action AnimationComplete;
         void ResetAnimation();
-        IEnumerator Animate(bool hideOnComplete);
+        void Animate(bool hideOnComplete);
+        void StopAnimationIfNeeded();
     }
 
     /// <summary>
@@ -25,6 +26,7 @@ namespace Unity.LiveCapture.VirtualCamera
         const float k_ScaleAnimationDuration = 0.3f;
 
         Image m_ReticleImage;
+        Coroutine m_ReticleAnimation;
 
         /// <summary>
         /// Invoked on completion of the animation. Can be used to deactivate the reticle GameObject for example.
@@ -60,8 +62,22 @@ namespace Unity.LiveCapture.VirtualCamera
         /// Animates the focus reticle following a fade-in and optionally fade-out pattern.
         /// </summary>
         /// <param name="hideOnComplete">whether or not the animation should fade out automatically after having faded in.</param>
-        /// <returns></returns>
-        public IEnumerator Animate(bool hideOnComplete)
+        public void Animate(bool hideOnComplete)
+        {
+            StopAnimationIfNeeded();
+            m_ReticleAnimation = StartCoroutine(Animation(hideOnComplete));
+        }
+
+        public void StopAnimationIfNeeded()
+        {
+            if (m_ReticleAnimation != null)
+            {
+                StopCoroutine(m_ReticleAnimation);
+                m_ReticleAnimation = null;
+            }
+        }
+
+        IEnumerator Animation(bool hideOnComplete)
         {
             m_ReticleImage.transform.localScale = Vector3.one * 2f;
             var startingScale = m_ReticleImage.transform.localScale;

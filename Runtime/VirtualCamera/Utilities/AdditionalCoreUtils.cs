@@ -46,7 +46,13 @@ namespace Unity.LiveCapture.VirtualCamera
             var shader = Shader.Find(shaderPath);
             if (shader == null)
             {
-                Debug.LogError("Cannot create required material because shader " + shaderPath + " could not be found");
+                Debug.LogError($"Cannot create required material because shader {shaderPath} could not be found");
+                return null;
+            }
+
+            if (!shader.isSupported)
+            {
+                Debug.LogError($"Shader {shaderPath} is not supported by the current graphics hardware.");
                 return null;
             }
 

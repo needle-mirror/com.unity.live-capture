@@ -15,11 +15,11 @@ namespace Unity.LiveCapture.VirtualCamera
         Material m_ComposeMaterial;
         bool m_AddedCommandBuffers;
 
-        /// <inheritdoc/>
-        public Material RenderMaterial => m_RenderMaterial;
-
-        /// <inheritdoc/>
-        public Material ComposeMaterial => m_ComposeMaterial;
+        public LegacyFocusPlaneImpl(Material renderMaterial, Material composeMaterial)
+        {
+            m_RenderMaterial = renderMaterial;
+            m_ComposeMaterial = composeMaterial;
+        }
 
         /// <inheritdoc/>
         public void SetCamera(Camera camera)
@@ -32,11 +32,10 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         public void Initialize()
         {
-            m_RenderMaterial = AdditionalCoreUtils.CreateEngineMaterial("Hidden/LiveCapture/FocusPlane/Render/Legacy");
-            m_ComposeMaterial = AdditionalCoreUtils.CreateEngineMaterial("Hidden/LiveCapture/FocusPlane/Compose/Legacy");
-
             m_RenderCommandBuffer = new CommandBuffer();
+            m_RenderCommandBuffer.name = "FocusPlane Render";
             m_ComposeCommandBuffer = new CommandBuffer();
+            m_ComposeCommandBuffer.name = "FocusPlane Compose";
 
             Update();
 
@@ -48,8 +47,8 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             RemoveCommandBufferIfNeeded(true);
 
-            AdditionalCoreUtils.DestroyIfNeeded(ref m_RenderMaterial);
-            AdditionalCoreUtils.DestroyIfNeeded(ref m_ComposeMaterial);
+            m_RenderMaterial = null;
+            m_ComposeMaterial = null;
 
             m_RenderCommandBuffer.Dispose();
             m_ComposeCommandBuffer.Dispose();
