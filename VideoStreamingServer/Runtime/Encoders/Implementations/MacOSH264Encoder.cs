@@ -206,13 +206,9 @@ namespace Unity.LiveCapture.VideoStreaming.Server
 
             if (m_SettingsID.settings != settings)
             {
-                m_SettingsID.settings = settings;
-
-                fixed(EncoderSettingsID* encoderPtr = &m_SettingsID)
-                {
-                    ExecuteMacOSCommand(EMacOSRenderEvent.Update, "Mac OS Encoder Update", (IntPtr)encoderPtr);
-                }
-            }
+                Dispose();
+                Setup(settings, m_SettingsID.encoderFormat);
+            }   
         }
 
         /// <inheritdoc/>

@@ -8,7 +8,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// </summary>
     struct FocusDistanceSample : ISample
     {
-        float m_Timestamp;
+        double m_Time;
 
         /// <summary>
         /// The focus distance in meters.
@@ -16,10 +16,10 @@ namespace Unity.LiveCapture.VirtualCamera
         public float FocusDistance;
 
         /// <inheritdoc/>
-        public float Timestamp
+        public double Time
         {
-            get => m_Timestamp;
-            set => m_Timestamp = value;
+            get => m_Time;
+            set => m_Time = value;
         }
     }
 }

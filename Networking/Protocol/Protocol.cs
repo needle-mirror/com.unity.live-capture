@@ -28,6 +28,11 @@ namespace Unity.LiveCapture.Networking.Protocols
         public string Name { get; }
 
         /// <summary>
+        /// Gets the version of this protocol.
+        /// </summary>
+        public Version Version { get; }
+
+        /// <summary>
         /// Gets a value indicating whether the protocol is read-only.
         /// </summary>
         /// <remarks>
@@ -40,13 +45,18 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// Creates a new <see cref="Protocol"/> instance.
         /// </summary>
         /// <param name="name">The name of the protocol.</param>
+        /// <param name="version">The protocol version.</param>
         /// <exception cref="ArgumentException">Thrown if <paramref name="name"/> is null or only white-space.</exception>
-        public Protocol(string name)
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="version"/> is null.</exception>
+        public Protocol(string name, Version version)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("A non-empty name must be provided.", nameof(name));
+            if (version == null)
+                throw new ArgumentNullException(nameof(name));
 
             Name = name;
+            Version = version;
             IsReadOnly = false;
         }
 
@@ -217,7 +227,7 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// <returns>A new inverted protocol instance.</returns>
         public Protocol CreateInverse()
         {
-            var inverted = new Protocol(Name);
+            var inverted = new Protocol(Name, Version);
 
             foreach (var message in this)
                 inverted.Add(message.GetInverse());

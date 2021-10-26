@@ -23,21 +23,27 @@ namespace Unity.LiveCapture
     [ExcludeFromPreset]
     [RequireComponent(typeof(PlayableDirector))]
     [AddComponentMenu("Live Capture/Take Recorder")]
-    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-take-recorder" + Documentation.endURL)]
+    [HelpURL(Documentation.baseURL + "ref-component-take-recorder" + Documentation.endURL)]
     public class TakeRecorder : MonoBehaviour, ITakeRecorderInternal
     {
         [SerializeField, HideInInspector]
         PlayableAsset m_NullPlayableAsset = null;
+
         [SerializeField]
         PlayableDirectorSlate m_DefaultSlatePlayer = new PlayableDirectorSlate();
+
         [SerializeField]
         TakePlayer m_TakePlayer = new TakePlayer();
+
         [SerializeField, OnlyStandardFrameRates]
         FrameRate m_FrameRate = StandardFrameRate.FPS_30_00;
+
         [SerializeField]
         List<LiveCaptureDevice> m_Devices = new List<LiveCaptureDevice>();
+
         [SerializeField]
         bool m_Live = true;
+
         PlayableDirector m_Director;
         PlayableGraph m_DirectorGraph;
         List<LiveCaptureDevice> m_RecordingDevices = new List<LiveCaptureDevice>();
@@ -96,12 +102,18 @@ namespace Unity.LiveCapture
             return m_Director;
         }
 
+        void OnEnable()
+        {
+            TakeRecorderUpdateManager.Instance.Register(this);
+        }
+
         void OnDisable()
         {
             StopRecordingInternal();
             DestroyPreviewGraph();
-            DestroyLiveLink();
             DisposeScreenshot();
+
+            TakeRecorderUpdateManager.Instance.Unregister(this);
         }
 
         void OnValidate()
@@ -187,18 +199,12 @@ namespace Unity.LiveCapture
 
         internal void AddDevice(LiveCaptureDevice device)
         {
-            if (m_Devices.AddUnique(device))
-            {
-                BuildLiveLink(device);
-            }
+            m_Devices.AddUnique(device);
         }
 
         internal void RemoveDevice(LiveCaptureDevice device)
         {
-            if (m_Devices.Remove(device))
-            {
-                device.BuildLiveLink(default(PlayableGraph));
-            }
+            m_Devices.Remove(device);
         }
 
         internal bool ContainsDevice(LiveCaptureDevice device)
@@ -209,6 +215,28 @@ namespace Unity.LiveCapture
         internal PlayableGraph GetPreviewGraph()
         {
             return m_PreviewGraph;
+        }
+
+        internal void LiveUpdate()
+        {
+            SetupDirectorGraphIfNeeded();
+
+            EvaluateIfNeeded();
+
+            m_IsEvaluatingExternally = false;
+
+            if (IsLive())
+            {
+                foreach (var device in m_Devices)
+                {
+                    if (IsDeviceValid(device)
+                        && device.isActiveAndEnabled
+                        && device.IsReady())
+                    {
+                        device.LiveUpdate();
+                    }
+                }
+            }
         }
 
         /// <inheritdoc/>
@@ -226,8 +254,6 @@ namespace Unity.LiveCapture
             }
 
             m_Live = value;
-
-            Rebuild();
 
             if (IsLive())
             {
@@ -253,7 +279,8 @@ namespace Unity.LiveCapture
             if (isActiveAndEnabled
                 && slate != null
                 && IsLive()
-                && !IsRecording())
+                && !IsRecording()
+                && CanStartRecording())
             {
                 TakeScreenshot();
 
@@ -269,7 +296,7 @@ namespace Unity.LiveCapture
 
                 foreach (var device in m_Devices)
                 {
-                    if (device != null && device.IsLive())
+                    if (IsDeviceReadyForRecording(device))
                     {
                         m_RecordingDevices.Add(device);
                         device.StartRecording();
@@ -304,7 +331,7 @@ namespace Unity.LiveCapture
 
                 foreach (var device in m_RecordingDevices)
                 {
-                    if (device != null && device.IsRecording())
+                    if (IsDeviceValid(device) && device.IsRecording())
                     {
                         device.StopRecording();
                     }
@@ -412,52 +439,39 @@ namespace Unity.LiveCapture
 #endif
         }
 
-        /// <summary>
-        /// Rebuilds the PlayableGraph and prepares the devices.
-        /// </summary>
-        public void Rebuild()
-        {
-            if (isActiveAndEnabled)
-            {
-                m_Director.RebuildGraph();
-
-                SetupDirectorGraphIfNeeded();
-            }
-        }
-
         Take ProduceTake()
         {
             var slate = GetEffectiveSlatePlayer().GetActiveSlate();
 
             Debug.Assert(slate != null);
 
-            using (var takeBuilder = new TakeBuilder(
+            using var takeBuilder = new TakeBuilder(
                 slate.Duration,
                 slate.SceneNumber,
                 slate.ShotName,
                 slate.TakeNumber,
                 slate.Description,
                 slate.Directory,
+                DateTime.Now,
                 slate.IterationBase,
                 FrameRate,
                 m_Screenshot,
-                m_Director))
-            {
-                TimelineUndoUtility.SetUndoEnabled(false);
+                m_Director);
 
-                ProduceTake(takeBuilder);
+            TimelineUndoUtility.SetUndoEnabled(false);
 
-                TimelineUndoUtility.SetUndoEnabled(true);
+            ProduceTake(takeBuilder);
 
-                return takeBuilder.Take;
-            }
+            TimelineUndoUtility.SetUndoEnabled(true);
+
+            return takeBuilder.Take;
         }
 
-        void ProduceTake(ITakeBuilder takeBuilder)
+        void ProduceTake(TakeBuilder takeBuilder)
         {
             foreach (var device in m_RecordingDevices)
             {
-                if (device != null)
+                if (IsDeviceValid(device))
                 {
                     try
                     {
@@ -469,6 +483,7 @@ namespace Unity.LiveCapture
                     }
                 }
             }
+            takeBuilder.AlignTracksByStartTimes();
         }
 
         void Update()
@@ -487,20 +502,39 @@ namespace Unity.LiveCapture
                     device.UpdateDevice();
                 }
             }
-        }
 
-        void LateUpdate()
-        {
-            SetupDirectorGraphIfNeeded();
-
-            EvaluateIfNeeded();
-
-            m_IsEvaluatingExternally = false;
+            if (IsRecording() && !AreDevicesReadyForRecording(m_RecordingDevices))
+            {
+                StopRecording();
+            }
         }
 
         bool IsDeviceValid(LiveCaptureDevice device)
         {
             return device != null && device.transform.parent == transform;
+        }
+
+        bool IsDeviceReadyForRecording(LiveCaptureDevice device)
+        {
+            return IsDeviceValid(device) && device.isActiveAndEnabled && device.IsReady();
+        }
+
+        bool AreDevicesReadyForRecording(IEnumerable<LiveCaptureDevice> devices)
+        {
+            foreach (var device in devices)
+            {
+                if (IsDeviceReadyForRecording(device))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal bool CanStartRecording()
+        {
+            return AreDevicesReadyForRecording(m_Devices);
         }
 
         void CreatePreviewGraphIfNeeded()
@@ -546,37 +580,6 @@ namespace Unity.LiveCapture
                 m_IsEvaluatingExternally = false;
                 m_Director.Pause();
                 m_DirectorGraph = graph;
-
-                BuildLiveLink();
-            }
-        }
-
-        void BuildLiveLink()
-        {
-            if (!IsLive())
-            {
-                return;
-            }
-
-            foreach (var device in m_Devices)
-            {
-                BuildLiveLink(device);
-            }
-        }
-
-        void BuildLiveLink(LiveCaptureDevice device)
-        {
-            if (device != null && device.isActiveAndEnabled && IsLive())
-            {
-                device.BuildLiveLink(m_DirectorGraph);
-            }
-        }
-
-        void DestroyLiveLink()
-        {
-            if (m_DirectorGraph.IsValid())
-            {
-                m_Director.RebuildGraph();
             }
         }
 

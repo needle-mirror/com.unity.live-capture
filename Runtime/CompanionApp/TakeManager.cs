@@ -16,8 +16,41 @@ namespace Unity.LiveCapture.CompanionApp
         Texture2D GetAssetPreview<T>(Guid guid) where T : UnityEngine.Object;
     }
 
+    interface IAssetPreview
+    {
+        Texture2D GetAssetPreview<T>(Guid guid) where T : UnityEngine.Object;
+    }
+
+    class EditorAssetPreview : IAssetPreview
+    {
+        public Texture2D GetAssetPreview<T>(Guid guid) where T : UnityEngine.Object
+        {
+            var texture = default(Texture2D);
+#if UNITY_EDITOR
+            var asset = AssetDatabaseUtility.LoadAssetWithGuid<T>(guid);
+
+            if (asset != null)
+            {
+                texture = AssetPreview.GetAssetPreview(asset);
+            }
+#endif
+            return texture;
+        }
+    }
+
     class TakeManager : ITakeManager
     {
+        public static TakeManager Default { get; } = new TakeManager();
+
+        IAssetPreview m_AssetPreview;
+
+        public TakeManager() : this(new EditorAssetPreview()) {}
+
+        public TakeManager(IAssetPreview assetPreview)
+        {
+            m_AssetPreview = assetPreview;
+        }
+
         public void SelectTake(ISlate slate, SerializableGuid guid)
         {
             if (slate == null)
@@ -26,7 +59,7 @@ namespace Unity.LiveCapture.CompanionApp
             }
 
 #if UNITY_EDITOR
-            var take = AssetDatabaseUtility.LoadAssetWithGuid<Take>(guid.ToString());
+            var take = AssetDatabaseUtility.LoadAssetWithGuid<Take>(guid);
 
             slate.Take = take;
 #endif
@@ -35,7 +68,7 @@ namespace Unity.LiveCapture.CompanionApp
         public void SetTakeData(TakeDescriptor descriptor)
         {
 #if UNITY_EDITOR
-            var take = AssetDatabaseUtility.LoadAssetWithGuid<Take>(descriptor.Guid.ToString());
+            var take = AssetDatabaseUtility.LoadAssetWithGuid<Take>(descriptor.Guid);
 
             if (take != null)
             {
@@ -48,6 +81,7 @@ namespace Unity.LiveCapture.CompanionApp
                 take.SceneNumber = descriptor.SceneNumber;
                 take.ShotName = descriptor.ShotName;
                 take.TakeNumber = descriptor.TakeNumber;
+                take.CreationTime = DateTime.FromBinary(descriptor.CreationTime);
                 take.Description = descriptor.Description;
                 take.Rating = descriptor.Rating;
                 take.FrameRate = descriptor.FrameRate;
@@ -80,7 +114,7 @@ namespace Unity.LiveCapture.CompanionApp
             }
 
 #if UNITY_EDITOR
-            var take = AssetDatabaseUtility.LoadAssetWithGuid<Take>(guid.ToString());
+            var take = AssetDatabaseUtility.LoadAssetWithGuid<Take>(guid);
 
             if (take != null)
             {
@@ -101,16 +135,7 @@ namespace Unity.LiveCapture.CompanionApp
 
         public Texture2D GetAssetPreview<T>(Guid guid) where T : UnityEngine.Object
         {
-            var texture = default(Texture2D);
-#if UNITY_EDITOR
-            var asset = AssetDatabaseUtility.LoadAssetWithGuid<T>(guid.ToString("N"));
-
-            if (asset != null)
-            {
-                texture = AssetPreview.GetAssetPreview(asset);
-            }
-#endif
-            return texture;
+            return m_AssetPreview.GetAssetPreview<T>(guid);
         }
     }
 }

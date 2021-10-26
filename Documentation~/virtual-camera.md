@@ -1,30 +1,35 @@
-# Using the Virtual Camera
+# Unity Virtual Camera
+
+Use the Unity Virtual Camera mobile app alongside the Unity Editor to drive a Unity camera from your iPad or iPhone and record camera movement, rotation, focus, zoom, and more to achieve a handheld look-and-feel.
+
+[View detailed feature list](virtual-camera-features.md)
+
+> **Important:** The Unity Virtual Camera app is a companion app, which means it requires the Unity Editor to function, as opposed to a standalone app.
 
 ## Before you start
 
-1. [Install the Live Capture package and the Unity Virtual Camera app](index.md#installation)
+Review the detailed requirements and perform the necessary installations and environment setup:
 
-2. [Make sure your network and your firewall are correctly set up](setup-network.md)
+1. [Install the Live Capture package and the Unity Virtual Camera app](index.md#installation).
 
-3. [Connect the Virtual Camera app to the Unity Editor](setup-connecting.md)
+2. [Make sure your network and your firewall are correctly set up](setup-network.md).
 
-## Virtual Camera app features
+3. [Connect the Virtual Camera app to the Unity Editor](setup-connecting.md).
 
-* Works in both editor edit and play modes.
-* Camera tracking via ARKit.
-* Additional camera motion control via **virtual joysticks**.
-* Live preview via **video streaming** between the editor and iPad companion app.
-* **Editor viewport** to see the virtual camera's view from the editor workstation.
-* **Record camera performances** to an animation clip.
-* **Axis locking** to prevent motion in any combination of 6 degrees of movement.
-* Control **focal length**, **focus distance** and **aperture** with configurable damping for a smoother feel.
-* **Reticle Auto Focus** mode to automatically set the focus distance based on a screen reticle.
-* **Tracking Auto Focus** focus mode to have focus distance dynamically match a scene object's distance to the camera.
-* Bi-directional control of camera settings, i.e. control the camera’s settings from either the editor or the companion app.
-* Temporarily halt tracking and reposition around the physical space.
-* Camera **motion damping**.
-* **Motion scaling** to multiply physical motion.
-* Steadicam simulation using Cinemachine.
-* Non-destructive and iterative workflow -- camera settings like damping and focal length can be changed after a capture session.
-* Video streaming support for both built-in, URP and HDRP render pipelines.
-* **Snapshots** system to save an image along with your camera's position and metadata like lens information that can be loaded to pick up where you left off.
+## In this documentation
+
+* How to get started with a [basic setup](virtual-camera-getting-started.md) in your current Unity project to try out the Unity Virtual Camera functionality.
+
+* Overview of the [Unity Virtual Camera app interface](virtual-camera-app-controls.md) (controls and settings).
+
+* General guidelines to achieve some basic [workflow tasks](virtual-camera-workflow.md) with Unity Virtual Camera.
+
+* How to manage Virtual Camera [lenses](virtual-camera-lenses.md).
+
+* How to use [Snapshots](virtual-camera-snapshots.md).
+
+* UI reference about Virtual Camera functional elements used in the Unity Editor: [components](virtual-camera-components.md), [presets](virtual-camera-presets.md), and [Video Server preferences](ref-user-preferences-video-server.md).
+
+## Additional resources
+
+* [Get support and access learning resources](https://forum.unity.com/threads/1111255/) about Unity Virtual Camera.

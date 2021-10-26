@@ -239,7 +239,7 @@ namespace Unity.LiveCapture.CompanionApp
                     "Live Capture",
                     Environment.MachineName,
                     m_Server.ID,
-                    m_Server.ProtocolVersion
+                    PackageUtility.GetVersion(LiveCaptureInfo.Version)
                 );
                 var endPoints = m_Server.EndPoints.ToArray();
 

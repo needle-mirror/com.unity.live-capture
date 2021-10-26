@@ -548,7 +548,17 @@ namespace Unity.LiveCapture.Editor
 
         float GetListBoxHeight()
         {
-            return GetListItemsHeight() + GetListFooterHeight();
+            return GetListHeaderHeight() + GetListItemsHeight() + GetListFooterHeight();
+        }
+
+        float GetListHeaderHeight()
+        {
+            var height = 0f;
+
+            if (Searchable && ShowSearchBar)
+                height += Defaults.SearchBarHeight + (2f * Defaults.SearchBottomPadding);
+
+            return height;
         }
 
         float GetListItemsHeight()
@@ -562,8 +572,6 @@ namespace Unity.LiveCapture.Editor
 
             if (Resizable)
                 height += Defaults.ResizeHandleHeight;
-            if (Searchable && ShowSearchBar)
-                height += Defaults.SearchBarHeight + Defaults.SearchBottomPadding;
 
             return height;
         }
@@ -649,8 +657,13 @@ namespace Unity.LiveCapture.Editor
             {
                 xMax = controlsRect.xMin - Defaults.ControlsSpacing,
             };
+            var headerRect = new Rect(listRect)
+            {
+                height = GetListHeaderHeight(),
+            };
             var itemsRect = new Rect(listRect)
             {
+                y = headerRect.yMax,
                 height = GetListItemsHeight(),
             };
             var footerRect = new Rect(listRect)
@@ -662,6 +675,7 @@ namespace Unity.LiveCapture.Editor
             Default.DrawListBackground(listRect);
 
             // we need to draw the search field before the items, to prevent the control IDs from changing during the search
+            DoListHeader(headerRect);
             DoListFooter(footerRect);
             DoListItems(itemsRect);
         }
@@ -1125,6 +1139,22 @@ namespace Unity.LiveCapture.Editor
             m_ScrollPosition = desiredViewBottom - viewHeight;
         }
 
+        void DoListHeader(Rect rect)
+        {
+            if (Searchable && ShowSearchBar)
+            {
+                var searchBarRect = new Rect(rect)
+                {
+                    xMin = rect.xMin + Defaults.SearchSidePadding,
+                    xMax = rect.xMax - Defaults.SearchSidePadding,
+                    yMin = rect.yMin + (2f * Defaults.SearchBottomPadding),
+                    yMax = rect.yMax - Defaults.SearchBottomPadding,
+                };
+
+                SearchFilter = s_ToolbarSearchField?.Invoke(null, new object[] { searchBarRect, SearchFilter, false }) as string;
+            }
+        }
+
         void DoListFooter(Rect rect)
         {
             if (Resizable)
@@ -1153,19 +1183,6 @@ namespace Unity.LiveCapture.Editor
                 EditorGUIUtility.AddCursorRect(m_Resizing ? alwaysRect : resizeRect, MouseCursor.ResizeVertical);
 
                 ProcessResizeInteraction(resizeRect);
-            }
-
-            if (Searchable && ShowSearchBar)
-            {
-                var searchBarRect = new Rect(rect)
-                {
-                    xMin = rect.xMin + Defaults.SearchSidePadding,
-                    xMax = rect.xMax - Defaults.SearchSidePadding,
-                    y = rect.yMax - (Defaults.SearchBarHeight + Defaults.SearchBottomPadding),
-                    height = Defaults.SearchBarHeight,
-                };
-
-                SearchFilter = s_ToolbarSearchField?.Invoke(null, new object[] { searchBarRect, SearchFilter, false }) as string;
             }
         }
 

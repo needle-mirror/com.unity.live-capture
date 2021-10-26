@@ -13,7 +13,7 @@ namespace Unity.LiveCapture.VirtualCamera.Networking
         {
             return new PoseSampleV0
             {
-                m_Timestamp = sample.Timestamp,
+                m_Timestamp = (float)sample.Time,
                 m_Pose = sample.Pose,
             };
         }
@@ -22,7 +22,32 @@ namespace Unity.LiveCapture.VirtualCamera.Networking
         {
             return new PoseSample
             {
-                Timestamp = sample.m_Timestamp,
+                Time = sample.m_Timestamp,
+                Pose = sample.m_Pose,
+            };
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    struct PoseSampleV1
+    {
+        double m_Time;
+        Pose m_Pose;
+
+        public static explicit operator PoseSampleV1(PoseSample sample)
+        {
+            return new PoseSampleV1
+            {
+                m_Time = sample.Time,
+                m_Pose = sample.Pose,
+            };
+        }
+
+        public static explicit operator PoseSample(PoseSampleV1 sample)
+        {
+            return new PoseSample
+            {
+                Time = sample.m_Time,
                 Pose = sample.m_Pose,
             };
         }

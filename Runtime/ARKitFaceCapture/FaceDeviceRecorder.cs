@@ -23,7 +23,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// <summary>
         /// The time used by the recorder in seconds.
         /// </summary>
-        public float Time { get; set; }
+        public double Time { get; set; }
 
         /// <summary>
         /// The data channels to record as enum flags.

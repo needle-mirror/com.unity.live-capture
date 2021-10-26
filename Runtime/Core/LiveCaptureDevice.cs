@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Playables;
 
 namespace Unity.LiveCapture
 {
@@ -55,24 +54,20 @@ namespace Unity.LiveCapture
         public abstract void UpdateDevice();
 
         /// <summary>
+        /// Override this method to update the device during live mode.
+        /// </summary>
+        /// <remarks>
+        /// This method is called after the animation system execution and before the script's LateUpdate.
+        /// </remarks>
+        public abstract void LiveUpdate();
+
+        /// <summary>
         /// Indicates whether a device is ready for recording.
         /// </summary>
         /// <returns>
         /// true if ready for recording; otherwise, false.
         /// </returns>
-        public abstract bool IsLive();
-
-        /// <summary>
-        /// Use this method to set the device ready for recording.
-        /// </summary>
-        /// <param name="value">true to set ready; otherwise, false.</param>
-        public abstract void SetLive(bool value);
-
-        /// <summary>
-        /// Builds the live link on this device using a given playable graph.
-        /// </summary>
-        /// <param name="graph">The PlayableGraph to drive the live link from.</param>
-        public abstract void BuildLiveLink(PlayableGraph graph);
+        public abstract bool IsReady();
 
         /// <summary>
         /// Checks if the device has started recording.

@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
 
 namespace Unity.LiveCapture.Editor
 {
@@ -7,23 +9,13 @@ namespace Unity.LiveCapture.Editor
     /// </summary>
     class UniqueNameFormatter
     {
-        Dictionary<int, int> m_UniqueItemCount = new Dictionary<int, int>();
+        readonly HashSet<string> m_Names = new HashSet<string>();
 
         public string Format(string text)
         {
-            var key = text.GetHashCode();
-            var count = 0;
-
-            if (m_UniqueItemCount.ContainsKey(key))
-            {
-                count = m_UniqueItemCount[key];
-                count++;
-                m_UniqueItemCount[key] = count;
-                return $"{text} ({count})";
-            }
-
-            m_UniqueItemCount.Add(key, count);
-            return text;
+            var name = ObjectNames.GetUniqueName(m_Names.ToArray(), text);
+            m_Names.Add(name);
+            return name;
         }
     }
 }

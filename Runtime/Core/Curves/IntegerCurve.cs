@@ -45,7 +45,7 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public void AddKey(float time, int value)
+        public void AddKey(double time, int value)
         {
             m_Curve.AddKey(time, value);
 

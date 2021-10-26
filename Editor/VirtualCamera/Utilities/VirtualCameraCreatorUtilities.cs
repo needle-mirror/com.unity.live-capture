@@ -1,6 +1,7 @@
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
+using UnityEditor;
+using UnityEditor.SceneManagement;
 #if HDRP_10_2_OR_NEWER
 using UnityEngine.Rendering.HighDefinition;
 #endif
@@ -18,13 +19,21 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         [MenuItem("GameObject/Live Capture/Camera/Virtual Camera Actor", false, 10)]
         public static GameObject CreateVirtualCameraActor()
         {
+            var go = CreateVirtualCameraActorInternal();
+
+            Selection.activeObject = go;
+
+            return go;
+        }
+
+        internal static GameObject CreateVirtualCameraActorInternal()
+        {
             var root = new GameObject("Virtual Camera Actor",
                 typeof(VirtualCameraActor),
                 typeof(PhysicalCameraDriver),
-                typeof(FrameLines)).transform;
-            GameObjectUtility.EnsureUniqueNameForSibling(root.gameObject);
-            Undo.RegisterCreatedObjectUndo(root.gameObject, "Create " + root.name);
-            Selection.activeObject = root;
+                typeof(FrameLines));
+            GameObjectUtility.EnsureUniqueNameForSibling(root);
+            Undo.RegisterCreatedObjectUndo(root, "Create " + root.name);
 
             var camera = root.GetComponent<Camera>();
             camera.usePhysicalProperties = true;
@@ -35,7 +44,9 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             ConfigureHDCamera(camera);
 #endif
 
-            MatchToSceneView(root);
+            MatchToSceneView(root.transform);
+
+            StageUtility.PlaceGameObjectInCurrentStage(root);
 
             return root.gameObject;
         }
@@ -47,9 +58,19 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         [MenuItem("GameObject/Live Capture/Camera/Cinemachine Camera Actor", false, 10)]
         public static GameObject CreateCinemachineCameraActor()
         {
+            var go = CreateCinemachineCameraActorInternal();
+
+            Selection.activeObject = go;
+
+            return go;
+        }
+
+        internal static GameObject CreateCinemachineCameraActorInternal()
+        {
+            var stage = StageUtility.GetCurrentStage();
             var name = "Cinemachine Camera Actor";
             var undoName = $"Create {name}";
-            var brains = Resources.FindObjectsOfTypeAll<CinemachineBrain>()
+            var brains = stage.FindComponentsOfType<CinemachineBrain>()
                 .Where(b => b != null && b.isActiveAndEnabled && b.OutputCamera != null);
             var brain = brains.FirstOrDefault();
             var camera = default(Camera);
@@ -66,7 +87,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
             if (camera == null)
             {
-                camera = Object.FindObjectOfType<Camera>();
+                camera = stage.FindComponentOfType<Camera>();
             }
 
             if (camera == null)
@@ -75,6 +96,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
                 camera = cameraRoot.GetComponent<Camera>();
                 cameraRoot.tag = "MainCamera";
                 GameObjectUtility.EnsureUniqueNameForSibling(cameraRoot);
+                StageUtility.PlaceGameObjectInCurrentStage(cameraRoot);
                 Undo.RegisterCreatedObjectUndo(cameraRoot, undoName);
             }
             else if (brain == null)
@@ -90,24 +112,26 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
                 Undo.AddComponent<FrameLines>(camera.gameObject);
             }
 
-            var root = new GameObject(name, typeof(CinemachineCameraDriver)).transform;
-            GameObjectUtility.EnsureUniqueNameForSibling(root.gameObject);
+            var root = new GameObject(name, typeof(CinemachineCameraDriver));
+            GameObjectUtility.EnsureUniqueNameForSibling(root);
             Undo.RegisterCreatedObjectUndo(root.gameObject, undoName);
-            Selection.activeObject = root;
 
             var virtualCameraRoot = new GameObject("Cinemachine Virtual Camera",
-                typeof(CinemachineVirtualCamera)).transform;
-            virtualCameraRoot.SetParent(root);
+                typeof(CinemachineVirtualCamera));
+
+            virtualCameraRoot.transform.SetParent(root.transform);
 
             var virtualCamera = virtualCameraRoot.GetComponent<CinemachineVirtualCamera>();
-            virtualCamera.Follow = root;
+            virtualCamera.Follow = root.transform;
             virtualCamera.AddCinemachineComponent<CinemachineTransposer>();
             virtualCamera.AddCinemachineComponent<CinemachineSameAsFollowTarget>();
 
             var driver = root.GetComponent<CinemachineCameraDriver>();
             driver.CinemachineVirtualCamera = virtualCamera;
 
-            MatchToSceneView(root);
+            MatchToSceneView(root.transform);
+
+            StageUtility.PlaceGameObjectInCurrentStage(root);
 
             return root.gameObject;
         }

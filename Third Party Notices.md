@@ -76,4 +76,4 @@ U.S. Government End Users.
 
 This software is a "commercial item" as that term is defined at 48 C.F.R. 2.101 (OCT 1995), consisting  of "commercial computer  software"  and "commercial computer software documentation" as such terms are  used in 48 C.F.R. 12.212 (SEPT 1995) and is provided to the U.S. Government only as a commercial end item. Consistent with 48 C.F.R.12.212 and 48 C.F.R. 227.7202-1 through 227.7202-4 (JUNE 1995), all U.S. Government End Users acquire the software with only those rights set forth herein.                               
 
-Any use of this software in individual and commercial software must include, in the user documentation and internal comments to the code, the above Disclaimer (as applicable) and U.S. Government End Users Notice.  
+Any use of this software in individual and commercial software must include, in the user documentation and internal comments to the code, the above Disclaimer (as applicable) and U.S. Government End Users Notice.

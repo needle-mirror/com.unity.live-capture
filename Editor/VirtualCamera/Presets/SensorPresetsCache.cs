@@ -1,6 +1,8 @@
+using System;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Unity.LiveCapture.VirtualCamera.Editor
 {
@@ -30,6 +32,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         static SensorPresetsCache()
         {
             Undo.postprocessModifications += PostprocessModifications;
+            SensorPresetCacheProxy.GetSensorSizeName = GetSensorSizeName;
 
             UpdateCache();
         }
@@ -132,6 +135,20 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             UpdateIfNeeded();
 
             return s_SensorNameContentsWithCustom;
+        }
+
+        static string GetSensorSizeName(Vector2 size)
+        {
+            for (var i = 0; i != s_SensorSizes.Length; ++i)
+            {
+                var s = s_SensorSizes[i];
+                if (Mathf.Approximately(s.x, size.x) && Mathf.Approximately(s.y, size.y))
+                {
+                    return s_SensorNames[i];
+                }
+            }
+
+            return String.Empty;
         }
     }
 }

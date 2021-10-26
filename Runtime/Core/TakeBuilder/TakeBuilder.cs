@@ -18,6 +18,7 @@ namespace Unity.LiveCapture
         IExposedPropertyTable m_Resolver;
         string m_ContentsDirectory;
         Take m_Take;
+        readonly Dictionary<TrackAsset, double> m_TrackStartTimes = new Dictionary<TrackAsset, double>();
 
         public Take Take => m_Take;
 
@@ -55,6 +56,7 @@ namespace Unity.LiveCapture
             int takeNumber,
             string description,
             string directory,
+            DateTime creationTime,
             Take iterationBase,
             FrameRate frameRate,
             Texture2D screenshot,
@@ -110,6 +112,7 @@ namespace Unity.LiveCapture
             m_Take.SceneNumber = sceneNumber;
             m_Take.ShotName = shotName;
             m_Take.TakeNumber = takeNumber;
+            m_Take.CreationTime = creationTime;
             m_Take.Description = description;
             m_Take.FrameRate = frameRate;
             m_Take.Screenshot = SaveAsPNG(screenshot, assetName, m_ContentsDirectory);
@@ -148,20 +151,17 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public void CreateAnimationTrack(string name, Animator animator, AnimationClip animationClip)
+        public void CreateAnimationTrack(string name, Animator animator, AnimationClip animationClip, ITrackMetadata metadata = null, double? startTime = null)
         {
-            CreateAnimationTrackInternal(name, animator, animationClip);
+            var track = CreateAnimationTrackInternal(name, animator, animationClip, startTime);
+
+            if (metadata != null)
+            {
+                AddMetadata(track, metadata);
+            }
         }
 
-        /// <inheritdoc/>
-        public void CreateAnimationTrack(string name, Animator animator, AnimationClip animationClip, ITrackMetadata metadata)
-        {
-            var track = CreateAnimationTrackInternal(name, animator, animationClip);
-
-            AddMetadata(track, metadata);
-        }
-
-        AnimationTrack CreateAnimationTrackInternal(string name, Animator animator, AnimationClip animationClip)
+        AnimationTrack CreateAnimationTrackInternal(string name, Animator animator, AnimationClip animationClip, double? startTimecode)
         {
             CheckDisposed();
 
@@ -188,6 +188,11 @@ namespace Unity.LiveCapture
             var parent = GetTracks<AnimationTrack>(binding).FirstOrDefault();
             var track = CreateTrackWithParent<AnimationTrack>(name, parent);
 
+            if (startTimecode != null)
+            {
+                m_TrackStartTimes.Add(track, startTimecode.Value);
+            }
+
             // Track overrides don't need redundant bindings.
             if (parent == null)
             {
@@ -201,13 +206,13 @@ namespace Unity.LiveCapture
 
             if (parent != null)
             {
-                var partentClip = parent.GetClips().FirstOrDefault();
+                var parentClip = parent.GetClips().FirstOrDefault();
 
-                if (partentClip != null)
+                if (parentClip != null)
                 {
-                    var duration = Math.Max(partentClip.duration, clip.duration);
+                    var duration = Math.Max(parentClip.duration, clip.duration);
 
-                    partentClip.duration = duration;
+                    parentClip.duration = duration;
                     clip.duration = duration;
                 }
             }
@@ -218,6 +223,38 @@ namespace Unity.LiveCapture
         void AddMetadata(TrackAsset track, ITrackMetadata metadata)
         {
             m_Take.AddTrackMetadata(track, metadata);
+        }
+
+        /// <summary>
+        /// Modify the animation tracks such that their clips are aligned by their start times.
+        /// </summary>
+        /// <remarks>
+        /// If <see cref="CreateAnimationTrack"/>
+        /// was called with respective start times for two or more tracks,
+        /// this method aligns those clips with t=0 corresponding to the earliest sample.
+        /// Tracks without start times have their clips aligned at t=0.
+        /// </remarks>
+        public void AlignTracksByStartTimes()
+        {
+            var takeStartTime = m_TrackStartTimes.Any() ? m_TrackStartTimes.Values.Min() : 0;
+            m_Take.StartTimecode = Timecode.FromSeconds(m_Take.FrameRate, takeStartTime);
+
+            // Shortcut: If we have no start times specified or if we only have the start time for
+            // a single track, we can skip alignment.
+            if (m_TrackStartTimes.Count <= 1) return;
+
+            foreach (var track in m_Take.Timeline.GetRootTracks())
+            {
+                if (m_TrackStartTimes.TryGetValue(track, out var startTime))
+                {
+                    // We can guarantee that trackStartTime >= 0
+                    var trackStartTime = startTime - takeStartTime;
+                    foreach (var clip in track.GetClips())
+                    {
+                        clip.start = trackStartTime;
+                    }
+                }
+            }
         }
 
         /// <summary>

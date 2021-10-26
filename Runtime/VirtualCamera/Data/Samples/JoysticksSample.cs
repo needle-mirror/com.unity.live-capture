@@ -9,7 +9,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// </summary>
     struct JoysticksSample : ISample
     {
-        float m_Timestamp;
+        double m_Time;
 
         /// <summary>
         /// The direction of the joysticks.
@@ -17,10 +17,10 @@ namespace Unity.LiveCapture.VirtualCamera
         public Vector3 Joysticks;
 
         /// <inheritdoc/>
-        public float Timestamp
+        public double Time
         {
-            get => m_Timestamp;
-            set => m_Timestamp = value;
+            get => m_Time;
+            set => m_Time = value;
         }
     }
 }

@@ -17,7 +17,7 @@ namespace Unity.LiveCapture.VirtualCamera
 {
     [AddComponentMenu("")]
     [RequireComponent(typeof(Camera))]
-    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-physical-camera-driver" + Documentation.endURL)]
+    [HelpURL(Documentation.baseURL + "ref-component-physical-camera-driver" + Documentation.endURL)]
     [ExcludeFromPreset]
     class PhysicalCameraDriver : BaseCameraDriver
     {

@@ -15,7 +15,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
     /// all skinned meshes relative to the <see cref="FaceActor"/> components are consistent between the rigs.
     /// </remarks>
     [CreateAssetMenu(fileName = "NewFaceMapper", menuName = "Live Capture/ARKit Face Capture/Mapper")]
-    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-arkit-default-face-mapper" + Documentation.endURL)]
+    [HelpURL(Documentation.baseURL + "ref-component-arkit-default-face-mapper" + Documentation.endURL)]
     [DisallowMultipleComponent]
     class DefaultFaceMapper : FaceMapper
     {

@@ -8,7 +8,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// </summary>
     struct ApertureSample : ISample
     {
-        float m_Timestamp;
+        double m_Time;
 
         /// <summary>
         /// The aperture in millimeters.
@@ -16,10 +16,10 @@ namespace Unity.LiveCapture.VirtualCamera
         public float Aperture;
 
         /// <inheritdoc/>
-        public float Timestamp
+        public double Time
         {
-            get => m_Timestamp;
-            set => m_Timestamp = value;
+            get => m_Time;
+            set => m_Time = value;
         }
     }
 }

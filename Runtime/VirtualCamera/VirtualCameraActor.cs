@@ -12,7 +12,7 @@ namespace Unity.LiveCapture.VirtualCamera
     [AddComponentMenu("Live Capture/Virtual Camera/Virtual Camera Actor")]
     [ExecuteAlways]
     [RequireComponent(typeof(Animator))]
-    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-virtual-camera-actor" + Documentation.endURL)]
+    [HelpURL(Documentation.baseURL + "ref-component-virtual-camera-actor" + Documentation.endURL)]
     public class VirtualCameraActor : MonoBehaviour
     {
         [SerializeField]
@@ -43,7 +43,11 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <remarks>
         /// The value is valid while <see cref="LocalPositionEnabled"/> is true.
         /// </remarks>
-        internal Vector3 LocalPosition => m_LocalPosition;
+        internal Vector3 LocalPosition
+        {
+            get => m_LocalPosition;
+            set => m_LocalPosition = value;
+        }
 
         /// <summary>
         /// Local rotation driven by an animation clip. This property was added
@@ -53,7 +57,11 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <remarks>
         /// The value is valid while <see cref="LocalEulerAnglesEnabled"/> is true.
         /// </remarks>
-        internal Vector3 LocalEulerAngles => m_LocalEulerAngles;
+        internal Vector3 LocalEulerAngles
+        {
+            get => m_LocalEulerAngles;
+            set => m_LocalEulerAngles = value;
+        }
 
         /// <summary>
         /// Is true in the LateUpdate stage if the an animation clip is
@@ -88,7 +96,11 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <remarks>
         /// The parameters will be used by a camera driver to configure the final camera component.
         /// </remarks>
-        public Lens Lens => m_Lens;
+        public Lens Lens
+        {
+            get => m_Lens;
+            set => m_Lens = value;
+        }
 
         /// <summary>
         /// The <see cref="VirtualCamera.LensIntrinsics"/> parameters of the actor.
@@ -96,7 +108,11 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <remarks>
         /// The parameters will be used by a camera driver to configure the final camera component.
         /// </remarks>
-        public LensIntrinsics LensIntrinsics => m_LensIntrinsics;
+        public LensIntrinsics LensIntrinsics
+        {
+            get => m_LensIntrinsics;
+            set => m_LensIntrinsics = value;
+        }
 
         /// <summary>
         /// The <see cref="VirtualCamera.CameraBody"/> parameters of the actor.
@@ -104,7 +120,11 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <remarks>
         /// The parameters will be used by a camera driver to configure the final camera component.
         /// </remarks>
-        public CameraBody CameraBody => m_CameraBody;
+        public CameraBody CameraBody
+        {
+            get => m_CameraBody;
+            set => m_CameraBody = value;
+        }
 
         /// <summary>
         /// Is depth of field enabled.
@@ -112,12 +132,20 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <remarks>
         /// The camera driver will use this property to enable or disable depth of field for the camera.
         /// </remarks>
-        public bool DepthOfFieldEnabled => m_DepthOfField;
+        public bool DepthOfFieldEnabled
+        {
+            get => m_DepthOfField;
+            set => m_DepthOfField = value;
+        }
 
         /// <summary>
         /// The aspect ratio of the crop mask.
         /// </summary>
-        public float CropAspect => m_CropAspect;
+        public float CropAspect
+        {
+            get => m_CropAspect;
+            set => m_CropAspect = value;
+        }
 
         void Awake()
         {

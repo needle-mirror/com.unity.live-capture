@@ -22,7 +22,7 @@ namespace Unity.LiveCapture.VirtualCamera
     [DisallowMultipleComponent]
     [AddComponentMenu("Live Capture/Virtual Camera/Frame Lines")]
     [RequireComponent(typeof(Camera))]
-    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-frame-lines" + Documentation.endURL)]
+    [HelpURL(Documentation.baseURL + "ref-component-frame-lines" + Documentation.endURL)]
     public class FrameLines : MonoBehaviour
     {
         // Name used for profiling.

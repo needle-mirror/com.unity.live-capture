@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Timeline;
@@ -16,12 +17,16 @@ namespace Unity.LiveCapture
         string m_ShotName;
         [SerializeField]
         int m_TakeNumber;
+        [SerializeField]
+        long m_CreationTime;
         [SerializeField, TextArea(2, 4)]
         string m_Description;
         [SerializeField]
         int m_Rating;
         [SerializeField, OnlyStandardFrameRates]
         FrameRate m_FrameRate;
+        [SerializeField]
+        Timecode m_StartTimecode;
         [SerializeField]
         Texture2D m_Screenshot;
         [SerializeField]
@@ -59,6 +64,15 @@ namespace Unity.LiveCapture
         }
 
         /// <summary>
+        /// The creation time of the take.
+        /// </summary>
+        public DateTime CreationTime
+        {
+            get => DateTime.FromBinary(m_CreationTime);
+            internal set => m_CreationTime = value.ToBinary();
+        }
+
+        /// <summary>
         /// The description of the shot where the take was captured.
         /// </summary>
         public string Description
@@ -74,6 +88,15 @@ namespace Unity.LiveCapture
         {
             get => m_Rating;
             set => m_Rating = value;
+        }
+
+        /// <summary>
+        /// The timecode of the start of the take.
+        /// </summary>
+        public Timecode StartTimecode
+        {
+            get => m_StartTimecode;
+            set => m_StartTimecode = value;
         }
 
         /// <summary>

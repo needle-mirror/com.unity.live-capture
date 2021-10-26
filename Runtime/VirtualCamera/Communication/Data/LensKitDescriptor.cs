@@ -17,7 +17,7 @@ namespace Unity.LiveCapture.VirtualCamera.Networking
             return new LensKitDescriptorV0
             {
                 m_Name = lensKit.Name,
-                m_Lenses = lensKit.Lenses.Select(lens => (LensAssetDescriptorV0)lens).ToArray(),
+                m_Lenses = lensKit.Lenses.Select(lens => (LensAssetDescriptorV0)lens).ToArray()
             };
         }
 
@@ -26,7 +26,7 @@ namespace Unity.LiveCapture.VirtualCamera.Networking
             return new LensKitDescriptor
             {
                 Name = lensKitDescriptor.m_Name,
-                Lenses = lensKitDescriptor.m_Lenses.Select(lens => (LensAssetDescriptor)lens).ToArray(),
+                Lenses = lensKitDescriptor.m_Lenses.Select(lens => (LensAssetDescriptor)lens).ToArray()
             };
         }
     }

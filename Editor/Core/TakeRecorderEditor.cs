@@ -7,28 +7,60 @@ using UnityEditor.Timeline;
 
 namespace Unity.LiveCapture.Editor
 {
+    using Editor = UnityEditor.Editor;
+
     [CustomEditor(typeof(TakeRecorder))]
     class TakeRecorderEditor : UnityEditor.Editor
     {
         static class Contents
         {
-            public static readonly GUIContent LiveToggleContent = EditorGUIUtility.TrTextContent("", "Toggle the live state of the device.");
+            public static readonly GUIContent EnableToggleContent = EditorGUIUtility.TrTextContent("", "Toggle the enabled state of the device.");
             public static readonly GUIContent LiveButtonContent = EditorGUIUtility.TrTextContent("Live", "Set to live mode for previewing and recording takes.");
             public static readonly GUIContent PreviewButtonContent = EditorGUIUtility.TrTextContent("Playback", "Set to playback mode for reviewing takes.");
             public static readonly GUIContent StartRecordingLabel = EditorGUIUtility.TrTextContentWithIcon("Start Recording", "Start recording a new Take.", "Animation.Record");
+            public static readonly string NoDevicesMessage = L10n.Tr("Recording requires at least a capture device.");
+            public static readonly string NoDeviceReadyMessage = L10n.Tr("Recording requires an enabled and configured capture device.");
+            public static readonly string ReadMoreText = L10n.Tr("read more");
+            public static readonly string CreateDeviceURL = "https://docs.unity3d.com/Packages/com.unity.live-capture@1.0/manual/ref-component-take-recorder.html";
             public static readonly GUIContent StopRecordingLabel = EditorGUIUtility.TrTextContentWithIcon("Stop Recording", "Stop the ongoing recording.", "Animation.Record");
             public static readonly GUIContent PlayPreviewLabel = EditorGUIUtility.TrTextContentWithIcon("Start Preview", "Start previewing the selected Take.", "PlayButton");
             public static readonly GUIContent StopPreviewLabel = EditorGUIUtility.TrTextContentWithIcon("Stop Preview", "Stop the ongoing playback.", "PauseButton");
             public static readonly GUIContent FrameRateLabel = EditorGUIUtility.TrTextContent("Frame Rate", "The frame rate to use for recording.");
             public static readonly GUIContent ProjectSettingsButton = EditorGUIUtility.TrTextContent("Open Project Settings", "Open the Take System project settings.");
-            public static readonly string ExternalSlateMsg = EditorGUIUtility.TrTextContent("Slate data provided externally using a Timeline track.").text;
+            public static readonly string ExternalSlateMsg = L10n.Tr("Slate data provided externally using a Timeline track.");
+            public static readonly GUIContent DeviceReadyIcon = EditorGUIUtility.TrIconContent("winbtn_mac_max");
+            public static readonly GUIContent DeviceNotReadyIcon = EditorGUIUtility.TrIconContent("winbtn_mac_close");
+            public static readonly GUIContent WarningIcon = EditorGUIUtility.TrIconContent("console.warnicon");
             public static readonly GUIStyle ButtonToggleStyle = "Button";
-            public static readonly string UndoSetLive = "Toggle Live Mode";
-            public static readonly string UndoCreateDevice = "Create Capture Device";
+            public static readonly string UndoSetLive = L10n.Tr("Toggle Live Mode");
+            public static readonly string UndoEnableDevice = L10n.Tr("Set Enabled");
+            public static readonly string UndoCreateDevice = L10n.Tr("Create Capture Device");
             public static readonly GUILayoutOption[] RecordButtonOptions =
             {
                 GUILayout.Height(30f)
             };
+
+            public static string GetRecordButtonMessage(int deviceCount)
+            {
+                if (deviceCount == 0)
+                {
+                    return NoDevicesMessage;
+                }
+                else
+                {
+                    return NoDeviceReadyMessage;
+                }
+            }
+        }
+
+        static List<TakeRecorderEditor> s_Editors = new List<TakeRecorderEditor>();
+
+        internal static void RepaintEditors()
+        {
+            foreach (var editor in s_Editors)
+            {
+                editor.Repaint();
+            }
         }
 
         static IEnumerable<(Type, CreateDeviceMenuItemAttribute[])> s_CreateDeviceMenuItems;
@@ -52,6 +84,8 @@ namespace Unity.LiveCapture.Editor
             CreateDeviceList();
 
             Undo.undoRedoPerformed += UndoRedoPerformed;
+
+            s_Editors.AddUnique(this);
         }
 
         void OnDisable()
@@ -59,6 +93,8 @@ namespace Unity.LiveCapture.Editor
             Undo.undoRedoPerformed -= UndoRedoPerformed;
 
             m_SlateInspector.Dispose();
+
+            s_Editors.Remove(this);
         }
 
         void UndoRedoPerformed()
@@ -78,31 +114,37 @@ namespace Unity.LiveCapture.Editor
             {
                 var element = m_DevicesProp.GetArrayElementAtIndex(index);
                 var device = element.objectReferenceValue as LiveCaptureDevice;
-                var isLive = device != null ? device.IsLive() : false;
+                var isDeviceEnabled = device != null ? device.enabled : false;
 
                 rect.y += 1.5f;
                 rect.height = EditorGUIUtility.singleLineHeight;
 
                 var buttonRect = rect;
+                var statusRect = rect;
                 var fieldRect = rect;
 
                 buttonRect.width = 15f;
-                fieldRect.x = buttonRect.xMax + 5f;
-                fieldRect.width -= 20f;
+                statusRect.width = 15f;
+                statusRect.x = buttonRect.xMax + 5f;
+                fieldRect.x = statusRect.xMax + 5f;
+                fieldRect.width -= 40f;
 
                 using (var change = new EditorGUI.ChangeCheckScope())
                 {
-                    isLive = GUI.Toggle(buttonRect, isLive, Contents.LiveToggleContent);
+                    isDeviceEnabled = GUI.Toggle(buttonRect, isDeviceEnabled, Contents.EnableToggleContent);
 
                     if (change.changed)
                     {
-                        Undo.RegisterCompleteObjectUndo(device, Contents.UndoSetLive);
+                        Undo.RegisterCompleteObjectUndo(device, Contents.UndoEnableDevice);
 
-                        device.SetLive(isLive);
+                        device.enabled = isDeviceEnabled;
 
                         EditorUtility.SetDirty(device);
+                        EditorApplication.QueuePlayerLoopUpdate();
                     }
                 }
+
+                EditorGUI.LabelField(statusRect, GetStatusIcon(device));
 
                 using (new EditorGUI.DisabledGroupScope(true))
                 {
@@ -125,6 +167,18 @@ namespace Unity.LiveCapture.Editor
             };
         }
 
+        GUIContent GetStatusIcon(LiveCaptureDevice device)
+        {
+            if (device.IsReady())
+            {
+                return Contents.DeviceReadyIcon;
+            }
+            else
+            {
+                return Contents.DeviceNotReadyIcon;
+            }
+        }
+
         void CreateDevice(Type type)
         {
             Debug.Assert(type != null);
@@ -135,8 +189,6 @@ namespace Unity.LiveCapture.Editor
             GameObjectUtility.EnsureUniqueNameForSibling(go);
 
             Undo.RegisterCreatedObjectUndo(go, Contents.UndoCreateDevice);
-
-            m_TakeRecorder.Rebuild();
 
             EditorGUIUtility.PingObject(go);
         }
@@ -260,6 +312,9 @@ namespace Unity.LiveCapture.Editor
 
         void DoRecordButton()
         {
+            var canStartRecording = m_TakeRecorder.CanStartRecording();
+
+            using (new EditorGUI.DisabledScope(!canStartRecording))
             using (var change = new EditorGUI.ChangeCheckScope())
             {
                 GUILayout.Toggle(m_TakeRecorder.IsRecording(),
@@ -276,6 +331,14 @@ namespace Unity.LiveCapture.Editor
                         m_TakeRecorder.StartRecording();
                     }
                 }
+            }
+
+            if (!canStartRecording)
+            {
+                var deviceCount = m_DevicesProp.arraySize;
+                var message = Contents.GetRecordButtonMessage(deviceCount);
+
+                LiveCaptureGUI.HelpBoxWithURL(message, Contents.ReadMoreText, Contents.CreateDeviceURL, MessageType.Warning);
             }
         }
 

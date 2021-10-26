@@ -36,7 +36,7 @@ namespace Unity.LiveCapture.Editor
         bool m_FocusSearchBox;
 
         Vector2 m_ScrollPos;
-        GUIContent m_HoveredOption;
+        int? m_LastHoveredIndex;
 
         /// <summary>
         /// Opens a dropdown window used to select a value from a set of options.
@@ -71,7 +71,7 @@ namespace Unity.LiveCapture.Editor
             window.m_FocusSearchBox = true;
 
             window.m_ScrollPos = Vector2.zero;
-            window.m_HoveredOption = null;
+            window.m_LastHoveredIndex = null;
 
             // we need to highlight the list item under the mouse
             window.wantsMouseMove = true;
@@ -97,7 +97,7 @@ namespace Unity.LiveCapture.Editor
             {
                 case EventType.MouseEnterWindow:
                 case EventType.MouseLeaveWindow:
-                    m_HoveredOption = null;
+                    m_LastHoveredIndex = null;
                     break;
                 case EventType.KeyDown:
                 {
@@ -123,6 +123,8 @@ namespace Unity.LiveCapture.Editor
 
                 using (var scroll = new EditorGUILayout.ScrollViewScope(m_ScrollPos))
                 {
+                    var hoveredIndex = default(int?);
+
                     // draw the options that pass the search filter
                     for (var i = 0; i < m_Options.Length; i++)
                     {
@@ -131,11 +133,23 @@ namespace Unity.LiveCapture.Editor
                             if (firstSearchItem < 0)
                                 firstSearchItem = i;
 
-                            DrawItem(i);
+                            if (DrawItem(i))
+                            {
+                                hoveredIndex = i;
+                            }
                         }
                     }
 
                     m_ScrollPos = scroll.scrollPosition;
+
+                    // repaint the window if the selection changes
+                    if (m_LastHoveredIndex != hoveredIndex && e.type != EventType.Layout)
+                    {
+                        m_LastHoveredIndex = hoveredIndex;
+
+                        if (e.type != EventType.Repaint)
+                            Repaint();
+                    }
                 }
             }
 
@@ -178,7 +192,7 @@ namespace Unity.LiveCapture.Editor
             }
         }
 
-        void DrawItem(int index)
+        bool DrawItem(int index)
         {
             var option = m_Options[index];
 
@@ -220,15 +234,7 @@ namespace Unity.LiveCapture.Editor
             }
 
             EditorGUI.LabelField(rect, option);
-
-            // force a refresh of the window if a new item is hovered by the mouse
-            if (m_HoveredOption != option && hover)
-            {
-                m_HoveredOption = option;
-
-                if (e.type != EventType.Repaint)
-                    Repaint();
-            }
+            return hover;
         }
 
         void Select(int index)

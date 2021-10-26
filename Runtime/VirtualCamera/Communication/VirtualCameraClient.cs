@@ -236,6 +236,12 @@ namespace Unity.LiveCapture.VirtualCamera
         /// </summary>
         /// <param name="descriptor">The snapshot list information to send.</param>
         void SendSnapshotListDescriptor(SnapshotListDescriptor descriptor);
+
+        /// <summary>
+        /// Sends the virtual camera track metadata list descriptor to the client.
+        /// </summary>
+        /// <param name="descriptor">The virtual camera track metadata information to send<./param>
+        void SendVirtualCameraTrackMetadataListDescriptor(VcamTrackMetadataListDescriptor descriptor);
     }
 
     /// <summary>
@@ -285,6 +291,7 @@ namespace Unity.LiveCapture.VirtualCamera
         readonly JsonSender<LensKitDescriptorV0> m_LensKitDescriptorSender;
         readonly BinarySender<int> m_SelectedLensAssetSender;
         readonly JsonSender<SnapshotListDescriptorV0> m_SnapshotListDescriptorSender;
+        readonly JsonSender<VcamTrackMetadataListDescriptorV0> m_VirtualCameraTrackMetadataListDescriptorSender;
 
         /// <inheritdoc />
         public event Action<VirtualCameraChannelFlags> ChannelFlagsReceived;
@@ -394,8 +401,9 @@ namespace Unity.LiveCapture.VirtualCamera
             m_VideoStreamIsRunningSender = m_Protocol.Add(new BoolSender(VirtualCameraMessages.ToClient.VideoStreamIsRunning));
             m_VideoStreamPortSender = m_Protocol.Add(new BinarySender<int>(VirtualCameraMessages.ToClient.VideoStreamPort));
             m_LensKitDescriptorSender = m_Protocol.Add(new JsonSender<LensKitDescriptorV0>(VirtualCameraMessages.ToClient.LensKitDescriptor_V0));
-            m_SelectedLensAssetSender = m_Protocol.Add(new BinarySender<int>(VirtualCameraMessages.ToClient.SelectedLensAsset));
+            m_SelectedLensAssetSender = m_Protocol.Add(new BinarySender<int>(VirtualCameraMessages.ToClient.SelectedLensAsset, options: DataOptions.None));
             m_SnapshotListDescriptorSender = m_Protocol.Add(new JsonSender<SnapshotListDescriptorV0>(VirtualCameraMessages.ToClient.SnapshotListDescriptor_V0));
+            m_VirtualCameraTrackMetadataListDescriptorSender = m_Protocol.Add(new JsonSender<VcamTrackMetadataListDescriptorV0>(VirtualCameraMessages.ToClient.VcamTrackMetadataListDescriptor_V0));
 
             m_Protocol.Add(new BinaryReceiver<VirtualCameraChannelFlags>(VirtualCameraMessages.ToServer.ChannelFlags, options: DataOptions.None)).AddHandler(flags =>
             {
@@ -405,19 +413,19 @@ namespace Unity.LiveCapture.VirtualCamera
             {
                 JoysticksSampleReceived?.Invoke((JoysticksSample)joysticks);
             });
-            m_Protocol.Add(new BinaryReceiver<PoseSampleV0>(VirtualCameraMessages.ToServer.PoseSample_V0, ChannelType.UnreliableUnordered)).AddHandler(pose =>
+            m_Protocol.Add(new BinaryReceiver<PoseSampleV1>(VirtualCameraMessages.ToServer.PoseSample_V1, ChannelType.UnreliableUnordered)).AddHandler(pose =>
             {
                 PoseSampleReceived?.Invoke((PoseSample)pose);
             });
-            m_Protocol.Add(new BinaryReceiver<FocalLengthSampleV0>(VirtualCameraMessages.ToServer.FocalLengthSample_V0, ChannelType.UnreliableUnordered)).AddHandler(focalLength =>
+            m_Protocol.Add(new BinaryReceiver<FocalLengthSampleV1>(VirtualCameraMessages.ToServer.FocalLengthSample_V1, ChannelType.UnreliableUnordered)).AddHandler(focalLength =>
             {
                 FocalLengthSampleReceived?.Invoke((FocalLengthSample)focalLength);
             });
-            m_Protocol.Add(new BinaryReceiver<FocusDistanceSampleV0>(VirtualCameraMessages.ToServer.FocusDistanceSample_V0, ChannelType.UnreliableUnordered)).AddHandler(focusDistance =>
+            m_Protocol.Add(new BinaryReceiver<FocusDistanceSampleV1>(VirtualCameraMessages.ToServer.FocusDistanceSample_V1, ChannelType.UnreliableUnordered)).AddHandler(focusDistance =>
             {
                 FocusDistanceSampleReceived?.Invoke((FocusDistanceSample)focusDistance);
             });
-            m_Protocol.Add(new BinaryReceiver<ApertureSampleV0>(VirtualCameraMessages.ToServer.ApertureSample_V0, ChannelType.UnreliableUnordered)).AddHandler(aperture =>
+            m_Protocol.Add(new BinaryReceiver<ApertureSampleV1>(VirtualCameraMessages.ToServer.ApertureSample_V1, ChannelType.UnreliableUnordered)).AddHandler(aperture =>
             {
                 ApertureSampleReceived?.Invoke((ApertureSample)aperture);
             });
@@ -607,6 +615,12 @@ namespace Unity.LiveCapture.VirtualCamera
         public void SendSnapshotListDescriptor(SnapshotListDescriptor descriptor)
         {
             m_SnapshotListDescriptorSender.Send((SnapshotListDescriptorV0)descriptor);
+        }
+
+        /// <inheritdoc />
+        public void SendVirtualCameraTrackMetadataListDescriptor(VcamTrackMetadataListDescriptor descriptor)
+        {
+            m_VirtualCameraTrackMetadataListDescriptorSender.Send((VcamTrackMetadataListDescriptorV0)descriptor);
         }
 
         /// <summary>

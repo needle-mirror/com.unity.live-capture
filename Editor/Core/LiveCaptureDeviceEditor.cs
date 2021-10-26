@@ -16,6 +16,8 @@ namespace Unity.LiveCapture.Editor
         {
             public static readonly GUIContent TakeRecorderNotFound = EditorGUIUtility.TrTextContent($"{nameof(TakeRecorder)} not found. " +
                 $"Place the device as a child of a {nameof(TakeRecorder)} component in the hierarchy.");
+            public static readonly GUIContent ConfigurationIssues = EditorGUIUtility.TrTextContent("Help",
+                "Find out why the device is not ready to operate.");
         }
 
         static readonly string[] s_ExcludeProperties = { "m_Script" };
@@ -37,7 +39,7 @@ namespace Unity.LiveCapture.Editor
         }
 
         /// <summary>
-        /// Draws the Inspector for this device.
+        /// Draws the Inspector for the inspected device.
         /// </summary>
         protected virtual void OnDeviceGUI()
         {

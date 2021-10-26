@@ -17,7 +17,7 @@ namespace Unity.LiveCapture.CompanionApp
         /// <summary>
         /// The name of the shot stored in the slate.
         /// </summary>
-        public string ShotName;
+        public string ShotName = string.Empty;
 
         /// <summary>
         /// The number associated with the take to record.
@@ -27,7 +27,7 @@ namespace Unity.LiveCapture.CompanionApp
         /// <summary>
         /// The description of the shot stored in the slate.
         /// </summary>
-        public string Description;
+        public string Description = string.Empty;
 
         /// <summary>
         /// The duration of the slate in seconds.

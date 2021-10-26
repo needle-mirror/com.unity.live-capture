@@ -49,9 +49,9 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public void AddKey(float time, float value)
+        public void AddKey(double time, float value)
         {
-            m_Sampler.Add(new Keyframe(time, value));
+            m_Sampler.Add(new Keyframe((float)time, value));
 
             Sample();
         }

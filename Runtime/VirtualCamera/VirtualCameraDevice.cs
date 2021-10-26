@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.LiveCapture.CompanionApp;
 using Unity.LiveCapture.VirtualCamera.Rigs;
 using UnityEngine;
-using UnityEngine.Playables;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
@@ -21,46 +21,82 @@ namespace Unity.LiveCapture.VirtualCamera
     [AddComponentMenu("")]
     [RequireComponent(typeof(FocusPlaneRenderer))]
     [CreateDeviceMenuItemAttribute("Virtual Camera Device")]
-    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-component-virtual-camera-device" + Documentation.endURL)]
+    [HelpURL(Documentation.baseURL + "ref-component-virtual-camera-device" + Documentation.endURL)]
     [DisallowMultipleComponent]
-    public class VirtualCameraDevice : CompanionAppDevice<IVirtualCameraClient>
+    public class VirtualCameraDevice : CompanionAppDevice<IVirtualCameraClient>, ITimedDataSource
     {
-        const float k_Epsilon = 0.0001f;
-        const float k_MaxSpeed = Mathf.Infinity;
+        // Due to a quirk in how LensPostProcessor works, if there's not enough keyframes
+        // in the buffer, we can run into a situation where we constantly "miss" the
+        // keyframes when performing the sampling. Setting the buffer size to some higher value
+        // minimizes this possibility.
+        const int k_MinBufferSize = 5;
+
+        const int k_TimeShiftTolerance = 15;
+
+        // If the editor/app runs slower than this fps, generate interpolated lens samples at this fps
+        readonly FrameRate k_MinSamplingFrameRate = StandardFrameRate.FPS_60_00;
+
+        static readonly Snapshot[] k_EmptySnapshots = new Snapshot[0];
 
         static List<VirtualCameraDevice> s_Instances = new List<VirtualCameraDevice>();
+
         internal static IEnumerable<VirtualCameraDevice> instances => s_Instances;
+
+        [SerializeField, HideInInspector]
+        string m_Guid;
 
         [SerializeField]
         internal LensAsset m_DefaultLensAsset;
+
         [SerializeField]
         VirtualCameraActor m_Actor;
-        [SerializeField]
-        VirtualCameraLiveLink m_LiveLink = new VirtualCameraLiveLink();
+
+        [SerializeField, EnumFlagButtonGroup(100f)]
+        VirtualCameraChannelFlags m_Channels = VirtualCameraChannelFlags.All;
+
+        /// <summary>
+        /// The current lens as set from the inspector or the companion app
+        /// </summary>
+        /// <remarks>
+        /// Note that this is not necessarily the lens used on the actor, due to
+        /// post-processing.
+        /// </remarks>
         [SerializeField]
         Lens m_Lens = Lens.DefaultParams;
+
         [SerializeField]
         LensAsset m_LensAsset;
+
         [SerializeField]
         LensIntrinsics m_LensIntrinsics = LensIntrinsics.DefaultParams;
+
         [SerializeField]
         CameraBody m_CameraBody = CameraBody.DefaultParams;
+
         [SerializeField]
         VirtualCameraRigState m_Rig = VirtualCameraRigState.Identity;
+
         [SerializeField]
         Settings m_Settings = Settings.DefaultData;
+
+        // Obsolete. Use m_SnapshotLibrary instead.
         [SerializeField, NonReorderable]
-        List<Snapshot> m_Snapshots = new List<Snapshot>();
+        internal List<Snapshot> m_Snapshots = new List<Snapshot>();
+        [SerializeField]
+        SnapshotLibrary m_SnapshotLibrary;
         VideoServer m_VideoServer = new VideoServer();
 
-        readonly SmoothDampSampler m_FocusDistanceSampler = new SmoothDampSampler();
-        readonly SmoothDampSampler m_FocalLengthSampler = new SmoothDampSampler();
-        readonly SmoothDampSampler m_ApertureSampler = new SmoothDampSampler();
+        [SerializeField, HideInInspector]
+        FrameTime m_SyncPresentationOffset;
 
-        float m_FocusDistanceDampingVelocity;
-        float m_FocalLengthDampingVelocity;
-        float m_ApertureDampingVelocity;
+        [SerializeField]
+        bool m_IsSynchronized;
+
+        [SerializeField, HideInInspector]
+        int m_BufferSize = k_MinBufferSize;
+
         float m_LastPoseTimeStamp;
+
         float m_LastJoysticksTimeStamp;
         bool m_PoseRigNeedsInitialize;
         IRaycaster m_Raycaster;
@@ -70,14 +106,27 @@ namespace Unity.LiveCapture.VirtualCamera
         TimestampTracker m_TimestampTracker = new TimestampTracker();
         MeshIntersectionTracker m_MeshIntersectionTracker = new MeshIntersectionTracker();
         Lens m_LensMetadata;
-        Lens m_InterpolatedLens;
         LensAsset m_LastLensAsset;
+        Snapshot[] m_LastSnapshots;
         bool m_LensIntrinsicsDirty;
         bool m_LastScreenAFRaycastIsValid;
         IScreenshotImpl m_ScreenshotImpl = new ScreenshotImpl();
         bool m_ActorAlignRequested;
+        VirtualCameraActor m_LastActor;
 
         internal VirtualCameraRecorder Recorder => m_Recorder;
+
+        static readonly FrameRate k_SyncBufferNominalFrameRate = StandardFrameRate.FPS_60_00;
+        TimedDataBuffer<Pose> m_PoseBuffer;
+        LensPostProcessor m_LensPostProcessor;
+
+        // Record the first synced sample to arrive after start of recording
+        double? m_FirstSampleTimecode;
+        ClientTimeEstimator m_ClientTimeEstimator = new ClientTimeEstimator();
+
+        // Values to be used in LiveUpdate()
+        Lens m_LensForActorUpdate;
+        Pose m_PoseForActorUpdate;
 
         /// <summary>
         /// Gets the <see cref="VirtualCameraActor"/> currently assigned to this device.
@@ -137,7 +186,8 @@ namespace Unity.LiveCapture.VirtualCamera
             {
                 m_Lens = value;
                 ValidateLensIntrinsics();
-                m_InterpolatedLens = m_Lens;
+                m_LensPostProcessor.Reset(m_Lens, m_ClientTimeEstimator.Now);
+                m_LensForActorUpdate = m_Lens;
             }
         }
 
@@ -167,6 +217,15 @@ namespace Unity.LiveCapture.VirtualCamera
         /// </summary>
         public CameraBody CameraBody => m_CameraBody;
 
+        /// <summary>
+        /// The <see cref="VirtualCamera.SnapshotLibrary"/> of the current device.
+        /// </summary>
+        internal SnapshotLibrary SnapshotLibrary
+        {
+            get => m_SnapshotLibrary;
+            set => m_SnapshotLibrary = value;
+        }
+
         bool TryGetInternalClient(out IVirtualCameraClientInternal client)
         {
             client = GetClient() as IVirtualCameraClientInternal;
@@ -184,6 +243,30 @@ namespace Unity.LiveCapture.VirtualCamera
             }
         }
 
+        LensPostProcessor CreateLensPostProcessor()
+        {
+            return new LensPostProcessor
+            {
+                UpdateFocusRigFunction = (distance, reticlePositionChanged) =>
+                {
+                    if (!reticlePositionChanged &&
+                        (m_Settings.FocusMode == FocusMode.Clear || m_Settings.FocusMode == FocusMode.Manual))
+                    {
+                        return (false, distance);
+                    }
+
+                    var focusUpdated = UpdateAutoFocusDistance(ref distance, reticlePositionChanged);
+                    return (focusUpdated, distance);
+                },
+                ValidationFunction = lens =>
+                {
+                    lens.Validate(m_LensIntrinsics);
+                    return lens;
+                },
+                BufferSize = m_BufferSize
+            };
+        }
+
         void Reset()
         {
             m_LensAsset = m_DefaultLensAsset;
@@ -191,7 +274,6 @@ namespace Unity.LiveCapture.VirtualCamera
             if (m_LensAsset != null)
             {
                 m_Lens = m_LensAsset.DefaultValues;
-                m_InterpolatedLens = m_Lens;
             }
 
             // Find & assign the first actor not already assigned to a device.
@@ -251,19 +333,33 @@ namespace Unity.LiveCapture.VirtualCamera
             m_Rig.Refresh(GetRigSettings());
             UpdateOverlaysIfNeeded(m_Settings);
 
-            if (!IsLive())
+            if (m_LensPostProcessor == null)
             {
-                m_InterpolatedLens = m_Lens;
+                m_LensPostProcessor = CreateLensPostProcessor();
+            }
+
+            if (IsSynchronized)
+            {
+                m_LensPostProcessor.AddLensKeyframe(GetSynchronizerTime(), m_Lens);
+            }
+            else
+            {
+                m_LensPostProcessor.AddLensKeyframe(m_ClientTimeEstimator.Now, m_Lens);
             }
         }
+
+        double GetSynchronizerTime() =>
+            Synchronizer != null ? Synchronizer.CurrentTimecode.ToSeconds(Synchronizer.FrameRate) : default;
 
         void ValidateActor()
         {
             InitializeDriver();
 
             // If actor has changed
-            if (m_Actor != null && m_Actor.Animator != m_LiveLink.GetAnimator())
+            if (m_Actor != null && m_Actor != m_LastActor)
             {
+                m_LastActor = m_Actor;
+
                 UpdateRigOriginFromActor();
             }
         }
@@ -307,6 +403,15 @@ namespace Unity.LiveCapture.VirtualCamera
             m_LensIntrinsicsDirty = m_LensIntrinsics != oldIntrinsics;
         }
 
+        /// <inheritdoc/>
+        protected override void OnSlateChanged(ISlate slate)
+        {
+            if (TryGetInternalClient(out var client))
+            {
+                client.SendVirtualCameraTrackMetadataListDescriptor(VcamTrackMetadataListDescriptor.Create(slate));
+            }
+        }
+
         internal void SetScreenshotImpl(IScreenshotImpl impl)
         {
             Debug.Assert(impl != null);
@@ -316,20 +421,27 @@ namespace Unity.LiveCapture.VirtualCamera
 
         internal int GetSnapshotCount()
         {
-            return m_Snapshots.Count;
+            return m_SnapshotLibrary == null ? 0 : m_SnapshotLibrary.Count;
         }
 
         internal Snapshot GetSnapshot(int index)
         {
-            return m_Snapshots[index];
+            if (m_SnapshotLibrary == null)
+            {
+                return null;
+            }
+
+            return m_SnapshotLibrary.Get(index);
         }
 
         internal void TakeSnapshot()
         {
-            if (IsRecording() || !this.IsLiveActive())
+            if (IsRecording() || !this.IsLiveAndReady())
             {
                 return;
             }
+
+            SnapshotLibraryUtility.EnforceSnapshotLibrary(this);
 
             var snapshot = new Snapshot()
             {
@@ -365,24 +477,22 @@ namespace Unity.LiveCapture.VirtualCamera
                 snapshot.Time,
                 snapshot.FrameRate);
 
-            m_Snapshots.Add(snapshot);
-
-            SendSnapshots();
+            SnapshotLibraryUtility.AddSnapshot(m_SnapshotLibrary, snapshot);
         }
 
         internal void GoToSnapshot(int index)
         {
-            if (index < 0 || index >= m_Snapshots.Count)
+            if (m_SnapshotLibrary == null)
             {
                 return;
             }
 
-            GoToSnapshot(m_Snapshots[index]);
+            GoToSnapshot(m_SnapshotLibrary.Get(index));
         }
 
         internal void GoToSnapshot(Snapshot snapshot)
         {
-            if (IsRecording())
+            if (snapshot == null || IsRecording())
             {
                 return;
             }
@@ -396,23 +506,22 @@ namespace Unity.LiveCapture.VirtualCamera
                 takeRecorderInternal.SetPreviewTime(snapshot.Slate, snapshot.Time);
             }
 
-            SetLive(true);
             Refresh();
         }
 
         internal void LoadSnapshot(int index)
         {
-            if (index < 0 || index >= m_Snapshots.Count)
+            if (m_SnapshotLibrary == null)
             {
                 return;
             }
 
-            LoadSnapshot(m_Snapshots[index]);
+            LoadSnapshot(m_SnapshotLibrary.Get(index));
         }
 
         internal void LoadSnapshot(Snapshot snapshot)
         {
-            if (IsRecording())
+            if (snapshot == null || IsRecording())
             {
                 return;
             }
@@ -432,14 +541,12 @@ namespace Unity.LiveCapture.VirtualCamera
 
         internal void DeleteSnapshot(int index)
         {
-            if (IsRecording() || index < 0 || index >= m_Snapshots.Count)
+            if (m_SnapshotLibrary == null || IsRecording())
             {
                 return;
             }
 
-            m_Snapshots.RemoveAt(index);
-
-            SendSnapshots();
+            m_SnapshotLibrary.RemoveAt(index);
         }
 
         void Awake()
@@ -452,12 +559,18 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             base.OnEnable();
 
+            TimedDataSourceManager.Instance.EnsureIdIsValid(ref m_Guid);
+            TimedDataSourceManager.Instance.Register(this);
+
             m_MeshIntersectionTracker.Initialize();
             m_Raycaster = RaycasterFactory.Create();
 
             InitializeDriver();
 
             s_Instances.Add(this);
+            m_PoseBuffer = new TimedDataBuffer<Pose>(k_SyncBufferNominalFrameRate, m_BufferSize);
+            m_LensPostProcessor = CreateLensPostProcessor();
+            m_ClientTimeEstimator.Reset();
         }
 
         /// <inheritdoc/>
@@ -465,14 +578,20 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             s_Instances.Remove(this);
 
+            TimedDataSourceManager.Instance.Unregister(this);
+
             RaycasterFactory.Dispose(m_Raycaster);
             m_MeshIntersectionTracker.Dispose();
-
-            m_LiveLink.SetAnimator(null);
 
             base.OnDisable();
 
             Refresh();
+        }
+
+        /// <inheritdoc/>
+        public override bool IsReady()
+        {
+            return base.IsReady() && m_Actor != null;
         }
 
         /// <inheritdoc/>
@@ -492,7 +611,12 @@ namespace Unity.LiveCapture.VirtualCamera
                 CropAspect = m_Settings.AspectRatio
             };
 
-            takeBuilder.CreateAnimationTrack("Virtual Camera", m_Actor.Animator, m_Recorder.Bake(), metadata);
+            takeBuilder.CreateAnimationTrack(
+                "Virtual Camera",
+                m_Actor.Animator,
+                m_Recorder.Bake(),
+                metadata,
+                m_FirstSampleTimecode);
         }
 
         /// <summary>
@@ -552,53 +676,9 @@ namespace Unity.LiveCapture.VirtualCamera
             m_Settings.ReticlePosition = reticlePosition;
             m_Settings.Validate();
 
-            if (m_Settings.FocusMode != FocusMode.Clear)
-                UpdateFocusRig(true);
+            m_LensPostProcessor.MarkReticlePositionChanged();
 
             SendSettings();
-        }
-
-        /// <inheritdoc/>
-        public override void BuildLiveLink(PlayableGraph graph)
-        {
-            m_LiveLink.Build(graph);
-        }
-
-        void UpdateLiveLink(Lens lens)
-        {
-            var eulerAngles = m_Rig.Pose.rotation.eulerAngles;
-
-            var changed = m_LiveLink.Position != m_Rig.Pose.position
-                || m_LiveLink.EulerAngles != eulerAngles
-                || m_LiveLink.Lens != lens
-                || m_LiveLink.LensIntrinsics != m_LensIntrinsics
-                || m_LiveLink.DepthOfFieldEnabled != IsDepthOfFieldEnabled()
-                || m_LiveLink.CropAspect != m_Settings.AspectRatio;
-
-            var animator = default(Animator);
-
-            if (m_Actor != null)
-            {
-                animator = m_Actor.Animator;
-            }
-
-            m_LiveLink.SetAnimator(animator);
-            m_LiveLink.SetActive(IsLive());
-            m_LiveLink.Position = m_Rig.Pose.position;
-            m_LiveLink.EulerAngles = eulerAngles;
-            m_LiveLink.Lens = lens;
-            m_LiveLink.LensIntrinsics = m_LensIntrinsics;
-            m_LiveLink.CameraBody = m_CameraBody;
-            m_LiveLink.DepthOfFieldEnabled = IsDepthOfFieldEnabled();
-            m_LiveLink.CropAspect = m_Settings.AspectRatio;
-            m_LiveLink.Update();
-
-            UpdateDamping();
-
-            if (changed)
-            {
-                Refresh();
-            }
         }
 
         /// <inheritdoc/>
@@ -612,7 +692,17 @@ namespace Unity.LiveCapture.VirtualCamera
             SendCameraBody();
             SendSettings();
             SendVideoStreamState();
-            SendSnapshots();
+            SendSnapshotsIfNeeded();
+        }
+
+        /// <summary>
+        /// Specify a fixed delta time for testing or offline processing.
+        /// </summary>
+        internal double? DeltaTimeOverride { get; set; }
+
+        internal void MarkClientTime(double time)
+        {
+            m_ClientTimeEstimator.Mark(time);
         }
 
         /// <inheritdoc/>
@@ -628,23 +718,61 @@ namespace Unity.LiveCapture.VirtualCamera
             UpdateOverlaysIfNeeded(m_Settings);
             UpdateTimestampTracker();
             UpdateRecorder();
+            UpdateLensPostProcessorSettings();
+            var deltaTime = DeltaTimeOverride ?? Time.unscaledDeltaTime;
+            m_ClientTimeEstimator.Update(deltaTime);
+
+            // If we're updating slower than k_MinSamplingFrameRate,
+            // generate samples at k_MinSamplingFrameRate.
+            // Otherwise, generate samples at the game's/editor's fps.
+            m_LensPostProcessor.SamplingFrameRate =
+                deltaTime > k_MinSamplingFrameRate.FrameInterval ?
+                    k_MinSamplingFrameRate :
+                    new FrameRate((int)Math.Round(1.0 / deltaTime));
+
+            if (!IsSynchronized)
+            {
+                // Unsynchronized updates to for post-processing lens samples works like the synchronized case,
+                // except that we're using the estimated client time instead of the Timecode provider time
+                Lens? maybeLensSample = null;
+
+                if (DeltaTimeOverride == null &&
+                    Math.Abs(m_ClientTimeEstimator.Now - m_LensPostProcessor.CurrentTime) > deltaTime * k_TimeShiftTolerance)
+                {
+                    // Device time shift detected. This can happen
+                    // 1) on the first update, or client was restarted
+                    // 2) when a timecode source was selected/changed on the device
+                    // 3) if there is a really long gap between pose samples, and the clocks have drifted
+                    m_LensPostProcessor.Reset(m_Lens, m_ClientTimeEstimator.Now);
+
+                    // This could cause a discontinuity if we were in the middle of doing an interpolation,
+                    // but it's more important that the actor gets updated with the correct value.
+                    maybeLensSample = m_Lens;
+                }
+
+                // Compute post-processed lens samples. There could be multiple samples per update
+                // if we are interpolating at a high frame rate.
+                foreach (var sample in m_LensPostProcessor.ProcessTo(m_ClientTimeEstimator.Now))
+                {
+                    maybeLensSample = sample.lens;
+                    if (IsRecording())
+                    {
+                        m_TimestampTracker.SetTimestamp((float)sample.time);
+                        Recorder.Time = m_TimestampTracker.LocalTime;
+                        m_Recorder.RecordAperture(sample.lens.Aperture);
+                        m_Recorder.RecordFocusDistance(sample.lens.FocusDistance);
+                        m_Recorder.RecordFocalLength(sample.lens.FocalLength);
+                    }
+                }
+
+                // Use the last post-processed lens sample for livelink update
+                UpdateActorData(maybeLensSample ?? m_LensForActorUpdate, m_Rig.Pose);
+
+                // Expose the target (unfiltered) focal length for the UI
+                m_Lens.FocusDistance = m_LensPostProcessor.FocusDistanceTarget;
+            }
 
             var camera = GetCamera();
-
-            if (m_Settings.FocusMode == FocusMode.ReticleAF || m_Settings.FocusMode == FocusMode.TrackingAF)
-            {
-                UpdateFocusRig(false);
-            }
-
-            if (IsRecording())
-            {
-                RecordSmoothDampedLens();
-            }
-
-            UpdateInterpolatedLens(Time.unscaledDeltaTime);
-
-            UpdateLiveLink(m_InterpolatedLens);
-
             m_FocusPlaneRenderer.SetCamera(camera);
             m_VideoServer.Camera = camera;
             m_VideoServer.Update();
@@ -652,52 +780,65 @@ namespace Unity.LiveCapture.VirtualCamera
             UpdateClient();
         }
 
-        void RecordSmoothDampedLens()
+        void UpdateActorData(Lens lens, Pose pose)
         {
-            var currentTime = (float)GetTakeRecorder().GetPreviewTime();
-
-            m_FocusDistanceSampler.SmoothTime = m_Settings.FocusDistanceDamping;
-            m_FocalLengthSampler.SmoothTime = m_Settings.FocalLengthDamping;
-            m_ApertureSampler.SmoothTime = m_Settings.ApertureDamping;
-            m_FocusDistanceSampler.Time = currentTime;
-            m_FocalLengthSampler.Time = currentTime;
-            m_ApertureSampler.Time = currentTime;
-
-            while (m_FocusDistanceSampler.MoveNext())
-            {
-                var keyFrame = m_FocusDistanceSampler.Current;
-                m_Recorder.Time = keyFrame.time;
-                m_Recorder.RecordFocusDistance(keyFrame.value);
-            }
-
-            while (m_FocalLengthSampler.MoveNext())
-            {
-                var keyFrame = m_FocalLengthSampler.Current;
-                m_Recorder.Time = keyFrame.time;
-                m_Recorder.RecordFocalLength(keyFrame.value);
-            }
-
-            while (m_ApertureSampler.MoveNext())
-            {
-                var keyFrame = m_ApertureSampler.Current;
-                m_Recorder.Time = keyFrame.time;
-                m_Recorder.RecordAperture(keyFrame.value);
-            }
+            m_LensForActorUpdate = lens;
+            m_PoseForActorUpdate = pose;
         }
 
-        void UpdateInterpolatedLens(float deltaTime)
+        /// <inheritdoc/>
+        public override void LiveUpdate()
         {
-            m_InterpolatedLens.FocusDistance = Mathf.SmoothDamp(
-                m_InterpolatedLens.FocusDistance, m_Lens.FocusDistance,
-                ref m_FocusDistanceDampingVelocity, m_Settings.FocusDistanceDamping, k_MaxSpeed, deltaTime);
+            Debug.Assert(m_Actor != null, "Actor is null");
 
-            m_InterpolatedLens.FocalLength = Mathf.SmoothDamp(
-                m_InterpolatedLens.FocalLength, m_Lens.FocalLength,
-                ref m_FocalLengthDampingVelocity, m_Settings.FocalLengthDamping, k_MaxSpeed, deltaTime);
+            if (m_Channels.HasFlag(VirtualCameraChannelFlags.Position))
+            {
+                m_Actor.LocalPosition = m_PoseForActorUpdate.position;
+                m_Actor.LocalPositionEnabled = true;
+            }
 
-            m_InterpolatedLens.Aperture = Mathf.SmoothDamp(
-                m_InterpolatedLens.Aperture, m_Lens.Aperture,
-                ref m_ApertureDampingVelocity, m_Settings.ApertureDamping, k_MaxSpeed, deltaTime);
+            if (m_Channels.HasFlag(VirtualCameraChannelFlags.Rotation))
+            {
+                m_Actor.LocalEulerAngles = m_PoseForActorUpdate.rotation.eulerAngles;
+                m_Actor.LocalEulerAnglesEnabled = true;
+            }
+
+            var lens = m_Actor.Lens;
+            var lensIntrinsics = m_Actor.LensIntrinsics;
+
+            if (m_Channels.HasFlag(VirtualCameraChannelFlags.FocalLength))
+            {
+                lens.FocalLength = m_LensForActorUpdate.FocalLength;
+                lensIntrinsics.FocalLengthRange = m_LensIntrinsics.FocalLengthRange;
+            }
+
+            if (m_Channels.HasFlag(VirtualCameraChannelFlags.FocusDistance))
+            {
+                m_Actor.DepthOfFieldEnabled = IsDepthOfFieldEnabled();
+
+                lens.FocusDistance = m_LensForActorUpdate.FocusDistance;
+                lensIntrinsics.CloseFocusDistance = m_LensIntrinsics.CloseFocusDistance;
+            }
+
+            if (m_Channels.HasFlag(VirtualCameraChannelFlags.Aperture))
+            {
+                lens.Aperture = m_LensForActorUpdate.Aperture;
+                lensIntrinsics.ApertureRange = m_LensIntrinsics.ApertureRange;
+            }
+
+            lensIntrinsics.LensShift = m_LensIntrinsics.LensShift;
+            lensIntrinsics.BladeCount = m_LensIntrinsics.BladeCount;
+            lensIntrinsics.Curvature = m_LensIntrinsics.Curvature;
+            lensIntrinsics.BarrelClipping = m_LensIntrinsics.BarrelClipping;
+            lensIntrinsics.Anamorphism = m_LensIntrinsics.Anamorphism;
+
+            m_Actor.Lens = lens;
+            m_Actor.LensIntrinsics = lensIntrinsics;
+            m_Actor.CameraBody = m_CameraBody;
+            m_Actor.CropAspect = m_Settings.AspectRatio;
+
+            if (m_Driver is ICustomDamping customDamping)
+                customDamping.SetDamping(m_Settings.Damping);
         }
 
         Camera GetCamera()
@@ -716,18 +857,20 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             var time = (float)GetTakeRecorder().GetPreviewTime();
 
-            m_Recorder.Channels = m_LiveLink.Channels;
+            m_Recorder.Channels = m_Channels;
             m_Recorder.Time = time;
+        }
+
+        void UpdateLensPostProcessorSettings()
+        {
+            m_LensPostProcessor.ApertureDamping = m_Settings.ApertureDamping;
+            m_LensPostProcessor.FocalLengthDamping = m_Settings.FocalLengthDamping;
+            m_LensPostProcessor.FocusDistanceDamping = m_Settings.FocusDistanceDamping;
         }
 
         void UpdateTimestampTracker()
         {
-            var time = (float)GetTakeRecorder().GetPreviewTime();
-
-            m_TimestampTracker.Time = time;
-            m_FocusDistanceSampler.Time = time;
-            m_FocalLengthSampler.Time = time;
-            m_ApertureSampler.Time = time;
+            m_TimestampTracker.Time = (float)GetTakeRecorder().GetPreviewTime();
         }
 
         /// <inheritdoc/>
@@ -743,15 +886,8 @@ namespace Unity.LiveCapture.VirtualCamera
 
             m_LastLensAsset = null;
 
-            m_InterpolatedLens = m_Lens;
-
             m_PoseRigNeedsInitialize = true;
             StartVideoServer();
-
-            if (TryGetInternalClient(out var client))
-            {
-                client.Initialize();
-            }
         }
 
         /// <inheritdoc/>
@@ -850,33 +986,17 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (IsRecording())
             {
-                m_LensMetadata = m_Lens;
-                m_InterpolatedLens = m_Lens;
-
-                m_TimestampTracker.Reset();
-
-                m_FocusDistanceSampler.Reset();
-                m_FocalLengthSampler.Reset();
-                m_ApertureSampler.Reset();
-
-                m_FocusDistanceSampler.SmoothTime = m_Settings.FocusDistanceDamping;
-                m_FocalLengthSampler.SmoothTime = m_Settings.FocalLengthDamping;
-                m_ApertureSampler.SmoothTime = m_Settings.ApertureDamping;
-
                 var frameRate = GetTakeRecorder().FrameRate;
 
-                m_FocusDistanceSampler.FrameRate = frameRate;
-                m_FocalLengthSampler.FrameRate = frameRate;
-                m_ApertureSampler.FrameRate = frameRate;
+                m_LensMetadata = m_Lens;
+
+                m_TimestampTracker.Reset();
+                m_FirstSampleTimecode = null;
 
                 m_Recorder.FrameRate = frameRate;
                 m_Recorder.Clear();
 
                 UpdateTimestampTracker();
-
-                m_FocusDistanceSampler.Initialize(m_Lens.FocusDistance);
-                m_FocalLengthSampler.Initialize(m_Lens.FocalLength);
-                m_ApertureSampler.Initialize(m_Lens.Aperture);
 
                 RecordCurrentValues();
 
@@ -895,17 +1015,18 @@ namespace Unity.LiveCapture.VirtualCamera
 
         void OnChannelFlagsReceived(VirtualCameraChannelFlags channelFlags)
         {
-            m_LiveLink.Channels = channelFlags;
+            m_Channels = channelFlags;
         }
 
         void OnJoysticksSampleReceived(JoysticksSample sample)
         {
-            m_TimestampTracker.SetTimestamp(sample.Timestamp);
+            float timestamp = (float)sample.Time;
+            m_TimestampTracker.SetTimestamp(timestamp);
 
             var settings = GetRigSettings();
             var frameInterval = 0d;
             var takeRecorder = GetTakeRecorder();
-            var deltaTime = Mathf.Max(0f, sample.Timestamp - m_LastJoysticksTimeStamp);
+            var deltaTime = Mathf.Max(0f, timestamp - m_LastJoysticksTimeStamp);
 
             if (takeRecorder != null)
             {
@@ -926,22 +1047,22 @@ namespace Unity.LiveCapture.VirtualCamera
                 m_Recorder.RecordRotation(m_Rig.Pose.rotation);
             }
 
-            m_LastJoysticksTimeStamp = sample.Timestamp;
+            m_LastJoysticksTimeStamp = timestamp;
 
             Refresh();
         }
 
         void OnPoseSampleReceived(PoseSample sample)
         {
-            m_TimestampTracker.SetTimestamp(sample.Timestamp);
-            var deltaTime = sample.Timestamp - m_LastPoseTimeStamp;
+            float timestamp = (float)sample.Time;
+            m_TimestampTracker.SetTimestamp(timestamp);
+            var deltaTime = timestamp - m_LastPoseTimeStamp;
 
             // If true the state will refresh the last input and the rebase offset
             if (m_PoseRigNeedsInitialize)
             {
                 m_Rig.LastInput = sample.Pose;
                 m_Rig.RebaseOffset = Quaternion.Euler(0f, sample.Pose.rotation.eulerAngles.y - m_Rig.LocalPose.rotation.eulerAngles.y, 0f);
-                m_LastPoseTimeStamp = sample.Timestamp;
                 m_PoseRigNeedsInitialize = false;
             }
 
@@ -954,27 +1075,50 @@ namespace Unity.LiveCapture.VirtualCamera
 
             if (IsRecording())
             {
-                m_Recorder.Time = m_TimestampTracker.LocalTime;
+                if (IsSynchronized)
+                {
+                    if (m_FirstSampleTimecode == null)
+                    {
+                        m_FirstSampleTimecode = sample.Time;
+                    }
+
+                    m_Recorder.Time = sample.Time - m_FirstSampleTimecode.Value;
+                }
+                else
+                {
+                    m_Recorder.Time = m_TimestampTracker.LocalTime;
+                }
+
                 m_Recorder.RecordPosition(m_Rig.Pose.position);
                 m_Recorder.RecordRotation(m_Rig.Pose.rotation);
             }
 
-            m_LastPoseTimeStamp = sample.Timestamp;
+            m_LastPoseTimeStamp = timestamp;
 
-            Refresh();
+            if (IsSynchronized)
+            {
+                m_PoseBuffer.Add(sample.Time, m_Rig.Pose);
+            }
+            else
+            {
+                Refresh();
+            }
+
+            // We use this event to track the time on the client. It's the most frequent
+            // provider of timed samples
+            MarkClientTime(sample.Time);
         }
 
         void OnFocalLengthSampleReceived(FocalLengthSample sample)
         {
             m_Lens.FocalLength = sample.FocalLength;
             m_Lens.Validate(m_LensIntrinsics);
-
-            if (IsRecording())
+            if (m_FirstSampleTimecode == null)
             {
-                m_FocalLengthSampler.Add(new Keyframe(sample.Timestamp, sample.FocalLength), true);
+                m_FirstSampleTimecode = sample.Time;
             }
 
-            Refresh();
+            m_LensPostProcessor.AddFocalLengthKeyframe(sample.Time, sample.FocalLength);
         }
 
         void OnFocusDistanceSampleReceived(FocusDistanceSample sample)
@@ -982,25 +1126,25 @@ namespace Unity.LiveCapture.VirtualCamera
             m_Lens.FocusDistance = sample.FocusDistance;
             m_Lens.Validate(m_LensIntrinsics);
 
-            if (IsRecording())
+            if (m_FirstSampleTimecode == null)
             {
-                m_FocusDistanceSampler.Add(new Keyframe(sample.Timestamp, sample.FocusDistance), true);
+                m_FirstSampleTimecode = sample.Time;
             }
 
-            Refresh();
+
+            m_LensPostProcessor.AddFocusDistanceKeyframe(sample.Time, m_Lens.FocusDistance);
         }
 
         void OnApertureSampleReceived(ApertureSample sample)
         {
             m_Lens.Aperture = sample.Aperture;
             m_Lens.Validate(m_LensIntrinsics);
-
-            if (IsRecording())
+            if (m_FirstSampleTimecode == null)
             {
-                m_ApertureSampler.Add(new Keyframe(sample.Timestamp, sample.Aperture), true);
+                m_FirstSampleTimecode = sample.Time;
             }
 
-            Refresh();
+            m_LensPostProcessor.AddApertureKeyframe(sample.Time, sample.Aperture);
         }
 
         void OnDampingEnabledReceived(bool damping)
@@ -1221,53 +1365,11 @@ namespace Unity.LiveCapture.VirtualCamera
             {
                 m_Recorder.RecordLocalEulerAnglesEnabled(true);
             }
-
-            RecordSmoothDampedLens();
         }
 
-        void UpdateDamping()
+        bool UpdateAutoFocusDistance(ref float distance, bool reticlePositionChanged)
         {
-            if (m_Driver is ICustomDamping customDamping)
-                customDamping.SetDamping(m_Settings.Damping);
-        }
-
-        void UpdateFocusRig(bool reticlePositionChanged)
-        {
-            // Depth of field activation may change as a result of a focus distance update.
-            var prevIsDepthOfFieldEnabled = IsDepthOfFieldEnabled();
-
-            var distance = m_Lens.FocusDistance;
-
-            UpdateAutoFocusDistance(ref distance, reticlePositionChanged);
-
-            // In principle DoF activation should not change if the focus distance has not changed.
-            // But writing it this way is more robust and makes an eventual issue easier to diagnose.
-            if (IsRecording())
-            {
-                var isDepthOfFieldEnabled = IsDepthOfFieldEnabled();
-                if (isDepthOfFieldEnabled != prevIsDepthOfFieldEnabled)
-                {
-                    m_Recorder.RecordEnableDepthOfField(isDepthOfFieldEnabled);
-                }
-            }
-
-            if (m_Lens.FocusDistance != distance)
-            {
-                m_Lens.FocusDistance = distance;
-                m_Lens.Validate(m_LensIntrinsics);
-
-                if (IsRecording())
-                {
-                    m_FocusDistanceSampler.Add(new Keyframe((float)GetTakeRecorder().GetPreviewTime(), distance));
-                }
-
-                SendLens();
-                Refresh();
-            }
-        }
-
-        void UpdateAutoFocusDistance(ref float distance, bool reticlePositionChanged)
-        {
+            bool distanceUpdated = false;
             switch (m_Settings.FocusMode)
             {
                 case FocusMode.Manual:
@@ -1275,7 +1377,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 {
                     if (m_Settings.FocusMode == FocusMode.Manual && !reticlePositionChanged)
                         throw new InvalidOperationException(
-                            $"{nameof(UpdateFocusRig)} was invoked while focusMode is set to [{FocusMode.Manual}], " +
+                            $"{nameof(UpdateAutoFocusDistance)} was invoked while focusMode is set to [{FocusMode.Manual}], " +
                             $"despite [{nameof(reticlePositionChanged)}] being false.");
 
                     m_LastScreenAFRaycastIsValid = m_Raycaster.Raycast(m_VideoServer.Camera, m_Settings.ReticlePosition, out distance);
@@ -1289,6 +1391,7 @@ namespace Unity.LiveCapture.VirtualCamera
                         distance += m_Settings.FocusDistanceOffset;
                     }
 
+                    distanceUpdated = true;
                     break;
                 }
                 case FocusMode.TrackingAF:
@@ -1303,6 +1406,7 @@ namespace Unity.LiveCapture.VirtualCamera
                         {
                             m_MeshIntersectionTracker.Reset();
                             distance = LensLimits.FocusDistance.y;
+                            distanceUpdated = true;
                         }
                     }
 
@@ -1312,14 +1416,14 @@ namespace Unity.LiveCapture.VirtualCamera
                         var hitVector = worldPosition - cameraTransform.position;
                         var depthVector = Vector3.Project(hitVector, cameraTransform.forward);
                         distance = depthVector.magnitude + m_Settings.FocusDistanceOffset;
+                        distanceUpdated = true;
                     }
 
                     break;
                 }
-                case FocusMode.Clear:
-                    throw new InvalidOperationException(
-                        $"UpdateFocusRig was invoked while focusMode is set to [{FocusMode.Clear}]");
             }
+
+            return distanceUpdated;
         }
 
         bool IsDepthOfFieldEnabled()
@@ -1373,7 +1477,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (TryGetInternalClient(out var client))
             {
-                client.SendChannelFlags(m_LiveLink.Channels);
+                client.SendChannelFlags(m_Channels);
             }
         }
 
@@ -1403,11 +1507,38 @@ namespace Unity.LiveCapture.VirtualCamera
             }
         }
 
-        void SendSnapshots()
+        void SendSnapshotsIfNeeded()
         {
-            if (TryGetInternalClient(out var client))
+            //Library is valid and we send contents to the client for the first time,
+            //or we update client for the first time with empty contents
+            var requiresUpdate = m_LastSnapshots == null;
+
+            if (!requiresUpdate)
             {
-                var descriptor = SnapshotListDescriptor.Create(m_Snapshots);
+                if (m_SnapshotLibrary == null)
+                {
+                    //Library is set to null.
+                    requiresUpdate = m_LastSnapshots != k_EmptySnapshots;
+                }
+                else
+                {
+                    //Library's contents are different from what we've sent previously.
+                    requiresUpdate = !Enumerable.SequenceEqual(m_LastSnapshots, m_SnapshotLibrary);
+                }
+            }
+
+            if (requiresUpdate && TryGetInternalClient(out var client))
+            {
+                if (m_SnapshotLibrary == null)
+                {
+                    m_LastSnapshots = k_EmptySnapshots;
+                }
+                else
+                {
+                    m_LastSnapshots = m_SnapshotLibrary.Snapshots;
+                }
+
+                var descriptor = SnapshotListDescriptor.Create(m_LastSnapshots);
 
                 client.SendSnapshotListDescriptor(descriptor);
             }
@@ -1441,6 +1572,104 @@ namespace Unity.LiveCapture.VirtualCamera
             }
         }
 
-        static bool Approximately(float a, float b) => Mathf.Abs(a - b) < k_Epsilon;
+        /// <inheritdoc />
+        public bool IsSynchronized
+        {
+            get => m_IsSynchronized;
+            set
+            {
+                if (m_IsSynchronized != value)
+                {
+                    m_TimestampTracker.Reset();
+
+                    // Set a reasonable initial time for the post processor. It doesn't have to be exact:
+                    // just needs to be close to the "present" time
+                    m_LensPostProcessor.Reset(m_Lens, value ? GetSynchronizerTime() : m_ClientTimeEstimator.Now);
+                }
+
+                m_IsSynchronized = value;
+            }
+        }
+
+        /// <inheritdoc/>
+        public ISynchronizer Synchronizer { get; set; }
+
+        /// <inheritdoc/>
+        public string Id => m_Guid;
+
+        /// <inheritdoc/>
+        string IRegistrable.FriendlyName => name;
+
+        /// <inheritdoc/>
+        public int BufferSize
+        {
+            get => m_BufferSize;
+            set
+            {
+                var newSize = Math.Max(k_MinBufferSize, value);
+                m_PoseBuffer.SetCapacity(newSize);
+                m_LensPostProcessor.BufferSize = newSize;
+                m_BufferSize = newSize;
+            }
+        }
+
+        /// <inheritdoc/>
+        public int? MaxBufferSize => null;
+        /// <inheritdoc/>
+        public int? MinBufferSize => k_MinBufferSize;
+
+
+        /// <inheritdoc/>
+        public FrameTime PresentationOffset
+        {
+            get => m_SyncPresentationOffset;
+            set => m_SyncPresentationOffset = value;
+        }
+
+        /// <inheritdoc/>
+        public TimedSampleStatus PresentAt(Timecode timecode, FrameRate frameRate)
+        {
+            Debug.Assert(IsSynchronized, "Attempting to call PresentAt() when data source is not being synchronized");
+
+            m_LensPostProcessor.SamplingFrameRate = frameRate;
+
+            // Get the frame time with respect to our buffer's frame rate
+            var requestedFrameTime = FrameTime.Remap(timecode.ToFrameTime(frameRate), frameRate, m_PoseBuffer.FrameRate);
+
+            // Apply offset (at our buffer's frame rate)
+            var presentationTime = requestedFrameTime + PresentationOffset;
+
+            Lens? maybeLensSample = null;
+
+            // Note that is it not possible for lens keyframes to be behind, since the postprocessor
+            // does extrapolation. However, it is possible for lens keyframes to be ahead or missing.
+            foreach (var(time, lens) in m_LensPostProcessor.ProcessTo(presentationTime.ToSeconds(k_SyncBufferNominalFrameRate)))
+            {
+                // Record post-processed samples. Depending on the rate at which PresentAt is called,
+                // we could potentially generate more than one sample per update.
+                if (IsRecording() && m_FirstSampleTimecode is {} firstSampleTime)
+                {
+                    m_Recorder.Time = (float)(time - firstSampleTime);
+                    m_Recorder.RecordAperture(lens.Aperture);
+                    m_Recorder.RecordFocalLength(lens.FocalLength);
+                    m_Recorder.RecordFocusDistance(lens.FocusDistance);
+                }
+
+                // Save the latest lens sample for presentation
+                maybeLensSample = lens;
+            }
+
+            // Finally, try to retrieve the pose sample from the buffer
+            var status = m_PoseBuffer.TryGetSample(presentationTime, out var pose);
+            if (status != TimedSampleStatus.DataMissing)
+            {
+                UpdateActorData(maybeLensSample ?? m_LensForActorUpdate, pose);
+                Refresh();
+            }
+
+            m_Lens.FocusDistance = m_LensPostProcessor.FocusDistanceTarget;
+
+            return status;
+        }
     }
 }

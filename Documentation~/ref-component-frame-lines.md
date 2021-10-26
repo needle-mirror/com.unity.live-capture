@@ -1,22 +1,28 @@
 # Frame Lines component
 
-The Frame Lines component allows you to render letter/pillar boxes in Game view to represent the sensor size or aspect ratio of a target format, as well as a center marker.
+The Frame Lines component allows you to:
+* Render masks and markers in Game view to represent the camera sensor size and target format aspect ratio.
+* Adjust the Game view relative to the sensor size.
 
-The Frame Lines component automatically applies to any Camera component of the GameObject it belongs to. This component must be on the same Game Object as the Virtual Camera Actor to be able to control it from the device.
+>**Note:** In the context of Virtual Camera workflows, you must use the [Virtual Camera Device component](ref-component-virtual-camera-device.md) to edit some of the hereby described properties since the Virtual Camera Device drives the Frame Lines component.
 
-Note that in the context of Virtual Camera workflows, the aspect ratio and enabled state of the gate mask, aspect ratio lines, and the center marker are controlled via the Virtual Camera Device settings or the app, and not via the component inspector.
-
+The Frame Lines component automatically applies to any Camera component of the GameObject it belongs to. To be able to control the Frame Lines properties from the [Virtual Camera Device](ref-component-virtual-camera-device.md), you must ensure the Frame Lines component is on the same GameObject as the [Virtual Camera Actor](ref-component-virtual-camera-actor.md).
 
 ![Film Format Controls](images/ref-component-frame-lines.png)
 
-## Gate Mask
+## Gate Properties
 
-The gate mask applies a fill to the area outside of the "film gate", or the difference between the resolution gate (the aspect ratio of the game view) and the film gate (the aspect ratio of the sensor)
+These properties apply to two complementary concepts related to the use of [Physical Cameras](https://docs.unity3d.com/Manual/PhysicalCameras.html) in Unity:
+* The _film gate_ (or sensor gate), which represents the aspect ratio of the physical camera sensor.
+* The _resolution gate_, which represents the aspect ratio of Unity's Game view.
 
-| **Property** | **Description** |
-|:---|:---|
-| **Gate Mask** | Toggles the visibility of the gate mask. |
-| **Gate Mask Opacity** | The opacity of the film gate mask. |
+| **Property** | | **Description** |
+|:---|:---|:---|
+| **Gate Fit** |  | Select a mode to fit the resolution gate relative to the film gate. |
+|| Fill | The film gate optimally fills the whole resolution gate area. This crops the film gate. |
+|| Overscan | The resolution gate includes the whole film gate area. This overscans the area outside of the film gate. |
+| **Gate Mask** || Enable this option to display a mask outside the boundaries of the film gate.<br /><br />**Note:** The actual visibility and size of the Gate Mask depend on the film gate and resolution gate aspect ratios, and on the selected **Gate Fit** mode. |
+| **Opacity** || The opacity of the **Gate Mask**. |
 
 ## Aspect Ratio
 

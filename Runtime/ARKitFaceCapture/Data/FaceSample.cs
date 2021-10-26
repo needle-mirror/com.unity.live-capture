@@ -6,15 +6,15 @@ namespace Unity.LiveCapture.ARKitFaceCapture
 {
     struct FaceSample : ISample
     {
-        float m_Timestamp;
+        double m_Time;
 
         public FacePose FacePose;
 
         /// <inheritdoc/>
-        public float Timestamp
+        public double Time
         {
-            get => m_Timestamp;
-            set => m_Timestamp = value;
+            get => m_Time;
+            set => m_Time = value;
         }
     }
 }

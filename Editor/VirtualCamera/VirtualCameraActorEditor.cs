@@ -52,7 +52,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         {
             foreach (var device in VirtualCameraDevice.instances)
             {
-                if (device.IsLiveActive() && device.Actor == m_Target)
+                if (device.IsLiveAndReady() && device.Actor == m_Target)
                 {
                     return true;
                 }

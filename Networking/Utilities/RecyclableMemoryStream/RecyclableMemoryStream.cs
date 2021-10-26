@@ -458,7 +458,7 @@ namespace Microsoft.IO
         {
             CheckDisposed();
 
-            int amountRead = InternalRead(buffer, streamPosition);
+            var amountRead = InternalRead(buffer, streamPosition);
             streamPosition += amountRead;
             return amountRead;
         }
@@ -546,10 +546,10 @@ namespace Microsoft.IO
         {
             CheckDisposed();
 
-            var blockSize = memoryManager.BlockSize;
+            var blockSize = m_MemoryManager.BlockSize;
             var end = (long)m_Position + source.Length;
             // Check for overflow
-            if (end > MaxStreamLength)
+            if (end > k_MaxStreamLength)
             {
                 throw new IOException("Maximum capacity exceeded");
             }

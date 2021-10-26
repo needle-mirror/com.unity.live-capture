@@ -103,7 +103,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// Asset that stores lists of presets for sensor sizes.
     /// </summary>
     [CreateAssetMenu(fileName = "Sensor Presets", menuName = "Live Capture/Virtual Camera/Sensor Presets", order = 1)]
-    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-asset-sensor-presets" + Documentation.endURL)]
+    [HelpURL(Documentation.baseURL + "ref-asset-sensor-presets" + Documentation.endURL)]
     [ExcludeFromPreset]
     public class SensorPresets : ScriptableObject
     {

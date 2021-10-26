@@ -38,8 +38,8 @@ namespace Unity.LiveCapture.VirtualCamera
             set => m_CoordinatesTransform = value;
             private get =>
                 m_CoordinatesTransform == null
-                    ? throw new ArgumentNullException(nameof(CoordinatesTransform))
-                    : m_CoordinatesTransform;
+                ? throw new ArgumentNullException(nameof(CoordinatesTransform))
+                : m_CoordinatesTransform;
         }
 
         public IFocusReticle FocusReticle
@@ -47,8 +47,8 @@ namespace Unity.LiveCapture.VirtualCamera
             set => m_FocusReticle = value;
             private get =>
                 m_FocusReticle == null
-                    ? throw new ArgumentNullException(nameof(FocusReticle))
-                    : m_FocusReticle;
+                ? throw new ArgumentNullException(nameof(FocusReticle))
+                : m_FocusReticle;
         }
 
         public bool PendingTap

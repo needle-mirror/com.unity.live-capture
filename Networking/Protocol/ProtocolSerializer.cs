@@ -13,7 +13,7 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// <summary>
         /// The latest version of the protocol serialized format.
         /// </summary>
-        const int k_Version = 0;
+        const int k_Version = 1;
 
         enum MessageType : byte
         {
@@ -41,7 +41,36 @@ namespace Unity.LiveCapture.Networking.Protocols
             IsReadOnly = true;
 
             var version = stream.ReadStruct<int>();
+
+            // check if the received protocol is too new
+            if (version > k_Version)
+                throw new Exception($"{nameof(Protocol)} version is not supported by this application version. Update the application.");
+
+            // read the protocol info
             Name = stream.ReadString();
+
+            if (version > 0)
+            {
+                var major = stream.ReadStruct<int>();
+                var minor = stream.ReadStruct<int>();
+                var build = stream.ReadStruct<int>();
+                var revision = stream.ReadStruct<int>();
+
+                if (build < 0)
+                {
+                    Version = new Version(major, minor);
+                }
+                else if (revision < 0)
+                {
+                    Version = new Version(major, minor, build);
+                }
+                else
+                {
+                    Version = new Version(major, minor, build, revision);
+                }
+            }
+
+            // read the messages defined in the protocol
             var count = stream.ReadStruct<ushort>();
 
             for (var i = 0; i < count; i++)
@@ -121,6 +150,10 @@ namespace Unity.LiveCapture.Networking.Protocols
 
             stream.WriteStruct(k_Version);
             stream.WriteString(Name);
+            stream.WriteStruct(Version.Major);
+            stream.WriteStruct(Version.Minor);
+            stream.WriteStruct(Version.Build);
+            stream.WriteStruct(Version.Revision);
             stream.WriteStruct(count);
 
             // Write each message prefixed by the length of the serialized message.

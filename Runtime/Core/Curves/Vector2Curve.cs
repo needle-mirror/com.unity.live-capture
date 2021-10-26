@@ -53,7 +53,7 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public void AddKey(float time, Vector2 value)
+        public void AddKey(double time, Vector2 value)
         {
             for (var i = 0; i < m_Curves.Length; ++i)
             {

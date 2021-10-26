@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Unity.LiveCapture.ARKitFaceCapture.Networking;
 using Unity.LiveCapture.CompanionApp;
@@ -11,13 +12,25 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     /// </summary>
     class FaceCaptureHost : CompanionAppHost
     {
-        readonly BinarySender<FaceSampleV0> m_FacePoseV0Sender;
+        readonly Action<FaceSample> m_SendPoseImpl;
 
         /// <inheritdoc />
         public FaceCaptureHost(NetworkBase network, Remote remote, Stream stream)
             : base(network, remote, stream)
         {
-            BinarySender<FaceSampleV0>.TryGet(m_Protocol, FaceMessages.ToServer.FacePoseSample_V0, out m_FacePoseV0Sender);
+            if (BinarySender<FaceSampleV1>.TryGet(m_Protocol,
+                FaceMessages.ToServer.FacePoseSample_V1,
+                out var senderV1))
+            {
+                m_SendPoseImpl = sample => senderV1.Send((FaceSampleV1)sample);
+            }
+            else if (BinarySender<FaceSampleV0>.TryGet(m_Protocol,
+                FaceMessages.ToServer.FacePoseSample_V0,
+                out var senderV0))
+            {
+                // V1 message type not supported. Fall back to V0 (timecodes will get truncated)
+                m_SendPoseImpl = sample => senderV0.Send((FaceSampleV0)sample);
+            }
         }
 
         /// <summary>
@@ -26,10 +39,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// <param name="sample">The pose sample.</param>
         public void SendPose(FaceSample sample)
         {
-            if (m_FacePoseV0Sender != null)
-            {
-                m_FacePoseV0Sender.Send((FaceSampleV0)sample);
-            }
+            m_SendPoseImpl?.Invoke(sample);
         }
     }
 }

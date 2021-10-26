@@ -3,7 +3,8 @@
     "rootNamespace": "Unity.LiveCapture.CompanionApp",
     "references": [
         "Unity.LiveCapture",
-        "Unity.LiveCapture.Networking"
+        "Unity.LiveCapture.Networking",
+        "Unity.Timeline"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

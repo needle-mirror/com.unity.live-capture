@@ -57,7 +57,7 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public void AddKey(float time, Quaternion value)
+        public void AddKey(double time, Quaternion value)
         {
             var euler = value.eulerAngles;
 

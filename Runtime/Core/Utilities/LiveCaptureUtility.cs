@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
@@ -23,17 +24,32 @@ namespace Unity.LiveCapture
                 list.Add(item);
                 return true;
             }
-
             return false;
         }
 
         /// <summary>
-        /// Checks if a <see cref="LiveCaptureDevice" /> is live and the associated <see cref="TakeRecorder" /> is enabled
+        /// Determine the index of a specific item in the current instance.
+        /// </summary>
+        public static int FindIndex<T>(this IReadOnlyList<T> list, Func<T, bool> predicate)
+        {
+            int i = 0;
+            foreach (var element in list)
+            {
+                if (predicate(element))
+                    return i;
+                i++;
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// Checks if a <see cref="LiveCaptureDevice" /> is ready and the associated <see cref="TakeRecorder" /> is enabled
         /// and has live mode set.
         /// </summary>
         /// <param name="device">The device to check.</param>
         /// <returns>True if a device is live and its associated take recorder is live and enabled; false otherwise.</returns>
-        public static bool IsLiveActive(this LiveCaptureDevice device)
+        public static bool IsLiveAndReady(this LiveCaptureDevice device)
         {
             var takeRecorder = device.GetTakeRecorder() as ITakeRecorderInternal;
 
@@ -45,7 +61,7 @@ namespace Unity.LiveCapture
             return takeRecorder.IsEnabled
                 && takeRecorder.IsLive()
                 && device.isActiveAndEnabled
-                && device.IsLive();
+                && device.IsReady();
         }
 
         /// <summary>

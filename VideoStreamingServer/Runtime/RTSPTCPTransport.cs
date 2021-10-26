@@ -63,7 +63,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                 return string.Format(CultureInfo.InvariantCulture, "{0}:{1}", _currentEndPoint.Address, _currentEndPoint.Port);
             }
         }
-        
+
         public string LocalAddress => string.Format(CultureInfo.InvariantCulture, "{0}:{1}", _localEndpoint.Address,
             _localEndpoint.Port);
 

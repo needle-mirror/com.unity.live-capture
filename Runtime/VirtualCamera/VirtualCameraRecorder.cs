@@ -28,7 +28,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// The time used by the recorder in seconds.
         /// </summary>
-        public float Time { get; set; }
+        public double Time { get; set; }
 
         /// <summary>
         /// The frame rate to use for recording.

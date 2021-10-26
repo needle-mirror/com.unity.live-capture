@@ -39,7 +39,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// Asset that stores lists of presets for aspect ratios.
     /// </summary>
     [CreateAssetMenu(fileName = "Aspect Ratio Presets", menuName = "Live Capture/Virtual Camera/Aspect Ratio Presets", order = 1)]
-    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-asset-aspect-ratio-presets" + Documentation.endURL)]
+    [HelpURL(Documentation.baseURL + "ref-asset-aspect-ratio-presets" + Documentation.endURL)]
     [ExcludeFromPreset]
     public class AspectRatioPresets : ScriptableObject
     {

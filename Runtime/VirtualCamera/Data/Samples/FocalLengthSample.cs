@@ -8,7 +8,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// </summary>
     struct FocalLengthSample : ISample
     {
-        float m_Timestamp;
+        double m_Time;
 
         /// <summary>
         /// The focal length in millimeters.
@@ -16,10 +16,10 @@ namespace Unity.LiveCapture.VirtualCamera
         public float FocalLength;
 
         /// <inheritdoc/>
-        public float Timestamp
+        public double Time
         {
-            get => m_Timestamp;
-            set => m_Timestamp = value;
+            get => m_Time;
+            set => m_Time = value;
         }
     }
 }

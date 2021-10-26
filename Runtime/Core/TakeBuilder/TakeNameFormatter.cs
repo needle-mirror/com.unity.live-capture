@@ -1,4 +1,4 @@
-﻿namespace Unity.LiveCapture
+namespace Unity.LiveCapture
 {
     class TakeNameFormatter : WildcardFormatter
     {

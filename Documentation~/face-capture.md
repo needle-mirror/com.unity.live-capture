@@ -1,6 +1,14 @@
-# Face Capture
+# Unity Face Capture
+
+Use the Unity Face Capture mobile app alongside the Unity Editor to animate and record facial expressions and head angle.
+
+[View detailed feature list](face-capture-features.md)
+
+> **Important:** The Unity Face Capture app is a companion app, which means it requires the Unity Editor to function, as opposed to a standalone app.
 
 ## Before you start
+
+Review the detailed requirements and perform the necessary installations and environment setup:
 
 1. [Install the Live Capture package and the Unity Face Capture app](index.md#installation)
 
@@ -8,20 +16,14 @@
 
 3. [Connect the Face Capture app to the Unity Editor](setup-connecting.md)
 
-## Features
+## In this documentation
 
-* Works in both Edit Mode and Play Mode in the Editor.
+* How to [get started](face-capture-getting-started.md) with Unity Face Capture.
 
-* Face tracking of 52 blendshapes via Apple's ARKit.
+* Overview of the [Unity Virtual Camera app interface](face-capture-app-controls.md) (controls and settings).
 
-* See a live preview of the performance in the Editor.
+* UI reference about the Face Capture functional elements used in the Unity Editor: [components](face-capture-components.md) and [assets/presets](face-capture-presets.md).
 
-* Record performances to an Animation Clip.
+## Additional resources
 
-* Includes a sample rigged head.
-
-* Tweak how the values from ARKit are processed using evaluation parameters.
-
-* Re-use performances between different character rigs via a robust mapping system.
-
-* Leverage Live Capture's take system to organize and iterate on performances.
+* [Get support and access learning resources](https://forum.unity.com/threads/1111255/) about Unity Face Capture.

@@ -87,11 +87,22 @@ namespace Unity.LiveCapture
         /// <param name="seconds">The number of seconds.</param>
         /// <param name="frames">The number of frames.</param>
         /// <param name="subframe">The time within the frame.</param>
+        /// <param name="isDropFrame">
+        /// Is the given time provided as a valid drop frame timecode, as opposed to a real (wall clock) timecode. This parameter is
+        /// only relevant if <paramref name="frameRate"/> is drop frame.
+        /// </param>
         /// <returns>
         /// A new <see cref="Timecode"/> that represents the given time, or <see langword="default"/>
         /// if <paramref name="frameRate"/> is invalid.
         /// </returns>
-        public static Timecode FromHMSF(FrameRate frameRate, int hours, int minutes, int seconds, int frames, Subframe subframe = default)
+        public static Timecode FromHMSF(
+            FrameRate frameRate,
+            int hours,
+            int minutes,
+            int seconds,
+            int frames,
+            Subframe subframe = default,
+            bool isDropFrame = true)
         {
             var framesPerSecond = (int)Math.Ceiling((double)frameRate);
             var framesPerMinute = framesPerSecond * 60;
@@ -103,7 +114,7 @@ namespace Unity.LiveCapture
                 seconds * framesPerSecond +
                 frames;
 
-            return FromFrameTime(frameRate, new FrameTime(frameNumber, subframe));
+            return FromFrameTime(frameRate, new FrameTime(frameNumber, subframe), isDropFrame);
         }
 
         /// <summary>
@@ -154,6 +165,11 @@ namespace Unity.LiveCapture
         /// </returns>
         public static Timecode FromFrameTime(FrameRate frameRate, FrameTime frameTime)
         {
+            return FromFrameTime(frameRate, frameTime, false);
+        }
+
+        static Timecode FromFrameTime(FrameRate frameRate, FrameTime frameTime, bool isDropFrame)
+        {
             if (!frameRate.IsValid || frameRate.Numerator == 0)
             {
                 return default;
@@ -161,7 +177,9 @@ namespace Unity.LiveCapture
 
             var frameNumber = frameTime.FrameNumber;
 
-            if (frameRate.IsDropFrame)
+            // If using a drop frame rate and the time is given in real time (wall clock time), we need to convert the
+            // time into the drop frame time space.
+            if (frameRate.IsDropFrame && !isDropFrame)
             {
                 // skip the first few frames of each minute, except for each tenth minute
                 var fps = (double)frameRate;

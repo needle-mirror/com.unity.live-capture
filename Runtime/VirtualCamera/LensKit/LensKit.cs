@@ -11,7 +11,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// menu in its inspector.
     /// </remarks>
     [CreateAssetMenu(menuName = "Live Capture/Virtual Camera/Lens Kit", order = 2)]
-    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "ref-asset-lens-kit" + Documentation.endURL)]
+    [HelpURL(Documentation.baseURL + "ref-asset-lens-kit" + Documentation.endURL)]
     [ExcludeFromPreset]
     public class LensKit : ScriptableObject
     {

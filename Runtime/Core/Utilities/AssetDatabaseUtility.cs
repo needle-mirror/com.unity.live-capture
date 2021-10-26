@@ -64,6 +64,28 @@ namespace Unity.LiveCapture
         }
 
         /// <summary>
+        /// Returns the asset associated with a given GUID.
+        /// </summary>
+        /// <typeparam name="T">Type of the asset to load.</typeparam>
+        /// <param name="guid">The GUID.</param>
+        /// <returns>The asset associated with the given GUID.</returns>
+        public static T LoadAssetWithGuid<T>(Guid guid) where T : UnityObject
+        {
+            return LoadAssetWithGuid<T>(guid.ToString("N"));
+        }
+
+        /// <summary>
+        /// Returns the asset associated with a given SerializableGuid.
+        /// </summary>
+        /// <typeparam name="T">Type of the asset to load.</typeparam>
+        /// <param name="guid">The SerializableGuid.</param>
+        /// <returns>The asset associated with the given GUID.</returns>
+        internal static T LoadAssetWithGuid<T>(SerializableGuid guid) where T : UnityObject
+        {
+            return LoadAssetWithGuid<T>(guid.ToString());
+        }
+
+        /// <summary>
         /// Returns the list of sub assets at given asset.
         /// </summary>
         /// <typeparam name="T">Type of the asset to load.</typeparam>

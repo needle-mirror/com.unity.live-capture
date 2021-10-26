@@ -13,6 +13,7 @@ namespace Unity.LiveCapture.Editor
             public static string Unknown = "Unknown";
             public static string OverrideStr = "Override";
             public static GUIContent FrameRate = EditorGUIUtility.TrTextContent("Frame Rate", "The frame rate used during the recording.");
+            public static GUIContent StartTime = EditorGUIUtility.TrTextContent("Start Time", "The timecode of the first frame of the recording.");
             public static GUIContent SceneNumber = EditorGUIUtility.TrTextContent("Scene Number", "The number associated with the scene where the take was captured.");
             public static GUIContent ShotName = EditorGUIUtility.TrTextContent("Shot Name", "The name of the shot where the take was captured.");
             public static GUIContent TakeNumber = EditorGUIUtility.TrTextContent("Take Number", "The number associated with the take.");
@@ -69,12 +70,16 @@ namespace Unity.LiveCapture.Editor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
+            var startTimeText = target is Take take
+                ? take.StartTimecode.ToString()
+                : "";
 
             EditorGUILayout.PropertyField(m_Rating, Contents.Rating);
 
             using (new EditorGUI.DisabledGroupScope(true))
             {
                 EditorGUILayout.PropertyField(m_FrameRate, Contents.FrameRate);
+                EditorGUILayout.TextField(Contents.StartTime, startTimeText);
                 EditorGUILayout.PropertyField(m_SceneNumber, Contents.SceneNumber);
                 EditorGUILayout.PropertyField(m_ShotName, Contents.ShotName);
                 EditorGUILayout.PropertyField(m_TakeNumber, Contents.TakeNumber);

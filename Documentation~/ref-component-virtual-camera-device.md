@@ -33,7 +33,7 @@ Each channel represents a camera property that you might want to preview and rec
 | **Lens Asset** | Select the current lens from an available **[Lens Kit](ref-asset-lens-kit.md)**. |
 | **Focal Length** | The focal length of the lens in millimeters. |
 | **Focus Distance** | The focus distance of the lens in world units. |
-| **Aperture** | The aperture of the lens in f-numbers. |
+| **Aperture** | The aperture of the lens in f-number. |
 
 ### Camera Body
 
@@ -60,16 +60,19 @@ Controls the overall behavior of the camera motion and other functions. These pr
 | **Pedestal Space** | Sets the pedestal joystick motion to be relative to the Origin or to the Local pose. |
 | **Aspect Ratio Preset** | Set a camera aspect ratio from a preset defined in a **[Aspect Ratio Preset](ref-asset-aspect-ratio-presets.md)**. |
 | **Aspect Ratio** | The aspect ratio is that is represented via frame lines and optional fill on the **[Frame Lines](ref-component-frame-lines.md)** component. |
-| **Focus Mode** | Disables the focus mode or sets it to manual, automatic or spatial. |
-| **Reticle Control** | Allows you to control the reticle from the Device, or from the Game view as well as from the Device (not mutually exclusive). |
-| **Focus Distance Offset**   | The offset applied to the focus distance when using either of the auto focus modes. |
+| **Focus Mode** | Disables the focus mode or sets it to Manual, Reticle AF, or Tracking AF. |
+| **Reticle Control** | Allows you to control the focus reticle from the mobile Device, or from the Game view as well as from the mobile Device (not mutually exclusive). |
+| **Focus Distance Offset**   | Offset applied to the focus distance when using either of the autofocus (AF) modes. |
 | **Focus Distance Damping**   | Damping applied to the focus distance. |
 | **Focal Length Damping**   | Damping applied to the focal length. |
-| **Aperture Damping**   | Damping applied to the aperture or F-Stop. |
-| **Gate Mask**   | Toggles a gate mask/fill. |
-| **Apect Ratio Lines**   | Toggles frame lines showing the aspect ratio. |
-| **Center Marker**   | Toggles a center marker. |
-| **Focus Plane**   | Toggles a focus plane. |
+| **Aperture Damping**   | Damping applied to the Aperture (f-number). |
+| **Gate Fit**\* | Select a mode to fit the resolution gate relative to the film gate.<br />• **Fill**: The film gate optimally fills the whole resolution gate area. This crops the film gate.<br />• **Overscan**: The resolution gate includes the whole film gate area. This overscans the area outside of the film gate.<br /> |
+| **Gate Mask**\*   | Displays a mask outside the boundaries of the film gate. |
+| **Apect Ratio Lines**\*   | Displays aspect ratio lines and mask in the Game view according to the specified Aspect Ratio. |
+| **Center Marker**\*   | Displays a center marker in Game view. |
+| **Focus Plane**   | Renders a visualization of the focus plane.<br />This option is directly controlling the activation status of the [Focus Plane component](ref-component-focus-plane-renderer.md) associated to the [Virtual Camera Actor](ref-component-virtual-camera-actor.md). |
+
+\* These four options are directly controlling properties of the [Frame Lines component](ref-component-frame-lines.md) associated to the [Virtual Camera Actor](ref-component-virtual-camera-actor.md).
 
 ## Snapshots
 

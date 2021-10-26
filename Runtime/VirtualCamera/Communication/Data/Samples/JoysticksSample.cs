@@ -13,7 +13,7 @@ namespace Unity.LiveCapture.VirtualCamera.Networking
         {
             return new JoysticksSampleV0
             {
-                m_Timestamp = sample.Timestamp,
+                m_Timestamp = (float)sample.Time,
                 m_Joysticks = sample.Joysticks,
             };
         }
@@ -22,7 +22,7 @@ namespace Unity.LiveCapture.VirtualCamera.Networking
         {
             return new JoysticksSample
             {
-                Timestamp = sample.m_Timestamp,
+                Time = sample.m_Timestamp,
                 Joysticks = sample.m_Joysticks,
             };
         }

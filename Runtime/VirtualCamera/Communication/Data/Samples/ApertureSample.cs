@@ -12,7 +12,7 @@ namespace Unity.LiveCapture.VirtualCamera.Networking
         {
             return new ApertureSampleV0
             {
-                m_Timestamp = sample.Timestamp,
+                m_Timestamp = (float)sample.Time,
                 m_Aperture = sample.Aperture,
             };
         }
@@ -21,7 +21,33 @@ namespace Unity.LiveCapture.VirtualCamera.Networking
         {
             return new ApertureSample
             {
-                Timestamp = sample.m_Timestamp,
+                Time = sample.m_Timestamp,
+                Aperture = sample.m_Aperture,
+            };
+        }
+    }
+
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    struct ApertureSampleV1
+    {
+        double m_Time;
+        float m_Aperture;
+
+        public static explicit operator ApertureSampleV1(ApertureSample sample)
+        {
+            return new ApertureSampleV1
+            {
+                m_Time = sample.Time,
+                m_Aperture = sample.Aperture,
+            };
+        }
+
+        public static explicit operator ApertureSample(ApertureSampleV1 sample)
+        {
+            return new ApertureSample
+            {
+                Time = sample.m_Time,
                 Aperture = sample.m_Aperture,
             };
         }

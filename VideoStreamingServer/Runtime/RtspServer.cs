@@ -335,7 +335,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                             }
                         }
                     }
-                    
+
                     udp_pair.Start(); // start listening for data on the UDP ports
 
                     // Pass the Port of the two sockets back in the reply

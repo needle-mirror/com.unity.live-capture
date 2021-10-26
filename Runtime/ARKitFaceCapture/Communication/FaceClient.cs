@@ -42,7 +42,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         public FaceClient(NetworkBase network, Remote remote, ClientInitialization data)
             : base(network, remote, data)
         {
-            m_Protocol.Add(new BinaryReceiver<FaceSampleV0>(FaceMessages.ToServer.FacePoseSample_V0,
+            m_Protocol.Add(new BinaryReceiver<FaceSampleV1>(FaceMessages.ToServer.FacePoseSample_V1,
                 ChannelType.UnreliableUnordered)).AddHandler(pose =>
                 {
                     FacePoseSampleReceived?.Invoke((FaceSample)pose);

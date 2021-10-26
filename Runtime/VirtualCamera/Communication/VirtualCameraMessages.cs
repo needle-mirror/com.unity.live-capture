@@ -44,6 +44,7 @@ namespace Unity.LiveCapture.VirtualCamera
             public const string LensKitDescriptor_V0 = k_Base + "LensKitDescriptor_V0";
             public const string SelectedLensAsset = k_Base + "SelectedLensAsset";
             public const string SnapshotListDescriptor_V0 = k_Base + "SnapshotListDescriptor_V0";
+            public const string VcamTrackMetadataListDescriptor_V0 = k_Base + "VirtualCameraTrackMetadataListDescriptor_V0";
         }
 
         public static class ToServer
@@ -53,9 +54,13 @@ namespace Unity.LiveCapture.VirtualCamera
             public const string ChannelFlags = k_Base + "ChannelFlags";
             public const string JoysticksSample_V0 = k_Base + "JoysticksSample_V0";
             public const string PoseSample_V0 = k_Base + "PoseSample_V0";
+            public const string PoseSample_V1 = k_Base + "PoseSample_V1";
             public const string FocalLengthSample_V0 = k_Base + "FocalLengthSample_V0";
+            public const string FocalLengthSample_V1 = k_Base + "FocalLengthSample_V1";
             public const string FocusDistanceSample_V0 = k_Base + "FocusDistanceSample_V0";
+            public const string FocusDistanceSample_V1 = k_Base + "FocusDistanceSample_V1";
             public const string ApertureSample_V0 = k_Base + "ApertureSample_V0";
+            public const string ApertureSample_V1 = k_Base + "ApertureSample_V1";
             public const string DampingEnabled = k_Base + "DampingEnabled";
             public const string BodyDamping = k_Base + "BodyDamping";
             public const string AimDamping = k_Base + "AimDamping";

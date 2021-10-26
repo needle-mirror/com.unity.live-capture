@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Profiling;
+using Unity.LiveCapture.Editor;
 
 namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
 {

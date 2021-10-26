@@ -1,10 +1,9 @@
 using System;
+using System.Collections.ObjectModel;
+using UnityEngine;
+using UnityEditor;
 using Unity.LiveCapture.Editor;
 using Unity.LiveCapture.CompanionApp.Editor;
-using UnityEditor;
-using UnityEngine;
-using System.Linq;
-using System.Collections.ObjectModel;
 
 namespace Unity.LiveCapture.VirtualCamera.Editor
 {
@@ -14,22 +13,9 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         static readonly float k_SnapshotElementHeight = 4f * (EditorGUIUtility.singleLineHeight + 2f) + 2f;
         static readonly float k_PreviewWidth = k_SnapshotElementHeight * 16f / 9f;
 
-        static readonly ReadOnlyCollection<(GUIContent label, Func<UnityEngine.Object> createActor)> k_ActorCreateMenuItems =
-            new ReadOnlyCollection<(GUIContent, Func<UnityEngine.Object>)>
-            (
-                new (GUIContent, Func<UnityEngine.Object>)[]
-                {
-                    (Contents.CreateVirtualCameraActor, CreateVirtualCameraActor),
-#if VP_CINEMACHINE_2_4_0
-                    (Contents.CreateCinemachineCameraActor, CreateCinemachineCameraActor)
-#endif
-                }
-            );
-
         public static class Contents
         {
             public static GUIContent None = EditorGUIUtility.TrTextContent("None");
-            public static string ActorWarningMessage = L10n.Tr("Device requires a Virtual Camera Actor target.");
             public static GUIContent CreateVirtualCameraActor = EditorGUIUtility.TrTextContent("Virtual Camera Actor");
             public static GUIContent CreateCinemachineCameraActor = EditorGUIUtility.TrTextContent("Cinemachine Camera Actor");
             public static GUIContent LensAssetLabel = EditorGUIUtility.TrTextContent("Lens Asset", "The asset that provides the lens intrinsics.");
@@ -38,10 +24,24 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             public static GUIContent VideoSettingsButton = EditorGUIUtility.TrTextContent("Open Video Settings", "Open the settings of the video server.");
             public static string Deleted = L10n.Tr("(deleted)");
             public static GUIContent Snapshots = EditorGUIUtility.TrTextContent("Snapshots", "The snapshots taken using this device.");
+            public static GUIContent Library = EditorGUIUtility.TrTextContent("Library", "The asset where the snapshots are stored.");
+            public static GUIContent NewLibrary = EditorGUIUtility.TrTextContent("New", "Create and assign a new Snapshot Library asset.");
+            public static GUIContent NoLibrarySelected = EditorGUIUtility.TrTextContent("No Snapshot Library asset selected", "Select or create a Snapshot Library asset to inspect its contents.");
             public static GUIContent TakeSnapshot = EditorGUIUtility.TrTextContent("Take Snapshot", "Save the current position, lens and camera body while generating a screenshot.");
             public static GUIContent GotoLabel = EditorGUIUtility.TrTextContent("Go To", "Move the camera to the saved position.");
             public static GUIContent Load = EditorGUIUtility.TrTextContent("Load", "Move the camera to the saved position and restore the saved lens and the camera body.");
+            public static GUIContent MigrateSnapshotsMessage = EditorGUIUtility.TrTextContent("Detected snapshots in obsolete storage. Would you like to transfer them to a Snapshot Library, or simply delete them?");
+            public static GUIContent MigrateSnapshotsSaveMessage = EditorGUIUtility.TrTextContent("To finalize the actions below, you must save the current Scene.");
+            public static GUIContent MigrateSnapshotsMigrateButton = EditorGUIUtility.TrTextContent("Migrate Snapshots to Library", "Creates a new Snapshot Library for this device and transfers its snapshots to it.");
+            public static GUIContent MigrateSnapshotsDeleteButton = EditorGUIUtility.TrTextContent("Delete Snapshots", "Deletes all snapshots from this device's obsolete storage.");
             public static string PreviewNotAvailable = L10n.Tr("Preview not available.");
+            public static GUIContent ActorCreateNew = EditorGUIUtility.TrTextContent("Create and assign a new actor", "Create a new actor in the scene and assign it to this device.");
+            public static string ActorCreateNewUndo = L10n.Tr("Create and assign a new actor");
+            public static string MissingActorText = L10n.Tr("The device requires a Virtual Camera Actor target.");
+            public static string MissingClientText = L10n.Tr("The device requires a connected Client.");
+            public static string ReadMoreText = L10n.Tr("read more");
+            public static string ConnectClientURL = "https://docs.unity3d.com/Packages/com.unity.live-capture@1.0/manual/setup-connecting.html";
+            public static string SetupActorURL = "https://docs.unity3d.com/Packages/com.unity.live-capture@1.0/manual/virtual-camera-workflow.html";
 
             static GUIStyle s_CenteredLabel;
             public static GUIStyle CenteredLabel
@@ -61,16 +61,49 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             }
         }
 
+        static readonly (GUIContent label, Func<UnityEngine.Object> createActorFunc)[] k_ActorCreateMenuItems =
+        {
+            (Contents.CreateVirtualCameraActor, CreateVirtualCameraActor),
+#if VP_CINEMACHINE_2_4_0
+            (Contents.CreateCinemachineCameraActor, CreateCinemachineCameraActor)
+#endif
+        };
+
+        static VirtualCameraActor CreateVirtualCameraActor()
+        {
+            return GetActorComponent(VirtualCameraCreatorUtilities.CreateVirtualCameraActorInternal());
+        }
+
+#if VP_CINEMACHINE_2_4_0
+        static VirtualCameraActor CreateCinemachineCameraActor()
+        {
+            return GetActorComponent(VirtualCameraCreatorUtilities.CreateCinemachineCameraActorInternal());
+        }
+
+#endif
+
+        static VirtualCameraActor GetActorComponent(GameObject go)
+        {
+            var actor = go.GetComponent<VirtualCameraActor>();
+
+            Debug.Assert(actor != null, $"Can't find {nameof(VirtualCameraActor)} component in {go}");
+
+            return actor;
+        }
+
         VirtualCameraDevice m_Device;
         SerializedProperty m_Actor;
-        SerializedProperty m_LiveLinkChannels;
+        SerializedProperty m_Channels;
         SerializedProperty m_Lens;
         SerializedProperty m_LensAsset;
         SerializedProperty m_LensIntrinsics;
         SerializedProperty m_CameraBody;
         SerializedProperty m_Settings;
         SerializedProperty m_Snapshots;
-        CompactList m_List;
+        SerializedProperty m_SnapshotLibrary;
+
+        SnapshotLibrary m_EmptySnapshotLibrary;
+        UnityEditor.Editor m_SnapshotLibraryEditor;
 
         protected override void OnEnable()
         {
@@ -79,31 +112,51 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             m_Device = target as VirtualCameraDevice;
 
             m_Actor = serializedObject.FindProperty("m_Actor");
-            m_LiveLinkChannels = serializedObject.FindProperty("m_LiveLink.Channels");
+            m_Channels = serializedObject.FindProperty("m_Channels");
             m_LensAsset = serializedObject.FindProperty("m_LensAsset");
             m_Lens = serializedObject.FindProperty("m_Lens");
             m_LensIntrinsics = serializedObject.FindProperty("m_LensIntrinsics");
             m_CameraBody = serializedObject.FindProperty("m_CameraBody");
             m_Settings = serializedObject.FindProperty("m_Settings");
             m_Snapshots = serializedObject.FindProperty("m_Snapshots");
+            m_SnapshotLibrary = serializedObject.FindProperty("m_SnapshotLibrary");
 
-            CreateList();
+            m_EmptySnapshotLibrary = CreateInstance<SnapshotLibrary>();
+        }
+
+        void OnDisable()
+        {
+            if (m_SnapshotLibraryEditor != null)
+            {
+                DestroyImmediate(m_SnapshotLibraryEditor);
+            }
+
+            DestroyImmediate(m_EmptySnapshotLibrary);
         }
 
         protected override void OnDeviceGUI()
         {
             DoClientGUI();
 
+            if (m_Device.GetClient() == null)
+            {
+                LiveCaptureGUI.HelpBoxWithURL(Contents.MissingClientText, Contents.ReadMoreText,
+                    Contents.ConnectClientURL, MessageType.Warning);
+            }
+
             serializedObject.Update();
 
             DoActorGUI(m_Actor);
+
             if (m_Actor.objectReferenceValue == null)
             {
-                EditorGUILayout.HelpBox(Contents.ActorWarningMessage, MessageType.Warning);
-                DoActorCreateGUI(m_Actor, k_ActorCreateMenuItems);
+                LiveCaptureGUI.HelpBoxWithURL(Contents.MissingActorText, Contents.ReadMoreText,
+                    Contents.SetupActorURL, MessageType.Warning);
+
+                DoActorCreateGUI();
             }
 
-            DoLiveLinkChannelsGUI(m_LiveLinkChannels);
+            DoChannelsGUI(m_Channels);
             DoLensAssetField();
 
             if (GUILayout.Button(Contents.VideoSettingsButton))
@@ -116,7 +169,21 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             EditorGUILayout.PropertyField(m_CameraBody, Contents.CameraBody);
             EditorGUILayout.PropertyField(m_Settings, Contents.Settings);
 
-            DoSnapshotsGUI();
+            var controlRect = EditorGUILayout.GetControlRect();
+            var snapshotsFoldoutLabel = EditorGUI.BeginProperty(controlRect, Contents.Snapshots, m_SnapshotLibrary);
+            m_SnapshotLibrary.isExpanded = EditorGUI.Foldout(controlRect, m_SnapshotLibrary.isExpanded, snapshotsFoldoutLabel, true);
+
+            if (m_SnapshotLibrary.isExpanded)
+            {
+                if (m_Snapshots.arraySize > 0)
+                {
+                    DoMigrateSnapshotsGUI();
+                }
+                else
+                {
+                    DoSnapshotsGUI();
+                }
+            }
 
             serializedObject.ApplyModifiedProperties();
 
@@ -125,7 +192,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             {
                 RenderFeatureEditor<FocusPlaneRenderer, VirtualCameraScriptableRenderFeature>.OnInspectorGUI();
             }
-            
+
             if (m_Device.Settings.GateMask ||
                 m_Device.Settings.AspectRatioLines ||
                 m_Device.Settings.CenterMarker)
@@ -135,169 +202,95 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 #endif
         }
 
-        void CreateList()
+        void DoActorCreateGUI()
         {
-            m_List = new CompactList(m_Snapshots);
-            m_List.OnCanAddCallback = () => false;
-            m_List.OnCanRemoveCallback = () => true;
-            m_List.DrawElementCallback = null;
-            m_List.Reorderable = true;
-            m_List.ItemHeight = k_SnapshotElementHeight;
-            m_List.ShowSearchBar = false;
-            m_List.DrawElementCallback = (r, i) => {};
-            m_List.ElementHeightCallback = (i) => 0f;
-            m_List.DrawListItemCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
+            if (GUILayout.Button(Contents.ActorCreateNew))
             {
-                var element = m_Snapshots.GetArrayElementAtIndex(index);
-                var screenshot = element.FindPropertyRelative("m_Screenshot").objectReferenceValue as Texture2D;
-                var slate = element.FindPropertyRelative("m_Slate").objectReferenceValue as ISlate;
-                var frameRate = new FrameRate(
-                    element.FindPropertyRelative("m_FrameRate.m_Numerator").intValue,
-                    element.FindPropertyRelative("m_FrameRate.m_Denominator").intValue,
-                    element.FindPropertyRelative("m_FrameRate.m_IsDropFrame").boolValue);
-                var time = element.FindPropertyRelative("m_Time").doubleValue;
-                var focalLength = element.FindPropertyRelative("m_Lens.m_FocalLength").floatValue;
-                var aperture = element.FindPropertyRelative("m_Lens.m_Aperture").floatValue;
-                var lensAsset = element.FindPropertyRelative("m_LensAsset").objectReferenceValue;
-                var sensorSize = element.FindPropertyRelative("m_CameraBody.m_SensorSize").vector2Value;
-                var previewRect = new Rect(rect.x, rect.y + 2.5f, k_PreviewWidth, rect.height - 5f);
-                var propertiesRect = new Rect(previewRect.xMax + 5f, rect.y + 2f, rect.width - previewRect.width, rect.height);
-
-                if (screenshot != null)
+                if (k_ActorCreateMenuItems.Length == 1)
                 {
-                    var preview = AssetPreview.GetAssetPreview(screenshot);
+                    AssignAndPingActor(k_ActorCreateMenuItems[0].createActorFunc());
+                }
+                else
+                {
+                    var menu = new GenericMenu();
 
-                    if (preview != null)
+                    foreach (var(label, createActorFunc) in k_ActorCreateMenuItems)
                     {
-                        var textureRect = BestFit(previewRect, preview);
-
-                        EditorGUI.DrawPreviewTexture(textureRect, preview);
+                        menu.AddItem(label, false, () => AssignAndPingActor(createActorFunc()));
                     }
+
+                    menu.ShowAsContext();
                 }
-                else
-                {
-                    EditorGUI.LabelField(previewRect, Contents.PreviewNotAvailable, Contents.CenteredLabel);
-                }
-
-                var rowHeight = EditorGUIUtility.singleLineHeight;
-                var yOffset = rowHeight + 2f;
-                var rowRect1 = new Rect(propertiesRect.x, propertiesRect.y, propertiesRect.width, rowHeight);
-                var rowRect2 = new Rect(propertiesRect.x, propertiesRect.y + yOffset, propertiesRect.width, rowHeight);
-                var rowRect3 = new Rect(propertiesRect.x, propertiesRect.y + yOffset * 2f, propertiesRect.width, rowHeight);
-                var rowRect4 = new Rect(propertiesRect.x, propertiesRect.y + yOffset * 3f, propertiesRect.width, rowHeight);
-                var slateField = string.Empty;
-                var timecode = Timecode.FromSeconds(frameRate, time);
-
-                if (slate != null)
-                {
-                    slateField = $"[{slate.SceneNumber.ToString("D3")}] {slate.ShotName} TC [{timecode}]";
-                }
-                else
-                {
-                    slateField = $"TC [{timecode}]";
-                }
-
-                var lensAssetField = string.Empty;
-
-                if (lensAsset != null)
-                {
-                    lensAssetField = $"Lens: {lensAsset.name}";
-                }
-                else
-                {
-                    lensAssetField = $"Lens: {Contents.Deleted}";
-                }
-
-                var lensField = $"{focalLength.ToString("F1")}mm f/{aperture}";
-                var sensorField = GetSensorName(sensorSize);
-
-                EditorGUI.LabelField(rowRect1, slateField);
-                EditorGUI.LabelField(rowRect2, lensAssetField);
-                EditorGUI.LabelField(rowRect3, lensField);
-                EditorGUI.LabelField(rowRect4, sensorField);
-            };
-            m_List.OnRemoveCallback = () =>
-            {
-                m_Device.DeleteSnapshot(m_List.Index);
-            };
-        }
-
-        static VirtualCameraActor CreateVirtualCameraActor()
-        {
-            return GetNewActor(VirtualCameraCreatorUtilities.CreateVirtualCameraActor());
-        }
-
-#if VP_CINEMACHINE_2_4_0
-        static VirtualCameraActor CreateCinemachineCameraActor()
-        {
-            return GetNewActor(VirtualCameraCreatorUtilities.CreateCinemachineCameraActor());
-        }
-#endif
-
-        static VirtualCameraActor GetNewActor(GameObject newGameObject)
-        {
-            EditorGUIUtility.PingObject(newGameObject);
-
-            var newActor = newGameObject.GetComponent<VirtualCameraActor>();
-            Debug.Assert(newActor != null);
-            return newActor;
-        }
-
-        string GetSensorName(Vector2 sensorSize)
-        {
-            var sensorSizes = SensorPresetsCache.GetSensorSizes();
-            var index = Array.FindIndex(sensorSizes, (s) => s == sensorSize);
-
-            if (index == -1)
-            {
-                return $"[{sensorSize.x} x {sensorSize.y}]";
             }
-
-            var options = SensorPresetsCache.GetSensorNames();
-
-            return options[index];
         }
 
-        Rect BestFit(Rect rect, Texture2D texture)
+        void AssignAndPingActor(UnityEngine.Object newActor)
         {
-            var rectAspect = rect.width / rect.height;
-            var textureAspect = texture.width / texture.height;
+            serializedObject.Update();
 
-            if (textureAspect > rectAspect)
-            {
-                var height = rect.width / textureAspect;
+            m_Actor.objectReferenceValue = newActor;
 
-                rect.y += (rect.height - height) * 0.5f;
-                rect.height = height;
-            }
-            else if (textureAspect < rectAspect)
-            {
-                var width = rect.height * textureAspect;
+            serializedObject.ApplyModifiedProperties();
 
-                rect.x += (rect.width - width) * 0.5f;
-                rect.width = width;
-            }
+            EditorGUIUtility.PingObject(newActor);
 
-            return rect;
+            TakeRecorderEditor.RepaintEditors();
+        }
+
+        static SnapshotLibrary CreateSnapshotLibrary(string name)
+        {
+            var path = EditorUtility.SaveFilePanelInProject(
+                "Create new Snapshot Library",
+                name,
+                "asset",
+                "Create a new Snapshot Library at the selected directory"
+            );
+
+            return SnapshotLibraryUtility.CreateSnapshotLibrary(path);
         }
 
         void DoSnapshotsGUI()
         {
-            var rect = EditorGUILayout.GetControlRect();
-            var label = EditorGUI.BeginProperty(rect, Contents.Snapshots, m_Snapshots);
-            m_Snapshots.isExpanded = EditorGUI.Foldout(rect, m_Snapshots.isExpanded, label, true);
-
-            if (!m_Snapshots.isExpanded)
+            using (new EditorGUILayout.HorizontalScope())
             {
-                return;
+                EditorGUILayout.PrefixLabel(Contents.Library);
+                EditorGUILayout.ObjectField(m_SnapshotLibrary, GUIContent.none);
+
+                if (GUILayout.Button(Contents.NewLibrary, EditorStyles.miniButton))
+                {
+                    var asset = CreateSnapshotLibrary(
+                        SnapshotLibraryUtility.GetSnapshotLibraryDefaultName(m_Device));
+
+                    if (asset != null)
+                    {
+                        m_SnapshotLibrary.objectReferenceValue = asset;
+                    }
+                }
             }
 
-            m_List.DoGUILayout();
+            var snapshotLibrary = m_EmptySnapshotLibrary;
+            var hasSnapshotLibrary = m_SnapshotLibrary.objectReferenceValue != null;
+
+            if (hasSnapshotLibrary)
+            {
+                snapshotLibrary = m_SnapshotLibrary.objectReferenceValue as SnapshotLibrary;
+            }
+
+            CreateCachedEditor(snapshotLibrary, null, ref m_SnapshotLibraryEditor);
+
+            var snapshotLibraryEditor = m_SnapshotLibraryEditor as SnapshotLibraryEditor;
+
+            snapshotLibraryEditor.NoneListItemContent = hasSnapshotLibrary ? null : Contents.NoLibrarySelected;
+
+            using (new EditorGUI.DisabledScope(!hasSnapshotLibrary))
+            {
+                m_SnapshotLibraryEditor.OnInspectorGUI();
+            }
 
             using (new EditorGUILayout.HorizontalScope())
             using (new EditorGUI.DisabledScope(m_Device.IsRecording()))
             {
-                using (new EditorGUI.DisabledScope(!m_Device.IsLiveActive()))
+                using (new EditorGUI.DisabledScope(!m_Device.IsLiveAndReady()))
                 {
                     if (GUILayout.Button(Contents.TakeSnapshot))
                     {
@@ -307,22 +300,51 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
                     }
                 }
 
-                if (GUILayout.Button(Contents.GotoLabel))
+                using (new EditorGUI.DisabledScope(snapshotLibrary.Count == 0 || snapshotLibraryEditor.Index == -1))
                 {
-                    m_Device.GoToSnapshot(m_List.Index);
+                    if (GUILayout.Button(Contents.GotoLabel))
+                    {
+                        m_Device.GoToSnapshot(snapshotLibraryEditor.Index);
 
-                    EditorUtility.SetDirty(m_Device);
-                }
+                        EditorUtility.SetDirty(m_Device);
+                    }
 
-                if (GUILayout.Button(Contents.Load))
-                {
-                    m_Device.LoadSnapshot(m_List.Index);
+                    if (GUILayout.Button(Contents.Load))
+                    {
+                        m_Device.LoadSnapshot(snapshotLibraryEditor.Index);
 
-                    EditorUtility.SetDirty(m_Device);
+                        EditorUtility.SetDirty(m_Device);
+                    }
                 }
             }
 
             EditorGUI.EndProperty();
+        }
+
+        void DoMigrateSnapshotsGUI()
+        {
+            EditorGUILayout.HelpBox(Contents.MigrateSnapshotsMessage.text, MessageType.Info);
+            EditorGUILayout.HelpBox(Contents.MigrateSnapshotsSaveMessage.text, MessageType.Info);
+
+            if (GUILayout.Button(Contents.MigrateSnapshotsMigrateButton))
+            {
+                var asset = CreateSnapshotLibrary(
+                    SnapshotLibraryUtility.GetSnapshotLibraryDefaultName(m_Device));
+
+                if (asset != null)
+                {
+                    m_SnapshotLibrary.objectReferenceValue = asset;
+
+                    serializedObject.ApplyModifiedProperties();
+
+                    SnapshotLibraryUtility.MigrateSnapshotsToSnapshotLibrary(m_Device);
+                }
+            }
+
+            if (GUILayout.Button(Contents.MigrateSnapshotsDeleteButton))
+            {
+                m_Snapshots.ClearArray();
+            }
         }
 
         void DoLensAssetField()

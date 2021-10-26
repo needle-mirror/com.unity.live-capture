@@ -15,10 +15,6 @@ namespace Unity.LiveCapture.VirtualCamera
     {
         readonly BinarySender<VirtualCameraChannelFlags> m_ChannelFlagsSender;
         readonly BinarySender<JoysticksSampleV0> m_JoysticksSender;
-        readonly BinarySender<PoseSampleV0> m_PoseSender;
-        readonly BinarySender<FocalLengthSampleV0> m_FocalLengthSender;
-        readonly BinarySender<FocusDistanceSampleV0> m_FocusDistanceSender;
-        readonly BinarySender<ApertureSampleV0> m_ApertureSender;
         readonly BoolSender m_DampingEnabledSender;
         readonly BinarySender<Vector3> m_BodyDampingSender;
         readonly BinarySender<float> m_AimDampingSender;
@@ -48,11 +44,6 @@ namespace Unity.LiveCapture.VirtualCamera
         readonly BinarySender<int> m_GoToSnapshotSender;
         readonly BinarySender<int> m_LoadSnapshotSender;
         readonly BinarySender<int> m_DeleteSnapshotSender;
-
-        /// <summary>
-        /// An event invoked when this client has been assigned to a virtual camera.
-        /// </summary>
-        public event Action Initializing;
 
         public event Action<VirtualCameraChannelFlags> ChannelFlagsReceived;
         public event Action<float> FocalLengthReceived;
@@ -88,6 +79,12 @@ namespace Unity.LiveCapture.VirtualCamera
         public event Action<LensKitDescriptor> LensKitDescriptorReceived;
         public event Action<int> SelectedLensAssetReceived;
         public event Action<SnapshotListDescriptor> SnapshotListDescriptorReceived;
+        public event Action<VcamTrackMetadataListDescriptor> VcamTrackMetadataListDescriptorReceived;
+
+        readonly Action<PoseSample> m_SendPoseImpl;
+        readonly Action<FocalLengthSample> m_SendFocalLengthImpl;
+        readonly Action<FocusDistanceSample> m_SendFocusDistanceImpl;
+        readonly Action<ApertureSample> m_SendApertureImpl;
 
         /// <inheritdoc />
         public VirtualCameraHost(NetworkBase network, Remote remote, Stream stream)
@@ -95,10 +92,45 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             BinarySender<VirtualCameraChannelFlags>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.ChannelFlags, out m_ChannelFlagsSender);
             BinarySender<JoysticksSampleV0>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.JoysticksSample_V0, out m_JoysticksSender);
-            BinarySender<PoseSampleV0>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.PoseSample_V0, out m_PoseSender);
-            BinarySender<FocalLengthSampleV0>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.FocalLengthSample_V0, out m_FocalLengthSender);
-            BinarySender<FocusDistanceSampleV0>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.FocusDistanceSample_V0, out m_FocusDistanceSender);
-            BinarySender<ApertureSampleV0>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.ApertureSample_V0, out m_ApertureSender);
+
+            // Pick the right data format based on the server's protocols. We strive to support older server versions (up to a point)
+            // This seems repetitive. We should come up with a generic way to instantiate the right sender type from the protocol (may require reflection)
+            if (BinarySender<PoseSampleV1>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.PoseSample_V1, out var poseSenderV1))
+            {
+                m_SendPoseImpl = sample => poseSenderV1.Send((PoseSampleV1)sample);
+            }
+            else if (BinarySender<PoseSampleV0>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.PoseSample_V0, out var poseSenderV0))
+            {
+                m_SendPoseImpl = sample => poseSenderV0.Send((PoseSampleV0)sample);
+            }
+
+            if (BinarySender<FocalLengthSampleV1>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.FocalLengthSample_V1, out var focalLengthSenderV1))
+            {
+                m_SendFocalLengthImpl = sample => focalLengthSenderV1.Send((FocalLengthSampleV1)sample);
+            }
+            else if (BinarySender<FocalLengthSampleV0>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.FocalLengthSample_V0, out var focalLengthSenderV0))
+            {
+                m_SendFocalLengthImpl = sample => focalLengthSenderV0.Send((FocalLengthSampleV0)sample);
+            }
+
+            if (BinarySender<FocusDistanceSampleV1>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.FocusDistanceSample_V1, out var focusDistanceSenderV1))
+            {
+                m_SendFocusDistanceImpl = sample => focusDistanceSenderV1.Send((FocusDistanceSampleV1)sample);
+            }
+            else if (BinarySender<FocusDistanceSampleV0>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.FocusDistanceSample_V0, out var focusDistanceSenderV0))
+            {
+                m_SendFocusDistanceImpl = sample => focusDistanceSenderV0.Send((FocusDistanceSampleV0)sample);
+            }
+
+            if (BinarySender<ApertureSampleV1>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.ApertureSample_V1, out var apertureSenderV1))
+            {
+                m_SendApertureImpl = sample => apertureSenderV1.Send((ApertureSampleV1)sample);
+            }
+            else if (BinarySender<ApertureSampleV0>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.ApertureSample_V0, out var apertureSenderV0))
+            {
+                m_SendApertureImpl = sample => apertureSenderV0.Send((ApertureSampleV0)sample);
+            }
+
             BoolSender.TryGet(m_Protocol, VirtualCameraMessages.ToServer.DampingEnabled, out m_DampingEnabledSender);
             BinarySender<Vector3>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.BodyDamping, out m_BodyDampingSender);
             BinarySender<float>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.AimDamping, out m_AimDampingSender);
@@ -366,14 +398,13 @@ namespace Unity.LiveCapture.VirtualCamera
                     SnapshotListDescriptorReceived?.Invoke((SnapshotListDescriptor)snapshotList);
                 });
             }
-        }
-
-        /// <inheritdoc />
-        protected override void Initialize()
-        {
-            base.Initialize();
-
-            Initializing?.Invoke();
+            if (JsonReceiver<VcamTrackMetadataListDescriptorV0>.TryGet(m_Protocol, VirtualCameraMessages.ToClient.VcamTrackMetadataListDescriptor_V0, out var VcamTrackMetadataListDescriptorChanged_V0))
+            {
+                VcamTrackMetadataListDescriptorChanged_V0.AddHandler(metadataList =>
+                {
+                    VcamTrackMetadataListDescriptorReceived?.Invoke((VcamTrackMetadataListDescriptor)metadataList);
+                });
+            }
         }
 
         /// <summary>
@@ -382,10 +413,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="channelFlags">The channel flags.</param>
         public void SendChannelFlags(VirtualCameraChannelFlags channelFlags)
         {
-            if (m_ChannelFlagsSender != null)
-            {
-                m_ChannelFlagsSender.Send(channelFlags);
-            }
+            m_ChannelFlagsSender?.Send(channelFlags);
         }
 
         /// <summary>
@@ -394,10 +422,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="sample">The joystick sample.</param>
         public void SendJoysticks(JoysticksSample sample)
         {
-            if (m_JoysticksSender != null)
-            {
-                m_JoysticksSender.Send((JoysticksSampleV0)sample);
-            }
+            m_JoysticksSender?.Send((JoysticksSampleV0)sample);
         }
 
         /// <summary>
@@ -406,10 +431,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="sample">The pose sample.</param>
         public void SendPose(PoseSample sample)
         {
-            if (m_PoseSender != null)
-            {
-                m_PoseSender.Send((PoseSampleV0)sample);
-            }
+            m_SendPoseImpl?.Invoke(sample);
         }
 
         /// <summary>
@@ -418,10 +440,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="sample">The focal length sample.</param>
         public void SendFocalLength(FocalLengthSample sample)
         {
-            if (m_FocalLengthSender != null)
-            {
-                m_FocalLengthSender.Send((FocalLengthSampleV0)sample);
-            }
+            m_SendFocalLengthImpl?.Invoke(sample);
         }
 
         /// <summary>
@@ -430,10 +449,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="sample">The aperture sample.</param>
         public void SendFocusDistance(FocusDistanceSample sample)
         {
-            if (m_FocusDistanceSender != null)
-            {
-                m_FocusDistanceSender.Send((FocusDistanceSampleV0)sample);
-            }
+            m_SendFocusDistanceImpl?.Invoke(sample);
         }
 
         /// <summary>
@@ -442,110 +458,117 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="sample">The aperture sample.</param>
         public void SendAperture(ApertureSample sample)
         {
-            if (m_ApertureSender != null)
-            {
-                m_ApertureSender.Send((ApertureSampleV0)sample);
-            }
+            m_SendApertureImpl?.Invoke(sample);
         }
 
-        /// <summary>
-        /// Sets the virtual camera's settings.
-        /// </summary>
-        /// <param name="settings">The state to set.</param>
-        public void SetSettings(Settings settings)
+        public void SendDampingEnabled(bool value)
         {
-            if (m_DampingEnabledSender != null)
-            {
-                m_DampingEnabledSender.Send(settings.Damping.Enabled);
-            }
-            if (m_BodyDampingSender != null)
-            {
-                m_BodyDampingSender.Send(settings.Damping.Body);
-            }
-            if (m_AimDampingSender != null)
-            {
-                m_AimDampingSender.Send(settings.Damping.Aim);
-            }
-            if (m_FocalLengthDampingSender != null)
-            {
-                m_FocalLengthDampingSender.Send(settings.FocalLengthDamping);
-            }
-            if (m_FocusDistanceDampingSender != null)
-            {
-                m_FocusDistanceDampingSender.Send(settings.FocusDistanceDamping);
-            }
-            if (m_ApertureDampingSender != null)
-            {
-                m_ApertureDampingSender.Send(settings.ApertureDamping);
-            }
-            if (m_PositionLockSender != null)
-            {
-                m_PositionLockSender.Send(settings.PositionLock);
-            }
-            if (m_RotationLockSender != null)
-            {
-                m_RotationLockSender.Send(settings.RotationLock);
-            }
-            if (m_AutoHorizonSender != null)
-            {
-                m_AutoHorizonSender.Send(settings.AutoHorizon);
-            }
-            if (m_ErgonomicTiltSender != null)
-            {
-                m_ErgonomicTiltSender.Send(settings.ErgonomicTilt);
-            }
-            if (m_RebasingSender != null)
-            {
-                m_RebasingSender.Send(settings.Rebasing);
-            }
-            if (m_MotionScaleSender != null)
-            {
-                m_MotionScaleSender.Send(settings.MotionScale);
-            }
-            if (m_JoystickSensitivitySender != null)
-            {
-                m_JoystickSensitivitySender.Send(settings.JoystickSensitivity);
-            }
-            if (m_PedestalSpaceSender != null)
-            {
-                m_PedestalSpaceSender.Send(settings.PedestalSpace);
-            }
-            if (m_FocusModeSender != null)
-            {
-                m_FocusModeSender.Send(settings.FocusMode);
-            }
-            if (m_FocusReticlePositionSender != null)
-            {
-                m_FocusReticlePositionSender.Send(settings.ReticlePosition);
-            }
-            if (m_FocusDistanceOffsetSender != null)
-            {
-                m_FocusDistanceOffsetSender.Send(settings.FocusDistanceOffset);
-            }
-            if (m_CropAspectSender != null)
-            {
-                m_CropAspectSender.Send(settings.AspectRatio);
-            }
-            if (m_GateFitSender != null)
-            {
-                m_GateFitSender.Send(settings.GateFit);
-            }
-            if (m_ShowGateMaskSender != null)
-            {
-                m_ShowGateMaskSender.Send(settings.GateMask);
-            }
-            if (m_ShowFrameLinesSender != null)
-            {
-                m_ShowFrameLinesSender.Send(settings.AspectRatioLines);
-            }
-            if (m_ShowCenterMarkerSender != null)
-            {
-                m_ShowCenterMarkerSender.Send(settings.CenterMarker);
-            }
-            if (m_ShowFocusPlaneSender != null)
-            {
-                m_ShowFocusPlaneSender.Send(settings.FocusPlane);
-            }
+            m_DampingEnabledSender?.Send(value);
+        }
+
+        public void SendBodyDamping(Vector3 value)
+        {
+            m_BodyDampingSender?.Send(value);
+        }
+
+        public void SendAimDamping(float value)
+        {
+            m_AimDampingSender?.Send(value);
+        }
+
+        public void SendFocalLengthDamping(float value)
+        {
+            m_FocalLengthDampingSender?.Send(value);
+        }
+
+        public void SendFocusDistanceDamping(float value)
+        {
+            m_FocusDistanceDampingSender?.Send(value);
+        }
+
+        public void SendApertureDamping(float value)
+        {
+            m_ApertureDampingSender?.Send(value);
+        }
+
+        public void SendPositionLock(PositionAxis value)
+        {
+            m_PositionLockSender?.Send(value);
+        }
+
+        public void SendRotationLock(RotationAxis value)
+        {
+            m_RotationLockSender?.Send(value);
+        }
+
+        public void SendAutoHorizon(bool value)
+        {
+            m_AutoHorizonSender?.Send(value);
+        }
+
+        public void SendErgonomicTilt(float value)
+        {
+            m_ErgonomicTiltSender?.Send(value);
+        }
+
+        public void SendRebasing(bool value)
+        {
+            m_RebasingSender?.Send(value);
+        }
+
+        public void SendMotionScale(Vector3 value)
+        {
+            m_MotionScaleSender?.Send(value);
+        }
+
+        public void SendJoystickSensitivity(Vector3 value)
+        {
+            m_JoystickSensitivitySender?.Send(value);
+        }
+
+        public void SendPedestalSpace(Space value)
+        {
+            m_PedestalSpaceSender?.Send(value);
+        }
+
+        public void SendFocusMode(FocusMode value)
+        {
+            m_FocusModeSender?.Send(value);
+        }
+
+        public void SendFocusReticlePosition(Vector2 value)
+        {
+            m_FocusReticlePositionSender?.Send(value);
+        }
+
+        public void SendFocusDistanceOffset(float value)
+        {
+            m_FocusDistanceOffsetSender?.Send(value);
+        }
+
+        public void SendCropAspect(float value)
+        {
+            m_CropAspectSender?.Send(value);
+        }
+
+        public void SendShowGateMask(bool value)
+        {
+            m_ShowGateMaskSender?.Send(value);
+        }
+
+        public void SendShowFrameLines(bool value)
+        {
+            m_ShowFrameLinesSender?.Send(value);
+        }
+
+        public void SendShowCenterMarker(bool value)
+        {
+            m_ShowCenterMarkerSender?.Send(value);
+        }
+
+        public void SendShowFocusPlane(bool value)
+        {
+            m_ShowFocusPlaneSender?.Send(value);
         }
 
         /// <summary>
@@ -554,10 +577,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="ergonomicTilt">The ergonomic tilt in degrees..</param>
         public void SetErgonomicTilt(float ergonomicTilt)
         {
-            if (m_ErgonomicTiltSender != null)
-            {
-                m_ErgonomicTiltSender.Send(ergonomicTilt);
-            }
+            m_ErgonomicTiltSender?.Send(ergonomicTilt);
         }
 
         /// <summary>
@@ -565,10 +585,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// </summary>
         public void SetPoseToOrigin()
         {
-            if (m_PoseToOriginSender != null)
-            {
-                m_PoseToOriginSender.Send();
-            }
+            m_PoseToOriginSender?.Send();
         }
 
         /// <summary>
@@ -577,10 +594,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="guid">The Guid of the lens asset to set.</param>
         public void SetLensAsset(Guid guid)
         {
-            if (m_SetLensAssetSender != null)
-            {
-                m_SetLensAssetSender.Send(guid);
-            }
+            m_SetLensAssetSender?.Send(guid);
         }
 
         /// <summary>
@@ -588,10 +602,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// </summary>
         public void TakeSnapshot()
         {
-            if (m_TakeSnapshotSender != null)
-            {
-                m_TakeSnapshotSender.Send();
-            }
+            m_TakeSnapshotSender?.Send();
         }
 
         /// <summary>
@@ -600,10 +611,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="index">The index of the snapshot in the list to set.</param>
         public void GoToSnapshot(int index)
         {
-            if (m_GoToSnapshotSender != null)
-            {
-                m_GoToSnapshotSender.Send(index);
-            }
+            m_GoToSnapshotSender?.Send(index);
         }
 
         /// <summary>
@@ -612,10 +620,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="index">The index of the snapshot in the list to set.</param>
         public void LoadSnapshot(int index)
         {
-            if (m_LoadSnapshotSender != null)
-            {
-                m_LoadSnapshotSender.Send(index);
-            }
+            m_LoadSnapshotSender?.Send(index);
         }
 
         /// <summary>
@@ -624,10 +629,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="index">The index of the snapshot in the list to delete.</param>
         public void DeleteSnapshot(int index)
         {
-            if (m_DeleteSnapshotSender != null)
-            {
-                m_DeleteSnapshotSender.Send(index);
-            }
+            m_DeleteSnapshotSender?.Send(index);
         }
     }
 }

@@ -86,7 +86,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
         /// Used with Multicast mode with the Multicast Address and Port
         /// </summary>
         public UDPSocket(String data_multicast_address, int data_multicast_port, String control_multicast_address,
-            int control_multicast_port)
+                         int control_multicast_port)
         {
             is_multicast = true;
 
@@ -208,7 +208,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                     Messages.RtspChunk currentMessage = new Messages.RtspData();
                     // aMessage.SourcePort = ??
                     currentMessage.Data = frame;
-                    ((Messages.RtspData) currentMessage).Channel = data_port;
+                    ((Messages.RtspData)currentMessage).Channel = data_port;
 
 
                     OnDataReceived(new RtspChunkEventArgs(currentMessage));

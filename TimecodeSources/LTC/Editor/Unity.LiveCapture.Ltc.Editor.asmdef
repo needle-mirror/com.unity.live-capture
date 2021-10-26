@@ -1,0 +1,19 @@
+{
+    "name": "Unity.LiveCapture.Ltc.Editor",
+    "rootNamespace": "Unity.LiveCapture.Ltc.Editor",
+    "references": [
+        "Unity.LiveCapture.Ltc",
+        "Unity.LiveCapture.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

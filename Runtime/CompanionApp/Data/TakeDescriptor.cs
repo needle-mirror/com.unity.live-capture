@@ -20,6 +20,8 @@ namespace Unity.LiveCapture.CompanionApp
         [SerializeField]
         int m_TakeNumber;
         [SerializeField]
+        long m_CreationTime;
+        [SerializeField]
         string m_Description;
         [SerializeField]
         int m_Rating;
@@ -27,6 +29,10 @@ namespace Unity.LiveCapture.CompanionApp
         FrameRate m_FrameRate;
         [SerializeField]
         SerializableGuid m_Screenshot;
+        [SerializeField]
+        string m_TimelineName;
+        [SerializeField]
+        double m_TimelineDuration;
 
         /// <summary>
         /// The globally unique identifier of the take asset.
@@ -74,6 +80,15 @@ namespace Unity.LiveCapture.CompanionApp
         }
 
         /// <summary>
+        /// The creation time of the take, stored as binary.
+        /// </summary>
+        public long CreationTime
+        {
+            get => m_CreationTime;
+            internal set => m_CreationTime = value;
+        }
+
+        /// <summary>
         /// The description of the shot where the take was captured.
         /// </summary>
         public string Description
@@ -109,6 +124,44 @@ namespace Unity.LiveCapture.CompanionApp
             set => m_Screenshot = value;
         }
 
+        /// <summary>
+        /// The name of the timeline of the take.
+        /// </summary>
+        public string TimelineName
+        {
+            get => m_TimelineName;
+            set => m_TimelineName = value;
+        }
+
+        /// <summary>
+        /// The duration of the timeline of the take.
+        /// </summary>
+        public double TimelineDuration
+        {
+            get => m_TimelineDuration;
+            set => m_TimelineDuration = value;
+        }
+
+        /// <summary>
+        /// Copies all properties from another take descriptor.
+        /// </summary>
+        /// <param name="other">The take descriptor to copy properties from.</param>
+        public void CopyFrom(TakeDescriptor other)
+        {
+            Guid = other.Guid;
+            Name = other.Name;
+            SceneNumber = other.SceneNumber;
+            ShotName = other.ShotName;
+            TakeNumber = other.TakeNumber;
+            CreationTime = other.CreationTime;
+            Description = other.Description;
+            Rating = other.Rating;
+            FrameRate = other.FrameRate;
+            Screenshot = other.Screenshot;
+            TimelineName = other.TimelineName;
+            TimelineDuration = other.TimelineDuration;
+        }
+
         internal static TakeDescriptor Create(Take take)
         {
             var descriptor = new TakeDescriptor();
@@ -118,6 +171,7 @@ namespace Unity.LiveCapture.CompanionApp
             descriptor.SceneNumber = take.SceneNumber;
             descriptor.ShotName = take.ShotName;
             descriptor.TakeNumber = take.TakeNumber;
+            descriptor.CreationTime = take.CreationTime.ToBinary();
             descriptor.Description = take.Description;
             descriptor.Rating = take.Rating;
             descriptor.FrameRate = take.FrameRate;
@@ -125,6 +179,12 @@ namespace Unity.LiveCapture.CompanionApp
             if (take.Screenshot != null)
             {
                 descriptor.Screenshot = SerializableGuid.FromString(AssetDatabaseUtility.GetAssetGUID(take.Screenshot));
+            }
+
+            if (take.Timeline != null)
+            {
+                descriptor.TimelineName = take.Timeline.name;
+                descriptor.TimelineDuration = take.Timeline.duration;
             }
 #endif
             return descriptor;

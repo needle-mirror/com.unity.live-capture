@@ -10,6 +10,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             const string k_Base = "ARKitFaceCapture_ToServer_";
 
             public const string FacePoseSample_V0 = k_Base + "FacePoseSample_V0";
+            public const string FacePoseSample_V1 = k_Base + "FacePoseSample_V1";
         }
     }
 }

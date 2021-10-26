@@ -9,7 +9,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// </summary>
     struct PoseSample : ISample
     {
-        float m_Timestamp;
+        double m_Time;
 
         /// <summary>
         /// The transform pose.
@@ -17,10 +17,10 @@ namespace Unity.LiveCapture.VirtualCamera
         public Pose Pose;
 
         /// <inheritdoc/>
-        public float Timestamp
+        public double Time
         {
-            get => m_Timestamp;
-            set => m_Timestamp = value;
+            get => m_Time;
+            set => m_Time = value;
         }
     }
 }

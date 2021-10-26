@@ -57,6 +57,6 @@ namespace Unity.LiveCapture
         /// </summary>
         /// <param name="time">The time in seconds to insert the keyframe at.</param>
         /// <param name="value">The keyframe value.</param>
-        void AddKey(float time, T value);
+        void AddKey(double time, T value);
     }
 }

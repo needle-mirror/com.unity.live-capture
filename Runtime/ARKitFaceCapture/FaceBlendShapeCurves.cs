@@ -52,13 +52,13 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         }
 
         /// <inheritdoc/>
-        public void AddKey(float time, FaceBlendShapePose value)
+        public void AddKey(double time, FaceBlendShapePose value)
         {
             AddKey(time, ref value);
         }
 
-        /// <inheritdoc cref="AddKey(float,FaceBlendShapePose)"/>
-        public void AddKey(float time, ref FaceBlendShapePose value)
+        /// <inheritdoc cref="AddKey(double,Unity.LiveCapture.ARKitFaceCapture.FaceBlendShapePose)"/>
+        public void AddKey(double time, ref FaceBlendShapePose value)
         {
             for (var i = 0; i < FaceBlendShapePose.ShapeCount; ++i)
             {

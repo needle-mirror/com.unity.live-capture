@@ -9,16 +9,16 @@
 | **Field**              | **Function**                                                 |
 | :--------------------- | :----------------------------------------------------------- |
 | __Settings__           | Opens the [settings window](#settings) to configure view options, joystick settings, recording options, etc. |
-| __Timeline__           | Shows whether or not a timeline is assigned in the **Live Capture** window |
-| __Gate__               | Displays the current sensor size in mm                       |
-| __Timecode__           | Displays the timecode (hr:min:sec:frame) of the current recording session or clip |
-| __Focus Mode__         | Displays the current focus mode (Depth of Field Disabled, Manual Focus, Auto Focus, Spatial Focus) |
-| __Focus Distance__     | Displays the current focus distance in meters. This will display "N/A" when Focus Mode is "DoF Disabled" |
-| __Aperture__           | Displays the current F-stop (aperture)                       |
-| __Focal Length__      | Displays the current focal length in millimeters              |
-| __AR Tracking Toggle__ | Tap to enable/disable AR tracking                            |
-| __Connection__         | Tap to open a connection window to connect or disconnect from a server |
-| __Help__               | Tap to enter Help Mode. In Help Mode, tapping any control will display a tooltip with more information about its functionality |
+| __Timeline__           | Shows whether or not a timeline is assigned in the **Live Capture** window. |
+| __SENSOR__               | Displays the current sensor size in millimeters.                       |
+| __TIME__           | Displays the timecode (hr:min:sec:frame) of the current recording session or clip. |
+| __FOCUS MODE__         | Displays the current [focus mode](#focus-mode). |
+| __FOCUS DIST__     | Displays the current focus distance in meters. This displays "N/A" when you select the "Clear" [focus mode](#focus-mode). |
+| __F-STOP__           | Displays the current [aperture](#focus-and-aperture-dials) (f-number).                       |
+| __ZOOM__       | Displays the current [focal length](#focal-length) (zoom) in millimeters.              |
+| __AR Tracking__ | Tap to enable/disable AR tracking.                            |
+| __Connection__         | Tap to open a connection window to connect or disconnect from a server. |
+| __Help__               | Tap to enter Help Mode. In Help Mode, tap any control to display a tooltip with more information about its functionality. |
 
 
 ### Axis rotation locking
@@ -35,17 +35,6 @@ You can change the motion scale to multiply the tracked motion along a given loc
 You can also select the lock icon beside each axis icon to lock or unlock the position along this axis. For example, to simulate a tripod, lock all three axes.
 
 ![Position Lock](images/motion-scale.png)
-
-
-### Focal Length
-
-Change the focal length of the camera using focal length dial. Open the dial with the focal length button on the right control bar. Rotate the dial to change the value. The current focal length is displayed in the HUD under **ZOOM**.
-
-Changing the focal length sets the distance, in millimeters, between the camera sensor and the camera lens. Lower values result in a wider Field of View, and vice versa
-
-**Note: changing this value forces the Focus Mode to Manual.**
-
-![Focal Length Dialog](images/focal-length-dial.png)
 
 
 ### Damping Settings
@@ -72,21 +61,50 @@ Pressing the **Reset Lens** button resets the camera lens to its default setting
 ![Reset Dialog](images/reset-dialog.png)
 
 
-###  Depth of Field
-The depth of field can be controlled in two ways, using a manual dial, or by tapping to place a screen-space reticle.
-Note that the reticle position may optionally be set from the editor as well, by clicking in the gameview.
-| Dial - Manual Focus | Dial - Auto Focus | Focus Mode |
-| ----- | ----- | ----- |
-|![Focus Distance and Aperture dial](images/focus-distance-aperture.png) | ![Focus Distance Offset and Aperture dial](images/focus-distance-offset-aperture.png) |![Focus Mode](images/focus-mode.png)|
+### Focal Length
 
-| **Mode**          | **Description**                                                 |
-| :----------------- | :----------------------------------------------------------- |
-| __DoF Disabled__ | Disable Depth of Field                 |
-| __Manual__      | In this mode, tapping the screen will set the focus distance to the point under the placed reticle. **Note** setting the focus distance with the dial will automatically set the focus mode to **Manual**                                        |
-| __Screen AF__  | In this mode, tapping the screen will place a persistent reticle that will constantly set the focus distance to the 3D point under the reticle. **Note** constantly calculating the focus distance under the reticle is performance intensive, so you may have to lower the quality of the video stream to maintain framerate |
-| __World AF__  | In this mode, tapping the screen will select the scene object under the reticle, if any. If an object is selected, focus distance will be continually updated to match this object's distance to the camera. **Note** To be selected, an object needs to use (a) material(s) including a pass matching one of the following tags: `Forward`, `ForwardOnly`, `SRPDefaultUnlit`, `GBuffer`, `ForwardLit`, `Unlit`, `UniversalForward`. Built-in SRP and ShaderGraph materials should be covered, remember to tag one of your passes when working with custom shaders. |
+Change the focal length of the camera using focal length dial. Open the dial with the focal length button on the right control bar. Rotate the dial to change the value. The current focal length is displayed in the HUD under **ZOOM**.
 
-When using Screen or World Auto Focus, the focus distance dial controls an offset applied to the automatically evaluated focus distance.
+Changing the focal length sets the distance, in millimeters, between the camera sensor and the camera lens. Lower values result in a wider Field of View, and vice versa.
+
+![Focal Length Dialog](images/focal-length-dial.png)
+
+### Focus and aperture dials
+
+The focus and aperture dials allow you to manually set the camera focus distance and aperture.
+
+To display the focus and aperture dials, press the middle icon in the app screen's right vertical toolbar.
+
+| Dial display in manual mode | Dial display in autofocus (AF) modes |
+|:---|:---|
+| ![Focus Distance and Aperture dial](images/focus-distance-aperture.png) | ![Focus Distance Offset and Aperture dial](images/focus-distance-offset-aperture.png) |
+
+| Dial | Description |
+|:---|:---|
+| Center | The aperture dial. It allows you to manually set the camera aperture in f-number. Its graduated scale shows the standard f-stop values for reference. |
+| Outer | The focus dial. Its function depends on the selected [focus mode](#focus-mode):<br />• In manual mode, this dial allows you to manually set the camera focus distance in meters.<br />• In any of the two autofocus (AF) modes, this dial allows you to apply an offset to the automatically evaluated focus distance. |
+
+
+### Focus mode
+
+The focus mode defines how you want to control the camera focus from the app interface.
+
+To change the camera focus mode, press the bottom icon in the app screen's right vertical toolbar, and select the mode in the list.
+
+![Focus Mode](images/focus-mode.png)
+
+| Mode | Description |
+|:---|:---|
+| __Clear__ | Disables the depth of field (DoF).<br />All elements of the scene appear in focus whatever their distance to the camera.<br /><br />**Note:** If you use the [focus dial](#focus-and-aperture-dials) from this mode, the mode automatically changes to **Manual**. |
+| __Manual__ | Allows you to manually set the camera focus distance in two alternative ways:<br />• Tap the screen to focus on a specific 3D point of the scene. A reticle briefly appears where you tapped the screen, and then disappears.<br />• Use the [focus dial](#focus-and-aperture-dials) to manually set up a focus distance value. |
+| __Reticle AF__ | Automatically and constantly focuses the camera at the 3D point of the scene under the displayed reticle.<br />• Tap the screen if you need to change the reticle position. Notice the reticle is persistent in this mode.<br />• Use the [focus dial](#focus-and-aperture-dials) if you need to apply a focus distance offset.<br /><br />**Note:** This mode is resource intensive, as Unity constantly calculates the focus distance. You might need to lower the quality of the video stream to maintain the desired framerate. |
+| __Tracking AF__ | Allows you to automatically and constantly keep the focus on a specific selected element of the scene.<br />• Tap the screen to select the scene element you want to keep the focus on. A reticle briefly appears where you tapped the screen, and then disappears.<br />• Use the [focus dial](#focus-and-aperture-dials) if you need to apply a focus distance offset.<br /><br />**Note:** To be able to select an object to keep focus on, its mesh must be readable and use at least a material with a pass matching one of the following tags: `Forward`, `ForwardOnly`, `SRPDefaultUnlit`, `GBuffer`, `ForwardLit`, `Unlit`, `UniversalForward`. Built-in SRP and ShaderGraph materials should be covered, remember to tag one of your passes when working with custom shaders. |
+
+**Note:** You might also be able to click in the Unity Editor Game view to set the reticle position depending on the [Virtual Camera Device component](ref-component-virtual-camera-device.md) Reticle Control property value.
+
+![Camera focus reticle](images/virtual-camera-focus-reticle.png)
+<br />_How the reticle displays on the app screen._
+
 
 ###  Timeline Control
 
