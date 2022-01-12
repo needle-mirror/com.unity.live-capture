@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Playables;
 
@@ -11,6 +12,7 @@ namespace Unity.LiveCapture
     /// which it injects as an output on a playable graph. This allows using a timeline to drive some or all of the
     /// actor's properties without needing to modify the timeline asset.
     /// </remarks>
+    [Obsolete("Override LiveCaptureDevice.LiveUpdate to set properties to the actors in the scene.")]
     public interface ILiveLink
     {
         /// <summary>

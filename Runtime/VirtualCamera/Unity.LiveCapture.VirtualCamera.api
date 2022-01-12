@@ -141,8 +141,8 @@ namespace Unity.LiveCapture.VirtualCamera
         public UnityEngine.Pose Origin { get; }
         public UnityEngine.Pose Pose { get; }
         public VirtualCameraDevice() {}
-        public virtual void BuildLiveLink(UnityEngine.Playables.PlayableGraph graph);
         protected virtual string GetAssetName();
+        public virtual void LiveUpdate();
         protected virtual void OnClientAssigned();
         protected virtual void OnClientUnassigned();
         protected virtual void OnDisable();

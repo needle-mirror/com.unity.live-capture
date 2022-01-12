@@ -104,9 +104,22 @@ namespace Unity.LiveCapture.CompanionApp
         event Action<Guid> TexturePreviewRequested;
 
         /// <summary>
-        /// Resets the client communication state.
+        /// Resets the communication state and notifies the client that a new session starts by sending
+        /// the Initialize event.
         /// </summary>
-        void Initialize();
+        /// <remarks>
+        /// The Initialize event is only sent once before any other event.
+        /// </remarks>
+        void SendInitialize();
+
+        /// <summary>
+        /// Notifies the client that the session has ended.
+        /// </summary>
+        /// <remarks>
+        /// After the session has ended, the client can safely assume that the communicaiton is over.
+        /// The client can wait for the Initialize event again to start a new session.
+        /// </remarks>
+        void SendEndSession();
 
         /// <summary>
         /// Sends the device mode to the client.
@@ -188,6 +201,7 @@ namespace Unity.LiveCapture.CompanionApp
         protected readonly Protocol m_Protocol;
 
         readonly EventSender m_InitializeSender;
+        readonly EventSender m_EndSessionSender;
         readonly BoolSender m_IsRecordingSender;
         readonly DataSender<DeviceMode> m_DeviceModeSender;
         readonly DataSender<FrameRate> m_FrameRateSender;
@@ -197,6 +211,8 @@ namespace Unity.LiveCapture.CompanionApp
         readonly BoolSender m_SlateIsPreviewingSender;
         readonly BinarySender<int> m_SlateSelectedTakeSender;
         readonly BinarySender<int> m_SlateIterationBaseSender;
+        readonly BinarySender<int> m_SlateTakeNumberSender;
+        readonly StringSender m_SlateShotNameSender;
         readonly JsonSender<TakeDescriptorArrayV0> m_SlateTakesSender;
         readonly StringSender m_NextTakeNameSender;
         readonly StringSender m_NextAssetNameSender;
@@ -269,6 +285,7 @@ namespace Unity.LiveCapture.CompanionApp
             m_Protocol.SetNetwork(network, remote);
 
             m_InitializeSender = m_Protocol.Add(new EventSender(CompanionAppMessages.ToClient.Initialize));
+            m_EndSessionSender = m_Protocol.Add(new EventSender(CompanionAppMessages.ToClient.EndSession));
             m_IsRecordingSender = m_Protocol.Add(new BoolSender(CompanionAppMessages.ToClient.IsRecordingChanged));
             m_DeviceModeSender = m_Protocol.Add(new BinarySender<DeviceMode>(CompanionAppMessages.ToClient.DeviceModeChanged));
             m_FrameRateSender = m_Protocol.Add(new BinarySender<FrameRate>(CompanionAppMessages.ToClient.FrameRate));
@@ -278,7 +295,9 @@ namespace Unity.LiveCapture.CompanionApp
             m_SlatePreviewTimeSender = m_Protocol.Add(new BinarySender<double>(CompanionAppMessages.ToClient.SlatePreviewTimeChanged));
             m_SlateSelectedTakeSender = m_Protocol.Add(new BinarySender<int>(CompanionAppMessages.ToClient.SlateSelectedTake));
             m_SlateIterationBaseSender = m_Protocol.Add(new BinarySender<int>(CompanionAppMessages.ToClient.SlateIterationBase));
-            m_SlateTakesSender = m_Protocol.Add(new JsonSender<TakeDescriptorArrayV0>(CompanionAppMessages.ToClient.SlateTakes_V0));
+            m_SlateTakeNumberSender = m_Protocol.Add(new BinarySender<int>(CompanionAppMessages.ToClient.SlateTakeNumber, options: DataOptions.None));
+            m_SlateShotNameSender = m_Protocol.Add(new StringSender(CompanionAppMessages.ToClient.SlateShotName, options: DataOptions.None));
+            m_SlateTakesSender = m_Protocol.Add(new JsonSender<TakeDescriptorArrayV0>(CompanionAppMessages.ToClient.SlateTakes_V0, options: DataOptions.None));
             m_NextTakeNameSender = m_Protocol.Add(new StringSender(CompanionAppMessages.ToClient.NextTakeName));
             m_NextAssetNameSender = m_Protocol.Add(new StringSender(CompanionAppMessages.ToClient.NextAssetName));
             m_TexturePreviewSender = m_Protocol.Add(new TextureSender(CompanionAppMessages.ToClient.TexturePreview));
@@ -354,11 +373,17 @@ namespace Unity.LiveCapture.CompanionApp
         }
 
         /// <inheritdoc />
-        public virtual void Initialize()
+        public void SendInitialize()
         {
             m_Protocol.Reset();
 
             m_InitializeSender.Send();
+        }
+
+        /// <inheritdoc />
+        public void SendEndSession()
+        {
+            m_EndSessionSender.Send();
         }
 
         /// <inheritdoc />
@@ -406,9 +431,11 @@ namespace Unity.LiveCapture.CompanionApp
         /// <inheritdoc />
         public void SendSlateDescriptor(SlateDescriptor descriptor)
         {
+            m_SlateTakesSender.Send((TakeDescriptorArrayV0)descriptor.Takes);
             m_SlateSelectedTakeSender.Send(descriptor.SelectedTake);
             m_SlateIterationBaseSender.Send(descriptor.IterationBase);
-            m_SlateTakesSender.Send((TakeDescriptorArrayV0)descriptor.Takes);
+            m_SlateTakeNumberSender.Send(descriptor.TakeNumber);
+            m_SlateShotNameSender.Send(descriptor.ShotName);
         }
 
         /// <inheritdoc />

@@ -10,6 +10,7 @@ namespace Unity.LiveCapture.CompanionApp
             const string k_Base = "CompanionApp_ToClient_";
 
             public const string Initialize = k_Base + "Initialize";
+            public const string EndSession = k_Base + "EndSession";
             public const string IsRecordingChanged = k_Base + "IsRecordingChanged";
             public const string DeviceModeChanged = k_Base + "DeviceModeChanged";
             public const string FrameRate = k_Base + "FrameRate";
@@ -19,6 +20,8 @@ namespace Unity.LiveCapture.CompanionApp
             public const string SlatePreviewTimeChanged = k_Base + "SlatePreviewTimeChanged";
             public const string SlateSelectedTake = k_Base + "SlateSelectedTake";
             public const string SlateIterationBase = k_Base + "SlateIterationBase";
+            public const string SlateTakeNumber = k_Base + "SlateTakeNumber";
+            public const string SlateShotName = k_Base + "SlateShotName";
             public const string SlateTakes_V0 = k_Base + "SlateTakes_V0";
             public const string NextTakeName = k_Base + "NextTakeName";
             public const string NextAssetName = k_Base + "NextAssetName";

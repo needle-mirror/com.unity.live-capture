@@ -49,11 +49,6 @@ namespace Unity.LiveCapture.VirtualCamera
         readonly BinarySender<int> m_LoadSnapshotSender;
         readonly BinarySender<int> m_DeleteSnapshotSender;
 
-        /// <summary>
-        /// An event invoked when this client has been assigned to a virtual camera.
-        /// </summary>
-        public event Action Initializing;
-
         public event Action<VirtualCameraChannelFlags> ChannelFlagsReceived;
         public event Action<float> FocalLengthReceived;
         public event Action<float> FocusDistanceReceived;
@@ -366,14 +361,6 @@ namespace Unity.LiveCapture.VirtualCamera
                     SnapshotListDescriptorReceived?.Invoke((SnapshotListDescriptor)snapshotList);
                 });
             }
-        }
-
-        /// <inheritdoc />
-        protected override void Initialize()
-        {
-            base.Initialize();
-
-            Initializing?.Invoke();
         }
 
         /// <summary>

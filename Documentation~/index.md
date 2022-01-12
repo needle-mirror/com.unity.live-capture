@@ -2,12 +2,17 @@
 
 Use the Live Capture package to connect to the Unity Virtual Camera and Unity Face Capture companion apps to capture and record camera motion and face performances.
 
-## Available client Apps
+## Available client apps
 
-Two Apps compatible with the Live Capture package are currently available (for iOS):
+Two apps compatible with the Live Capture package are currently available (for iOS):
 
 * The [Unity Virtual Camera app](virtual-camera.md) allows you to capture and record camera motion through an iPhone or iPad as if you were physically in the Unity Scene.
-* The [Unity Live Capture app](face-capture.md) allows you to capture and record face movements through an iPhone or iPad and apply them on a character in your Unity Scene.
+* The [Unity Face Capture app](face-capture.md) allows you to capture and record face movements through an iPhone or iPad and apply them on a character in your Unity Scene.
+
+## Live Capture package features
+
+* Manage the [connections](ref-window-connections.md) between your data sources and the Unity Editor.
+* Use the [take system](take-system.md) to record, manage, and play back Live Capture takes.
 
 ## Installation
 
@@ -47,3 +52,7 @@ The Unity Virtual Camera and Unity Face Capture apps are currently available on 
 * Your **firewall** must allow your Unity Editor program to get **inbound connections** from external apps of your local network.
 
 [Get more information on how to meet those network requirements in Windows](setup-network.md).
+
+## Known issues and limitations
+
+See the list of current [known issues and limitations](known-issues-limitations.md) that you might experience with the Live Capture package and companion apps, along with some workarounds.

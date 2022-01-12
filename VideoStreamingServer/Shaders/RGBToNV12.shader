@@ -11,7 +11,6 @@ Shader "Hidden/Live Capture/RGBToNV12"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma multi_compile _ UNITY_COLORSPACE_GAMMA
             #pragma multi_compile _ VERTICAL_FLIP
 
             #include "UnityCG.cginc"

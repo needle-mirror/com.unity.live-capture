@@ -1,3 +1,4 @@
+using System;
 using Unity.LiveCapture.CompanionApp;
 using UnityEngine;
 using UnityEngine.Playables;
@@ -19,8 +20,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     {
         [SerializeField]
         FaceActor m_Actor;
-        [SerializeField, HideInInspector]
-        FaceLiveLink m_LiveLink = new FaceLiveLink();
+        [SerializeField, HideInInspector, EnumFlagButtonGroup(100f)]
+        FaceChannelFlags m_Channels = FaceChannelFlags.All;
         [SerializeField, HideInInspector]
         FacePose m_Pose = FacePose.Identity;
         FaceDeviceRecorder m_Recorder = new FaceDeviceRecorder();
@@ -47,17 +48,12 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         protected override void OnEnable()
         {
             base.OnEnable();
-
-            m_LiveLink.Initialize();
         }
 
         /// <inheritdoc/>
         protected override void OnDisable()
         {
             base.OnDisable();
-
-            m_LiveLink.SetAnimator(null);
-            m_LiveLink.Dispose();
         }
 
         /// <inheritdoc/>
@@ -109,32 +105,49 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         }
 
         /// <inheritdoc/>
-        public override void BuildLiveLink(PlayableGraph graph)
+        [Obsolete("Use LiveUpdate instead")]
+        public override void BuildLiveLink(PlayableGraph graph) {}
+
+        /// <inheritdoc/>
+        public override void LiveUpdate()
         {
-            m_LiveLink.Build(graph);
+            if (m_Actor == null)
+            {
+                return;
+            }
+
+            if (m_Channels.HasFlag(FaceChannelFlags.BlendShapes))
+            {
+                m_Actor.BlendShapes = m_Pose.BlendShapes;
+            }
+
+            if (m_Channels.HasFlag(FaceChannelFlags.HeadPosition))
+            {
+                m_Actor.HeadPosition = m_Pose.HeadPosition;
+            }
+
+            if (m_Channels.HasFlag(FaceChannelFlags.HeadRotation))
+            {
+                m_Actor.HeadOrientation = m_Pose.HeadOrientation.eulerAngles;
+            }
+
+            if (m_Channels.HasFlag(FaceChannelFlags.Eyes))
+            {
+                m_Actor.LeftEyeOrientation = m_Pose.LeftEyeOrientation.eulerAngles;
+                m_Actor.RightEyeOrientation = m_Pose.RightEyeOrientation.eulerAngles;
+            }
+
+            m_Actor.BlendShapesEnabled = m_Channels.HasFlag(FaceChannelFlags.BlendShapes);
+            m_Actor.HeadPositionEnabled = m_Channels.HasFlag(FaceChannelFlags.HeadPosition);
+            m_Actor.HeadOrientationEnabled = m_Channels.HasFlag(FaceChannelFlags.HeadRotation);
+            m_Actor.EyeOrientationEnabled = m_Channels.HasFlag(FaceChannelFlags.Eyes);
         }
 
         /// <inheritdoc/>
         public override void UpdateDevice()
         {
             UpdateTimestampTracker();
-            UpdateLiveLink();
             UpdateClient();
-        }
-
-        void UpdateLiveLink()
-        {
-            var animator = default(Animator);
-
-            if (m_Actor != null)
-            {
-                animator = m_Actor.Animator;
-            }
-
-            m_LiveLink.SetAnimator(animator);
-            m_LiveLink.SetActive(IsLive());
-            m_LiveLink.Pose = m_Pose;
-            m_LiveLink.Update();
         }
 
         void OnFacePoseSampleReceived(FaceSample sample)
@@ -144,7 +157,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
 
             if (IsRecording())
             {
-                m_Recorder.Channels = m_LiveLink.Channels;
+                m_Recorder.Channels = m_Channels;
                 m_Recorder.Time = m_TimestampTracker.LocalTime;
                 m_Recorder.Record(ref m_Pose);
             }

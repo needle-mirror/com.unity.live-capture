@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
@@ -47,6 +48,7 @@ namespace Unity.LiveCapture
         ISlatePlayer m_ExternalSlatePlayer;
         bool m_IsEvaluatingExternally;
         Texture2D m_Screenshot;
+        bool m_UsesObsoleteLiveLink;
 
         /// <inheritdoc/>
         public FrameRate FrameRate
@@ -197,7 +199,7 @@ namespace Unity.LiveCapture
         {
             if (m_Devices.Remove(device))
             {
-                device.BuildLiveLink(default(PlayableGraph));
+                InvokeBuildLiveLinkWithoutWarning(device, default(PlayableGraph));
             }
         }
 
@@ -209,6 +211,28 @@ namespace Unity.LiveCapture
         internal PlayableGraph GetPreviewGraph()
         {
             return m_PreviewGraph;
+        }
+
+        internal void LiveUpdate()
+        {
+            SetupDirectorGraphIfNeeded();
+
+            EvaluateIfNeeded();
+
+            m_IsEvaluatingExternally = false;
+
+            if (IsLive())
+            {
+                foreach (var device in m_Devices)
+                {
+                    if (IsDeviceValid(device)
+                        && device.isActiveAndEnabled
+                        && device.IsLive())
+                    {
+                        device.LiveUpdate();
+                    }
+                }
+            }
         }
 
         /// <inheritdoc/>
@@ -491,11 +515,7 @@ namespace Unity.LiveCapture
 
         void LateUpdate()
         {
-            SetupDirectorGraphIfNeeded();
-
-            EvaluateIfNeeded();
-
-            m_IsEvaluatingExternally = false;
+            LiveUpdate();
         }
 
         bool IsDeviceValid(LiveCaptureDevice device)
@@ -553,23 +573,34 @@ namespace Unity.LiveCapture
 
         void BuildLiveLink()
         {
+            m_UsesObsoleteLiveLink = false;
+
             if (!IsLive())
             {
                 return;
             }
 
+            var outputCount = m_DirectorGraph.GetOutputCount();
+
             foreach (var device in m_Devices)
             {
                 BuildLiveLink(device);
             }
+
+            m_UsesObsoleteLiveLink = m_DirectorGraph.GetOutputCount() == outputCount;
         }
 
         void BuildLiveLink(LiveCaptureDevice device)
         {
             if (device != null && device.isActiveAndEnabled && IsLive())
             {
-                device.BuildLiveLink(m_DirectorGraph);
+                InvokeBuildLiveLinkWithoutWarning(device, m_DirectorGraph);
             }
+        }
+
+        void InvokeBuildLiveLinkWithoutWarning(LiveCaptureDevice device, PlayableGraph graph)
+        {
+            typeof(LiveCaptureDevice).GetMethod("BuildLiveLink").Invoke(device, new object[] { graph });
         }
 
         void DestroyLiveLink()

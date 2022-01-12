@@ -35,8 +35,8 @@ namespace Unity.LiveCapture.VirtualCamera
         internal LensAsset m_DefaultLensAsset;
         [SerializeField]
         VirtualCameraActor m_Actor;
-        [SerializeField]
-        VirtualCameraLiveLink m_LiveLink = new VirtualCameraLiveLink();
+        [SerializeField, EnumFlagButtonGroup(100f)]
+        VirtualCameraChannelFlags m_Channels = VirtualCameraChannelFlags.All;
         [SerializeField]
         Lens m_Lens = Lens.DefaultParams;
         [SerializeField]
@@ -76,6 +76,7 @@ namespace Unity.LiveCapture.VirtualCamera
         bool m_LastScreenAFRaycastIsValid;
         IScreenshotImpl m_ScreenshotImpl = new ScreenshotImpl();
         bool m_ActorAlignRequested;
+        VirtualCameraActor m_LastActor;
 
         internal VirtualCameraRecorder Recorder => m_Recorder;
 
@@ -262,8 +263,10 @@ namespace Unity.LiveCapture.VirtualCamera
             InitializeDriver();
 
             // If actor has changed
-            if (m_Actor != null && m_Actor.Animator != m_LiveLink.GetAnimator())
+            if (m_Actor != null && m_Actor != m_LastActor)
             {
+                m_LastActor = m_Actor;
+
                 UpdateRigOriginFromActor();
             }
         }
@@ -468,8 +471,6 @@ namespace Unity.LiveCapture.VirtualCamera
             RaycasterFactory.Dispose(m_Raycaster);
             m_MeshIntersectionTracker.Dispose();
 
-            m_LiveLink.SetAnimator(null);
-
             base.OnDisable();
 
             Refresh();
@@ -559,47 +560,8 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
         /// <inheritdoc/>
-        public override void BuildLiveLink(PlayableGraph graph)
-        {
-            m_LiveLink.Build(graph);
-        }
-
-        void UpdateLiveLink(Lens lens)
-        {
-            var eulerAngles = m_Rig.Pose.rotation.eulerAngles;
-
-            var changed = m_LiveLink.Position != m_Rig.Pose.position
-                || m_LiveLink.EulerAngles != eulerAngles
-                || m_LiveLink.Lens != lens
-                || m_LiveLink.LensIntrinsics != m_LensIntrinsics
-                || m_LiveLink.DepthOfFieldEnabled != IsDepthOfFieldEnabled()
-                || m_LiveLink.CropAspect != m_Settings.AspectRatio;
-
-            var animator = default(Animator);
-
-            if (m_Actor != null)
-            {
-                animator = m_Actor.Animator;
-            }
-
-            m_LiveLink.SetAnimator(animator);
-            m_LiveLink.SetActive(IsLive());
-            m_LiveLink.Position = m_Rig.Pose.position;
-            m_LiveLink.EulerAngles = eulerAngles;
-            m_LiveLink.Lens = lens;
-            m_LiveLink.LensIntrinsics = m_LensIntrinsics;
-            m_LiveLink.CameraBody = m_CameraBody;
-            m_LiveLink.DepthOfFieldEnabled = IsDepthOfFieldEnabled();
-            m_LiveLink.CropAspect = m_Settings.AspectRatio;
-            m_LiveLink.Update();
-
-            UpdateDamping();
-
-            if (changed)
-            {
-                Refresh();
-            }
-        }
+        [Obsolete("Use LiveUpdate instead")]
+        public override void BuildLiveLink(PlayableGraph graph) {}
 
         /// <inheritdoc/>
         public override void UpdateClient()
@@ -643,13 +605,69 @@ namespace Unity.LiveCapture.VirtualCamera
 
             UpdateInterpolatedLens(Time.unscaledDeltaTime);
 
-            UpdateLiveLink(m_InterpolatedLens);
-
             m_FocusPlaneRenderer.SetCamera(camera);
             m_VideoServer.Camera = camera;
             m_VideoServer.Update();
 
             UpdateClient();
+        }
+
+        /// <inheritdoc/>
+        public override void LiveUpdate()
+        {
+            if (m_Actor == null)
+            {
+                return;
+            }
+
+            if (m_Channels.HasFlag(VirtualCameraChannelFlags.Position))
+            {
+                m_Actor.LocalPosition = m_Rig.Pose.position;
+                m_Actor.LocalPositionEnabled = true;
+            }
+
+            if (m_Channels.HasFlag(VirtualCameraChannelFlags.Rotation))
+            {
+                m_Actor.LocalEulerAngles = m_Rig.Pose.rotation.eulerAngles;
+                m_Actor.LocalEulerAnglesEnabled = true;
+            }
+
+            var lens = m_Actor.Lens;
+            var lensIntrinsics = m_Actor.LensIntrinsics;
+
+            if (m_Channels.HasFlag(VirtualCameraChannelFlags.FocalLength))
+            {
+                lens.FocalLength = m_InterpolatedLens.FocalLength;
+                lensIntrinsics.FocalLengthRange = m_LensIntrinsics.FocalLengthRange;
+            }
+
+            if (m_Channels.HasFlag(VirtualCameraChannelFlags.FocusDistance))
+            {
+                m_Actor.DepthOfFieldEnabled = IsDepthOfFieldEnabled();
+
+                lens.FocusDistance = m_InterpolatedLens.FocusDistance;
+                lensIntrinsics.CloseFocusDistance = m_LensIntrinsics.CloseFocusDistance;
+            }
+
+            if (m_Channels.HasFlag(VirtualCameraChannelFlags.Aperture))
+            {
+                lens.Aperture = m_InterpolatedLens.Aperture;
+                lensIntrinsics.ApertureRange = m_LensIntrinsics.ApertureRange;
+            }
+
+            lensIntrinsics.LensShift = m_LensIntrinsics.LensShift;
+            lensIntrinsics.BladeCount = m_LensIntrinsics.BladeCount;
+            lensIntrinsics.Curvature = m_LensIntrinsics.Curvature;
+            lensIntrinsics.BarrelClipping = m_LensIntrinsics.BarrelClipping;
+            lensIntrinsics.Anamorphism = m_LensIntrinsics.Anamorphism;
+
+            m_Actor.Lens = lens;
+            m_Actor.LensIntrinsics = lensIntrinsics;
+            m_Actor.CameraBody = m_CameraBody;
+            m_Actor.CropAspect = m_Settings.AspectRatio;
+
+            if (m_Driver is ICustomDamping customDamping)
+                customDamping.SetDamping(m_Settings.Damping);
         }
 
         void RecordSmoothDampedLens()
@@ -716,7 +734,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             var time = (float)GetTakeRecorder().GetPreviewTime();
 
-            m_Recorder.Channels = m_LiveLink.Channels;
+            m_Recorder.Channels = m_Channels;
             m_Recorder.Time = time;
         }
 
@@ -747,11 +765,6 @@ namespace Unity.LiveCapture.VirtualCamera
 
             m_PoseRigNeedsInitialize = true;
             StartVideoServer();
-
-            if (TryGetInternalClient(out var client))
-            {
-                client.Initialize();
-            }
         }
 
         /// <inheritdoc/>
@@ -895,7 +908,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         void OnChannelFlagsReceived(VirtualCameraChannelFlags channelFlags)
         {
-            m_LiveLink.Channels = channelFlags;
+            m_Channels = channelFlags;
         }
 
         void OnJoysticksSampleReceived(JoysticksSample sample)
@@ -1373,7 +1386,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (TryGetInternalClient(out var client))
             {
-                client.SendChannelFlags(m_LiveLink.Channels);
+                client.SendChannelFlags(m_Channels);
             }
         }
 

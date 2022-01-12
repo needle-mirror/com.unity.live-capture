@@ -32,6 +32,16 @@ namespace Unity.LiveCapture.CompanionApp
         readonly BinarySender<SerializableGuid> m_RequestTexturePreview;
 
         /// <summary>
+        /// An event invoked when the communication starts.
+        /// </summary>
+        public event Action Initialized;
+
+        /// <summary>
+        /// An event invoked when the communication ends.
+        /// </summary>
+        public event Action SessionEnded;
+
+        /// <summary>
         /// An event invoked when the recording state has been changed.
         /// </summary>
         public event Action<bool> IsRecordingReceived;
@@ -75,6 +85,16 @@ namespace Unity.LiveCapture.CompanionApp
         /// An event invoked when the index of the iteration base take has been changed.
         /// </summary>
         public event Action<int> SlateIterationBaseReceived;
+
+        /// <summary>
+        /// An event invoked when the take number of the current slate has been changed.
+        /// </summary>
+        public event Action<int> SlateTakeNumberReceived;
+
+        /// <summary>
+        /// An event invoked when the shot name of the current slate has been changed.
+        /// </summary>
+        public event Action<string> SlateShotNameReceived;
 
         /// <summary>
         /// An event invoked when the slate takes have been changed.
@@ -123,7 +143,18 @@ namespace Unity.LiveCapture.CompanionApp
 
             if (EventReceiver.TryGet(m_Protocol, CompanionAppMessages.ToClient.Initialize, out var initialize))
             {
-                initialize.AddHandler(Initialize);
+                initialize.AddHandler(() =>
+                {
+                    m_Protocol.Reset();
+                    Initialized?.Invoke();
+                });
+            }
+            if (EventReceiver.TryGet(m_Protocol, CompanionAppMessages.ToClient.EndSession, out var endSession))
+            {
+                endSession.AddHandler(() =>
+                {
+                    SessionEnded?.Invoke();
+                });
             }
             if (BoolReceiver.TryGet(m_Protocol, CompanionAppMessages.ToClient.IsRecordingChanged, out var isRecordingChanged))
             {
@@ -188,6 +219,20 @@ namespace Unity.LiveCapture.CompanionApp
                     SlateIterationBaseReceived?.Invoke(iterationBase);
                 });
             }
+            if (BinaryReceiver<int>.TryGet(m_Protocol, CompanionAppMessages.ToClient.SlateTakeNumber, out var slateTakeNumberChanged))
+            {
+                slateTakeNumberChanged.AddHandler(takeNumber =>
+                {
+                    SlateTakeNumberReceived?.Invoke(takeNumber);
+                });
+            }
+            if (StringReceiver.TryGet(m_Protocol, CompanionAppMessages.ToClient.SlateShotName, out var slateShotNameChanged))
+            {
+                slateShotNameChanged.AddHandler(shotName =>
+                {
+                    SlateShotNameReceived?.Invoke(shotName);
+                });
+            }
             if (JsonReceiver<TakeDescriptorArrayV0>.TryGet(m_Protocol, CompanionAppMessages.ToClient.SlateTakes_V0, out var slateTakesChanged))
             {
                 slateTakesChanged.AddHandler(takes =>
@@ -219,14 +264,6 @@ namespace Unity.LiveCapture.CompanionApp
                     TexturePreviewReceived?.Invoke(guid, texture);
                 });
             }
-        }
-
-        /// <summary>
-        /// Resets the protocol state.
-        /// </summary>
-        protected virtual void Initialize()
-        {
-            m_Protocol.Reset();
         }
 
         /// <summary>

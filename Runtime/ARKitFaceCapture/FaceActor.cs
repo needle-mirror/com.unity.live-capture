@@ -66,6 +66,60 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// </summary>
         public FaceMapper Mapper => m_Mapper;
 
+        internal FaceBlendShapePose BlendShapes
+        {
+            get => m_BlendShapes;
+            set => m_BlendShapes = value;
+        }
+
+        internal Vector3 HeadPosition
+        {
+            get => m_HeadPosition;
+            set => m_HeadPosition = value;
+        }
+
+        internal Vector3 HeadOrientation
+        {
+            get => m_HeadOrientation;
+            set => m_HeadOrientation = value;
+        }
+
+        internal Vector3 LeftEyeOrientation
+        {
+            get => m_LeftEyeOrientation;
+            set => m_LeftEyeOrientation = value;
+        }
+
+        internal Vector3 RightEyeOrientation
+        {
+            get => m_RightEyeOrientation;
+            set => m_RightEyeOrientation = value;
+        }
+
+        internal bool BlendShapesEnabled
+        {
+            get => m_BlendShapesEnabled;
+            set => m_BlendShapesEnabled = value;
+        }
+
+        internal bool HeadPositionEnabled
+        {
+            get => m_HeadPositionEnabled;
+            set => m_HeadPositionEnabled = value;
+        }
+
+        internal bool HeadOrientationEnabled
+        {
+            get => m_HeadOrientationEnabled;
+            set => m_HeadOrientationEnabled = value;
+        }
+
+        internal bool EyeOrientationEnabled
+        {
+            get => m_EyeOrientationEnabled;
+            set => m_EyeOrientationEnabled = value;
+        }
+
         void Awake()
         {
             Animator = GetComponent<Animator>();

@@ -157,7 +157,7 @@ namespace Unity.LiveCapture
         public abstract void AddKey(float time, T value);
     }
 
-    public interface ILiveLink
+    [System.Obsolete(@"Override LiveCaptureDevice.LiveUpdate to set properties to the actors in the scene.")] public interface ILiveLink
     {
         public abstract void Build(UnityEngine.Playables.PlayableGraph graph);
         public abstract UnityEngine.Animator GetAnimator();
@@ -232,10 +232,11 @@ namespace Unity.LiveCapture
     [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExecuteAlways] public abstract class LiveCaptureDevice : UnityEngine.MonoBehaviour
     {
         protected LiveCaptureDevice() {}
-        public abstract void BuildLiveLink(UnityEngine.Playables.PlayableGraph graph);
+        [System.Obsolete(@"Use LiveUpdate instead")] public virtual void BuildLiveLink(UnityEngine.Playables.PlayableGraph graph);
         public Unity.LiveCapture.ITakeRecorder GetTakeRecorder();
         public abstract bool IsLive();
         public abstract bool IsRecording();
+        public abstract void LiveUpdate();
         protected virtual void OnDestroy();
         protected void Refresh();
         public abstract void SetLive(bool value);
@@ -245,7 +246,7 @@ namespace Unity.LiveCapture
         public abstract void Write(Unity.LiveCapture.ITakeBuilder takeBuilder);
     }
 
-    public abstract class LiveLink<T> : Unity.LiveCapture.ILiveLink where T : System.ValueType, UnityEngine.Animations.IAnimationJob, new()
+    [System.Obsolete(@"Override LiveCaptureDevice.LiveUpdate to set properties to the actors in the scene.")] public abstract class LiveLink<T> : Unity.LiveCapture.ILiveLink where T : System.ValueType, UnityEngine.Animations.IAnimationJob, new()
     {
         protected LiveLink() {}
         public virtual void Build(UnityEngine.Playables.PlayableGraph graph);

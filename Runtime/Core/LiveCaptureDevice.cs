@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Playables;
 
@@ -72,7 +73,16 @@ namespace Unity.LiveCapture
         /// Builds the live link on this device using a given playable graph.
         /// </summary>
         /// <param name="graph">The PlayableGraph to drive the live link from.</param>
+        [Obsolete("Use LiveUpdate instead")]
         public abstract void BuildLiveLink(PlayableGraph graph);
+
+        /// <summary>
+        /// Override this method to update the device during live mode.
+        /// </summary>
+        /// <remarks>
+        /// This method is called after the animation system execution and before the script's LateUpdate.
+        /// </remarks>
+        public abstract void LiveUpdate();
 
         /// <summary>
         /// Checks if the device has started recording.

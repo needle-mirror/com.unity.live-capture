@@ -7,6 +7,18 @@ namespace Unity.LiveCapture.VirtualCamera
     /// <summary>
     /// URP specific focus plane implementation.
     /// </summary>
+    /// <remarks>
+    /// We find ourselves supporting both RenderTexture and RTHandle,
+    /// as URP migrated to RTHandle at v13.1.2
+    /// </remarks>
+#if URP_13_1_2_OR_NEWER
+    class UrpFocusPlaneImpl : RTHandleFocusPlaneImpl
+    {
+        public UrpFocusPlaneImpl(Material composeMaterial) : base(composeMaterial)
+        {
+        }
+    }
+#else
     class UrpFocusPlaneImpl : IFocusPlaneImpl, IRenderTargetProvider<RenderTexture>
     {
         RenderTexture m_Target;
@@ -82,5 +94,6 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         public void Update() {}
     }
+#endif
 }
 #endif

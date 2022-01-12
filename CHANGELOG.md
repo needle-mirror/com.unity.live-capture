@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2022-01-12
+
+### Changed
+  - Various documentation adjustments. 
+  - Better handling of client session state.
+  - Instead of using AnimationJobs, the LiveCaptureDevice now uses LiveUpdate to set the actor's properties.
+
+### Fixed
+- Make sure users can create Actors in Prefab Mode.
+- Support .NET standard 2.1 compilation.
+- Make sure Focus Plane doesn't disappear after recording a take.
+
 ## [1.0.1] - 2021-08-26
 
 ### Changed

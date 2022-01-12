@@ -28,7 +28,6 @@ namespace Unity.LiveCapture.CompanionApp
         readonly SlateChangeTracker m_SlateChangeTracker = new SlateChangeTracker();
         readonly TakeNameFormatter m_TakeNameFormatter = new TakeNameFormatter();
         string m_LastAssetName;
-        readonly ITakeManager m_TakeManager = new TakeManager();
 
         bool TryGetInternalClient(out ICompanionAppClientInternal client)
         {
@@ -53,6 +52,7 @@ namespace Unity.LiveCapture.CompanionApp
             if (m_Client != null)
             {
                 OnClientAssigned();
+                SendInitialize();
             }
         }
 
@@ -71,6 +71,7 @@ namespace Unity.LiveCapture.CompanionApp
             if (m_Client != null)
             {
                 OnClientUnassigned();
+                SendEndSession();
             }
         }
 
@@ -153,6 +154,7 @@ namespace Unity.LiveCapture.CompanionApp
                 {
                     SetLive(false);
                     OnClientUnassigned();
+                    SendEndSession();
                     Unregister();
 
                     ClientMappingDatabase.DeregisterClientAssociation(this, m_Client, rememberAssignment);
@@ -174,6 +176,7 @@ namespace Unity.LiveCapture.CompanionApp
                     SendRecordingState();
 
                     OnClientAssigned();
+                    SendInitialize();
                     UpdateClient();
                     SetLive(true);
 
@@ -189,6 +192,22 @@ namespace Unity.LiveCapture.CompanionApp
                 {
                     CompanionAppServer.DeregisterClientConnectHandler(OnClientConnected);
                 }
+            }
+        }
+
+        void SendInitialize()
+        {
+            if (TryGetInternalClient(out var client))
+            {
+                client.SendInitialize();
+            }
+        }
+
+        void SendEndSession()
+        {
+            if (TryGetInternalClient(out var client))
+            {
+                client.SendEndSession();
             }
         }
 
@@ -445,7 +464,7 @@ namespace Unity.LiveCapture.CompanionApp
 
             if (takeRecorder != null)
             {
-                m_TakeManager.SelectTake(takeRecorder.GetActiveSlate(), guid);
+                TakeManager.Default.SelectTake(takeRecorder.GetActiveSlate(), guid);
 
                 SendSlateDescriptor();
                 Refresh();
@@ -454,7 +473,7 @@ namespace Unity.LiveCapture.CompanionApp
 
         void ClientSetTakeData(TakeDescriptor descriptor)
         {
-            m_TakeManager.SetTakeData(descriptor);
+            TakeManager.Default.SetTakeData(descriptor);
 
             SendSlateDescriptor();
             Refresh();
@@ -462,7 +481,7 @@ namespace Unity.LiveCapture.CompanionApp
 
         void ClientDeleteTake(Guid guid)
         {
-            m_TakeManager.DeleteTake(guid);
+            TakeManager.Default.DeleteTake(guid);
 
             SendSlateDescriptor();
             Refresh();
@@ -476,7 +495,7 @@ namespace Unity.LiveCapture.CompanionApp
             {
                 var slate = takeRecorder.GetActiveSlate();
 
-                m_TakeManager.SetIterationBase(slate, guid);
+                TakeManager.Default.SetIterationBase(slate, guid);
 
                 SendSlateDescriptor(slate);
                 Refresh();
@@ -491,7 +510,7 @@ namespace Unity.LiveCapture.CompanionApp
             {
                 var slate = takeRecorder.GetActiveSlate();
 
-                m_TakeManager.ClearIterationBase(slate);
+                TakeManager.Default.ClearIterationBase(slate);
 
                 SendSlateDescriptor(slate);
                 Refresh();
@@ -500,7 +519,7 @@ namespace Unity.LiveCapture.CompanionApp
 
         void OnTexturePreviewRequested(Guid guid)
         {
-            var texture = m_TakeManager.GetAssetPreview<Texture2D>(guid);
+            var texture = TakeManager.Default.GetAssetPreview<Texture2D>(guid);
 
             if (texture != null && TryGetInternalClient(out var client))
             {

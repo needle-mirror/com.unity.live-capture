@@ -7,7 +7,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.Editor
     [CustomEditor(typeof(FaceDevice))]
     class FaceDeviceEditor : CompanionAppDeviceEditor<IFaceClient>
     {
-        static readonly string[] s_ExcludeProperties = { "m_Script", "m_Actor", "m_LiveLink" };
+        static readonly string[] s_ExcludeProperties = { "m_Script", "m_Actor", "m_Channels" };
 
         FaceDevice m_Device;
         SerializedProperty m_Actor;
@@ -20,7 +20,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.Editor
             m_Device = target as FaceDevice;
 
             m_Actor = serializedObject.FindProperty("m_Actor");
-            m_LiveLinkChannels = serializedObject.FindProperty("m_LiveLink.Channels");
+            m_LiveLinkChannels = serializedObject.FindProperty("m_Channels");
         }
 
         protected override void OnDeviceGUI()

@@ -7,6 +7,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
 
 #endif
+
 #if URP_10_2_OR_NEWER
 using UnityEngine.Rendering.Universal;
 #endif
@@ -16,7 +17,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// <summary>
     /// Map between Camera and FocusPlane components.
     /// </summary>
-    class FocusPlaneMap : ComponentMap<Camera, FocusPlaneRenderer> {}
+    class FocusPlaneMap : ComponentMap<Camera, FocusPlaneRenderer> { }
 
     /// <summary>
     /// A component that provides focus plane visualization.
@@ -32,21 +33,13 @@ namespace Unity.LiveCapture.VirtualCamera
     {
         class NullImpl : IFocusPlaneImpl
         {
-            public void SetCamera(Camera camera)
-            {
-            }
+            public void SetCamera(Camera camera) { }
 
-            public void Initialize()
-            {
-            }
+            public void Initialize() { }
 
-            public void Dispose()
-            {
-            }
+            public void Dispose() { }
 
-            public void Update()
-            {
-            }
+            public void Update() { }
 
             public bool TryGetRenderTarget<T>(out T target)
             {
@@ -195,15 +188,25 @@ namespace Unity.LiveCapture.VirtualCamera
 
         void Update()
         {
+#if UNITY_EDITOR
+            // In the Editor, the Asset Database has a tendency to stomp over our
+            // material bindings (uniforms, textures, etc.). As a slightly inefficient workaround,
+            // let's just re-send the uniform values on every Update.
+            if (m_RenderMaterial != null)
+            {
+                m_Settings.Apply(m_RenderMaterial);
+            }
+#else
             if (m_Settings != m_CachedSettings)
             {
                 m_CachedSettings = m_Settings;
+
                 if (m_RenderMaterial != null)
                 {
                     m_Settings.Apply(m_RenderMaterial);
                 }
             }
-
+#endif
             m_Impl.Update();
         }
 

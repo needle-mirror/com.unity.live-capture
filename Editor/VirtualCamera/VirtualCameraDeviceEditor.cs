@@ -17,7 +17,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         static readonly ReadOnlyCollection<(GUIContent label, Func<UnityEngine.Object> createActor)> k_ActorCreateMenuItems =
             new ReadOnlyCollection<(GUIContent, Func<UnityEngine.Object>)>
             (
-                new (GUIContent, Func<UnityEngine.Object>)[]
+                new(GUIContent, Func<UnityEngine.Object>)[]
                 {
                     (Contents.CreateVirtualCameraActor, CreateVirtualCameraActor),
 #if VP_CINEMACHINE_2_4_0
@@ -79,7 +79,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             m_Device = target as VirtualCameraDevice;
 
             m_Actor = serializedObject.FindProperty("m_Actor");
-            m_LiveLinkChannels = serializedObject.FindProperty("m_LiveLink.Channels");
+            m_LiveLinkChannels = serializedObject.FindProperty("m_Channels");
             m_LensAsset = serializedObject.FindProperty("m_LensAsset");
             m_Lens = serializedObject.FindProperty("m_Lens");
             m_LensIntrinsics = serializedObject.FindProperty("m_LensIntrinsics");
@@ -125,7 +125,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             {
                 RenderFeatureEditor<FocusPlaneRenderer, VirtualCameraScriptableRenderFeature>.OnInspectorGUI();
             }
-            
+
             if (m_Device.Settings.GateMask ||
                 m_Device.Settings.AspectRatioLines ||
                 m_Device.Settings.CenterMarker)
@@ -232,6 +232,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         {
             return GetNewActor(VirtualCameraCreatorUtilities.CreateCinemachineCameraActor());
         }
+
 #endif
 
         static VirtualCameraActor GetNewActor(GameObject newGameObject)

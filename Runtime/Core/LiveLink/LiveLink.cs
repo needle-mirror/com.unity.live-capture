@@ -16,6 +16,7 @@ namespace Unity.LiveCapture
     /// </remarks>
     /// <typeparam name="T">The animation job used to apply the animated properties.</typeparam>
     [Serializable]
+    [Obsolete("Override LiveCaptureDevice.LiveUpdate to set properties to the actors in the scene.")]
     public abstract class LiveLink<T> : ILiveLink where T : struct, IAnimationJob
     {
         static readonly ushort k_AnimationOutputPriority = 2000;
