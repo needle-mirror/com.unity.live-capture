@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2022-02-28
+
+### Changed
+  - Disable video streaming on Apple silicon.
+
+### Fixed
+  - Make sure the Virtual Camera recordings always include the initial lens values.
+
 ## [2.0.0-pre.3] - 2021-10-26
 
 ### Added
@@ -18,7 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Removed
   -  LiveCaptureDevice IsLive/SetLive API.
 
-### Fix
+### Fixed
   - Creating actors in Prefab mode doesn't work.  
   - Bug where the camera actor can be left in an indeterminate state if lens postprocessor is reset.
 

@@ -1,5 +1,5 @@
 using System;
-using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEditor;
 using Unity.LiveCapture.Editor;
@@ -21,6 +21,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             public static GUIContent LensAssetLabel = EditorGUIUtility.TrTextContent("Lens Asset", "The asset that provides the lens intrinsics.");
             public static GUIContent CameraBody = EditorGUIUtility.TrTextContent("Camera Body", "The parameters of the camera's body.");
             public static GUIContent Settings = EditorGUIUtility.TrTextContent("Settings", "The settings of the device.");
+            public static string VideoNotCompatible = L10n.Tr("Video streaming not supported on Apple silicon.");
             public static GUIContent VideoSettingsButton = EditorGUIUtility.TrTextContent("Open Video Settings", "Open the settings of the video server.");
             public static string Deleted = L10n.Tr("(deleted)");
             public static GUIContent Snapshots = EditorGUIUtility.TrTextContent("Snapshots", "The snapshots taken using this device.");
@@ -158,6 +159,11 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
             DoChannelsGUI(m_Channels);
             DoLensAssetField();
+
+            if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+            {
+                EditorGUILayout.HelpBox(Contents.VideoNotCompatible, MessageType.Warning);
+            }
 
             if (GUILayout.Button(Contents.VideoSettingsButton))
             {

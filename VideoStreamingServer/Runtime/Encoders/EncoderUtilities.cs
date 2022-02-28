@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Linq;
 using UnityEngine;
 
@@ -33,6 +34,9 @@ namespace Unity.LiveCapture.VideoStreaming.Server
 #endif
                 case VideoEncoder.VideoToolboxH264:
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+                    if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                        return EncoderSupport.NotSupportedOnPlatform;
+
                     return EncoderSupport.Supported;
 #else
                     return EncoderSupport.NotSupportedOnPlatform;

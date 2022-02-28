@@ -1355,6 +1355,9 @@ namespace Unity.LiveCapture.VirtualCamera
             m_Recorder.RecordEnableDepthOfField(IsDepthOfFieldEnabled());
             m_Recorder.RecordLensIntrinsics(m_LensIntrinsics);
             m_Recorder.RecordCropAspect(m_Settings.AspectRatio);
+            m_Recorder.RecordAperture(m_LensForActorUpdate.Aperture);
+            m_Recorder.RecordFocalLength(m_LensForActorUpdate.FocalLength);
+            m_Recorder.RecordFocusDistance(m_LensForActorUpdate.FocusDistance);
 
             if (m_Recorder.Channels.HasFlag(VirtualCameraChannelFlags.Position))
             {

@@ -28,6 +28,11 @@
             "define": "VP_CINEMACHINE_2_4_0"
         },
         {
+            "name": "com.unity.render-pipelines.core",
+            "expression": "10.2.2",
+            "define": "SRP_CORE_10_2_OR_NEWER"
+        },
+        {
             "name": "com.unity.render-pipelines.high-definition",
             "expression": "10.2.2",
             "define": "HDRP_10_2_OR_NEWER"
@@ -41,6 +46,11 @@
             "name": "com.unity.render-pipelines.universal",
             "expression": "10.2.2",
             "define": "URP_10_2_OR_NEWER"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "13.1.2",
+            "define": "URP_13_1_2_OR_NEWER"
         },
         {
             "name": "com.unity.postprocessing",

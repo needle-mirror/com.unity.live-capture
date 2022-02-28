@@ -13,10 +13,6 @@ namespace Unity.LiveCapture
     /// <summary>
     /// A take recorder that manages a set of capture devices.
     /// </summary>
-    /// <remarks>
-    /// This class provides the devices with the PlayableDirector's playable graph, to allow them to modify
-    /// the animation stream and make actors in the scene go live.
-    /// </remarks>
     [ExecuteAlways]
     [DefaultExecutionOrder(-10)]
     [DisallowMultipleComponent]
@@ -45,13 +41,11 @@ namespace Unity.LiveCapture
         bool m_Live = true;
 
         PlayableDirector m_Director;
-        PlayableGraph m_DirectorGraph;
         List<LiveCaptureDevice> m_RecordingDevices = new List<LiveCaptureDevice>();
         bool m_Recording;
         PlayableGraph m_PreviewGraph;
         TakeRecorderPlayable m_Playable;
         ISlatePlayer m_ExternalSlatePlayer;
-        bool m_IsEvaluatingExternally;
         Texture2D m_Screenshot;
 
         /// <inheritdoc/>
@@ -193,7 +187,6 @@ namespace Unity.LiveCapture
                 }
 
                 m_TakePlayer.Take = take;
-                m_IsEvaluatingExternally = true;
             }
         }
 
@@ -219,12 +212,6 @@ namespace Unity.LiveCapture
 
         internal void LiveUpdate()
         {
-            SetupDirectorGraphIfNeeded();
-
-            EvaluateIfNeeded();
-
-            m_IsEvaluatingExternally = false;
-
             if (IsLive())
             {
                 foreach (var device in m_Devices)
@@ -561,36 +548,6 @@ namespace Unity.LiveCapture
             if (m_PreviewGraph.IsValid())
             {
                 m_PreviewGraph.Destroy();
-            }
-        }
-
-        void SetupDirectorGraphIfNeeded()
-        {
-            var graph = m_Director.playableGraph;
-
-            if (!graph.IsValid())
-            {
-                m_Director.RebuildGraph();
-
-                graph = m_Director.playableGraph;
-            }
-
-            if (!m_DirectorGraph.Equals(graph))
-            {
-                m_IsEvaluatingExternally = false;
-                m_Director.Pause();
-                m_DirectorGraph = graph;
-            }
-        }
-
-        void EvaluateIfNeeded()
-        {
-            if (!m_IsEvaluatingExternally
-                && IsLive()
-                && m_DirectorGraph.IsValid()
-                && !m_DirectorGraph.IsPlaying())
-            {
-                m_DirectorGraph.Evaluate();
             }
         }
 
