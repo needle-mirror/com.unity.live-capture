@@ -16,6 +16,9 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     [HelpURL(Documentation.baseURL + "ref-component-arkit-face-device" + Documentation.endURL)]
     public class FaceDevice : CompanionAppDevice<IFaceClient>, ITimedDataSource
     {
+        const int k_OutOfOrderFrameTolerance = -5;
+        const int k_MinTimeShiftTolerance = 15;
+
         [SerializeField, HideInInspector]
         string m_Guid;
 
@@ -35,13 +38,10 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         bool m_IsSynchronized;
 
         [SerializeField, HideInInspector]
-        int m_BufferSize = 1;
+        int m_BufferSize = 3;
 
         [SerializeField]
         FaceDeviceRecorder m_Recorder = new FaceDeviceRecorder();
-
-        readonly TimestampTracker m_TimestampTracker = new TimestampTracker();
-        double? m_FirstSampleTimecode;
 
         /// <summary>
         /// The nominal frame rate used for doing frame number conversions in the synchronization buffer.
@@ -52,7 +52,10 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// easier to inspect by a human.
         /// </remarks>
         static readonly FrameRate k_SyncBufferNominalFrameRate = StandardFrameRate.FPS_60_00;
+        static readonly FrameTime k_OutOfOrderTolerance = new FrameTime(3);
         TimedDataBuffer<FacePose> m_SyncBuffer;
+        FrameTime m_PresentationFrameTime;
+        FrameTime m_CurrentFrameTime;
 
         /// <summary>
         /// Gets the <see cref="FaceActor"/> currently assigned to this device.
@@ -177,12 +180,17 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         {
             if (IsRecording())
             {
-                m_TimestampTracker.Reset();
-                m_Recorder.FrameRate = GetTakeRecorder().FrameRate;
-                m_Recorder.Prepare();
-                m_FirstSampleTimecode = null;
+                var takeRecorder = GetTakeRecorder();
+                var timeOffset = takeRecorder.GetPreviewTime();
+                var frameRate = takeRecorder.FrameRate;
 
-                UpdateTimestampTracker();
+                m_Recorder.FrameRate = frameRate;
+                m_Recorder.Channels = m_Channels;
+                m_Recorder.OnReset = () =>
+                {
+                    m_Recorder.Record(ref m_Pose);
+                };
+                m_Recorder.Prepare(timeOffset);
             }
         }
 
@@ -239,17 +247,18 @@ namespace Unity.LiveCapture.ARKitFaceCapture
                 return;
             }
 
+            double? startTime = IsSynchronized ? m_Recorder.InitialTime : null;
+
             takeBuilder.CreateAnimationTrack(
                 "Face",
                 m_Actor.Animator,
                 m_Recorder.Bake(),
-                startTime: m_FirstSampleTimecode);
+                startTime: startTime);
         }
 
         /// <inheritdoc/>
         public override void UpdateDevice()
         {
-            UpdateTimestampTracker();
             UpdateClient();
         }
 
@@ -257,6 +266,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         public override void LiveUpdate()
         {
             Debug.Assert(m_Actor != null, "Actor is null");
+
+            Present();
 
             if (m_Channels.HasFlag(FaceChannelFlags.BlendShapes))
             {
@@ -294,58 +305,65 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             var requestedFrameTime = FrameTime.Remap(timecode.ToFrameTime(frameRate), frameRate, m_SyncBuffer.FrameRate);
 
             // Apply offset (at our buffer's frame rate)
-            var presentationTime = requestedFrameTime + PresentationOffset;
+            m_PresentationFrameTime = requestedFrameTime + PresentationOffset;
 
-            var status = m_SyncBuffer.TryGetSample(presentationTime, out var facePose);
-            if (status != TimedSampleStatus.DataMissing)
+            return m_SyncBuffer.TryGetSample(m_PresentationFrameTime, out var _);
+        }
+
+        void Present()
+        {
+            var delta = (m_PresentationFrameTime - m_CurrentFrameTime).FrameNumber;
+
+            if (delta < k_OutOfOrderFrameTolerance || delta > k_MinTimeShiftTolerance)
             {
-                if (IsRecording())
-                {
-                    // If we're recording a track with Timecode, we require the first recorded sample appear
-                    // at t=0 (the start of the clip).
-                    // This is necessary for the TakeBuilder to do proper clip alignment.
-                    var sampleTime = presentationTime.ToSeconds(m_SyncBuffer.FrameRate);
-                    m_FirstSampleTimecode ??= sampleTime;
-                    var delta = sampleTime - m_FirstSampleTimecode.Value;
-                    m_Recorder.Time = delta;
-                    m_Recorder.Channels = m_Channels;
-                    m_Recorder.Record(ref facePose);
-                }
-
-                m_Pose = facePose;
-
-                Refresh();
+                // Device time shift detected. This can happen
+                // 1) on the first update, or client was restarted
+                // 2) when a timecode source was selected/changed on the device
+                // 3) if there is a really long gap between pose samples, and the clocks have drifted
+                m_CurrentFrameTime = m_PresentationFrameTime;
+                m_SyncBuffer.Clear();
             }
 
-            return status;
+            if (IsRecording())
+            {
+                while (m_CurrentFrameTime <= m_PresentationFrameTime)
+                {
+                    if (m_SyncBuffer.TryGetSample(m_CurrentFrameTime, out var facePose) == TimedSampleStatus.Ok)
+                    {
+                        var time = m_CurrentFrameTime.ToSeconds(m_SyncBuffer.FrameRate);
+                        
+                        m_Recorder.Channels = m_Channels;
+                        m_Recorder.Update(time);
+                        m_Recorder.Record(ref facePose);
+                    }
+
+                    m_CurrentFrameTime++;
+                }
+            }
+            else
+            {
+                m_CurrentFrameTime = m_PresentationFrameTime;
+                m_CurrentFrameTime++;
+            }
+
+            if (m_SyncBuffer.TryGetSample(m_PresentationFrameTime, out var pose) != TimedSampleStatus.DataMissing)
+            {
+                m_Pose = pose;
+            }
         }
 
         void OnFacePoseSampleReceived(FaceSample sample)
         {
             if (!IsSynchronized)
             {
-                m_Pose = sample.FacePose;
-                Refresh();
-            }
-            else
-            {
-                m_SyncBuffer.Add(sample.Time, sample.FacePose);
+                m_PresentationFrameTime = FrameTime.FromSeconds(m_SyncBuffer.FrameRate, sample.Time);
             }
 
-            if (IsRecording() && !IsSynchronized)
-            {
-                m_TimestampTracker.SetTimestamp(sample.Time);
-                m_Recorder.Time = m_TimestampTracker.LocalTime;
-                m_Recorder.Channels = m_Channels;
-                m_Recorder.Record(ref m_Pose);
-            }
-        }
+            var frameTime = FrameTime.FromSeconds(k_SyncBufferNominalFrameRate, sample.Time);
 
-        void UpdateTimestampTracker()
-        {
-            var time = GetTakeRecorder().GetPreviewTime();
+            m_SyncBuffer.Add(frameTime, k_SyncBufferNominalFrameRate, sample.FacePose);
 
-            m_TimestampTracker.Time = time;
+            Refresh();
         }
     }
 }

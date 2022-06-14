@@ -45,5 +45,10 @@ namespace Unity.LiveCapture.Editor
 
             window.SetTimeline(director);
         }
+
+        public void Repaint()
+        {
+            TimelineEditor.Refresh(RefreshReason.WindowNeedsRedraw);
+        }
     }
 }

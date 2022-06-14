@@ -40,24 +40,31 @@ namespace Unity.LiveCapture.VirtualCamera
         float m_LensError = 0.5f;
 
         /// <summary>
-        /// The time used by the recorder in seconds.
+        /// The time when the recording started in seconds.
         /// </summary>
-        public double Time { get; set; }
+        public double? InitialTime { get; private set; }
 
         /// <summary>
-        /// The frame rate to use for recording.
+        /// The time used by the recorder in seconds.
         /// </summary>
-        public FrameRate FrameRate
-        {
-            get => m_Curves[0].FrameRate;
-            set
-            {
-                foreach (var curve in m_Curves)
-                {
-                    curve.FrameRate = value;
-                }
-            }
-        }
+        public double Time { get; private set; }
+
+        /// <summary>
+        /// The elapsed time since the recording started in seconds.
+        /// </summary>
+        public double ElapsedTime => InitialTime.HasValue ? Time - InitialTime.Value : 0d;
+
+        /// <summary>
+        /// The time offset to add to the recording.
+        /// </summary>
+        public double TimeOffset { get; private set; }
+
+        /// <summary>
+        /// The time to use for recording.
+        /// </summary>
+        public double RecordingTime => ElapsedTime + TimeOffset;
+
+        public Action OnReset { get; set; }
 
         public float PositionError
         {
@@ -80,7 +87,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// The data channels to record as enum flags.
         /// </summary>
-        public VirtualCameraChannelFlags Channels { get; set; }
+        public VirtualCameraChannelFlags Channels { get; private set; }
 
         /// <summary>
         /// Sets all the keyframe reduction parameters within their valid bounds.
@@ -111,29 +118,54 @@ namespace Unity.LiveCapture.VirtualCamera
             return true;
         }
 
-        /// <summary>
-        /// Removes all recorded samples.
-        /// </summary>
-        public void Clear()
+        public void Update(double time)
         {
-            foreach (var curve in m_Curves)
+            Time = time;
+
+            if (ElapsedTime < 0d)
             {
-                curve.Clear();
+                InitialTime = null;
+            }
+
+            if (!InitialTime.HasValue)
+            {
+                InitialTime = time;
+
+                Reset();
             }
         }
 
         /// <summary>
         /// Initializes the recorder parameters for a new recording session.
         /// </summary>
-        public void Prepare()
+        public void Prepare(double timeOffset, VirtualCameraChannelFlags channels, FrameRate frameRate)
         {
-            Clear();
+            InitialTime = null;
+            Time = 0d;
+            TimeOffset = timeOffset;
+            Channels = channels;
+
+            foreach (var curve in m_Curves)
+            {
+                curve.FrameRate = frameRate;
+            }
 
             GetReduceable(0).MaxError = PositionError / 100f;
             GetReduceable(1).MaxError = RotationError;
             GetReduceable(2).MaxError = LensError / 100f;
             GetReduceable(3).MaxError = LensError / 100f;
             GetReduceable(4).MaxError = LensError / 100f;
+            Reset();
+        }
+
+        void Reset()
+        {
+            foreach (var curve in m_Curves)
+            {
+                curve.Clear();
+            }
+
+            OnReset?.Invoke();
         }
 
         /// <summary>
@@ -144,7 +176,8 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (Channels.HasFlag(VirtualCameraChannelFlags.Position))
             {
-                GetCurve<Vector3>(0).AddKey(Time, sample);
+                GetCurve<Vector3>(0).AddKey(RecordingTime, sample);
+                RecordLocalPositionEnabled(true);
             }
         }
 
@@ -156,7 +189,8 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (Channels.HasFlag(VirtualCameraChannelFlags.Rotation))
             {
-                GetCurve<Quaternion>(1).AddKey(Time, sample);
+                GetCurve<Quaternion>(1).AddKey(RecordingTime, sample);
+                RecordLocalEulerAnglesEnabled(true);
             }
         }
 
@@ -168,7 +202,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (Channels.HasFlag(VirtualCameraChannelFlags.FocalLength))
             {
-                GetCurve<float>(2).AddKey(Time, sample);
+                GetCurve<float>(2).AddKey(RecordingTime, sample);
             }
         }
 
@@ -180,7 +214,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (Channels.HasFlag(VirtualCameraChannelFlags.FocusDistance))
             {
-                GetCurve<float>(3).AddKey(Time, sample);
+                GetCurve<float>(3).AddKey(RecordingTime, sample);
             }
         }
 
@@ -192,7 +226,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (Channels.HasFlag(VirtualCameraChannelFlags.Aperture))
             {
-                GetCurve<float>(4).AddKey(Time, sample);
+                GetCurve<float>(4).AddKey(RecordingTime, sample);
             }
         }
 
@@ -204,7 +238,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (Channels.HasFlag(VirtualCameraChannelFlags.FocusDistance))
             {
-                GetCurve<bool>(5).AddKey(Time, sample);
+                GetCurve<bool>(5).AddKey(RecordingTime, sample);
             }
         }
 
@@ -214,25 +248,25 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="sample">The crop aspect to record</param>
         public void RecordCropAspect(float sample)
         {
-            GetCurve<float>(14).AddKey(Time, sample);
+            GetCurve<float>(14).AddKey(RecordingTime, sample);
         }
 
         /// <summary>
         /// Records the local position enabled state.
         /// </summary>
         /// <param name="sample">The state to record</param>
-        public void RecordLocalPositionEnabled(bool sample)
+        void RecordLocalPositionEnabled(bool sample)
         {
-            GetCurve<bool>(15).AddKey(Time, sample);
+            GetCurve<bool>(15).AddKey(RecordingTime, sample);
         }
 
         /// <summary>
         /// Records the local euler angles enabled state.
         /// </summary>
         /// <param name="sample">The state to record</param>
-        public void RecordLocalEulerAnglesEnabled(bool sample)
+        void RecordLocalEulerAnglesEnabled(bool sample)
         {
-            GetCurve<bool>(16).AddKey(Time, sample);
+            GetCurve<bool>(16).AddKey(RecordingTime, sample);
         }
 
         /// <summary>
@@ -241,14 +275,14 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <param name="intrinsics">The lens intrinsic parameters to record</param>
         public void RecordLensIntrinsics(LensIntrinsics intrinsics)
         {
-            GetCurve<Vector2>(6).AddKey(Time, intrinsics.FocalLengthRange);
-            GetCurve<float>(7).AddKey(Time, intrinsics.CloseFocusDistance);
-            GetCurve<Vector2>(8).AddKey(Time, intrinsics.ApertureRange);
-            GetCurve<Vector2>(9).AddKey(Time, intrinsics.LensShift);
-            GetCurve<int>(10).AddKey(Time, intrinsics.BladeCount);
-            GetCurve<Vector2>(11).AddKey(Time, intrinsics.Curvature);
-            GetCurve<float>(12).AddKey(Time, intrinsics.BarrelClipping);
-            GetCurve<float>(13).AddKey(Time, intrinsics.Anamorphism);
+            GetCurve<Vector2>(6).AddKey(RecordingTime, intrinsics.FocalLengthRange);
+            GetCurve<float>(7).AddKey(RecordingTime, intrinsics.CloseFocusDistance);
+            GetCurve<Vector2>(8).AddKey(RecordingTime, intrinsics.ApertureRange);
+            GetCurve<Vector2>(9).AddKey(RecordingTime, intrinsics.LensShift);
+            GetCurve<int>(10).AddKey(RecordingTime, intrinsics.BladeCount);
+            GetCurve<Vector2>(11).AddKey(RecordingTime, intrinsics.Curvature);
+            GetCurve<float>(12).AddKey(RecordingTime, intrinsics.BarrelClipping);
+            GetCurve<float>(13).AddKey(RecordingTime, intrinsics.Anamorphism);
         }
 
         /// <summary>

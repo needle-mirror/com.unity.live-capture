@@ -4,7 +4,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [3.0.0-pre.5] - 2021-04-29
+## [3.0.0-pre.6] - 2022-06-14
+
+### Fix
+- Ensure that synchronized VirtualCamera and FaceCapture produce recordings aligned to the initial time offset set in Timeline.
+- Improved recording accuracy in VirtualCamera when using motion damping.
+- Ensure the network client can reconnect after a graceful server restart.
+- Make sure the preview refreshes in the Unity Editor when the user selects a Take in the companion app library.
+- Release of invalid GC handle when entering play mode with a Take Recorder.
+
+## [3.0.0-pre.5] - 2022-04-29
 
 ### Added
 - New Synchronization window to manage synchronizers and timecode sources.
@@ -20,7 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Remove an unnecessary component referring to a missing script in Face Capture sample.
 - The rendering of Takes using the Recorder package now works in combination with the Take Recorder playback features.
 
-## [3.0.0-pre.4] - 2021-04-13
+## [3.0.0-pre.4] - 2022-04-13
 
 ### Added
 - Mocap Core library to provide a foundation for vendor specific mocap packages.
@@ -31,7 +40,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Read the fractional part of the current second from NTP packets correctly.
 - Prevent NTP Timecode Source from failing to initialize networking.
 
-## [3.0.0-pre.3] - 2021-04-08
+## [3.0.0-pre.3] - 2022-04-08
 
 ### Added
 - Scene bindings are now stored in the PlayableDirector that contains the TakeRecorderTrack.

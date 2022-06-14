@@ -100,5 +100,10 @@ namespace Unity.LiveCapture
         /// <param name="slate">The slate.</param>
         /// <param name="time">The current time in seconds.</param>
         void SetPreviewTime(ISlate slate, double time);
+
+        /// <summary>
+        /// Prepares the current context for playback.
+        /// </summary>
+        void Prepare();
     }
 }

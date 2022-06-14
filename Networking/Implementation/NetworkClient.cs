@@ -263,6 +263,7 @@ namespace Unity.LiveCapture.Networking
             switch (status)
             {
                 case DisconnectStatus.Graceful:
+                    Stop(false);
                     break;
                 default:
                     // when there is a non-graceful disconnect we should try to reconnect to the

@@ -90,10 +90,17 @@ namespace Unity.LiveCapture
 
         public void Prepare(bool isRecording)
         {
-            var director = GetDirector();
+            if (IsValid())
+            {
+                var director = GetDirector();
 
-            director.RebuildGraph();
-            director.Evaluate();
+                director.RebuildGraph();
+                director.Evaluate();
+
+                // Prepare might be called after DirectorUpdateAnimationEnd. Calling DeferredEvaluate
+                // forces the Editor to do one extra update loop evaluation before the end of the frame.
+                director.DeferredEvaluate();
+            }
         }
 
         public bool IsValid()

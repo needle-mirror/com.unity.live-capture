@@ -91,6 +91,12 @@ namespace Unity.LiveCapture
         /// <inheritdoc/>
         bool ITakeRecorderInternal.IsEnabled => isActiveAndEnabled;
 
+        /// <inheritdoc/>
+        void ITakeRecorderInternal.Prepare()
+        {
+            Prepare();
+        }
+
         void OnEnable()
         {
             s_Instances.Add(this);
@@ -212,18 +218,22 @@ namespace Unity.LiveCapture
         /// <inheritdoc/>
         public void StartRecording()
         {
-            if (isActiveAndEnabled
+            if (isActiveAndEnabled && CanStartRecording())
+            {
+                StartRecordingInternal();
+            }
+        }
+
+        internal void StartRecordingInternal()
+        {
+            if (!IsRecording()
                 && IsLive()
-                && !IsRecording()
-                && CanStartRecording()
                 && TryGetContext(out var context))
             {
                 m_Recording = true;
 
                 TakeScreenshot();
-
-                context.Prepare(true);
-
+                Prepare();
                 PlayPreview();
 
                 m_RecordingStartTime = DateTime.Now.TimeOfDay.TotalSeconds;
@@ -276,8 +286,7 @@ namespace Unity.LiveCapture
                 if (TryGetContext(out var context))
                 {
                     ProduceTake(context);
-
-                    context.Prepare(false);
+                    Prepare();
                 }
 
                 DisposeScreenshot();
@@ -316,9 +325,9 @@ namespace Unity.LiveCapture
         /// <inheritdoc/>
         public void PausePreview()
         {
-            if (isActiveAndEnabled)
+            if (isActiveAndEnabled && IsPreviewPlaying())
             {
-                CreatePlayerIfNeeded();
+                Debug.Assert(m_Player.IsValid());
 
                 m_Player.Pause();
 
@@ -359,6 +368,14 @@ namespace Unity.LiveCapture
                 m_Player.SetTime(time, GetPreviewDuration());
 
                 HandlePreviewTimeRequest();
+            }
+        }
+
+        void Prepare()
+        {
+            if (TryGetContext(out var context))
+            {
+                context.Prepare(IsRecording());
             }
         }
 
@@ -509,6 +526,12 @@ namespace Unity.LiveCapture
             {
                 StopRecording();
             }
+        }
+
+        void LateUpdate()
+        {
+            HandlePreviewTimeRequest();
+            HandlePreviewEnded();
         }
 
         bool IsDeviceValid(LiveCaptureDevice device)

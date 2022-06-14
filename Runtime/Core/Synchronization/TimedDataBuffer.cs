@@ -172,7 +172,23 @@ namespace Unity.LiveCapture
         /// </remarks>
         public void Add(Timecode timecode, FrameRate frameRate, T value)
         {
-            var frameTime = FrameTime.Remap(timecode.ToFrameTime(frameRate), frameRate, FrameRate);
+            Add(timecode.ToFrameTime(frameRate), frameRate, value);
+        }
+
+        /// <summary>
+        /// Add a new sample to the back of the buffer.
+        /// </summary>
+        /// <param name="frameTime">The frame time of the sample.</param>
+        /// <param name="frameRate">The frame rate of the frame time.</param>
+        /// <param name="value">The sample value.</param>
+        /// <remarks>
+        /// If the back of the buffer (the newest sample) is older than or has the sample time value as
+        /// the new sample, the new sample will not be added. That is, out-of-order additions will
+        /// be dropped.
+        /// </remarks>
+        internal void Add(FrameTime frameTime, FrameRate frameRate, T value)
+        {
+            frameTime = FrameTime.Remap(frameTime, frameRate, FrameRate);
             if (Count == 0 || Back().frameTime < frameTime)
             {
                 Add((frameTime, value));

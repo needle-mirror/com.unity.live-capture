@@ -26,9 +26,10 @@
     * [Recording/playback controls](virtual-camera-app-ui-recplay.md)
   * [Workflow](virtual-camera-workflow.md)
   * [Lenses](virtual-camera-lenses.md)
-  * [Snapshots](virtual-camera-snapshots.md)
-    * [Project Settings](ref-project-settings-snapshots.md)
-  * [Video Server Preferences](ref-user-preferences-video-server.md)      
+  * [Using Snapshots](virtual-camera-snapshots.md)
+  * Unity Editor Settings
+    * [Project Settings – Snapshots](ref-project-settings-snapshots.md)
+    * [User Preferences – Video Server](ref-user-preferences-video-server.md)      
   * [Components](virtual-camera-components.md)
     * [Cinemachine Camera Driver](ref-component-cinemachine-camera-driver.md)
     * [Focus Plane Renderer](ref-component-focus-plane-renderer.md)

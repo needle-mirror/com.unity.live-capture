@@ -482,11 +482,13 @@ namespace Unity.LiveCapture.CompanionApp
 
         void ClientSetSelectedTake(Guid guid)
         {
-            var takeRecorder = GetTakeRecorder();
+            var takeRecorder = GetTakeRecorder() as ITakeRecorderInternal;
 
             if (takeRecorder != null)
             {
                 TakeManager.Default.SelectTake(takeRecorder.GetActiveSlate(), guid);
+
+                takeRecorder.Prepare();
 
                 SendSlateDescriptor();
                 Refresh();
@@ -511,13 +513,15 @@ namespace Unity.LiveCapture.CompanionApp
 
         void ClientSetIterationBase(Guid guid)
         {
-            var takeRecorder = GetTakeRecorder();
+            var takeRecorder = GetTakeRecorder() as ITakeRecorderInternal;
 
             if (takeRecorder != null)
             {
                 var slate = takeRecorder.GetActiveSlate();
 
                 TakeManager.Default.SetIterationBase(slate, guid);
+
+                takeRecorder.Prepare();
 
                 SendSlateDescriptor(slate);
                 Refresh();
@@ -526,13 +530,15 @@ namespace Unity.LiveCapture.CompanionApp
 
         void ClientClearIterationBase()
         {
-            var takeRecorder = GetTakeRecorder();
+            var takeRecorder = GetTakeRecorder() as ITakeRecorderInternal;
 
             if (takeRecorder != null)
             {
                 var slate = takeRecorder.GetActiveSlate();
 
                 TakeManager.Default.ClearIterationBase(slate);
+
+                takeRecorder.Prepare();
 
                 SendSlateDescriptor(slate);
                 Refresh();

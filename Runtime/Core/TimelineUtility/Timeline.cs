@@ -29,6 +29,8 @@ namespace Unity.LiveCapture
         TimelineAsset MasterAsset { get; }
 
         void SetAsMasterDirector(PlayableDirector director);
+
+        void Repaint();
     }
 
     /// <summary>
@@ -78,6 +80,11 @@ namespace Unity.LiveCapture
         public static void SetAsMasterDirector(PlayableDirector director)
         {
             Instance.m_Impl?.SetAsMasterDirector(director);
+        }
+
+        public static void Repaint()
+        {
+            Instance.m_Impl?.Repaint();
         }
     }
 }

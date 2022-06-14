@@ -22,3 +22,13 @@ Each channel represents a face property that you might want to animate separatel
 * **Head Position**
 * **Head Rotation**
 * **Eyes**
+
+## Keyframe Reduction
+
+Allows you to adjust the level of keyframe reduction applied to your recordings. Higher values produce smaller files but might affect the recorded animation curve accuracy. 
+
+| Property | Function |
+|:---|:---|
+| **Position Error** | The relative tolerance (in percent) for reducing position keyframes. |
+| **Rotation Error** | The tolerance (in degrees) for reducing rotation keyframes. |
+| **Blend Shape Error** | The relative tolerance (in percent) for reducing blend shape keyframes. |

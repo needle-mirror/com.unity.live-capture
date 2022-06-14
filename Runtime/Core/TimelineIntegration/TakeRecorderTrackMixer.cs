@@ -21,17 +21,7 @@ namespace Unity.LiveCapture
 
         public override void OnGraphStart(Playable playable)
         {
-            if (!m_Initialized)
-            {
-                m_Initialized = true;
-
-                Initialize();
-
-                if (m_TakeRecorder != null)
-                {
-                    m_TakeRecorder.AddContextProvider(this);
-                }
-            }
+            Initialize();
         }
 
         public override void OnPlayableDestroy(Playable playable)
@@ -74,6 +64,16 @@ namespace Unity.LiveCapture
 
         void Initialize()
         {
+            if (m_Initialized)
+            {
+                return;
+            }
+
+            if (m_TakeRecorder != null)
+            {
+                m_TakeRecorder.AddContextProvider(this);
+            }
+
             Debug.Assert(m_Contexts.Count == m_Playable.GetInputCount());
 
             var isRecording = false;
@@ -112,6 +112,8 @@ namespace Unity.LiveCapture
             }
 
             m_Director.RebindPlayableGraphOutputs();
+
+            m_Initialized = true;
         }
 
         public void Construct(PlayableDirector director,

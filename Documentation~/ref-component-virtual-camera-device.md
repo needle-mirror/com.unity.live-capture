@@ -24,18 +24,27 @@ Each channel represents a camera property that you might want to preview and rec
 * **Focus Distance**
 * **Aperture**
 
-## Camera properties
+## Lens Asset
 
-### Lens Asset / Lens
+Select the current lens from an available **[Lens Kit](ref-asset-lens-kit.md)**.
+
+## Open Video settings
+
+This button opens the [Video Server Settings](ref-user-preferences-video-server.md) section of the Unity project Preferences windows.
+
+## Lens
+
+![](images/ref-component-virtual-camera-device-lens.png)
 
 | **Property** | **Description** |
 |:---|:---|
-| **Lens Asset** | Select the current lens from an available **[Lens Kit](ref-asset-lens-kit.md)**. |
 | **Focal Length** | The focal length of the lens in millimeters. |
 | **Focus Distance** | The focus distance of the lens in world units. |
 | **Aperture** | The aperture of the lens in f-number. |
 
-### Camera Body
+## Camera Body
+
+![](images/ref-component-virtual-camera-device-camera-body.png)
 
 | **Property** | **Description** |
 |:---|:---|
@@ -48,13 +57,15 @@ Each channel represents a camera property that you might want to preview and rec
 
 Controls the overall behavior of the camera motion and other functions. These properties are shared with the connected client device.
 
+![](images/ref-component-virtual-camera-device-settings.png)
+
 | **Property** | **Description** |
 |:---|:---|
 | **Damping** | Enable or disable damping effect.<br />• The **Body** of the damping represents how long it takes, in seconds, to reach the target position. You can set it separately for all three directions<br />• The **Aim** is the same as the body but for the rotation. You can set it once for all three rotations.|
 | **Position Lock** | Use these toggle buttons to separately lock the position along all three axes. The position lock is relative to the origin. |
 | **Rotation Lock** | Use these toggle buttons to separately lock the rotation around all three axes. The rotation lock is relative to the origin. |
 | **Auto Horizon** | Enable this option to force the roll rotation to be zero. This is only active when the **Rotation Lock** is enabled, preventing any roll (rotation around the z-axis). |
-| **Ergonomic Tilt** | Offsets the tlit, or camera rotation on the x-axis. This helps you manipulate the Client Device in a more comfortable way.<br />This property is only applied when the client is connected. |
+| **Ergonomic Tilt** | Offsets the tilt, or camera rotation on the x-axis. This helps you manipulate the Client Device in a more comfortable way.<br />This property is only applied when the client is connected. |
 | **Motion Scale** | Applies a scale to the device motion when you control the Virtual Camera position.<br />A scale of (1,1,1) means that the Virtual Camera movement matches the device position in the real world. This is useful if the virtual world is bigger than the physical room space you are using. |
 | **Joystick Sensitivity** | Sets the camera motion speed obtained when you use the joysticks.<br />A speed of (1,2,1) moves the pedestal axis two time faster. |
 | **Pedestal Space** | Sets the pedestal joystick motion to be relative to the Origin or to the Local pose. |
@@ -68,20 +79,59 @@ Controls the overall behavior of the camera motion and other functions. These pr
 | **Aperture Damping**   | Damping applied to the Aperture (f-number). |
 | **Gate Fit**\* | Select a mode to fit the resolution gate relative to the film gate.<br />• **Fill**: The film gate optimally fills the whole resolution gate area. This crops the film gate.<br />• **Overscan**: The resolution gate includes the whole film gate area. This overscans the area outside of the film gate.<br /> |
 | **Gate Mask**\*   | Displays a mask outside the boundaries of the film gate. |
-| **Apect Ratio Lines**\*   | Displays aspect ratio lines and mask in the Game view according to the specified Aspect Ratio. |
+| **Aspect Ratio Lines**\*   | Displays aspect ratio lines and mask in the Game view according to the specified Aspect Ratio. |
 | **Center Marker**\*   | Displays a center marker in Game view. |
 | **Focus Plane**   | Renders a visualization of the focus plane.<br />This option is directly controlling the activation status of the [Focus Plane component](ref-component-focus-plane-renderer.md) associated to the [Virtual Camera Actor](ref-component-virtual-camera-actor.md). |
 
 \* These four options are directly controlling properties of the [Frame Lines component](ref-component-frame-lines.md) associated to the [Virtual Camera Actor](ref-component-virtual-camera-actor.md).
 
+## Keyframe Reduction
+
+Allows you to adjust the level of keyframe reduction applied to your recordings. Higher values produce smaller files but might affect the recorded animation curve accuracy.
+
+![](images/ref-component-virtual-camera-device-keyframe-reduction.png)
+
+| **Property** | **Description** |
+|:---|:---|
+| **Position Error** | The relative tolerance (in percent) for reducing position keyframes. |
+| **Rotation Error** | The tolerance (in degrees) for reducing rotation keyframes. |
+| **Lens Error** | The relative tolerance (in percent) for reducing lens keyframes. |
+
 ## Snapshots
 
-See the [Snapshots documentation](virtual-camera-snapshots.md).
+Use Snapshots to capture the current state of your Virtual Camera and reuse it later.
 
-## Align with Actor
+>**See also:**
+>* [Using Virtual Camera Snapshots](virtual-camera-snapshots.md).
+>* [Project Settings: Snapshots](ref-project-settings-snapshots.md)
 
-Pressing the **Align with Actor** button sets the pose (position and rotation) of the device to the assigned actor's pose when the Take Recorder is not set to **Live**. This is useful for manually positioning the camera in the scene.
+![](images/ref-component-virtual-camera-device-snapshots.png)
 
-## Video settings
+### Library
 
-The Open Video Settings button opens the the [Video Server Settings](ref-user-preferences-video-server.md) section of the Unity project Preferences windows.
+| Property/button | Function |
+| :--- | :--- |
+| **Library** | The asset file containing the Snapshots currently listed. |
+| **New** | Allows you to create another asset file if you need to store your Snapshots in multiple assets. |
+
+### Snapshot list
+
+The list displays all Snapshots already taken. Each snapshot entry shows a thumbnail of the camera view, along with metadata like the shot name, timecode, lens information, and sensor size.
+
+Use the controls at the right of the list to search and manage Snapshots.
+
+| Control | Function |
+| :--- | :--- |
+| Minus ( **-** ) button | Deletes the current selected Snapshot |
+| Menu ( **⋮** ) button | Allows you to display a text search field at the top of the list to search Snapshots according to their slate metadata, if any. |
+| Up/down arrows | Scroll the list up and down. |
+
+### Snapshot controls
+
+Use the buttons under the list to take and reuse Snapshots.
+
+| Button | Function |
+| :--- | :--- |
+| **Take Snapshot** | Captures a snapshot with the current camera position and metadata. |
+| **Go To** | Restores the camera's position and rotation of the selected snapshot and the Timeline's shot if available, without loading the camera related metadata. |
+| **Load** | Restores the camera's position, rotation, lens and body of the selected snapshot, and the Timeline's shot if available. |

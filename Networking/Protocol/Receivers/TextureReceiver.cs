@@ -80,22 +80,27 @@ namespace Unity.LiveCapture.Networking.Protocols
                     var textureName = stream.ReadString();
                     var metadata = stream.ReadString();
 
-                    var texture = new Texture2D(
-                        description.Width,
-                        description.Height,
-                        description.GraphicsFormat,
-                        description.MipCount,
-                        TextureCreationFlags.None)
+                    if (SystemInfo.IsFormatSupported(description.GraphicsFormat, FormatUsage.Sample))
                     {
-                        name = textureName,
-                        anisoLevel = description.AnisoLevel,
-                        wrapMode = description.WrapMode,
-                        filterMode = description.FilterMode,
-                    };
+                        var texture = new Texture2D(
+                            description.Width,
+                            description.Height,
+                            description.GraphicsFormat,
+                            description.MipCount,
+                            TextureCreationFlags.None)
+                        {
+                            name = textureName,
+                            anisoLevel = description.AnisoLevel,
+                            wrapMode = description.WrapMode,
+                            filterMode = description.FilterMode,
+                        };
 
-                    ReadTexture(stream, texture, m_Compression);
+                        ReadTexture(stream, texture, m_Compression);
 
-                    return new TextureData(texture, metadata);
+                        return new TextureData(texture, metadata);
+                    }
+
+                    return new TextureData(null, metadata);
                 }
                 default:
                     throw new Exception($"{nameof(TextureReceiver)} version is not supported by this application version.");

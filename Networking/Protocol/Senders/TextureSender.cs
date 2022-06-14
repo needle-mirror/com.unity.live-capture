@@ -15,6 +15,7 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// <summary>
         /// The texture sent over the network.
         /// </summary>
+        /// <remarks>May be null if the receiver couldn't interpret the transmitted texture.</remarks>
         public Texture2D texture { get; }
 
         /// <summary>
@@ -30,12 +31,8 @@ namespace Unity.LiveCapture.Networking.Protocols
         /// </summary>
         /// <param name="texture">The texture sent over the network.</param>
         /// <param name="metadata">The metadata string sent along with the texture.</param>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="texture"/> is null.</exception>
         public TextureData(Texture2D texture, string metadata)
         {
-            if (texture == null)
-                throw new ArgumentNullException(nameof(texture));
-
             this.texture = texture;
             this.metadata = metadata ?? string.Empty;
         }

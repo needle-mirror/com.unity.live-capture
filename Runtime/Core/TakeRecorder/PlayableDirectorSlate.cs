@@ -81,18 +81,38 @@ namespace Unity.LiveCapture
         public Take Take
         {
             get => m_Take;
-            set => m_Take = value;
+            set => SetTake(value, ref m_Take);
         }
 
         public Take IterationBase
         {
             get => m_IterationBase;
-            set => m_IterationBase = value;
+            set => SetTake(value, ref m_IterationBase);
         }
 
         public IExposedPropertyTable GetResolver()
         {
             return m_Director;
+        }
+
+        void SetTake(Take take, ref Take dst)
+        {
+            if (take == dst)
+            {
+                return;
+            }
+
+            if (dst != null)
+            {
+                m_Director.ClearSceneBindings(dst.BindingEntries);
+            }
+
+            dst = take;
+
+            if (dst != null)
+            {
+                m_Director.SetSceneBindings(dst.BindingEntries);
+            }
         }
 
         public ISlate GetSlate()
@@ -118,8 +138,10 @@ namespace Unity.LiveCapture
             if (m_Director.playableAsset != timeline)
             {
                 m_Director.playableAsset = timeline;
+                m_Director.DeferredEvaluate();
 
                 Timeline.SetAsMasterDirector(m_Director);
+                Timeline.Repaint();
             }
         }
 

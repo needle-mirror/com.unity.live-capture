@@ -44,4 +44,6 @@
 
 * Non-destructive and iterative workflow – change camera settings such as damping and focal length after a capture session.
 
-* **Snapshots** system to save an image along with your camera's position and metadata like lens information that can be loaded to pick up where you left off.
+* [**Snapshots** system](virtual-camera-snapshots.md) to capture the current state of your Virtual Camera and reuse it later. This includes, for example, the position of the camera in the Scene, and other metadata such as the lens information.
+
+  >**Note:** The Snapshots feature is only available from the Virtual Camera Device in the Unity Editor. There is currently no interface to manage Snapshots from the Virtual Camera app.

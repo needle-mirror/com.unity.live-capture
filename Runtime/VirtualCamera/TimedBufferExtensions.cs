@@ -1,6 +1,3 @@
-using System;
-using UnityEngine;
-
 namespace Unity.LiveCapture.VirtualCamera
 {
     static class TimedBufferExtensions

@@ -1,7 +1,7 @@
 {
   "name": "com.unity.live-capture",
   "displayName": "Live Capture",
-  "version": "3.0.0-pre.5",
+  "version": "3.0.0-pre.6",
   "unity": "2020.3",
   "unityRelease": "16f1",
   "description": "Use the Live Capture package to connect to the Unity Virtual Camera and Unity Face Capture companion apps to capture and record camera motion and face performances.",
@@ -27,14 +27,14 @@
     }
   ],
   "_upm": {
-    "changelog": "### Added\n- New Synchronization window to manage synchronizers and timecode sources.\n- New Timed Data Source Details window to view and adjust synchronization buffers.\n- Expose the default face mapper implementation in the public API to allow to extend it.\n- Users can now undo/redo the addition and removal of connections they perform through the Connections window.\n- Expose networking utilities in the public API to allow implementing custom connections to external devices.\n\n### Changed\n- Rename \"Server\" to \"Connection\" in the Connections window UI and public API.\n\n### Fix\n- Remove an unnecessary component referring to a missing script in Face Capture sample.\n- The rendering of Takes using the Recorder package now works in combination with the Take Recorder playback features."
+    "changelog": "### Fix\n- Ensure that synchronized VirtualCamera and FaceCapture produce recordings aligned to the initial time offset set in Timeline.\n- Improved recording accuracy in VirtualCamera when using motion damping.\n- Ensure the network client can reconnect after a graceful server restart.\n- Make sure the preview refreshes in the Unity Editor when the user selects a Take in the companion app library.\n- Release of invalid GC handle when entering play mode with a Take Recorder."
   },
   "upmCi": {
-    "footprint": "1154acaddd628ae3d3226eb8d800a1a69bcc0103"
+    "footprint": "cb34c0134aa11e656f04eb26d37ef8e5b270120d"
   },
   "repository": {
     "url": "https://github.com/Unity-Technologies/VirtualProduction.git",
     "type": "git",
-    "revision": "ba78648fafc9d4a50b88634050cc8c51fb835f02"
+    "revision": "7e2efad0623ea97b44e23a12f7050a9c6aff46e7"
   }
 }
