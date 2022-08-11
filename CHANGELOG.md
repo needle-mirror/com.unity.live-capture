@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2022-08-11
+
+### Fix
+  - The machine name used for server discovery is truncated if it is too long.
+  - Prevent an error from occurring when stopping the recording while a Live Capture settings window is open.
+  - Prevent Unity from crashing when loading RenderDoc in a project that includes the Live Capture package.
+  - Remove an unnecessary component referring to a missing script in Face Capture sample.
+  - Make sure to correctly dispose the video encoder in MacOS.
+
+### Changed
+  - Disable video streaming on Apple silicon.
+  - Automatic firewall configuration on Windows now detects and removes rules that block the Unity Editor on private or domain networks.
+
 ## [1.1.0] - 2022-01-12
 
 ### Changed

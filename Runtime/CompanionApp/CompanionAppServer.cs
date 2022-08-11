@@ -234,10 +234,12 @@ namespace Unity.LiveCapture.CompanionApp
 
             if (m_Server.StartServer(m_Port))
             {
+                var machineName = Environment.MachineName;
+
                 // start server discovery
                 var config = new ServerData(
                     "Live Capture",
-                    Environment.MachineName,
+                    machineName.Substring(0, Math.Min(machineName.Length, 32)),
                     m_Server.ID,
                     m_Server.ProtocolVersion
                 );

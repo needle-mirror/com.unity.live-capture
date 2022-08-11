@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
@@ -14,6 +16,40 @@ namespace Unity.LiveCapture.Editor
     /// </summary>
     static class FirewallUtility
     {
+        enum Direction
+        {
+            In,
+            Out,
+        }
+
+        enum Action
+        {
+            Allow,
+            Block,
+        }
+
+        [Flags]
+        enum Profile
+        {
+            None = 0,
+            Private = 1 << 0,
+            Domain  = 1 << 1,
+            Public  = 1 << 2,
+        }
+
+        struct Rule
+        {
+            public string Name { get; set; }
+            public bool Enabled { get; set; }
+            public Direction Direction { get; set; }
+            public Profile Profile { get; set; }
+            public Action Action { get; set; }
+            public string Path { get; set; }
+        }
+
+        static readonly string s_ModuleName = "Live Capture";
+        static readonly string s_RuleName = $"Unity {Application.unityVersion} {s_ModuleName}";
+
         /// <summary>
         /// Can the firewall be modified on the editor platform.
         /// </summary>
@@ -50,56 +86,15 @@ namespace Unity.LiveCapture.Editor
             }
 
 #if UNITY_EDITOR_WIN
-            var ruleName = $"Unity {Application.unityVersion} Live Capture";
-
-            var info = new ProcessStartInfo
+            if (TryGetRules(out var rules))
             {
-                FileName = "netsh",
-                Arguments = $"advfirewall firewall show rule name=\"{ruleName}\"",
-                // don't use a command line so we can read the standard output
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                // hide windows opened by the process
-                WindowStyle = ProcessWindowStyle.Hidden,
-                CreateNoWindow = true,
-            };
-
-            try
-            {
-                using (var process = Process.Start(info))
-                {
-                    var hasExited = process.WaitForExit(2000);
-
-                    if (!hasExited)
-                    {
-                        process.Kill();
-                        Debug.LogWarning($"Failed to get firewall rules, netsh did not exit successfully.");
-                        return false;
-                    }
-
-                    var output = process.StandardOutput.ReadToEnd();
-
-                    switch (process.ExitCode)
-                    {
-                        case 0: // success
-                            return CheckForRule(output, "In") && CheckForRule(output, "Out");
-                        case 1: // no matching rules found. Not in the docs, found this out experimentally
-                            return false;
-                        default: // assume there is an error otherwise
-                            Debug.LogError($"Failed to get firewall rules with exit code {process.ExitCode:X}: ({output})!");
-                            return false;
-                    }
-                }
+                return rules.Any(r => r.Direction == Direction.In && r.Action == Action.Allow)
+                    && rules.Any(r => r.Direction == Direction.Out && r.Action == Action.Allow)
+                    && rules.All(r => r.Action != Action.Block);
             }
-            catch (Exception e)
-            {
-                Debug.LogError($"Failed to get firewall rule: {e}");
-                return false;
-            }
-#else
-            return false;
 #endif
+
+            return false;
         }
 
         /// <summary>
@@ -117,6 +112,7 @@ namespace Unity.LiveCapture.Editor
                 FirewallConfigured?.Invoke(false);
                 return;
             }
+
             if (IsConfigured())
             {
                 FirewallConfigured?.Invoke(true);
@@ -125,15 +121,47 @@ namespace Unity.LiveCapture.Editor
 
 #if UNITY_EDITOR_WIN
             var programPath = Path.GetFullPath(EditorApplication.applicationPath);
-            var ruleName = $"Unity {Application.unityVersion} Live Capture";
 
             // We need to supply all the commands in a single line.
             // Commands separated by '&' are executed even if a previous command fails.
             var args = new StringBuilder();
-            args.Append($"netsh advfirewall firewall add rule name=\"{ruleName}\" program=\"{programPath}\" dir=in profile=private,domain action=allow enable=yes");
-            args.Append("&");
-            args.Append($"netsh advfirewall firewall add rule name=\"{ruleName}\" program=\"{programPath}\" dir=out profile=private,domain action=allow enable=yes");
-            args.Append("&");
+
+            var needsInboundRule = true;
+            var needsOutboundRule = true;
+
+            if (TryGetRules(out var rules))
+            {
+                foreach (var rule in rules)
+                {
+                    // remove rules that block the editor
+                    if (rule.Action == Action.Block)
+                    {
+                        args.Append($"netsh advfirewall firewall delete rule name=\"{rule.Name}\" program=\"{programPath}\"");
+                        args.Append("&");
+                    }
+                    // check if we have rules allowing the editor already
+                    if (rule.Direction == Direction.In && rule.Action == Action.Allow && rule.Profile == (Profile.Private | Profile.Domain))
+                    {
+                        needsInboundRule = false;
+                    }
+                    if (rule.Direction == Direction.Out && rule.Action == Action.Allow && rule.Profile == (Profile.Private | Profile.Domain))
+                    {
+                        needsOutboundRule = false;
+                    }
+                }
+            }
+
+            if (needsInboundRule)
+            {
+                args.Append($"netsh advfirewall firewall add rule name=\"{s_RuleName}\" program=\"{programPath}\" dir=in profile=private,domain action=allow enable=yes");
+                args.Append("&");
+            }
+            if (needsOutboundRule)
+            {
+                args.Append($"netsh advfirewall firewall add rule name=\"{s_RuleName}\" program=\"{programPath}\" dir=out profile=private,domain action=allow enable=yes");
+                args.Append("&");
+            }
+
             args.Append("exit");
 
             // run the commands from a command line
@@ -184,79 +212,147 @@ namespace Unity.LiveCapture.Editor
         }
 
 #if UNITY_EDITOR_WIN
-        static bool CheckForRule(string output, string direction)
+        static bool TryGetRules(out Rule[] rules)
         {
-            // Sample output rule is below.
+            rules = null;
 
-            // Rule Name:                            Unity Live Capture
-            // ----------------------------------------------------------------------
-            // Enabled:                              Yes
-            // Direction:                            In
-            // Profiles:                             Domain,Private,Public
-            // Grouping:
-            // LocalIP:                              Any
-            // RemoteIP:                             Any
-            // Protocol:                             Any
-            // Edge traversal:                       No
-            // Action:                               Allow
+            var programPath = NormalizePath(EditorApplication.applicationPath);
 
-            using var stream = new StringReader(output);
-            var ruleMatches = false;
-
-            while (true)
+            var info = new ProcessStartInfo
             {
-                var line = stream.ReadLine();
+                FileName = "netsh",
+                Arguments = $"advfirewall firewall show rule name=all verbose",
+                // don't use a command line so we can read the standard output
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                // hide windows opened by the process
+                WindowStyle = ProcessWindowStyle.Hidden,
+                CreateNoWindow = true,
+            };
 
-                if (line == null)
-                    break;
+            try
+            {
+                /*
+                Sample output rule is below.
 
-                var keyValue = line.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                Rule Name:                            Unity 2022.1.0b10 Live Capture
+                ----------------------------------------------------------------------
+                Enabled:                              Yes
+                Direction:                            In
+                Profiles:                             Domain,Private
+                Grouping:
+                LocalIP:                              Any
+                RemoteIP:                             Any
+                Protocol:                             Any
+                Edge traversal:                       No
+                Program:                              C:\Program Files\Unity\2022.1.0b10\Editor\Unity.exe
+                InterfaceTypes:                       Any
+                Security:                             NotRequired
+                Rule source:                          Local Setting
+                Action:                               Allow
+                */
 
-                // ignore keys with no specified value, we can assume default values
-                if (keyValue.Length != 2)
+                using var process = new Process
                 {
-                    continue;
-                }
+                    StartInfo = info,
+                };
 
-                var key = keyValue[0].Trim();
-                var value = keyValue[1].Trim();
+                process.Start();
 
-                // keep track of the start of a new rule
-                if (key == "Rule Name")
+                var tempRules = new List<Rule>();
+                var currentRule = default(Rule);
+
+                while (!process.StandardOutput.EndOfStream)
                 {
-                    // the previous rule matches what we are looking for, we are done looking
-                    if (ruleMatches)
+                    var line = process.StandardOutput.ReadLine();
+
+                    var splitIndex = line.IndexOf(':');
+
+                    if (splitIndex < 0)
                     {
-                        break;
+                        continue;
                     }
 
-                    ruleMatches = true;
-                    continue;
+                    var key = line.Substring(0, splitIndex).Trim();
+                    var value = line.Substring(splitIndex + 1).Trim();
+
+                    switch (key)
+                    {
+                        case "Rule Name":
+                            currentRule = new Rule
+                            {
+                                Name = value,
+                            };
+                            break;
+                        case "Enabled":
+                            currentRule.Enabled = value == "Yes";
+                            break;
+                        case "Direction":
+                            currentRule.Direction = value == "In" ? Direction.In : Direction.Out;
+                            break;
+                        case "Profiles":
+                            foreach (var profile in value.Split(','))
+                            {
+                                switch (profile)
+                                {
+                                    case "Private":
+                                        currentRule.Profile |= Profile.Private;
+                                        break;
+                                    case "Domain":
+                                        currentRule.Profile |= Profile.Domain;
+                                        break;
+                                    case "Public":
+                                        currentRule.Profile |= Profile.Public;
+                                        break;
+                                }
+                            }
+                            break;
+                        case "Program":
+                            currentRule.Path = NormalizePath(value);
+                            break;
+                        case "Action":
+                            currentRule.Action = value == "Allow" ? Action.Allow : Action.Block;
+
+                            // this is the last rule property, so add the rule if it is relevant
+                            if (currentRule.Enabled && (int)(currentRule.Profile & (Profile.Private | Profile.Domain)) != 0 && currentRule.Path == programPath)
+                            {
+                                tempRules.Add(currentRule);
+                            }
+                            break;
+                    }
                 }
 
-                // check if the value matches what we are looking for since the start of the last rule
-                if (!ruleMatches)
+                if (!process.WaitForExit(2000))
                 {
-                    continue;
+                    process.Kill();
+                    Debug.LogWarning($"Failed to get firewall rules, netsh did not exit successfully.");
+                    return false;
                 }
 
-                switch (key)
+                switch (process.ExitCode)
                 {
-                    case "Enabled":
-                        ruleMatches = value == "Yes";
-                        break;
-                    case "Direction":
-                        ruleMatches = value == direction;
-                        break;
-                    case "Action":
-                        ruleMatches = value == "Allow";
-                        break;
+                    case 0: // success
+                        rules = tempRules.ToArray();
+                        return true;
+                    case 1: // no matching rules found. Not in the docs, found this out experimentally
+                        return false;
+                    default: // assume there is an error otherwise
+                        Debug.LogError($"Failed to get firewall rules with exit code {process.ExitCode:X})!");
+                        return false;
                 }
             }
-
-            return ruleMatches;
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to get firewall rule: {e}");
+                return false;
+            }
         }
-
 #endif
+
+        static string NormalizePath(string path)
+        {
+            return Path.GetFullPath(path).ToUpperInvariant();
+        }
     }
 }

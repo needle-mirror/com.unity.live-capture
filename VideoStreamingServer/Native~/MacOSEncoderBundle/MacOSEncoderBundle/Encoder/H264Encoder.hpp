@@ -16,7 +16,6 @@
 #import <AVFoundation/AVFoundation.h>
 #import <Metal/Metal.h>
 
-#include "MetalTexture2D.hpp"
 #include "PluginUtils.hpp"
 #include "MacOSEncoderSessionDataPlugin.hpp"
 
@@ -52,7 +51,7 @@ public: // Methods
     ~H264Encoder();
     
     void Initialize(bool useSRGB, bool allocateBuffers = true);
-    bool UpdateEncoderSessionData(const MacOSEncoderSessionData& other);
+    void Dispose();
     bool EncodeFrame(void* frameSource, unsigned long long int timestamp);
     
     bool RemoveEncodedFrame();
@@ -78,8 +77,7 @@ private: // Members
     uint64                      m_FrameCount;
     
     CVPixelBufferRef            m_PixelBuffers[k_BufferedFrameNumbers];
-    ITexture2D*                 m_RenderTextures[k_BufferedFrameNumbers];
-    std::vector<uint8>          m_EncodedBuffers[k_BufferedFrameNumbers];
+    id<MTLTexture>              m_RenderTextures[k_BufferedFrameNumbers];
     std::queue<EncodedFrame>    m_FrameQueue;
     unsigned long long int      m_LatestTimestamp;
     
@@ -92,7 +90,6 @@ private: // Methods
     void releaseBuffers();
     
     bool copyBuffer(void* frameSource, int frameIndex);
-    void updateSettings(bool sizeUpdated);
 };
 
 }

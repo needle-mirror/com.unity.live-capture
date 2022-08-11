@@ -37,8 +37,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {
-            m_SerializedObject = new SerializedObject(SnapshotSettings.Instance);
-            m_ScreenshotDirectory = m_SerializedObject.FindProperty("m_ScreenshotDirectory");
+            InitializeWithCurrentSettings();
         }
 
         public override void OnDeactivate()
@@ -61,7 +60,14 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         public override void OnGUI(string searchContext)
         {
-            m_SerializedObject.Update();
+            if (m_SerializedObject == null)
+            {
+                InitializeWithCurrentSettings();
+            }
+            else
+            {
+                m_SerializedObject.Update();
+            }
 
             using (var change = new EditorGUI.ChangeCheckScope())
             using (new SettingsWindowGUIScope())
@@ -92,6 +98,15 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
                 SettingsScope.Project,
                 GetSearchKeywordsFromSerializedObject(new SerializedObject(SnapshotSettings.Instance))
             );
+        }
+
+        /// <summary>
+        /// Grab the <see cref="SnapshotSettings"/> instance and set it up for editing.
+        /// </summary>
+        void InitializeWithCurrentSettings()
+        {
+            m_SerializedObject = new SerializedObject(SnapshotSettings.Instance);
+            m_ScreenshotDirectory = m_SerializedObject.FindProperty("m_ScreenshotDirectory");
         }
     }
 }
