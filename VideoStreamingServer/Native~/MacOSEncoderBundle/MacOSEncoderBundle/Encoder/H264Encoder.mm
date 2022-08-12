@@ -22,19 +22,7 @@ namespace MacOsEncodingPlugin
     
     H264Encoder::~H264Encoder()
     {
-        WriteFileDebug("Info: ~[H264Encoder()] - Destructor called.\n");
-        if (m_EncodingSession != nullptr)
-        {
-            endSession();
-            m_EncodingSession = nullptr;
-            WriteFileDebug("Info: ~[H264Encoder()] - endSession.\n");
-            m_SessionCreated = false;
-        }
-        
-        for (auto& renderTexture : m_RenderTextures)
-        {
-            renderTexture = nullptr;
-        }
+        Dispose();
     }
     
     void H264Encoder::Initialize(bool useSRGB, bool buffersAllocation)
@@ -56,18 +44,18 @@ namespace MacOsEncodingPlugin
         }
     }
 
-    bool H264Encoder::UpdateEncoderSessionData(const MacOSEncoderSessionData& other)
+    void H264Encoder::Dispose()
     {
-        const auto updateData = !(other == m_FrameData);
-        if (updateData)
-        {
-            bool sizeUpdated = m_FrameData.width != other.width
-                             || m_FrameData.height != other.height;
-            
-            m_FrameData.Update(other);
-            updateSettings(sizeUpdated);
-        }
-        return updateData;
+        WriteFileDebug("Info: ~[H264Encoder()] - Dispose.\n");
+
+        if (m_EncodingSession == nullptr)
+            return;
+        
+        WriteFileDebug("Info: ~[H264Encoder()] - encoding session is valid.\n");
+    
+        endSession();
+        m_EncodingSession = nullptr;
+        m_SessionCreated = false;
     }
 
     void postEncodeParser(H264Encoder* encoder, CMSampleBufferRef sampleBuffer)
@@ -394,6 +382,8 @@ namespace MacOsEncodingPlugin
         
         CFRelease(m_EncodingSession);
         m_EncodingSession = NULL;
+        
+        releaseBuffers();
     }
 
     bool H264Encoder::allocateBuffers()
@@ -440,8 +430,7 @@ namespace MacOsEncodingPlugin
                 return false;
             }
             
-            id<MTLTexture> tex = CVMetalTextureGetTexture(imageTexture);
-            m_RenderTextures[i] = m_GraphicDevice->CreateDefaultTextureFromNative(width, height, tex);
+            m_RenderTextures[i] = CVMetalTextureGetTexture(imageTexture);
         }
         
         WriteFileDebug("Success: [allocateBuffers] - Buffers are allocated.\n");
@@ -453,32 +442,19 @@ namespace MacOsEncodingPlugin
         if (m_InitializationResult != MacOSEncoderStatus::Success)
             return;
         
-        for (auto& renderTexture : m_RenderTextures)
+        for (int i = 0; i < k_BufferedFrameNumbers; ++i)
         {
-            if (renderTexture != nullptr)
-            {
-                delete renderTexture;
-                renderTexture = nullptr;
-            }
-        }
-    }
-
-    void H264Encoder::updateSettings(bool sizeUpdated)
-    {
-        if (m_InitializationResult == MacOSEncoderStatus::Success)
-        {
-            endSession();
+            [m_RenderTextures[i] release];
+            CVPixelBufferRelease(m_PixelBuffers[i]);
             
-            if (sizeUpdated)
-            {
-                releaseBuffers();
-            }
+            m_RenderTextures[i] = nil;
+            m_PixelBuffers[i] = nil;
         }
         
-        m_InitializationResult = MacOSEncoderStatus::NotInitialized;
-        Initialize(sizeUpdated);
-        
-        WriteFileDebug("Success: [UpdateSettings] - Settings changed.\n");
+        while (m_FrameQueue.size() > 0)
+        {
+            m_FrameQueue.pop();
+        }
     }
 
     bool H264Encoder::copyBuffer(void* frameSource, int frameIndex)

@@ -28,8 +28,8 @@ namespace MacOsEncodingPlugin
 {
     static IUnityInterfaces*         s_UnityInterfaces = nullptr;
     static IUnityGraphics*           s_UnityGraphics = nullptr;
-    static IUnityGraphicsMetal*      s_MetalGraphics = nullptr;
-    static IGraphicsEncoderDevice*   s_GraphicsEncoderDevice = nullptr;
+    static IUnityGraphicsMetalV1*    s_MetalGraphics = nullptr;
+    static MetalGraphicsEncoderDevice* s_GraphicsEncoderDevice = nullptr;
     static bool                      s_Initialized = false;
     
     static IDObjectMap<H264Encoder>  s_EncoderMap;
@@ -44,7 +44,7 @@ namespace MacOsEncodingPlugin
         switch (renderer)
         {
         case UnityGfxRenderer::kUnityGfxRendererMetal:
-            s_MetalGraphics = s_UnityInterfaces->Get<IUnityGraphicsMetal>();
+            s_MetalGraphics = s_UnityInterfaces->Get<IUnityGraphicsMetalV1>();
             return true;
         default:
             WriteFileDebug("Error - [GetRenderDeviceInterface] graphics API not supported.\n");
@@ -211,10 +211,13 @@ namespace MacOsEncodingPlugin
         instanceEncoder->Initialize(encoderData->useSRGB);
         
         s_EncoderMap.Add(encoderData->id, instanceEncoder);
+        
+        WriteFileDebug("Error - [Initialize] Added encoder ", encoderData->id);
     }
 
     void Update(void* data)
     {
+        /*
         WriteFileDebug("Info - [Initialize] Calling event.\n");
         
         if (!AreParametersValid(data))
@@ -233,6 +236,7 @@ namespace MacOsEncodingPlugin
         {
             WriteFileDebug("Error - [Update] invalid parameters.\n");
         }
+         */
     }
 
     void Encode(void* data)
@@ -258,16 +262,28 @@ namespace MacOsEncodingPlugin
         if (!AreParametersValid(data))
             return;
         
-        auto id = static_cast<int*>(data);
-        if (id && *id > 0)
+        WriteFileDebug("Info - [Finalize] Parameters are valid.\n");
+        
+        auto id = *(int*)data;
+        
+        if (id > 0)
         {
-            auto encoder = s_EncoderMap.GetInstance(*id);
+            WriteFileDebug("Info - [Finalize] id is valid ", id);
+            
+            auto encoder = s_EncoderMap.GetInstance(id);
             if (encoder)
             {
+                WriteFileDebug("Info - [Finalize] encoder is valid.\n");
+
+                encoder->Dispose();
                 delete encoder;
                 encoder = nullptr;
-                s_EncoderMap.Remove(*id);
-                WriteFileDebug("Info - [Finalize] Device deleted and removed.\n");
+                s_EncoderMap.Remove(id);
+                WriteFileDebug("Info - [Finalize] Device deleted and removed ", id);
+            }
+            else
+            {
+                WriteFileDebug("Info - [Finalize] encoder is null.\n");
             }
         }
         

@@ -14,6 +14,7 @@ namespace Unity.LiveCapture.VirtualCamera
     class VirtualCameraHost : CompanionAppHost
     {
         readonly BinarySender<VirtualCameraChannelFlags> m_ChannelFlagsSender;
+        readonly BinarySender<InputSampleV0> m_InputSender;
         readonly BinarySender<JoysticksSampleV0> m_JoysticksSender;
         readonly BinarySender<GamepadSampleV0> m_GamepadSender;
         readonly BoolSender m_DampingEnabledSender;
@@ -94,6 +95,7 @@ namespace Unity.LiveCapture.VirtualCamera
             : base(network, remote, stream)
         {
             BinarySender<VirtualCameraChannelFlags>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.ChannelFlags, out m_ChannelFlagsSender);
+            BinarySender<InputSampleV0>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.InputSample_V0, out m_InputSender);
             BinarySender<JoysticksSampleV0>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.JoysticksSample_V0, out m_JoysticksSender);
             BinarySender<GamepadSampleV0>.TryGet(m_Protocol, VirtualCameraMessages.ToServer.GamepadSample_V0, out m_GamepadSender);
 
@@ -426,6 +428,15 @@ namespace Unity.LiveCapture.VirtualCamera
         public void SendChannelFlags(VirtualCameraChannelFlags channelFlags)
         {
             m_ChannelFlagsSender?.Send(channelFlags);
+        }
+
+        /// <summary>
+        /// Sends a frame sample to the server.
+        /// </summary>
+        /// <param name="sample">The frame sample.</param>
+        public void SendInput(InputSample sample)
+        {
+            m_InputSender?.Send((InputSampleV0)sample);
         }
 
         /// <summary>

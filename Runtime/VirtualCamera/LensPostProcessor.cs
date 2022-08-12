@@ -30,9 +30,7 @@ namespace Unity.LiveCapture.VirtualCamera
         float m_FocalLengthVelocity;
         float m_ApertureVelocity;
 
-        TimedDataBuffer<Pose> m_PoseKeyframes = new TimedDataBuffer<Pose>(k_KeyframeBufferFrameRate, k_MinBufferSize);
-        TimedDataBuffer<Vector3> m_JoystickKeyframes = new TimedDataBuffer<Vector3>(k_KeyframeBufferFrameRate, k_MinBufferSize);
-        TimedDataBuffer<(Vector3, Vector3)> m_GamepadKeyframes = new TimedDataBuffer<(Vector3, Vector3)>(k_KeyframeBufferFrameRate, k_MinBufferSize);
+        TimedDataBuffer<InputSample> m_InputKeyframes = new TimedDataBuffer<InputSample>(k_KeyframeBufferFrameRate, k_MinBufferSize);
         TimedDataBuffer<float> m_FocusDistanceKeyframes = new TimedDataBuffer<float>(k_KeyframeBufferFrameRate, k_MinBufferSize);
         TimedDataBuffer<float> m_FocalLengthKeyframes = new TimedDataBuffer<float>(k_KeyframeBufferFrameRate, k_MinBufferSize);
         TimedDataBuffer<float> m_ApertureKeyframes = new TimedDataBuffer<float>(k_KeyframeBufferFrameRate, k_MinBufferSize);
@@ -69,9 +67,7 @@ namespace Unity.LiveCapture.VirtualCamera
         public void Validate()
         {
             m_BufferSize = Math.Max(MinBufferSize, m_BufferSize);
-            m_PoseKeyframes.SetCapacity(m_BufferSize);
-            m_JoystickKeyframes.SetCapacity(m_BufferSize);
-            m_GamepadKeyframes.SetCapacity(m_BufferSize);
+            m_InputKeyframes.SetCapacity(m_BufferSize);
             m_FocalLengthKeyframes.SetCapacity(m_BufferSize);
             m_FocusDistanceKeyframes.SetCapacity(m_BufferSize);
             m_ApertureKeyframes.SetCapacity(m_BufferSize);
@@ -94,9 +90,7 @@ namespace Unity.LiveCapture.VirtualCamera
         public void Reset()
         {
             m_Lens = GetLensTarget?.Invoke() ?? Lens.DefaultParams;
-            m_PoseKeyframes.Clear();
-            m_JoystickKeyframes.Clear();
-            m_GamepadKeyframes.Clear();
+            m_InputKeyframes.Clear();
             m_FocalLengthKeyframes.Clear();
             m_ApertureKeyframes.Clear();
             m_FocusDistanceKeyframes.Clear();
@@ -105,19 +99,9 @@ namespace Unity.LiveCapture.VirtualCamera
             m_ApertureVelocity = 0;
         }
 
-        public void AddPoseKeyframe(double time, Pose value)
+        public void AddInputKeyframe(InputSample sample)
         {
-            m_PoseKeyframes.Add(time, value);
-        }
-
-        public void AddJoystickKeyframe(double time, Vector3 value)
-        {
-            m_JoystickKeyframes.Add(time, value);
-        }
-
-        public void AddGamepadKeyframe(double time, Vector3 move, Vector3 look)
-        {
-            m_GamepadKeyframes.Add(time, (move, look));
+            m_InputKeyframes.Add(sample.Time, sample);
         }
 
         public void AddFocusDistanceKeyframe(double time, float value)
@@ -144,17 +128,17 @@ namespace Unity.LiveCapture.VirtualCamera
 
         public FrameRate GetBufferFrameRate()
         {
-            return m_PoseKeyframes.FrameRate;
+            return m_InputKeyframes.FrameRate;
         }
 
         public bool TryGetBufferRange(out FrameTime oldestSample, out FrameTime newestSample)
         {
-            return m_PoseKeyframes.TryGetBufferRange(out oldestSample, out newestSample);
+            return m_InputKeyframes.TryGetBufferRange(out oldestSample, out newestSample);
         }
 
         public TimedSampleStatus GetStatusAt(FrameTime frameTime)
         {
-            return m_PoseKeyframes.TryGetSample(frameTime, out var _);
+            return m_InputKeyframes.TryGetSample(frameTime, out var _);
         }
 
         public IEnumerable<(double time, Pose? pose, Lens? lens)> ProcessTo(FrameTime frameTime)
@@ -182,46 +166,29 @@ namespace Unity.LiveCapture.VirtualCamera
                 var rigSettings = GetRigSettings(settings);
                 var applyDamping = ApplyDamping?.Invoke() ?? false;
 
-                if (applyDamping)
+                if (m_InputKeyframes.GetLatest(CurrentFrameTime) is {} key)
                 {
-                    if (m_PoseKeyframes.GetLatest(CurrentFrameTime) is {} pose)
-                    {
-                        InitializeRigIfNeeded(ref rig, pose);
+                    var pose = key.ARPose;
 
+                    InitializeRigIfNeeded(ref rig, pose);
+
+                    if (applyDamping)
+                    {
                         pose = VirtualCameraDamping.Calculate(
                             rig.LastInput, pose, settings.Damping, deltaTime);
-
-                        rig.Update(pose, rigSettings);
-
-                        isPoseValid = true;
                     }
-                }
-                else
-                {
-                    if (m_PoseKeyframes.TryGetSample(CurrentFrameTime, out var pose) == TimedSampleStatus.Ok)
-                    {
-                        InitializeRigIfNeeded(ref rig, pose);
 
-                        rig.Update(pose, rigSettings);
+                    rig.Update(pose, rigSettings);
 
-                        isPoseValid = true;
-                    }
-                }
-                if (m_JoystickKeyframes.TryGetSample(CurrentFrameTime, out var joystick) == TimedSampleStatus.Ok)
-                {
-                    rig.Translate(joystick, deltaTime, settings.JoystickSensitivity, settings.PedestalSpace, settings.MotionSpace, rigSettings);
-                    
-                    isPoseValid = true;
-                }
-                if (m_GamepadKeyframes.TryGetSample(CurrentFrameTime, out (Vector3 move, Vector3 look) gamepad) == TimedSampleStatus.Ok)
-                {
-                    var move = gamepad.move;
-                    var look = gamepad.look;
+                    // Virtual Joysticks
+                    rig.Translate(key.VirtualJoysticks, deltaTime, settings.JoystickSensitivity, settings.PedestalSpace, settings.MotionSpace, rigSettings);
+
+                    // Gamepad
                     /// Convert look to degrees about Unity's ZXY rotation order and handedness.
-                    var unityLook = new Vector3(-look.x, look.y, -look.z);
+                    var look = Vector3.Scale(key.GamepadLook, new Vector3(-1f, 1f, -1f));
 
-                    rig.Rotate(unityLook, deltaTime, Vector3.one, rigSettings);
-                    rig.Translate(move, deltaTime, Vector3.one, settings.PedestalSpace, settings.MotionSpace, rigSettings);
+                    rig.Rotate(look, deltaTime, Vector3.one, rigSettings);
+                    rig.Translate(key.GamepadMove, deltaTime, Vector3.one, settings.PedestalSpace, settings.MotionSpace, rigSettings);
 
                     isPoseValid = true;
                 }

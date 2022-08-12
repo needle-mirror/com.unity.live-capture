@@ -1,6 +1,8 @@
+using System;
+
 namespace Unity.LiveCapture.VirtualCamera
 {
-    interface ICameraDriverImpl
+    interface ICameraDriverImpl : IDisposable
     {
         /// <summary>
         /// Activates the depth of field effect.

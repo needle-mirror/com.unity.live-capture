@@ -1,44 +1,42 @@
-using System;
 using UnityEngine;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
-    [Serializable]
     class VanillaCameraDriverComponent : ICameraDriverComponent
     {
-        Camera m_Camera;
-
         /// <summary>
         /// The camera this driver component acts on.
         /// </summary>
-        public Camera Camera
-        {
-            set { m_Camera = value; }
-        }
+        public Camera Camera { get; set; }
 
         /// <inheritdoc/>
-        public bool EnableDepthOfField(bool value)
-        {
-            return false;
-        }
+        public void Dispose() {}
 
         /// <inheritdoc/>
-        public bool SetDamping(Damping dampingData)
-        {
-            return false;
-        }
+        public void EnableDepthOfField(bool value) {}
 
         /// <inheritdoc/>
-        public bool SetFocusDistance(float focusDistance)
-        {
-            return false;
-        }
+        public void SetDamping(Damping dampingData) {}
 
         /// <inheritdoc/>
-        public bool SetPhysicalCameraProperties(Lens lens, LensIntrinsics intrinsics, CameraBody cameraBody)
+        public void SetFocusDistance(float focusDistance) {}
+
+        /// <inheritdoc/>
+        public void SetPhysicalCameraProperties(Lens lens, LensIntrinsics intrinsics, CameraBody cameraBody)
         {
-            CompositeCameraDriverImpl.UpdateCamera(m_Camera, lens, intrinsics, cameraBody);
-            return true;
+            Camera.usePhysicalProperties = true;
+            Camera.sensorSize = cameraBody.SensorSize;
+            Camera.lensShift = intrinsics.LensShift;
+            Camera.focalLength = lens.FocalLength;
+#if UNITY_2022_2_OR_NEWER
+            Camera.aperture = lens.Aperture;
+            Camera.iso = cameraBody.Iso;
+            Camera.shutterSpeed = cameraBody.ShutterSpeed;
+            Camera.anamorphism = intrinsics.Anamorphism;
+            Camera.curvature = intrinsics.Curvature;
+            Camera.barrelClipping = intrinsics.BarrelClipping;
+            Camera.bladeCount = intrinsics.BladeCount;
+#endif
         }
     }
 }

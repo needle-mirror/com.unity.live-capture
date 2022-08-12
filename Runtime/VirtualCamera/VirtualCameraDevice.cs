@@ -846,7 +846,7 @@ namespace Unity.LiveCapture.VirtualCamera
             if (TryGetInternalClient(out var client))
             {
                 client.ChannelFlagsReceived += OnChannelFlagsReceived;
-                client.PoseSampleReceived += OnPoseSampleReceived;
+                client.InputSampleReceived += OnInputSampleReceived;
                 client.FocalLengthSampleReceived += OnFocalLengthSampleReceived;
                 client.FocusDistanceSampleReceived += OnFocusDistanceSampleReceived;
                 client.ApertureSampleReceived += OnApertureSampleReceived;
@@ -880,8 +880,6 @@ namespace Unity.LiveCapture.VirtualCamera
                 client.GoToSnapshot += OnGoToSnapshot;
                 client.LoadSnapshot += OnLoadSnapshot;
                 client.DeleteSnapshot += OnDeleteSnapshot;
-                client.JoysticksSampleReceived += OnJoysticksSampleReceived;
-                client.GamepadSampleReceived += OnGamepadSampleReceived;
             }
         }
 
@@ -890,7 +888,7 @@ namespace Unity.LiveCapture.VirtualCamera
             if (TryGetInternalClient(out var client))
             {
                 client.ChannelFlagsReceived -= OnChannelFlagsReceived;
-                client.PoseSampleReceived -= OnPoseSampleReceived;
+                client.InputSampleReceived -= OnInputSampleReceived;
                 client.FocalLengthSampleReceived -= OnFocalLengthSampleReceived;
                 client.FocusDistanceSampleReceived -= OnFocusDistanceSampleReceived;
                 client.ApertureSampleReceived -= OnApertureSampleReceived;
@@ -924,8 +922,6 @@ namespace Unity.LiveCapture.VirtualCamera
                 client.GoToSnapshot -= OnGoToSnapshot;
                 client.LoadSnapshot -= OnLoadSnapshot;
                 client.DeleteSnapshot -= OnDeleteSnapshot;
-                client.JoysticksSampleReceived -= OnJoysticksSampleReceived;
-                client.GamepadSampleReceived -= OnGamepadSampleReceived;
             }
         }
 
@@ -966,19 +962,9 @@ namespace Unity.LiveCapture.VirtualCamera
             m_Channels = channelFlags;
         }
 
-        void OnJoysticksSampleReceived(JoysticksSample sample)
+        void OnInputSampleReceived(InputSample sample)
         {
-            m_Processor.AddJoystickKeyframe(sample.Time, sample.Joysticks);
-        }
-
-        void OnGamepadSampleReceived(GamepadSample sample)
-        {
-            m_Processor.AddGamepadKeyframe(sample.Time, sample.Move, sample.Look);
-        }
-
-        void OnPoseSampleReceived(PoseSample sample)
-        {
-            m_Processor.AddPoseKeyframe(sample.Time, sample.Pose);
+            m_Processor.AddInputKeyframe(sample);
 
             Refresh();
 

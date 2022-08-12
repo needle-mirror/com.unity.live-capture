@@ -1,5 +1,4 @@
 using UnityEngine;
-using System;
 #if VP_CINEMACHINE_2_4_0
 using Cinemachine;
 #endif
@@ -15,43 +14,70 @@ namespace Unity.LiveCapture.VirtualCamera
         CinemachineDriverComponent m_CinemachineComponent = new CinemachineDriverComponent();
 #if HDRP_10_2_OR_NEWER
         [SerializeField, Tooltip("High Definition Render Pipeline camera driver component.")]
-        HdrpCoreCameraDriverComponent m_HdrpCoreComponent = new HdrpCoreCameraDriverComponent();
+        HdrpCinemachineCameraDriverComponent m_HdrpCinemachineComponent = new HdrpCinemachineCameraDriverComponent();
+#endif
+#if URP_10_2_OR_NEWER
+        [SerializeField, Tooltip("Universal Render Pipeline camera driver component.")]
+        UrpCinemachineCameraDriverComponent m_UrpComponent = new UrpCinemachineCameraDriverComponent();
 #endif
         ICameraDriverImpl m_Impl;
 
         public CinemachineVirtualCamera CinemachineVirtualCamera
         {
             get => m_CinemachineComponent.CinemachineVirtualCamera;
-            set => m_CinemachineComponent.CinemachineVirtualCamera = value;
+            set
+            {
+                m_CinemachineComponent.CinemachineVirtualCamera = value;
+                Validate();
+            }
         }
 
-        protected override void Initialize()
+        protected override void OnEnable()
         {
-#if HDRP_10_2_OR_NEWER
-            m_HdrpCoreComponent.SetRoot(gameObject);
-#endif
-        }
+            base.OnEnable();
 
-        void OnValidate()
-        {
-            m_CinemachineComponent.Validate();
-        }
-
-        protected override ICameraDriverImpl GetImplementation()
-        {
             if (m_Impl == null)
             {
                 m_Impl = new CompositeCameraDriverImpl(new ICameraDriverComponent[]
                 {
                     m_CinemachineComponent,
 #if HDRP_10_2_OR_NEWER
-                    m_HdrpCoreComponent,
+                    m_HdrpCinemachineComponent,
+#endif
+#if URP_10_2_OR_NEWER
+                    m_UrpComponent,
 #endif
                 });
             }
-
-            return m_Impl;
         }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            m_Impl.Dispose();
+        }
+
+        protected override void OnValidate()
+        {
+            base.OnValidate();
+
+            m_CinemachineComponent.Validate();
+
+            Validate();
+        }
+
+        void Validate()
+        {
+#if HDRP_10_2_OR_NEWER
+            m_HdrpCinemachineComponent.CinemachineVirtualCamera = CinemachineVirtualCamera;
+#endif
+#if URP_10_2_OR_NEWER
+            m_UrpComponent.CinemachineVirtualCamera = CinemachineVirtualCamera;
+#endif
+        }
+
+        protected override ICameraDriverImpl GetImplementation() => m_Impl;
 
         /// <inheritdoc/>
         public override Camera GetCamera()
@@ -64,8 +90,10 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
 #else
-        protected override void Initialize()
+        protected override void OnEnable()
         {
+            base.OnEnable();
+
             Debug.LogError(
                 $"A {nameof(CinemachineCameraDriver)} is used yet Cinemachine is not installed." +
                 $"a {nameof(PhysicalCameraDriver)} should be used instead.");

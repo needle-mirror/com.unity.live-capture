@@ -17,7 +17,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The version of the package.
         /// </summary>
-        public const string Version = "3.0.0-pre.6";
+        public const string Version = "3.0.0";
 
         /// <summary>
         /// The version used for documentation references.

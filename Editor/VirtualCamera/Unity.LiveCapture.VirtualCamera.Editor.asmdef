@@ -13,6 +13,7 @@
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.RenderPipelines.HighDefinition.Runtime",
         "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Editor",
         "Cinemachine",
         "Unity.InputSystem"
     ],

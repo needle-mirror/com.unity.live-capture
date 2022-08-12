@@ -6,7 +6,6 @@
     #define USING_POST_PROCESSING_STACK_V2
 #endif
 
-using System;
 using UnityEngine;
 
 #if HDRP_10_2_OR_NEWER
@@ -21,11 +20,10 @@ namespace Unity.LiveCapture.VirtualCamera
     [ExcludeFromPreset]
     class PhysicalCameraDriver : BaseCameraDriver
     {
+        VanillaCameraDriverComponent m_VanillaCameraDriverComponent = new VanillaCameraDriverComponent();
 #if HDRP_10_2_OR_NEWER
         [SerializeField, Tooltip("High Definition Render Pipeline camera driver component.")]
         HdrpCoreCameraDriverComponent m_HdrpCoreComponent = new HdrpCoreCameraDriverComponent();
-
-        HdrpNoCinemachineCameraDriverComponent m_HdrpNoCinemachineCameraDriverComponent = new HdrpNoCinemachineCameraDriverComponent();
 #endif
 #if URP_10_2_OR_NEWER
         [SerializeField, Tooltip("Universal Render Pipeline camera driver component.")]
@@ -35,47 +33,39 @@ namespace Unity.LiveCapture.VirtualCamera
         [SerializeField, HideInInspector]
         PostProcessingV2CameraDriverComponent m_PostProcessingV2CameraDriverComponent = new PostProcessingV2CameraDriverComponent();
 #endif
-#if !USING_POST_PROCESSING_STACK_V2 && !USING_SCRIPTABLE_RENDER_PIPELINE
-        [SerializeField, HideInInspector]
-        VanillaCameraDriverComponent m_VanillaCameraDriverComponent = new VanillaCameraDriverComponent();
-#endif
 
         Camera m_Camera;
         ICameraDriverImpl m_Impl;
 
-        protected override void Initialize()
+        protected override void OnEnable()
         {
+            base.OnEnable();
+
             m_Camera = GetComponent<Camera>();
-            m_Camera.usePhysicalProperties = true;
 
+            m_VanillaCameraDriverComponent.Camera = m_Camera;
 #if HDRP_10_2_OR_NEWER
-            var hdCameraData = GetComponent<HDAdditionalCameraData>();
-            if (hdCameraData == null)
-                hdCameraData = gameObject.AddComponent<HDAdditionalCameraData>();
+            if (!gameObject.TryGetComponent<HDAdditionalCameraData>(out var hdData))
+            {
+                gameObject.AddComponent<HDAdditionalCameraData>();
+            }
 
-            m_HdrpNoCinemachineCameraDriverComponent.Camera = m_Camera;
-
-            m_HdrpCoreComponent.SetRoot(gameObject);
+            m_HdrpCoreComponent.Root = gameObject;
+            m_HdrpCoreComponent.Camera = m_Camera;
 #endif
 #if URP_10_2_OR_NEWER
-            m_UrpComponent.SetCamera(m_Camera);
+            m_UrpComponent.Camera = m_Camera;
 #endif
 #if USING_POST_PROCESSING_STACK_V2
-            m_PostProcessingV2CameraDriverComponent.SetCamera(m_Camera);
+            m_PostProcessingV2CameraDriverComponent.Camera = m_Camera;
 #endif
-#if !USING_POST_PROCESSING_STACK_V2 && !USING_SCRIPTABLE_RENDER_PIPELINE
-            m_VanillaCameraDriverComponent.Camera = m_Camera;
-#endif
-        }
 
-        protected override ICameraDriverImpl GetImplementation()
-        {
             if (m_Impl == null)
             {
                 m_Impl = new CompositeCameraDriverImpl(new ICameraDriverComponent[]
                 {
+                    m_VanillaCameraDriverComponent,
 #if HDRP_10_2_OR_NEWER
-                    m_HdrpNoCinemachineCameraDriverComponent,
                     m_HdrpCoreComponent,
 #endif
 #if URP_10_2_OR_NEWER
@@ -84,14 +74,18 @@ namespace Unity.LiveCapture.VirtualCamera
 #if USING_POST_PROCESSING_STACK_V2
                     m_PostProcessingV2CameraDriverComponent,
 #endif
-#if !USING_POST_PROCESSING_STACK_V2 && !USING_SCRIPTABLE_RENDER_PIPELINE
-                    m_VanillaCameraDriverComponent,
-#endif
                 });
             }
-
-            return m_Impl;
         }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            m_Impl.Dispose();
+        }
+
+        protected override ICameraDriverImpl GetImplementation() => m_Impl;
 
         /// <inheritdoc/>
         public override Camera GetCamera() => m_Camera;

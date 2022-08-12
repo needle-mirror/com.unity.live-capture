@@ -23,19 +23,9 @@ namespace Unity.LiveCapture.VirtualCamera
         event Action<VirtualCameraChannelFlags> ChannelFlagsReceived;
 
         /// <summary>
-        /// An event invoked when a joystick sample is received.
+        /// An event invoked when a input sample is received.
         /// </summary>
-        event Action<JoysticksSample> JoysticksSampleReceived;
-
-        /// <summary>
-        /// An event invoked when a gamepad sample is received.
-        /// </summary>
-        event Action<GamepadSample> GamepadSampleReceived;
-
-        /// <summary>
-        /// An event invoked when a transform sample is received.
-        /// </summary>
-        event Action<PoseSample> PoseSampleReceived;
+        event Action<InputSample> InputSampleReceived;
 
         /// <summary>
         /// An event invoked when a focal length sample is received.
@@ -307,17 +297,13 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc />
         public event Action<VirtualCameraChannelFlags> ChannelFlagsReceived;
         /// <inheritdoc />
-        public event Action<JoysticksSample> JoysticksSampleReceived;
-        /// <inheritdoc />
-        public event Action<GamepadSample> GamepadSampleReceived;
-        /// <inheritdoc />
-        public event Action<PoseSample> PoseSampleReceived;
-        /// <inheritdoc />
         public event Action<FocalLengthSample> FocalLengthSampleReceived;
         /// <inheritdoc />
         public event Action<FocusDistanceSample> FocusDistanceSampleReceived;
         /// <inheritdoc />
         public event Action<ApertureSample> ApertureSampleReceived;
+        /// <inheritdoc />
+        public event Action<InputSample> InputSampleReceived;
         /// <inheritdoc />
         public event Action<bool> DampingEnabledReceived;
         /// <inheritdoc />
@@ -425,17 +411,9 @@ namespace Unity.LiveCapture.VirtualCamera
             {
                 ChannelFlagsReceived?.Invoke(flags);
             });
-            m_Protocol.Add(new BinaryReceiver<JoysticksSampleV0>(VirtualCameraMessages.ToServer.JoysticksSample_V0, ChannelType.UnreliableUnordered)).AddHandler(joysticks =>
+            m_Protocol.Add(new BinaryReceiver<InputSampleV0>(VirtualCameraMessages.ToServer.InputSample_V0, ChannelType.UnreliableUnordered)).AddHandler(sample =>
             {
-                JoysticksSampleReceived?.Invoke((JoysticksSample)joysticks);
-            });
-            m_Protocol.Add(new BinaryReceiver<GamepadSampleV0>(VirtualCameraMessages.ToServer.GamepadSample_V0, ChannelType.UnreliableUnordered)).AddHandler(joysticks =>
-            {
-                GamepadSampleReceived?.Invoke((GamepadSample)joysticks);
-            });
-            m_Protocol.Add(new BinaryReceiver<PoseSampleV1>(VirtualCameraMessages.ToServer.PoseSample_V1, ChannelType.UnreliableUnordered)).AddHandler(pose =>
-            {
-                PoseSampleReceived?.Invoke((PoseSample)pose);
+                InputSampleReceived?.Invoke((InputSample)sample);
             });
             m_Protocol.Add(new BinaryReceiver<FocalLengthSampleV1>(VirtualCameraMessages.ToServer.FocalLengthSample_V1, ChannelType.UnreliableUnordered)).AddHandler(focalLength =>
             {

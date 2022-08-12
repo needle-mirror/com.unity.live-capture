@@ -63,6 +63,7 @@ namespace Unity.LiveCapture.VirtualCamera
             public const string FocusDistanceSample_V1 = k_Base + "FocusDistanceSample_V1";
             public const string ApertureSample_V0 = k_Base + "ApertureSample_V0";
             public const string ApertureSample_V1 = k_Base + "ApertureSample_V1";
+            public const string InputSample_V0 = k_Base + "InputSample_V0";
             public const string DampingEnabled = k_Base + "DampingEnabled";
             public const string BodyDamping = k_Base + "BodyDamping";
             public const string AimDamping = k_Base + "AimDamping";

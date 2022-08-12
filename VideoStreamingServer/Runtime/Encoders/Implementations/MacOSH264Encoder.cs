@@ -128,7 +128,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
         EncoderSettingsID m_SettingsID;
         EncoderTextureID  m_TextureID;
         EncoderStatus     m_EncoderStatus;
-        IntPtr            m_Encoder;
+        int               m_FinalizeID;
         CommandBuffer     m_CommandBuffer;
 
         /// <inheritdoc/>
@@ -164,9 +164,11 @@ namespace Unity.LiveCapture.VideoStreaming.Server
             if (m_EncoderStatus != EncoderStatus.Initialized)
                 return;
 
-            fixed(int* encoderPtr = &m_SettingsID.encoderId)
+            m_FinalizeID = m_SettingsID.encoderId;
+
+            fixed(int* id = &m_FinalizeID)
             {
-                ExecuteMacOSCommand(EMacOSRenderEvent.Finalize, "Mac OS Encoder Finalize", (IntPtr)encoderPtr);
+                ExecuteMacOSCommand(EMacOSRenderEvent.Finalize, "Mac OS Encoder Finalize", (IntPtr)id);
             }
 
             DisposeCommandBuffer();
@@ -179,7 +181,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
         unsafe public void Setup(EncoderSettings settings, EncoderFormat encoderFormat)
         {
             m_SettingsID.settings = settings;
-            m_SettingsID.encoderId = ++m_Counter;
+            m_SettingsID.encoderId = m_Counter++;
             m_SettingsID.encoderFormat = encoderFormat;
             m_SettingsID.useSRGB = QualitySettings.activeColorSpace != ColorSpace.Gamma;
 

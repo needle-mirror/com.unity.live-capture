@@ -10,77 +10,105 @@ namespace Unity.LiveCapture.VirtualCamera
     [Serializable]
     class PostProcessingV2CameraDriverComponent : ICameraDriverComponent
     {
+        const string k_ProfileName = "Camera Driver Profile";
+
+        [SerializeField, HideInInspector]
+        PostProcessProfile m_Profile;
         DepthOfField m_DepthOfField;
-        Camera m_Camera;
-
+        
         /// <summary>
-        /// Configures the driver component based on a Camera instance.
+        /// Camera to be driven by this component.
         /// </summary>
-        /// <param name="camera">The camera instance used by the driver.</param>
-        public void SetCamera(Camera camera)
+        public Camera Camera { get; set; }
+
+        void PrepareIfNeeded()
         {
-            m_Camera = camera;
-            Assert.IsNotNull(m_Camera);
+            Assert.IsNotNull(Camera);
 
-            var postProcessLayer = AdditionalCoreUtils.GetOrAddComponent<PostProcessLayer>(m_Camera.gameObject);
-            postProcessLayer.volumeTrigger = m_Camera.transform;
-            postProcessLayer.volumeLayer = LayerMask.GetMask(LayerMask.LayerToName(m_Camera.gameObject.layer));
-
-            var postProcessVolume = AdditionalCoreUtils.GetOrAddComponent<PostProcessVolume>(m_Camera.gameObject);
-            postProcessVolume.isGlobal = false;
-            postProcessVolume.priority = 1;
-
-            var sphereCollider = AdditionalCoreUtils.GetOrAddComponent<SphereCollider>(m_Camera.gameObject);
-            sphereCollider.radius = 0.01f;
-            sphereCollider.isTrigger = true;
-
-            var profile = postProcessVolume.profile;
-            if (profile == null)
+            if (!Camera.gameObject.TryGetComponent<PostProcessLayer>(out var postProcessLayer))
             {
-                profile = ScriptableObject.CreateInstance<PostProcessProfile>();
-                profile.hideFlags = HideFlags.DontSave;
-                postProcessVolume.profile = profile;
+                postProcessLayer = AdditionalCoreUtils.GetOrAddComponent<PostProcessLayer>(Camera.gameObject);
+                postProcessLayer.volumeTrigger = Camera.transform;
+                postProcessLayer.volumeLayer = LayerMask.GetMask(LayerMask.LayerToName(Camera.gameObject.layer));
             }
 
-            m_DepthOfField = profile.GetSetting<DepthOfField>();
+            if (!Camera.gameObject.TryGetComponent<PostProcessVolume>(out var volume))
+            {
+                volume = AdditionalCoreUtils.GetOrAddComponent<PostProcessVolume>(Camera.gameObject);
+                volume.isGlobal = false;
+                volume.priority = 1;
+            }
+
+            if (!Camera.gameObject.TryGetComponent<SphereCollider>(out var sphereCollider))
+            {
+                sphereCollider = AdditionalCoreUtils.GetOrAddComponent<SphereCollider>(Camera.gameObject);
+                sphereCollider.radius = 0.01f;
+                sphereCollider.isTrigger = true;
+            }
+
+            // Profile instances will end up being shared when duplicating objects through serialization.
+            // We have to invalidate the profile when we don't know who created it.
+            if (!VolumeProfileTracker.Instance.TryRegisterProfileOwner(m_Profile, volume))
+            {
+                m_Profile = null;
+            }
+
+            if (m_Profile == null)
+            {
+                m_Profile = volume.profile;
+
+                if (string.IsNullOrEmpty(m_Profile.name))
+                {
+                    m_Profile.name = k_ProfileName;
+                }
+
+                VolumeProfileTracker.Instance.TryRegisterProfileOwner(m_Profile, volume);
+            }
+
+            volume.profile = m_Profile;
+
+            m_DepthOfField = m_Profile.GetSetting<DepthOfField>();
+
             if (m_DepthOfField == null)
             {
-                m_DepthOfField = profile.AddSettings<DepthOfField>();
-                m_DepthOfField.hideFlags = HideFlags.DontSave;
+                m_DepthOfField = m_Profile.AddSettings<DepthOfField>();
             }
-
-            UpdateParameterIfNeeded(m_DepthOfField.enabled, false);
         }
 
         /// <inheritdoc/>
-        public bool EnableDepthOfField(bool value)
+        public void Dispose()
         {
+            VolumeProfileTracker.Instance.UnregisterProfile(m_Profile);
+            AdditionalCoreUtils.DestroyIfNeeded(ref m_Profile);
+            AdditionalCoreUtils.DestroyIfNeeded(ref m_DepthOfField);
+        }
+
+        /// <inheritdoc/>
+        public void EnableDepthOfField(bool value)
+        {
+            PrepareIfNeeded();
+
             UpdateParameterIfNeeded(m_DepthOfField.enabled, value);
-            return true;
         }
 
         /// <inheritdoc/>
-        public bool SetDamping(Damping dampingData)
-        {
-            return false;
-        }
+        public void SetDamping(Damping dampingData) {}
 
         /// <inheritdoc/>
-        public bool SetFocusDistance(float focusDistance)
+        public void SetFocusDistance(float focusDistance)
         {
+            PrepareIfNeeded();
+
             UpdateParameterIfNeeded(m_DepthOfField.focusDistance, focusDistance);
-            return true;
         }
 
         /// <inheritdoc/>
-        public bool SetPhysicalCameraProperties(Lens lens, LensIntrinsics intrinsics, CameraBody cameraBody)
+        public void SetPhysicalCameraProperties(Lens lens, LensIntrinsics intrinsics, CameraBody cameraBody)
         {
-            CompositeCameraDriverImpl.UpdateCamera(m_Camera, lens, intrinsics, cameraBody);
+            PrepareIfNeeded();
 
             UpdateParameterIfNeeded(m_DepthOfField.focalLength, lens.FocalLength);
             UpdateParameterIfNeeded(m_DepthOfField.aperture, lens.Aperture);
-
-            return true;
         }
 
         static void UpdateParameterIfNeeded<T>(ParameterOverride<T> parameter, T value)

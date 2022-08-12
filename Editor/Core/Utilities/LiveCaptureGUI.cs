@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEditor;
 
@@ -5,25 +6,45 @@ namespace Unity.LiveCapture.Editor
 {
     static class LiveCaptureGUI
     {
+        const float k_IndentMargin = 15.0f;
+
         static class Contents
         {
             public static readonly GUIContent InfoIcon = EditorGUIUtility.TrIconContent("console.infoicon");
             public static readonly GUIContent WarningIcon = EditorGUIUtility.TrIconContent("console.warnicon");
             public static readonly GUIContent ErrorIcon = EditorGUIUtility.TrIconContent("console.erroricon");
-            public static readonly GUIStyle HelpBoxStyleNoIcon = new GUIStyle(EditorStyles.helpBox);
-            public static readonly GUIStyle HelpBoxStyleWithIcon = new GUIStyle(EditorStyles.helpBox);
-            public static readonly GUIStyle HelpBoxLinkStyle = new GUIStyle();
+            public static readonly GUIStyle HelpBoxStyleNoIcon;
+            public static readonly GUIStyle HelpBoxStyleWithIcon;
+            public static readonly GUIStyle HelpBoxLinkStyle;
+            public static readonly GUIStyle HelpBox;
+            public static readonly GUIContent Fix = EditorGUIUtility.TrTextContent("Fix");
 
             static Contents()
             {
-                HelpBoxStyleNoIcon.alignment = TextAnchor.UpperLeft;
-                HelpBoxStyleNoIcon.padding = new RectOffset(5, 5, 5, 20);
-                HelpBoxStyleWithIcon.alignment = TextAnchor.UpperLeft;
-                HelpBoxStyleWithIcon.padding = new RectOffset(37, 5, 5, 20);
-                HelpBoxLinkStyle.font = HelpBoxStyleWithIcon.font;
-                HelpBoxLinkStyle.padding = new RectOffset(5, 5, 2, 2);
-                HelpBoxLinkStyle.alignment = TextAnchor.LowerRight;
+                HelpBoxStyleWithIcon = new GUIStyle(EditorStyles.helpBox)
+                {
+                    alignment = TextAnchor.UpperLeft,
+                    padding = new RectOffset(37, 5, 5, 20)
+                };
+                HelpBoxLinkStyle = new GUIStyle()
+                {
+                    font = HelpBoxStyleWithIcon.font,
+                    padding = new RectOffset(5, 5, 2, 2),
+                    alignment = TextAnchor.LowerRight
+                };
                 HelpBoxLinkStyle.normal.textColor = new Color(0.34f, 0.68f, 1f, 1f);
+                HelpBoxStyleNoIcon = new GUIStyle(EditorStyles.helpBox)
+                {
+                    alignment = TextAnchor.UpperLeft,
+                    padding = new RectOffset(5, 5, 5, 20)
+                };
+                HelpBox = new GUIStyle()
+                {
+                    imagePosition = ImagePosition.ImageLeft,
+                    fontSize = 10,
+                    wordWrap = true
+                };
+                HelpBox.normal.textColor = EditorStyles.helpBox.normal.textColor;
             }
         }
 
@@ -73,6 +94,38 @@ namespace Unity.LiveCapture.Editor
             }
 
             EditorGUILayout.EndHorizontal();
+        }
+
+        public static void DrawFixMeBox(GUIContent message, Action action)
+        {
+            EditorGUILayout.BeginHorizontal();
+
+            float indent = EditorGUI.indentLevel * k_IndentMargin - EditorStyles.helpBox.margin.left;
+            GUILayoutUtility.GetRect(indent, EditorGUIUtility.singleLineHeight, EditorStyles.helpBox, GUILayout.ExpandWidth(false));
+
+            Rect leftRect = GUILayoutUtility.GetRect(Contents.Fix, EditorStyles.miniButton, GUILayout.MinWidth(60));
+            Rect rect = GUILayoutUtility.GetRect(message, EditorStyles.helpBox);
+            Rect boxRect = new Rect(leftRect.x, rect.y, rect.xMax - leftRect.xMin, rect.height);
+
+            int oldIndent = EditorGUI.indentLevel;
+            EditorGUI.indentLevel = 0;
+
+            if (Event.current.type == EventType.Repaint)
+                EditorStyles.helpBox.Draw(boxRect, false, false, false, false);
+
+            Rect labelRect = new Rect(boxRect.x + 4, boxRect.y + 3, rect.width - 8, rect.height);
+            EditorGUI.LabelField(labelRect, message, Contents.HelpBox);
+
+            var buttonRect = leftRect;
+            buttonRect.x += rect.width - 2;
+            buttonRect.y = rect.yMin + (rect.height - EditorGUIUtility.singleLineHeight) / 2;
+            bool clicked = GUI.Button(buttonRect, Contents.Fix);
+
+            EditorGUI.indentLevel = oldIndent;
+            EditorGUILayout.EndHorizontal();
+
+            if (clicked)
+                action();
         }
     }
 }

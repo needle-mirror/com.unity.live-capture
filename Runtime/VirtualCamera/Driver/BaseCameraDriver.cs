@@ -27,7 +27,15 @@ namespace Unity.LiveCapture.VirtualCamera
 
         protected abstract ICameraDriverImpl GetImplementation();
 
-        protected abstract void Initialize();
+        protected virtual void OnEnable()
+        {
+            m_VirtualCameraActor = GetComponent<VirtualCameraActor>();
+        }
+
+        protected virtual void OnDisable() {}
+        protected virtual void Awake() {}
+        protected virtual void OnDestroy() {}
+        protected virtual void OnValidate() {}
 
         bool TryGetImplementation(out ICameraDriverImpl impl)
         {
@@ -40,12 +48,6 @@ namespace Unity.LiveCapture.VirtualCamera
             catch {}
 
             return impl != null;
-        }
-
-        void OnEnable()
-        {
-            m_VirtualCameraActor = GetComponent<VirtualCameraActor>();
-            Initialize();
         }
 
         void Update()
