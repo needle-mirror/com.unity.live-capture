@@ -67,16 +67,6 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// </summary>
         public double ElapsedTime => InitialTime.HasValue ? Time - InitialTime.Value : 0d;
 
-        /// <summary>
-        /// The time offset to add to the recording.
-        /// </summary>
-        public double TimeOffset { get; private set; }
-
-        /// <summary>
-        /// The time to use for recording.
-        /// </summary>
-        public double RecordingTime => ElapsedTime + TimeOffset;
-
         public Action OnReset { get; set; }
 
         /// <summary>
@@ -148,11 +138,10 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// <summary>
         /// Initializes the recorder parameters for a new recording session.
         /// </summary>
-        public void Prepare(double timeOffset)
+        public void Prepare()
         {
             InitialTime = null;
             Time = 0d;
-            TimeOffset = timeOffset;
 
             GetReduceable(0).MaxError = BlendShapeError / 100f;
             GetReduceable(1).MaxError = PositionError / 100f;
@@ -180,26 +169,26 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         {
             if (Channels.HasFlag(FaceChannelFlags.BlendShapes))
             {
-                (GetCurve<FaceBlendShapePose>(0) as FaceBlendShapeCurves).AddKey(RecordingTime, ref sample.BlendShapes);
+                (GetCurve<FaceBlendShapePose>(0) as FaceBlendShapeCurves).AddKey(ElapsedTime, ref sample.BlendShapes);
             }
             if (Channels.HasFlag(FaceChannelFlags.HeadPosition))
             {
-                GetCurve<Vector3>(1).AddKey(RecordingTime, sample.HeadPosition);
+                GetCurve<Vector3>(1).AddKey(ElapsedTime, sample.HeadPosition);
             }
             if (Channels.HasFlag(FaceChannelFlags.HeadRotation))
             {
-                GetCurve<Quaternion>(2).AddKey(RecordingTime, sample.HeadOrientation);
+                GetCurve<Quaternion>(2).AddKey(ElapsedTime, sample.HeadOrientation);
             }
             if (Channels.HasFlag(FaceChannelFlags.Eyes))
             {
-                GetCurve<Quaternion>(3).AddKey(RecordingTime, sample.LeftEyeOrientation);
-                GetCurve<Quaternion>(4).AddKey(RecordingTime, sample.RightEyeOrientation);
+                GetCurve<Quaternion>(3).AddKey(ElapsedTime, sample.LeftEyeOrientation);
+                GetCurve<Quaternion>(4).AddKey(ElapsedTime, sample.RightEyeOrientation);
             }
 
-            GetCurve<bool>(5).AddKey(RecordingTime, Channels.HasFlag(FaceChannelFlags.BlendShapes));
-            GetCurve<bool>(6).AddKey(RecordingTime, Channels.HasFlag(FaceChannelFlags.HeadPosition));
-            GetCurve<bool>(7).AddKey(RecordingTime, Channels.HasFlag(FaceChannelFlags.HeadRotation));
-            GetCurve<bool>(8).AddKey(RecordingTime, Channels.HasFlag(FaceChannelFlags.Eyes));
+            GetCurve<bool>(5).AddKey(ElapsedTime, Channels.HasFlag(FaceChannelFlags.BlendShapes));
+            GetCurve<bool>(6).AddKey(ElapsedTime, Channels.HasFlag(FaceChannelFlags.HeadPosition));
+            GetCurve<bool>(7).AddKey(ElapsedTime, Channels.HasFlag(FaceChannelFlags.HeadRotation));
+            GetCurve<bool>(8).AddKey(ElapsedTime, Channels.HasFlag(FaceChannelFlags.Eyes));
         }
 
         /// <summary>

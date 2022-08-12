@@ -252,11 +252,21 @@ namespace Unity.LiveCapture.CompanionApp
 
                 if (TryGetInternalClient(out var client))
                 {
+                    var isPlaying = takeRecorder.IsPreviewPlaying();
+
                     client.SendFrameRate(takeRecorder.IsLive() || take == null ? takeRecorder.FrameRate : take.FrameRate);
                     client.SendHasSlate(hasSlate);
                     client.SendSlateDuration(takeRecorder.GetPreviewDuration());
-                    client.SendSlateIsPreviewing(takeRecorder.IsPreviewPlaying());
-                    client.SendSlatePreviewTime(takeRecorder.GetPreviewTime());
+                    client.SendSlateIsPreviewing(isPlaying);
+
+                    if (!isPlaying && IsRecording())
+                    {
+                        client.SendSlatePreviewTime(takeRecorder.GetRecordingElapsedTime());
+                    }
+                    else
+                    {
+                        client.SendSlatePreviewTime(takeRecorder.GetPreviewTime());
+                    }
 
                     if (slateChanged || assetNameChanged)
                     {

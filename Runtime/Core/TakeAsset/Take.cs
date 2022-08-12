@@ -33,6 +33,8 @@ namespace Unity.LiveCapture
         LazyLoadReference<Texture2D> m_Screenshot;
         [SerializeField]
         LazyLoadReference<TimelineAsset> m_Timeline;
+        [SerializeReference]
+        List<ITakeBinding> m_Bindings = new List<ITakeBinding>();
         [SerializeField]
         List<TrackBindingEntry> m_Entries = new List<TrackBindingEntry>();
         [SerializeField]
@@ -152,6 +154,11 @@ namespace Unity.LiveCapture
         internal IEnumerable<TrackBindingEntry> BindingEntries => m_Entries;
 
         internal IEnumerable<TrackMetadataEntry> MetadataEntries => m_MetadataEntries;
+
+        internal void AddBinding(ITakeBinding binding)
+        {
+            m_Bindings.Add(binding);
+        }
 
         internal void AddTrackBinding(TrackAsset track, ITakeBinding binding)
         {

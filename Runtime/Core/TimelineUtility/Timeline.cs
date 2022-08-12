@@ -28,8 +28,10 @@ namespace Unity.LiveCapture
         /// </summary>
         TimelineAsset MasterAsset { get; }
 
-        void SetAsMasterDirector(PlayableDirector director);
-
+        bool TrySetAsMasterDirector(PlayableDirector director);
+        void Play();
+        void Pause();
+        void SetGlobalTime(double time);
         void Repaint();
     }
 
@@ -77,9 +79,26 @@ namespace Unity.LiveCapture
             return MasterDirector != null && MasterDirector.playableGraph.IsValid();
         }
 
-        public static void SetAsMasterDirector(PlayableDirector director)
+        public static bool TrySetAsMasterDirector(PlayableDirector director)
         {
-            Instance.m_Impl?.SetAsMasterDirector(director);
+            var result = Instance.m_Impl?.TrySetAsMasterDirector(director);
+
+            return result.Value;
+        }
+
+        public static void Play()
+        {
+            Instance.m_Impl?.Play();
+        }
+
+        public static void Pause()
+        {
+            Instance.m_Impl?.Pause();
+        }
+
+        public static void SetGlobalTime(double time)
+        {
+            Instance.m_Impl?.SetGlobalTime(time);
         }
 
         public static void Repaint()

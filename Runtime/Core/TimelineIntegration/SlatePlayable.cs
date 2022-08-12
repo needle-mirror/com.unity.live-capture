@@ -20,6 +20,22 @@ namespace Unity.LiveCapture
             Dispose();
         }
 
+        public override void OnBehaviourPlay(Playable playable, FrameData info)
+        {
+            if (m_TimelinePlayable.IsValid())
+            {
+                m_TimelinePlayable.Play();
+            }
+        }
+
+        public override void OnBehaviourPause(Playable playable, FrameData info)
+        {
+            if (m_TimelinePlayable.IsValid())
+            {
+                m_TimelinePlayable.Pause();
+            }
+        }
+
         public override void PrepareFrame(Playable playable, FrameData info)
         {
             if (m_TimelinePlayable.IsValid())

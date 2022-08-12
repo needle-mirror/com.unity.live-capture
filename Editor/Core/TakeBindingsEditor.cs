@@ -1,5 +1,5 @@
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Playables;
 using UnityEditor;
 
 namespace Unity.LiveCapture.Editor
@@ -13,12 +13,15 @@ namespace Unity.LiveCapture.Editor
             public static readonly string NullBindingsMsg = EditorGUIUtility.TrTextContent("Missing scene bindings. Set all the required object references in the Bindings list to play this take.").text;
         }
 
-        SerializedProperty m_EntriesProp;
+        SerializedProperty m_Bindings;
+        SerializedProperty m_Entries;
         Take m_Take;
+        HashSet<string> m_BindingSet = new HashSet<string>();
 
         void OnEnable()
         {
-            m_EntriesProp = serializedObject.FindProperty("m_Entries");
+            m_Bindings = serializedObject.FindProperty("m_Bindings");
+            m_Entries = serializedObject.FindProperty("m_Entries");
             m_Take = target as Take;
         }
 
@@ -31,13 +34,13 @@ namespace Unity.LiveCapture.Editor
             if (resolver != null)
             {
                 DoBindingWarning(resolver);
+            }
 
-                m_EntriesProp.isExpanded = EditorGUILayout.Foldout(m_EntriesProp.isExpanded, Contents.BindingsLabel, true);
+            m_Entries.isExpanded = EditorGUILayout.Foldout(m_Entries.isExpanded, Contents.BindingsLabel, true);
 
-                if (m_EntriesProp.isExpanded)
-                {
-                    DoBindingsGUI(resolver);
-                }
+            if (m_Entries.isExpanded)
+            {
+                DoBindingsGUI();
             }
 
             serializedObject.ApplyModifiedProperties();
@@ -55,67 +58,86 @@ namespace Unity.LiveCapture.Editor
         {
             Debug.Assert(resolver != null);
 
-            var containsNull = false;
-            var entries = take.BindingEntries;
+            var serializedObject = new SerializedObject(take);
+            var entries = serializedObject.FindProperty("m_Entries");
+            var bindings = serializedObject.FindProperty("m_Bindings");
 
-            foreach (var entry in entries)
+            try
             {
-                var binding = entry.Binding;
-                var value = binding.GetValue(resolver);
-
-                if (value == null)
+                for (var i = 0; i < entries.arraySize; ++i)
                 {
-                    containsNull = true;
-                    break;
+                    var entry = entries.GetArrayElementAtIndex(i);
+                    var binding = entry.FindPropertyRelative("m_Binding");
+
+                    if (CheckIsBindingNull(binding, resolver))
+                    {
+                        return true;
+                    }
+                }
+
+                for (var i = 0; i < bindings.arraySize; ++i)
+                {
+                    var binding = bindings.GetArrayElementAtIndex(i);
+
+                    if (CheckIsBindingNull(binding, resolver))
+                    {
+                        return true;
+                    }
                 }
             }
+            finally
+            {
+                serializedObject.Dispose();
+            }
+            
 
-            return containsNull;
+            return false;
         }
 
-        void DoBindingsGUI(IExposedPropertyTable resolver)
+        static bool CheckIsBindingNull(SerializedProperty binding, IExposedPropertyTable resolver)
         {
             Debug.Assert(resolver != null);
 
-            var entries = m_Take.BindingEntries;
-            var index = 0;
+            var exposedPropertyName = binding.FindPropertyRelative("m_ExposedReference.exposedName");
+            var name = exposedPropertyName.stringValue;
+            var propertyName = new PropertyName(name);
+            var value = resolver.GetReferenceValue(propertyName, out var _);
 
-            foreach (var entry in entries)
+            return value == null;
+        }
+
+        void DoBindingsGUI()
+        {
+            m_BindingSet.Clear();
+
+            for (var i = 0; i < m_Entries.arraySize; ++i)
             {
-                var binding = entry.Binding;
-                var exposedPropertyNameProp = m_EntriesProp.GetArrayElementAtIndex(index++)
-                    .FindPropertyRelative("m_Binding.m_ExposedReference.exposedName");
-                var exposedNameStr = exposedPropertyNameProp.stringValue;
-                var value = binding.GetValue(resolver);
-                var position = EditorGUILayout.GetControlRect(false);
-                var labelPosition = new Rect(position.x, position.y, EditorGUIUtility.labelWidth - 2.5f, position.height);
-                var valuePosition = new Rect(labelPosition.xMax + 2.5f, position.y, position.width - EditorGUIUtility.labelWidth, position.height);
-
-                using (new EditorGUI.DisabledScope(true))
-                using (var change = new EditorGUI.ChangeCheckScope())
-                {
-                    exposedNameStr = EditorGUI.TextField(labelPosition, GUIContent.none, exposedNameStr);
-
-                    if (change.changed)
-                    {
-                        exposedPropertyNameProp.stringValue = exposedNameStr;
-                    }
-                }
-
-                using (var change = new EditorGUI.ChangeCheckScope())
-                {
-                    var newValue = EditorGUI.ObjectField(valuePosition, GUIContent.none, value, binding.Type, true);
-
-                    if (change.changed)
-                    {
-                        Undo.RecordObject(serializedObject.context, Contents.UndoSetBinding);
-                        
-                        binding.SetValue(newValue, resolver);
-
-                        EditorUtility.SetDirty(serializedObject.context);
-                    }
-                }
+                var entry = m_Entries.GetArrayElementAtIndex(i);
+                var binding = entry.FindPropertyRelative("m_Binding");
+                
+                DoBindingGUI(binding);
             }
+
+            for (var i = 0; i < m_Bindings.arraySize; ++i)
+            {
+                var binding = m_Bindings.GetArrayElementAtIndex(i);
+                
+                DoBindingGUI(binding);
+            }
+        }
+
+        void DoBindingGUI(SerializedProperty binding)
+        {
+            var name = binding.FindPropertyRelative("m_ExposedReference.exposedName").stringValue;
+
+            if (m_BindingSet.Contains(name))
+            {
+                return;
+            }
+
+            m_BindingSet.Add(name);
+
+            EditorGUILayout.PropertyField(binding);
         }
     }
 }

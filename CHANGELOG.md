@@ -4,21 +4,35 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [3.0.0] - 2022-08-12
+## [4.0.0-pre.1] - 2022-08-12
 
-### Added
-- The CinemachineCameraDriver now supports depth of field using the Universal Render Pipeline.
-- Automatic firewall configuration on Windows now detects and removes rules that block the Unity Editor on private or domain networks.
-
-### Fixed
+### Fix
+- Synchronize the Take Recorder's playback button state with the Timeline Window's ones.
+- Make sure audio tracks play sound when Takes from the Take Recorder are playing.
+- Make sure Recorder tracks work properly when Takes from the Take Recorder are playing.
+- Prevent the Scene from getting dirty when playing Takes from the Take Recorder without using Take Recorder Tracks.
+- Make sure to interrupt ongoing recordings when the user scrubs the Timeline playhead.
+- New Takes no longer inherit rating from their iteration base.
 - Make sure to correctly dispose the video encoder in MacOS.
 - Ensure that the VolumeProfile in the VirtualCameraActor can be edited and persist after entering PlayMode.
 - Make sure depth of field can blend when using Cinemachine camera actors.
 - The CinemachineCameraDriver now properly sets up the sensor size so it can blend.
 
+### Added
+- A VirtualCameraDevice can now be anchored to a Transform in the scene.
+- New functionality to show take's content range markers in clips from the TakeRecorderTrack.
+- A new button to go to the beginning of the shot.
+- A toggle to constrain the playback to the range of the shot content.
+- The CinemachineCameraDriver now supports depth of field using the Universal Render Pipeline.
+
+### Changed
+- The Pause Playback button does not rewind time anymore.
+- Automatic firewall configuration on Windows now detects and removes rules that block the Unity Editor on private or domain networks.
+- Minimum required Unity version is now 2021.3. 
+
 ## [3.0.0-pre.6] - 2022-06-14
 
-### Fixed
+### Fix
 - Ensure that synchronized VirtualCamera and FaceCapture produce recordings aligned to the initial time offset set in Timeline.
 - Improved recording accuracy in VirtualCamera when using motion damping.
 - Ensure the network client can reconnect after a graceful server restart.
@@ -37,7 +51,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Rename "Server" to "Connection" in the Connections window UI and public API.
 
-### Fixed
+### Fix
 - Remove an unnecessary component referring to a missing script in Face Capture sample.
 - The rendering of Takes using the Recorder package now works in combination with the Take Recorder playback features.
 
@@ -47,7 +61,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Mocap Core library to provide a foundation for vendor specific mocap packages.
 - New Transform Capture Device component to record transform hierarchies.
 
-### Fixed
+### Fix
 - Prevent an error from occurring when stopping the recording while a Live Capture settings window is open.
 - Read the fractional part of the current second from NTP packets correctly.
 - Prevent NTP Timecode Source from failing to initialize networking.
@@ -72,7 +86,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - The TakeRecorderTrack doesn't require a reference to the TakeRecorder anymore.
 - Disabled video streaming on Apple silicon.
 
-### Fixed
+### Fix
 - Improved performance of take directory loading.
 - Fixed actors not able to move using the transform handles when the TakeRecorder is enabled.
 - Context menu of the TakeRecorderTrack.

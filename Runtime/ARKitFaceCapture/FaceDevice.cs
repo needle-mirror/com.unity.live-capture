@@ -180,9 +180,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         {
             if (IsRecording())
             {
-                var takeRecorder = GetTakeRecorder();
-                var timeOffset = takeRecorder.GetPreviewTime();
-                var frameRate = takeRecorder.FrameRate;
+                var frameRate = GetTakeRecorder().FrameRate;
 
                 m_Recorder.FrameRate = frameRate;
                 m_Recorder.Channels = m_Channels;
@@ -190,7 +188,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
                 {
                     m_Recorder.Record(ref m_Pose);
                 };
-                m_Recorder.Prepare(timeOffset);
+                m_Recorder.Prepare();
             }
         }
 
@@ -253,7 +251,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
                 "Face",
                 m_Actor.Animator,
                 m_Recorder.Bake(),
-                startTime: startTime);
+                alignTime: startTime);
         }
 
         /// <inheritdoc/>
@@ -331,7 +329,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
                     if (m_SyncBuffer.TryGetSample(m_CurrentFrameTime, out var facePose) == TimedSampleStatus.Ok)
                     {
                         var time = m_CurrentFrameTime.ToSeconds(m_SyncBuffer.FrameRate);
-                        
+
                         m_Recorder.Channels = m_Channels;
                         m_Recorder.Update(time);
                         m_Recorder.Record(ref facePose);

@@ -23,9 +23,26 @@ namespace Unity.LiveCapture
 
             var root = TimelineHierarchy.GetRootDirector(director);
 
-            PlayableDirectorInternal.ResetFrameTiming();
+            if (Timeline.MasterDirector == root)
+            {
+                Timeline.Play();
+            }
+            else
+            {
+                PlayableDirectorInternal.ResetFrameTiming();
 
-            root.Play();
+                root.Play();
+            }
+        }
+
+        public static bool IsPlaying(PlayableDirector director)
+        {
+            if (director == null)
+                throw new ArgumentNullException(nameof(director));
+
+            var root = TimelineHierarchy.GetRootDirector(director);
+
+            return root.state == PlayState.Playing;
         }
 
         /// <summary>
@@ -42,7 +59,14 @@ namespace Unity.LiveCapture
 
             var root = TimelineHierarchy.GetRootDirector(director);
 
-            root.Pause();
+            if (Timeline.MasterDirector == root)
+            {
+                Timeline.Pause();
+            }
+            else
+            {
+                root.Pause();
+            }
         }
 
         /// <summary>
@@ -65,9 +89,22 @@ namespace Unity.LiveCapture
                 director = parentDirector;
             }
             
-            director.Pause();
-            director.time = time;
-            director.DeferredEvaluate();
+            if (Timeline.MasterDirector == director)
+            {
+                // Director.state returns PlayState.Paused when the root playable's IsDone() returns true.
+                // IsDone() returns true when time >= duration.
+                // Calling Pause() before SetGlobalTime will have no effect when time >= duration,
+                // as it relies on Director.state. Setting the time will work but the director will keep playing.
+                // The order of this two calls is then important.
+                Timeline.SetGlobalTime(time);
+                Timeline.Pause();
+            }
+            else
+            {
+                director.Pause();
+                director.time = time;
+                director.DeferredEvaluate();
+            }
         }
     }
 }

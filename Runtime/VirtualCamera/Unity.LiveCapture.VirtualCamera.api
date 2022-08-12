@@ -3,6 +3,21 @@
 // make sure the XML doc file is present and located next to the scraped dll
 namespace Unity.LiveCapture.VirtualCamera
 {
+    public struct AnchorSettings : System.IEquatable<Unity.LiveCapture.VirtualCamera.AnchorSettings>
+    {
+        [UnityEngine.Tooltip(@"The settings used to configure the smoothing applied to the anchor's motion.")] public Unity.LiveCapture.VirtualCamera.Damping Damping;
+        public static readonly Unity.LiveCapture.VirtualCamera.AnchorSettings Default;
+        [Unity.LiveCapture.EnumFlagButtonGroup(60)] [UnityEngine.Tooltip(@"The position axes to follow when anchored.")] public Unity.LiveCapture.VirtualCamera.Axis PositionLock;
+        [UnityEngine.Tooltip(@"Offset local to the target's anchor Transform.")] public UnityEngine.Vector3 PositionOffset;
+        [Unity.LiveCapture.EnumFlagButtonGroup(60)] [UnityEngine.Tooltip(@"The rotation axes to follow when anchored.")] public Unity.LiveCapture.VirtualCamera.Axis RotationLock;
+        public virtual bool Equals(object obj);
+        public virtual bool Equals(Unity.LiveCapture.VirtualCamera.AnchorSettings other);
+        public virtual int GetHashCode();
+        public static bool operator ==(Unity.LiveCapture.VirtualCamera.AnchorSettings a, Unity.LiveCapture.VirtualCamera.AnchorSettings b);
+        public static bool operator !=(Unity.LiveCapture.VirtualCamera.AnchorSettings a, Unity.LiveCapture.VirtualCamera.AnchorSettings b);
+        public virtual string ToString();
+    }
+
     public struct AspectRatioPreset
     {
         public float AspectRatio { get; set; }
@@ -13,6 +28,15 @@ namespace Unity.LiveCapture.VirtualCamera
     {
         public Unity.LiveCapture.VirtualCamera.AspectRatioPreset[] AspectRatios { get; }
         public AspectRatioPresets() {}
+    }
+
+    [System.Flags] public enum Axis
+    {
+        public const Unity.LiveCapture.VirtualCamera.Axis None = 0;
+        public byte value__;
+        public const Unity.LiveCapture.VirtualCamera.Axis X = 1;
+        public const Unity.LiveCapture.VirtualCamera.Axis Y = 2;
+        public const Unity.LiveCapture.VirtualCamera.Axis Z = 4;
     }
 
     public struct CameraBody : System.IEquatable<Unity.LiveCapture.VirtualCamera.CameraBody>
@@ -27,6 +51,19 @@ namespace Unity.LiveCapture.VirtualCamera
         public virtual int GetHashCode();
         public static bool operator ==(Unity.LiveCapture.VirtualCamera.CameraBody a, Unity.LiveCapture.VirtualCamera.CameraBody b);
         public static bool operator !=(Unity.LiveCapture.VirtualCamera.CameraBody a, Unity.LiveCapture.VirtualCamera.CameraBody b);
+    }
+
+    public struct Damping : System.IEquatable<Unity.LiveCapture.VirtualCamera.Damping>
+    {
+        [UnityEngine.Tooltip(@"Time in seconds for the camera to catch up with the target rotation.")] public float Aim;
+        [UnityEngine.Tooltip(@"Time in seconds for the camera to reach reach the target position.")] public UnityEngine.Vector3 Body;
+        public static readonly Unity.LiveCapture.VirtualCamera.Damping Default;
+        [UnityEngine.Tooltip(@"Enable or disable damping.")] public bool Enabled;
+        public virtual bool Equals(object obj);
+        public virtual bool Equals(Unity.LiveCapture.VirtualCamera.Damping other);
+        public virtual int GetHashCode();
+        public static bool operator ==(Unity.LiveCapture.VirtualCamera.Damping a, Unity.LiveCapture.VirtualCamera.Damping b);
+        public static bool operator !=(Unity.LiveCapture.VirtualCamera.Damping a, Unity.LiveCapture.VirtualCamera.Damping b);
     }
 
     [UnityEngine.AddComponentMenu(@"Live Capture/Virtual Camera/Focus Plane Renderer")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-component-focus-plane-renderer.html")] public class FocusPlaneRenderer : UnityEngine.MonoBehaviour
@@ -135,6 +172,9 @@ namespace Unity.LiveCapture.VirtualCamera
     [Unity.LiveCapture.CreateDeviceMenuItem(@"Virtual Camera Device", 0)] [UnityEngine.AddComponentMenu(@"")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-component-virtual-camera-device.html")] [UnityEngine.RequireComponent(typeof(Unity.LiveCapture.VirtualCamera.FocusPlaneRenderer))] public class VirtualCameraDevice : Unity.LiveCapture.CompanionApp.CompanionAppDevice<Unity.LiveCapture.VirtualCamera.IVirtualCameraClient>, Unity.LiveCapture.IRegistrable, Unity.LiveCapture.ITimedDataSource
     {
         public Unity.LiveCapture.VirtualCamera.VirtualCameraActor Actor { get; set; }
+        public bool AnchorEnabled { get; set; }
+        public Unity.LiveCapture.VirtualCamera.AnchorSettings AnchorSettings { get; set; }
+        public UnityEngine.Transform AnchorTarget { get; set; }
         public virtual int BufferSize { get; set; }
         public Unity.LiveCapture.VirtualCamera.CameraBody CameraBody { get; }
         public virtual Unity.LiveCapture.FrameRate FrameRate { get; }
@@ -162,7 +202,7 @@ namespace Unity.LiveCapture.VirtualCamera
         protected virtual void OnSlateChanged(Unity.LiveCapture.ISlate slate);
         protected virtual void OnValidate();
         public virtual Unity.LiveCapture.TimedSampleStatus PresentAt(Unity.LiveCapture.Timecode timecode, Unity.LiveCapture.FrameRate frameRate);
-        public virtual bool TryGetBufferRange(Unity.LiveCapture.FrameRate frameRate, out Unity.LiveCapture.FrameTime oldestSample, out Unity.LiveCapture.FrameTime newestSample);
+        public virtual bool TryGetBufferRange(out Unity.LiveCapture.FrameTime oldestSample, out Unity.LiveCapture.FrameTime newestSample);
         public virtual void UpdateClient();
         public virtual void UpdateDevice();
         public virtual void Write(Unity.LiveCapture.ITakeBuilder takeBuilder);

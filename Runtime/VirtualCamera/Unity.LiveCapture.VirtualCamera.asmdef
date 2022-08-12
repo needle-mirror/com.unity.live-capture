@@ -12,7 +12,8 @@
         "Unity.RenderPipelines.HighDefinition.Runtime",
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.TextMeshPro",
-        "Unity.Postprocessing.Runtime"
+        "Unity.Postprocessing.Runtime",
+        "Unity.Timeline"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

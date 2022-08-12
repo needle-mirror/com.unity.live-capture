@@ -1,10 +1,9 @@
 fileFormatVersion: 2
-guid: c5c2962fc2b39d04e9f5e3c5d7bad242
+guid: f775fba8efb2d7045b5ea7adbd80f78a
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences:
-  - m_RecorderTake: {fileID: 11400000, guid: 9469d533b19f3d34b8f42d57f2a8944e, type: 2}
+  defaultReferences: []
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

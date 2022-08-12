@@ -68,7 +68,7 @@ namespace Unity.LiveCapture.TransformCapture
             }
         }
 
-        public void Record(float time)
+        public void Record(float elapsedTime)
         {
             if (m_Transforms == null)
                 return;
@@ -83,8 +83,8 @@ namespace Unity.LiveCapture.TransformCapture
                 if (transform == null)
                     continue;
 
-                m_PositionCurves[i].AddKey(time, transform.localPosition);
-                m_RotationCurves[i].AddKey(time, transform.localRotation);
+                m_PositionCurves[i].AddKey(elapsedTime, transform.localPosition);
+                m_RotationCurves[i].AddKey(elapsedTime, transform.localRotation);
             }
         }
 

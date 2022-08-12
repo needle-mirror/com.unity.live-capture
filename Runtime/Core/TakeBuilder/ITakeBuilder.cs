@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Timeline;
 
 namespace Unity.LiveCapture
 {
@@ -8,20 +9,61 @@ namespace Unity.LiveCapture
     public interface ITakeBuilder
     {
         /// <summary>
+        /// The start time in seconds of the recording context.
+        /// </summary>
+        double ContextStartTime { get; }
+
+        /// <summary>
         /// Creates an animation track.
         /// </summary>
         /// <remarks>
         /// This method checks if another animation track is using the same binding.
         /// In that case, the new track becomes an override of the existing one.
-        /// You can optionally pass in a <paramref name="startTime"/>, which will be used for alignment by
-        /// <see cref="Unity.LiveCapture.TakeBuilder.AlignTracksByStartTimes"/>. If <paramref name="startTime"/> is <c>null</c>, the clip will by
-        /// aligned to the start of the track.
+        /// You can optionally pass in a <paramref name="alignTime"/>, which will be used for aligning
+        /// synchronized recordings under the same timecode source.
+        /// If <paramref name="alignTime"/> is <c>null</c>, no alignment will be performed for this track.
         /// </remarks>
         /// <param name="name">The name of the track.</param>
         /// <param name="animator">The target animator component to bind.</param>
         /// <param name="animationClip">The animation clip to set into the new track.</param>
         /// <param name="metadata">The metadata associated with the new track (optional).</param>
-        /// <param name="startTime">The time (expressed in seconds) of first sample of animation clip (optional).</param>
-        void CreateAnimationTrack(string name, Animator animator, AnimationClip animationClip, ITrackMetadata metadata = null, double? startTime = null);
+        /// <param name="alignTime">The timecode (expressed in seconds) of first recorded sample (optional).</param>
+        void CreateAnimationTrack(string name, Animator animator, AnimationClip animationClip, ITrackMetadata metadata = null, double? alignTime = null);
+
+        /// <summary>
+        /// Adds a <see cref="TakeBinding{T}"/> to the Take.
+        /// </summary>
+        /// <param name="binding">The binding to add.</param>
+        /// <param name="value">The object to bind.</param>
+        void AddBinding<T>(TakeBinding<T> binding, T value) where T : UnityEngine.Object;
+
+        /// <summary>
+        /// Creates a new track without binding.
+        /// </summary>
+        /// <remarks>
+        /// You can optionally pass in a <paramref name="alignTime"/>, which will be used for aligning
+        /// synchronized recordings under the same timecode source.
+        /// If <paramref name="alignTime"/> is <c>null</c>, no alignment will be performed for this track.
+        /// </remarks>
+        /// <param name="name">The name of the track.</param>
+        /// <param name="alignTime">The timecode (expressed in seconds) of first recorded sample (optional).</param>
+        /// <typeparam name="T">The type of track being created. The track type must be derived from TrackAsset.</typeparam>
+        /// <returns>Returns the created track.</returns>
+        T CreateTrack<T>(string name, double? alignTime = null) where T : TrackAsset, new();
+
+        /// <summary>
+        /// Creates a new track with binding.
+        /// </summary>
+        /// <remarks>
+        /// You can optionally pass in a <paramref name="alignTime"/>, which will be used for aligning
+        /// synchronized recordings under the same timecode source.
+        /// If <paramref name="alignTime"/> is <c>null</c>, no alignment will be performed for this track.
+        /// </remarks>
+        /// <param name="name">The name of the track.</param>
+        /// <param name="binding">The binding to use for the new track.</param>
+        /// <param name="alignTime">The timecode (expressed in seconds) of first recorded sample (optional).</param>
+        /// <typeparam name="T">The type of track being created. The track type must be derived from TrackAsset.</typeparam>
+        /// <returns>Returns the created track.</returns>
+        T CreateTrack<T>(string name, ITakeBinding binding, double? alignTime = null) where T : TrackAsset, new();
     }
 }

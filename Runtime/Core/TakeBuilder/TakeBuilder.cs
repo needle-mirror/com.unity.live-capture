@@ -18,10 +18,16 @@ namespace Unity.LiveCapture
         IExposedPropertyTable m_Resolver;
         string m_ContentsDirectory;
         Take m_Take;
-        readonly Dictionary<TrackAsset, double> m_TrackStartTimes = new Dictionary<TrackAsset, double>();
-        double m_TimeOffset;
+        readonly Dictionary<TrackAsset, double> m_TrackAlignTimes = new Dictionary<TrackAsset, double>();
 
         public Take Take => m_Take;
+
+        /// <inheritdoc/>
+        public double ContextStartTime { get; private set; }
+        public double ContextDuration { get; private set; }
+        public double RecordingStartTime { get; private set; }
+        public double RecordingDuration { get; private set; }
+        double ClipStartTime => ContextStartTime + RecordingStartTime;
 
         /// <summary>
         /// The directory that stores the take content data, like the recorded clips.
@@ -51,8 +57,10 @@ namespace Unity.LiveCapture
         }
 
         public TakeBuilder(
-            double timeOffset,
-            double duration,
+            double contextStartTime,
+            double contextDuration,
+            double recordingStartTime,
+            double recordingDuration,
             int sceneNumber,
             string shotName,
             int takeNumber,
@@ -78,7 +86,10 @@ namespace Unity.LiveCapture
             }
 
             m_Resolver = resolver;
-            m_TimeOffset = timeOffset;
+            ContextStartTime = contextStartTime;
+            ContextDuration = contextDuration;
+            RecordingStartTime = recordingStartTime;
+            RecordingDuration = recordingDuration;
 
             var assetName = GetAssetName(m_Formatter, sceneNumber, shotName, takeNumber);
             var assetPath = $"{directory}/{assetName}.asset";
@@ -110,6 +121,7 @@ namespace Unity.LiveCapture
                 var sourceAssetPath = AssetDatabase.GetAssetPath(iterationBase);
                 AssetDatabase.CopyAsset(sourceAssetPath, assetPath);
                 m_Take = AssetDatabase.LoadAssetAtPath<Take>(assetPath);
+                m_Take.Rating = default;
             }
 
             m_Take.SceneNumber = sceneNumber;
@@ -130,10 +142,10 @@ namespace Unity.LiveCapture
                 timeline.editorSettings.fps = frameRate.AsFloat();
 #endif
 
-                if (duration > 0d)
+                if (contextDuration > 0d)
                 {
                     timeline.durationMode = TimelineAsset.DurationMode.FixedLength;
-                    timeline.fixedDuration = duration + timeOffset;
+                    timeline.fixedDuration = contextStartTime + contextDuration;
                 }
                 else
                 {
@@ -154,9 +166,9 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public void CreateAnimationTrack(string name, Animator animator, AnimationClip animationClip, ITrackMetadata metadata = null, double? startTime = null)
+        public void CreateAnimationTrack(string name, Animator animator, AnimationClip animationClip, ITrackMetadata metadata = null, double? alignTime = null)
         {
-            var track = CreateAnimationTrackInternal(name, animator, animationClip, startTime);
+            var track = CreateAnimationTrackInternal(name, animator, animationClip, alignTime);
 
             if (metadata != null)
             {
@@ -164,7 +176,7 @@ namespace Unity.LiveCapture
             }
         }
 
-        AnimationTrack CreateAnimationTrackInternal(string name, Animator animator, AnimationClip animationClip, double? startTimecode)
+        AnimationTrack CreateAnimationTrackInternal(string name, Animator animator, AnimationClip animationClip, double? alignTime)
         {
             CheckDisposed();
 
@@ -191,36 +203,19 @@ namespace Unity.LiveCapture
             var parent = GetTracks<AnimationTrack>(binding).FirstOrDefault();
             var track = CreateTrackWithParent<AnimationTrack>(name, parent);
 
-            if (startTimecode != null)
+            if (alignTime != null)
             {
-                m_TrackStartTimes.Add(track, startTimecode.Value);
+                m_TrackAlignTimes.Add(track, alignTime.Value);
             }
 
-            // Track overrides don't need redundant bindings.
-            if (parent == null)
-            {
-                m_Take.AddTrackBinding(track, binding);
-            }
+            m_Take.AddTrackBinding(track, binding);
 
             var clip = track.CreateClip(animationClip);
             var playableAsset = clip.asset as AnimationPlayableAsset;
 
             playableAsset.removeStartOffset = false;
 
-            clip.start = m_TimeOffset;
-
-            if (parent != null)
-            {
-                var parentClip = parent.GetClips().FirstOrDefault();
-
-                if (parentClip != null)
-                {
-                    var duration = Math.Max(parentClip.duration, clip.duration);
-
-                    parentClip.duration = duration;
-                    clip.duration = duration;
-                }
-            }
+            clip.start = ClipStartTime;
 
             return track;
         }
@@ -240,21 +235,21 @@ namespace Unity.LiveCapture
         /// Tracks without start times have their clips aligned at t=0.
         /// </remarks>
         /// <param name="defaultStartTime">The start time to use for the take if none of the tracks had a start time.</param>
-        public void AlignTracksByStartTimes(double defaultStartTime)
+        public void AlignTracks(double defaultStartTime)
         {
-            var takeStartTime = m_TrackStartTimes.Any() ? m_TrackStartTimes.Values.Min() : defaultStartTime;
+            var takeStartTime = m_TrackAlignTimes.Any() ? m_TrackAlignTimes.Values.Min() : defaultStartTime;
             m_Take.StartTimecode = Timecode.FromSeconds(m_Take.FrameRate, takeStartTime);
 
             // Shortcut: If we have no start times specified or if we only have the start time for
             // a single track, we can skip alignment.
-            if (m_TrackStartTimes.Count <= 1) return;
+            if (m_TrackAlignTimes.Count <= 1) return;
 
             foreach (var track in m_Take.Timeline.GetRootTracks())
             {
-                if (m_TrackStartTimes.TryGetValue(track, out var startTime))
+                if (m_TrackAlignTimes.TryGetValue(track, out var alignTime))
                 {
                     // We can guarantee that trackStartTime >= 0
-                    var trackStartTime = startTime - takeStartTime + m_TimeOffset;
+                    var trackStartTime = alignTime - takeStartTime + ClipStartTime;
                     foreach (var clip in track.GetClips())
                     {
                         clip.start = trackStartTime;
@@ -263,12 +258,24 @@ namespace Unity.LiveCapture
             }
         }
 
+        /// <inheritdoc/>
+        public void AddBinding<T>(TakeBinding<T> binding, T value) where T : UnityEngine.Object
+        {
+            CheckDisposed();
+
+            binding.SetValue(value, m_Resolver);
+
+            m_Take.AddBinding(binding);
+        }
+
         /// <summary>
         /// Creates a new <see cref="ITakeBinding"/>.
         /// </summary>
         /// <param name="name">The binding name.</param>
         /// <param name="value">The binding object.</param>
-        public T CreateBinding<T>(string name, UnityObject value) where T : ITakeBinding, new()
+        /// <typeparam name="T">The type of binding created. The track type must be derived from ITakeBinding.</typeparam>
+        /// <returns>Returns the created binding.</returns>
+        internal T CreateBinding<T>(string name, UnityObject value) where T : ITakeBinding, new()
         {
             CheckDisposed();
 
@@ -280,21 +287,14 @@ namespace Unity.LiveCapture
             return binding;
         }
 
-        /// <summary>
-        /// Creates a new track without binding.
-        /// </summary>
-        /// <param name="name">The name of the track.</param>
-        public T CreateTrack<T>(string name) where T : TrackAsset, new()
+        /// <inheritdoc/>
+        public T CreateTrack<T>(string name, double? alignmentTime = null) where T : TrackAsset, new()
         {
             return CreateTrackWithParent<T>(name, null);
         }
 
-        /// <summary>
-        /// Creates a new track with binding.
-        /// </summary>
-        /// <param name="name">The name of the track.</param>
-        /// <param name="binding">The binding to use for the new track.</param>
-        public T CreateTrack<T>(string name, ITakeBinding binding) where T : TrackAsset, new()
+        /// <inheritdoc/>
+        public T CreateTrack<T>(string name, ITakeBinding binding, double? alignmentTime = null) where T : TrackAsset, new()
         {
             var track = CreateTrack<T>(name);
 
@@ -334,7 +334,8 @@ namespace Unity.LiveCapture
         public IEnumerable<T> GetTracks<T>(ITakeBinding binding) where T : TrackAsset, new()
         {
             return m_Take.BindingEntries
-                .Where(e => e.Track is T && e.Binding.Equals(binding))
+                .Where(e => e.Track is T
+                    && ITakeBindingEqualityComparer.Instance.Equals(e.Binding, binding))
                 .Select(e => e.Track as T);
         }
 

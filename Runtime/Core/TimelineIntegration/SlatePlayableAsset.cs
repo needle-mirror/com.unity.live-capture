@@ -38,6 +38,7 @@ namespace Unity.LiveCapture
         Take m_Take;
         [SerializeField]
         Take m_IterationBase;
+        double? m_DurationOverride;
 
         public bool AutoClipName
         {
@@ -113,7 +114,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The playback duration of the instantiated Playable, in seconds.
         /// </summary>
-        public override double duration => GetTakeDuration(m_Take, base.duration);
+        public override double duration => m_DurationOverride ?? GetTakeDuration(m_Take, base.duration);
 
         /// <summary>
         /// Injects SlatePlayables into the given graph.
@@ -128,14 +129,23 @@ namespace Unity.LiveCapture
             return ScriptPlayable<NestedTimelinePlayable>.Create(graph);
         }
 
-        static double GetTakeDuration(Take take, double defaultDuration)
+        /// <summary>
+        /// (Internal) Set a duration override in order to control the output of PlayableAsset.duration
+        /// at specific moments in order to prevent Timeline from trimming created TimelineClips.
+        /// </summary>
+        internal void SetDurationOverride(double? duration)
         {
-            if (take == null)
+            m_DurationOverride = duration;
+        }
+
+        double GetTakeDuration(Take take, double defaultDuration)
+        {
+            if (take.TryGetContentRange(out var start, out var end))
             {
-                return defaultDuration;
+                return end;
             }
 
-            return take.Timeline.duration;
+            return defaultDuration;
         }
     }
 }

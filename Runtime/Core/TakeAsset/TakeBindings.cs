@@ -9,4 +9,11 @@ namespace Unity.LiveCapture
     /// </summary>
     [Serializable]
     public class AnimatorTakeBinding : TakeBinding<Animator> {}
+
+    /// <summary>
+    /// A serializable implementation of <see cref="ITakeBinding"/> that contains values of
+    /// type UnityEngine.Transform.
+    /// </summary>
+    [Serializable]
+    public class TransformTakeBinding : TakeBinding<Transform> {}
 }

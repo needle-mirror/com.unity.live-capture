@@ -21,7 +21,7 @@ namespace Unity.LiveCapture
         public virtual void SetToAnimationClip(UnityEngine.AnimationClip clip);
     }
 
-    [System.Runtime.CompilerServices.IsReadOnly] public struct CalibrationResult
+    public struct CalibrationResult
     {
         public readonly Unity.LiveCapture.FrameTime GlobalTimeOffset;
         public readonly int[] OptimalBufferSizes;
@@ -42,12 +42,12 @@ namespace Unity.LiveCapture
         public int Capacity { get; }
         public virtual int Count { get; }
         public virtual T this[int index] { get; set; }
-        public CircularBuffer(int capacity) {}
+        public CircularBuffer(int capacity, System.Action<T> onDiscard = default(System.Action<T>)) {}
         public void Add(T value);
-        public T Back();
         public void Clear();
-        public T Front();
         [System.Runtime.CompilerServices.IteratorStateMachine(typeof(Unity.LiveCapture.CircularBuffer<>))] public virtual System.Collections.Generic.IEnumerator<T> GetEnumerator();
+        public T PeekBack();
+        public T PeekFront();
         public T PopBack();
         public T PopFront();
         public void PushBack(T value);
@@ -281,8 +281,9 @@ namespace Unity.LiveCapture
         public abstract void Update();
     }
 
-    public interface ITakeBinding : System.IEquatable<Unity.LiveCapture.ITakeBinding>
+    public interface ITakeBinding
     {
+        public abstract UnityEngine.PropertyName PropertyName { get; }
         public abstract System.Type Type { get; }
         public abstract void ClearValue(UnityEngine.IExposedPropertyTable resolver);
         public abstract UnityEngine.Object GetValue(UnityEngine.IExposedPropertyTable resolver);
@@ -290,9 +291,21 @@ namespace Unity.LiveCapture
         public abstract void SetValue(UnityEngine.Object value, UnityEngine.IExposedPropertyTable resolver);
     }
 
+    public class ITakeBindingEqualityComparer : System.Collections.Generic.IEqualityComparer<Unity.LiveCapture.ITakeBinding>
+    {
+        public static Unity.LiveCapture.ITakeBindingEqualityComparer Instance { get; }
+        public ITakeBindingEqualityComparer() {}
+        public virtual bool Equals(Unity.LiveCapture.ITakeBinding x, Unity.LiveCapture.ITakeBinding y);
+        public virtual int GetHashCode(Unity.LiveCapture.ITakeBinding obj);
+    }
+
     public interface ITakeBuilder
     {
-        public abstract void CreateAnimationTrack(string name, UnityEngine.Animator animator, UnityEngine.AnimationClip animationClip, Unity.LiveCapture.ITrackMetadata metadata = default(Unity.LiveCapture.ITrackMetadata), System.Nullable<double> startTime = default(System.Nullable<double>));
+        public abstract double ContextStartTime { get; }
+        public abstract void AddBinding<T>(Unity.LiveCapture.TakeBinding<T> binding, T value) where T : UnityEngine.Object;
+        public abstract void CreateAnimationTrack(string name, UnityEngine.Animator animator, UnityEngine.AnimationClip animationClip, Unity.LiveCapture.ITrackMetadata metadata = default(Unity.LiveCapture.ITrackMetadata), System.Nullable<double> alignTime = default(System.Nullable<double>));
+        public abstract T CreateTrack<T>(string name, System.Nullable<double> alignTime = default(System.Nullable<double>)) where T : UnityEngine.Timeline.TrackAsset, new();
+        public abstract T CreateTrack<T>(string name, Unity.LiveCapture.ITakeBinding binding, System.Nullable<double> alignTime = default(System.Nullable<double>)) where T : UnityEngine.Timeline.TrackAsset, new();
     }
 
     public interface ITakeRecorder
@@ -301,6 +314,7 @@ namespace Unity.LiveCapture
         public abstract Unity.LiveCapture.ISlate GetActiveSlate();
         public abstract double GetPreviewDuration();
         public abstract double GetPreviewTime();
+        public abstract double GetRecordingElapsedTime();
         public abstract bool IsLive();
         public abstract bool IsPreviewPlaying();
         public abstract bool IsRecording();
@@ -460,13 +474,13 @@ namespace Unity.LiveCapture
         public Take() {}
     }
 
-    public class TakeBinding<T> : System.IEquatable<Unity.LiveCapture.ITakeBinding>, Unity.LiveCapture.ITakeBinding where T : UnityEngine.Object
+    public class TakeBinding<T> : Unity.LiveCapture.ITakeBinding where T : UnityEngine.Object
     {
+        public virtual UnityEngine.PropertyName PropertyName { get; }
         public virtual System.Type Type { get; }
         public TakeBinding() {}
         public virtual void ClearValue(UnityEngine.IExposedPropertyTable resolver);
-        public virtual bool Equals(Unity.LiveCapture.ITakeBinding other);
-        public virtual UnityEngine.Object GetValue(UnityEngine.IExposedPropertyTable resolver);
+        public T GetValue(UnityEngine.IExposedPropertyTable resolver);
         public virtual void SetName(string name);
         public virtual void SetValue(UnityEngine.Object value, UnityEngine.IExposedPropertyTable resolver);
     }
@@ -480,6 +494,7 @@ namespace Unity.LiveCapture
         public virtual Unity.LiveCapture.ISlate GetActiveSlate();
         public virtual double GetPreviewDuration();
         public virtual double GetPreviewTime();
+        public virtual double GetRecordingElapsedTime();
         public virtual bool IsLive();
         public virtual bool IsPreviewPlaying();
         public virtual bool IsRecording();
@@ -591,6 +606,11 @@ namespace Unity.LiveCapture
         [UnityEngine.InspectorName(@"Data missing")] public const Unity.LiveCapture.TimedSampleStatus DataMissing = 3;
         [UnityEngine.InspectorName(@"OK")] public const Unity.LiveCapture.TimedSampleStatus Ok = 0;
         public int value__;
+    }
+
+    public class TransformTakeBinding : Unity.LiveCapture.TakeBinding<UnityEngine.Transform>
+    {
+        public TransformTakeBinding() {}
     }
 
     public class Vector2Curve : Unity.LiveCapture.ICurve, Unity.LiveCapture.ICurve<UnityEngine.Vector2>, Unity.LiveCapture.IReduceableCurve

@@ -66,6 +66,9 @@ namespace Unity.LiveCapture.VirtualCamera
         CameraBody m_CameraBody = CameraBody.DefaultParams;
 
         [SerializeField]
+        AnchorDeviceSettings m_AnchorDeviceSettings = AnchorDeviceSettings.Default;
+
+        [SerializeField]
         VirtualCameraRigState m_Rig = VirtualCameraRigState.Identity;
 
         [SerializeField]
@@ -106,6 +109,8 @@ namespace Unity.LiveCapture.VirtualCamera
         VirtualCameraActor m_LastActor;
         FrameTime m_PresentationFrameTime;
         bool m_ReticlePositionChanged;
+        AnchorDeviceSettings m_LastAnchorSettings = AnchorDeviceSettings.Default;
+        Pose m_LastActorWorldPose = Pose.identity;
 
         internal VirtualCameraRecorder Recorder => m_Recorder;
         internal SampleProcessor Processor => m_Processor;
@@ -156,6 +161,42 @@ namespace Unity.LiveCapture.VirtualCamera
                     Refresh();
                 }
             }
+        }
+
+        /// <summary>
+        /// The <see cref="VirtualCamera.AnchorDeviceSettings"/> of the current device.
+        /// </summary>
+        internal AnchorDeviceSettings AnchorDeviceSettings
+        {
+            get => m_AnchorDeviceSettings;
+            set => m_AnchorDeviceSettings = value;
+        }
+
+        /// <summary>
+        /// Enables or disables anchoring.
+        /// </summary>
+        public bool AnchorEnabled
+        {
+            get => m_AnchorDeviceSettings.Enabled;
+            set => m_AnchorDeviceSettings.Enabled = value;
+        }
+
+        /// <summary>
+        /// The target to anchor to.
+        /// </summary>
+        public Transform AnchorTarget
+        {
+            get => m_AnchorDeviceSettings.Target;
+            set => m_AnchorDeviceSettings.Target = value;
+        }
+
+        /// <summary>
+        /// The <see cref="VirtualCamera.AnchorSettings"/> of the current device.
+        /// </summary>
+        public AnchorSettings AnchorSettings
+        {
+            get => m_AnchorDeviceSettings.Settings;
+            set => m_AnchorDeviceSettings.Settings = value;
         }
 
         /// <summary>
@@ -428,9 +469,13 @@ namespace Unity.LiveCapture.VirtualCamera
 
             SnapshotLibraryUtility.EnforceSnapshotLibrary(this);
 
+            var pose = AnchorDeviceSettings.IsActive
+                ? m_Actor.transform.GetPose(Space.Self)
+                : m_Rig.Pose;
+
             var snapshot = new Snapshot()
             {
-                Pose = m_Rig.Pose,
+                Pose = pose,
                 LensAsset = m_LensAsset,
                 Lens = m_Lens,
                 CameraBody = m_CameraBody,
@@ -482,6 +527,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 return;
             }
 
+            SetAnchorEnabled(false);
             SetOrigin(snapshot.Pose);
 
             var takeRecorderInternal = GetTakeRecorder() as ITakeRecorderInternal;
@@ -617,6 +663,28 @@ namespace Unity.LiveCapture.VirtualCamera
                 m_Recorder.Bake(),
                 metadata,
                 startTime);
+
+            if (m_AnchorDeviceSettings.IsActive)
+            {
+                var actorBinding = new AnimatorTakeBinding();
+                var anchorTargetBinding = new TransformTakeBinding();
+
+                actorBinding.SetName(m_Actor.Animator.name);
+                anchorTargetBinding.SetName(m_AnchorDeviceSettings.Target.gameObject.name);
+
+                takeBuilder.AddBinding(anchorTargetBinding, m_AnchorDeviceSettings.Target);
+
+                var track = takeBuilder.CreateTrack<AnchorTrack>("Virtual Camera Anchor", actorBinding);
+                var clip = track.CreateDefaultClip();
+                var asset = clip.asset as AnchorPlayableAsset;
+
+                clip.displayName = "Anchor";
+                clip.start = takeBuilder.ContextStartTime;
+                clip.duration = track.timelineAsset.duration;
+
+                asset.Target = anchorTargetBinding;
+                asset.Settings = m_AnchorDeviceSettings.Settings;
+            }
         }
 
         /// <summary>
@@ -644,7 +712,7 @@ namespace Unity.LiveCapture.VirtualCamera
             };
 
             m_Rig.WorldToLocal(pose);
-            
+
             RefreshRig();
         }
 
@@ -741,12 +809,25 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             UpdateFocusRigIfNeeded();
             Process();
+            UpdateAnchor();
             UpdateActor(m_Rig.Pose, m_Processor.CurrentLens);
         }
 
         void UpdateActor(Pose pose, Lens lens)
         {
             Debug.Assert(m_Actor != null, "Actor is null");
+
+            if (m_Driver is IAnchorable anchorable)
+            {
+                if (m_AnchorDeviceSettings.IsActive)
+                {
+                    anchorable.AnchorTo(m_AnchorDeviceSettings.Target, m_AnchorDeviceSettings.Settings);
+                }
+                else
+                {
+                    anchorable.AnchorTo(null, null);
+                }
+            }
 
             if (m_Channels.HasFlag(VirtualCameraChannelFlags.Position))
             {
@@ -796,6 +877,69 @@ namespace Unity.LiveCapture.VirtualCamera
 
             if (m_Driver is ICustomDamping customDamping)
                 customDamping.SetDamping(m_Settings.Damping);
+        }
+
+        void SetAnchorEnabled(bool enable)
+        {
+            m_AnchorDeviceSettings.Enabled = enable;
+
+            UpdateAnchor();
+        }
+
+        void UpdateAnchor()
+        {
+            var anchorSettingsChanged =
+                m_AnchorDeviceSettings.Enabled != m_LastAnchorSettings.Enabled ||
+                m_AnchorDeviceSettings.Target != m_LastAnchorSettings.Target ||
+                m_AnchorDeviceSettings.Settings.PositionLock != m_LastAnchorSettings.Settings.PositionLock ||
+                m_AnchorDeviceSettings.Settings.RotationLock != m_LastAnchorSettings.Settings.RotationLock;
+
+            if (anchorSettingsChanged)
+            {
+                if (m_AnchorDeviceSettings.IsActive)
+                {
+                    ActivateAnchor(m_LastActorWorldPose);
+                }
+                else
+                {
+                    DeactivateAnchor(m_LastActorWorldPose);
+                }
+            }
+
+            m_LastAnchorSettings = m_AnchorDeviceSettings;
+            m_LastActorWorldPose = m_Actor.transform.GetPose(Space.World);
+        }
+
+        void ActivateAnchor(Pose actorPose)
+        {
+            Debug.Assert(m_AnchorDeviceSettings.IsActive);
+
+            var target = m_AnchorDeviceSettings.Target;
+            var settings = m_AnchorDeviceSettings.Settings;
+            var anchorPosition = target.TransformPoint(settings.PositionOffset);
+            var anchorPose = new Pose(
+                AnchorUtility.GetAnchorPosition(anchorPosition, settings),
+                AnchorUtility.GetAnchorOrientation(target.eulerAngles, settings));
+            var invRotation = Quaternion.Inverse(anchorPose.rotation);
+
+            m_Rig.Origin = Pose.identity;
+            m_Rig.WorldToLocal(new Pose()
+            {
+                position = invRotation * (actorPose.position - anchorPose.position),
+                rotation = invRotation * actorPose.rotation
+            });
+            m_Rig.Rebase(m_Rig.LastInput);
+
+            RefreshRig();
+        }
+
+        void DeactivateAnchor(Pose actorPose)
+        {
+            Debug.Assert(!m_AnchorDeviceSettings.IsActive);
+
+            SetOrigin(actorPose);
+
+            m_Rig.Rebase(m_Rig.LastInput);
         }
 
         Camera GetCamera()
@@ -932,9 +1076,7 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (IsRecording())
             {
-                var takeRecorder = GetTakeRecorder();
-                var timeOffset = takeRecorder.GetPreviewTime();
-                var frameRate = takeRecorder.FrameRate;
+                var frameRate = GetTakeRecorder().FrameRate;
 
                 m_LensMetadata = m_Lens;
 
@@ -942,7 +1084,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 {
                     RecordCurrentValues();
                 };
-                m_Recorder.Prepare(timeOffset, m_Channels, frameRate);
+                m_Recorder.Prepare(m_Channels, frameRate);
 
                 // Lens interpolation requires continuous updates.
                 Refresh();
@@ -953,7 +1095,14 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (m_Actor != null)
             {
-                SetOrigin(new Pose(m_Actor.transform.localPosition, m_Actor.transform.localRotation));
+                if (AnchorDeviceSettings.IsActive)
+                {
+                    ActivateAnchor(m_Actor.transform.GetPose(Space.World));
+                }
+                else
+                {
+                    SetOrigin(m_Actor.transform.GetPose(Space.Self));
+                }
             }
         }
 
@@ -1461,7 +1610,7 @@ namespace Unity.LiveCapture.VirtualCamera
             Debug.Assert(IsSynchronized, "Attempting to call PresentAt() when data source is not being synchronized");
 
             var requestedFrameTime = FrameTime.Remap(timecode.ToFrameTime(frameRate), frameRate, m_Processor.GetBufferFrameRate());
-            
+
             m_PresentationFrameTime = requestedFrameTime + PresentationOffset;
 
             return m_Processor.GetStatusAt(m_PresentationFrameTime);

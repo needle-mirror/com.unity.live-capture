@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using UnityEngine.Playables;
-
 using UnityObject = UnityEngine.Object;
 
 namespace Unity.LiveCapture
@@ -95,6 +94,8 @@ namespace Unity.LiveCapture
             return m_Director;
         }
 
+        bool IsRecording { get; set; }
+
         void SetTake(Take take, ref Take dst)
         {
             if (take == dst)
@@ -113,6 +114,8 @@ namespace Unity.LiveCapture
             {
                 m_Director.SetSceneBindings(dst.BindingEntries);
             }
+
+            Prepare();
         }
 
         public ISlate GetSlate()
@@ -120,19 +123,47 @@ namespace Unity.LiveCapture
             return this;
         }
 
+        public void Play()
+        {
+            if (Timeline.TrySetAsMasterDirector(m_Director))
+            {
+                PlayableDirectorControls.Play(m_Director);
+            }
+        }
+
+        public bool IsPlaying()
+        {
+            return PlayableDirectorControls.IsPlaying(m_Director);
+        }
+
+        public void Pause()
+        {
+            PlayableDirectorControls.Pause(m_Director);
+        }
+
         public double GetTime()
         {
-            return m_Director.time;;
+            return m_Director.time;
         }
 
         public void SetTime(double value)
         {
-            PlayableDirectorControls.SetTime(m_Director, value);
+            if (Timeline.TrySetAsMasterDirector(m_Director))
+            {
+                PlayableDirectorControls.SetTime(m_Director, value);
+            }
         }
 
         public void Prepare(bool isRecording)
         {
-            var take = isRecording ? m_IterationBase : m_Take;
+            IsRecording = isRecording;
+
+            Prepare();
+        }
+
+        void Prepare()
+        {
+            var take = IsRecording ? m_IterationBase : m_Take;
             var timeline = take != null ? take.Timeline : null;
 
             if (m_Director.playableAsset != timeline)
@@ -140,7 +171,7 @@ namespace Unity.LiveCapture
                 m_Director.playableAsset = timeline;
                 m_Director.DeferredEvaluate();
 
-                Timeline.SetAsMasterDirector(m_Director);
+                Timeline.TrySetAsMasterDirector(m_Director);
                 Timeline.Repaint();
             }
         }
@@ -152,7 +183,10 @@ namespace Unity.LiveCapture
 
         public bool IsValid()
         {
-            return m_Director != null;
+            var masterDirector = Timeline.MasterDirector;
+            var isTimelineAvailable = masterDirector == null || masterDirector == m_Director;
+
+            return m_Director != null && isTimelineAvailable;
         }
 
         /// <summary>

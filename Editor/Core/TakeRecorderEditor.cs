@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,6 +17,9 @@ namespace Unity.LiveCapture.Editor
     {
         static class Contents
         {
+            static readonly string k_IconPath = $"Packages/{LiveCaptureInfo.Name}/Editor/Core/Icons";
+            static readonly string Prefix = EditorGUIUtility.isProSkin ? "d_" : string.Empty;
+
             public static readonly GUIContent EnableToggleContent = EditorGUIUtility.TrTextContent("", "Toggle the enabled state of the device.");
             public static readonly GUIContent LiveButtonContent = EditorGUIUtility.TrTextContent("Live", "Set to live mode for previewing and recording takes.");
             public static readonly GUIContent PreviewButtonContent = EditorGUIUtility.TrTextContent("Playback", "Set to playback mode for reviewing takes.");
@@ -29,6 +33,8 @@ namespace Unity.LiveCapture.Editor
             public static readonly string CreateDeviceURL = Documentation.baseURL + "ref-component-take-recorder" + Documentation.endURL;
             public static readonly GUIContent StopRecordingLabel = EditorGUIUtility.TrTextContentWithIcon("Stop Recording", "Stop the ongoing recording.", "Animation.Record");
             public static readonly GUIContent PlayPreviewLabel = EditorGUIUtility.TrTextContentWithIcon("Start Preview", "Start previewing the selected Take.", "PlayButton");
+            public static readonly GUIContent PlayTakeContent = EditorGUIUtility.TrIconContent( $"{k_IconPath}/{Prefix}TimelinePlayRange.png", "Toggle play content's range.");
+            public static readonly GUIContent GotoBeginningContent = L10n.IconContent("Animation.FirstKey", "Go to the beginning of the shot");
             public static readonly GUIContent StopPreviewLabel = EditorGUIUtility.TrTextContentWithIcon("Stop Preview", "Stop the ongoing playback.", "PauseButton");
             public static readonly GUIContent FrameRateLabel = EditorGUIUtility.TrTextContent("Frame Rate", "The frame rate to use for recording.");
             public static readonly GUIContent ProjectSettingsButton = EditorGUIUtility.TrTextContent("Open Project Settings", "Open the Take System project settings.");
@@ -42,6 +48,11 @@ namespace Unity.LiveCapture.Editor
             public static readonly string UndoCreateDevice = L10n.Tr("Create Capture Device");
             public static readonly GUILayoutOption[] LargeButtonOptions =
             {
+                GUILayout.Height(30f)
+            };
+            public static readonly GUILayoutOption[] ShortButtonOptions =
+            {
+                GUILayout.Width(30f),
                 GUILayout.Height(30f)
             };
 
@@ -76,6 +87,7 @@ namespace Unity.LiveCapture.Editor
         SerializedProperty m_FrameRateProp;
         SerializedProperty m_Take;
         SerializedProperty m_DevicesProp;
+        SerializedProperty m_PlayTakeContent;
         ReorderableList m_DeviceList;
 
         void OnEnable()
@@ -84,6 +96,7 @@ namespace Unity.LiveCapture.Editor
             m_FrameRateProp = serializedObject.FindProperty("m_FrameRate");
             m_Take = serializedObject.FindProperty("m_TakePlayer.m_Take");
             m_DevicesProp = serializedObject.FindProperty("m_Devices");
+            m_PlayTakeContent = serializedObject.FindProperty("m_PlayTakeContent");
 
             m_TakeRecorder = target as TakeRecorder;
             m_Director = m_TakeRecorder.GetComponent<PlayableDirector>();
@@ -296,7 +309,10 @@ namespace Unity.LiveCapture.Editor
             var slate = m_TakeRecorder.GetActiveSlate();
 
             using (new EditorGUI.DisabledScope(slate == null))
+            using (new EditorGUILayout.HorizontalScope())
             {
+                DoGoToBeginningButton();
+
                 if (m_TakeRecorder.IsLive())
                 {
                     DoRecordButton();
@@ -305,6 +321,13 @@ namespace Unity.LiveCapture.Editor
                 {
                     DoPlayButton();
                 }
+
+                DoPlayTakeContentToggle();
+            }
+
+            if (m_TakeRecorder.IsLive())
+            {
+                DoRecordingInfoBox();
             }
 
             using (new EditorGUI.DisabledScope(m_TakeRecorder.IsRecording()))
@@ -335,7 +358,7 @@ namespace Unity.LiveCapture.Editor
 
                 if (change.changed)
                 {
-                    context.Prepare(false);
+                    TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved);
                 }
             }
         }
@@ -379,6 +402,11 @@ namespace Unity.LiveCapture.Editor
                     }
                 }
             }
+        }
+
+        void DoRecordingInfoBox()
+        {
+            var canStartRecording = m_TakeRecorder.CanStartRecording();
 
             if (!canStartRecording)
             {
@@ -386,6 +414,35 @@ namespace Unity.LiveCapture.Editor
                 var message = Contents.GetRecordButtonMessage(deviceCount);
 
                 LiveCaptureGUI.HelpBoxWithURL(message, Contents.ReadMoreText, Contents.CreateDeviceURL, MessageType.Warning);
+            }
+        }
+
+        void DoGoToBeginningButton()
+        {
+            using (new EditorGUI.DisabledScope(m_TakeRecorder.IsRecording()))
+            {
+                if (GUILayout.Button(Contents.GotoBeginningContent, Contents.ButtonToggleStyle, Contents.ShortButtonOptions))
+                {
+                    m_TakeRecorder.GoToBeginning();
+                }
+            }
+        }
+
+        void DoPlayTakeContentToggle()
+        {
+            using (new EditorGUI.DisabledScope(m_TakeRecorder.IsRecording()))
+            using (var change = new EditorGUI.ChangeCheckScope())
+            {
+                var value = GUILayout.Toggle(
+                    m_PlayTakeContent.boolValue,
+                    Contents.PlayTakeContent,
+                    Contents.ButtonToggleStyle,
+                    Contents.ShortButtonOptions);
+
+                if (change.changed)
+                {
+                    m_PlayTakeContent.boolValue = value;
+                }
             }
         }
 
@@ -400,7 +457,7 @@ namespace Unity.LiveCapture.Editor
                 {
                     if (m_TakeRecorder.IsPreviewPlaying())
                     {
-                        m_TakeRecorder.SetPreviewTime(0d);
+                        m_TakeRecorder.PausePreview();
                     }
                     else
                     {
@@ -472,7 +529,6 @@ namespace Unity.LiveCapture.Editor
         {
             var context = m_TakeRecorder.GetContext();
             var isLocked = m_TakeRecorder.IsLocked();
-            var isPlaying = m_TakeRecorder.IsPreviewPlaying();
 
             if (context == null || !isLocked && !m_TakeRecorder.HasExternalContextProvider())
             {
@@ -487,7 +543,7 @@ namespace Unity.LiveCapture.Editor
             using (new EditorGUI.DisabledScope(m_TakeRecorder.IsPreviewPlaying()))
             using (var change = new EditorGUI.ChangeCheckScope())
             {
-                var value = DoLockToggle(content, isLocked || isPlaying,
+                var value = DoLockToggle(content, isLocked,
                     Contents.ButtonToggleStyle, Contents.LargeButtonOptions);
 
                 if (change.changed)

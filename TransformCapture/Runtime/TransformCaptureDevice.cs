@@ -119,9 +119,9 @@ namespace Unity.LiveCapture.TransformCapture
         {
             if (IsRecording())
             {
-                var time = (float)GetTakeRecorder().GetPreviewTime();
+                var elapsedTime = (float)GetTakeRecorder().GetRecordingElapsedTime();
 
-                m_Recorder.Record(time);
+                m_Recorder.Record(elapsedTime);
             }
         }
     }

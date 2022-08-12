@@ -13,21 +13,37 @@ namespace Unity.LiveCapture
     public class TakeBinding<T> : ITakeBinding where T : UnityObject
     {
         [SerializeField]
-        ExposedReference<UnityObject> m_ExposedReference;
+        ExposedReference<T> m_ExposedReference;
 
         /// <inheritdoc/>
         public Type Type => typeof(T);
 
         /// <inheritdoc/>
+        public PropertyName PropertyName => m_ExposedReference.exposedName;
+
+        /// <inheritdoc/>
         public void SetName(string name)
         {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentException(nameof(name));
+
             m_ExposedReference.exposedName = new PropertyName(name);
         }
 
         /// <inheritdoc/>
-        public UnityObject GetValue(IExposedPropertyTable resolver)
+        UnityObject ITakeBinding.GetValue(IExposedPropertyTable resolver)
         {
-            return m_ExposedReference.Resolve(resolver);
+            return this.GetValue(resolver);
+        }
+
+        /// <summary>
+        /// Gets the resolved value of the binding.
+        /// </summary>
+        /// <param name="resolver">The resolve table.</param>
+        /// <returns> The resolved object reference. </returns>
+        public T GetValue(IExposedPropertyTable resolver)
+        {
+            return m_ExposedReference.Resolve(resolver) as T;
         }
 
         /// <inheritdoc/>
@@ -40,18 +56,6 @@ namespace Unity.LiveCapture
         public void ClearValue(IExposedPropertyTable resolver)
         {
             resolver.ClearReferenceValue(m_ExposedReference.exposedName);
-        }
-
-        /// <inheritdoc/>
-        public bool Equals(ITakeBinding other)
-        {
-            if (other is TakeBinding<T> binding)
-            {
-                return m_ExposedReference.exposedName == binding.m_ExposedReference.exposedName &&
-                    m_ExposedReference.defaultValue == binding.m_ExposedReference.defaultValue;
-            }
-
-            return false;
         }
     }
 }

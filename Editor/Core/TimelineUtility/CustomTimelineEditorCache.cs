@@ -1,5 +1,5 @@
 /// File borrowed from Timeline package, used to obtain the ClipEditor of a clip.
-/// Using the ClipEditor we can obtain the list of sub-timelies a TimelineClip controls.
+/// Using the ClipEditor we can obtain the list of sub-Timelines a TimelineClip controls.
 using System;
 using System.Collections.Generic;
 using System.Linq;

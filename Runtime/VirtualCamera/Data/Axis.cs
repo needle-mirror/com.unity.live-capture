@@ -6,7 +6,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// An enum defining the 3D axes as flags.
     /// </summary>
     [Flags]
-    enum Axis : byte
+    public enum Axis : byte
     {
         /// <summary>
         /// No axis flags set.

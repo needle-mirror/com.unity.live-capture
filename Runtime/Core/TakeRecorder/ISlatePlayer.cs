@@ -8,6 +8,9 @@ namespace Unity.LiveCapture
         IExposedPropertyTable GetResolver();
         ISlate GetSlate();
         double GetTimeOffset();
+        void Play();
+        bool IsPlaying();
+        void Pause();
         double GetTime();
         void SetTime(double value);
         void Prepare(bool isRecording);

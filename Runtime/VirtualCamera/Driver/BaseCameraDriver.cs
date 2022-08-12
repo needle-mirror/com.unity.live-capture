@@ -1,3 +1,4 @@
+using Unity.LiveCapture.VirtualCamera.Rigs;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -15,9 +16,15 @@ namespace Unity.LiveCapture.VirtualCamera
     [DisallowMultipleComponent]
     [RequireComponent(typeof(VirtualCameraActor))]
     [ExecuteAlways]
-    abstract class BaseCameraDriver : MonoBehaviour, ICameraDriver, IPreviewable
+    abstract class BaseCameraDriver : MonoBehaviour, ICameraDriver, IPreviewable, IAnchorable
     {
         VirtualCameraActor m_VirtualCameraActor;
+        Transform m_AnchorTarget;
+        AnchorSettings? m_AnchorSettings;
+        int m_LastAnchorSessionID;
+        int m_AnchorSessionID;
+        Pose? m_AnchorPose;
+        Vector3? m_AnchorEuler;
 
         float m_CachedFocusDistance;
         bool m_CachedFocusDistanceEnabled;
@@ -30,9 +37,15 @@ namespace Unity.LiveCapture.VirtualCamera
         protected virtual void OnEnable()
         {
             m_VirtualCameraActor = GetComponent<VirtualCameraActor>();
+
+            CameraDriverUpdateManager.Instance.Register(this);
         }
 
-        protected virtual void OnDisable() {}
+        protected virtual void OnDisable()
+        {
+            CameraDriverUpdateManager.Instance.Unregister(this);
+        }
+
         protected virtual void Awake() {}
         protected virtual void OnDestroy() {}
         protected virtual void OnValidate() {}
@@ -56,7 +69,8 @@ namespace Unity.LiveCapture.VirtualCamera
             m_VirtualCameraActor.LocalEulerAnglesEnabled = false;
         }
 
-        void LateUpdate()
+        /// <param name="deltaTime">Can usually be <see cref="Time.deltaTime"/></param>
+        internal void PostLateUpdate(float deltaTime)
         {
             if (TryGetImplementation(out var impl))
             {
@@ -65,14 +79,71 @@ namespace Unity.LiveCapture.VirtualCamera
                 var lensIntrinsics = m_VirtualCameraActor.LensIntrinsics;
                 var cameraBody = m_VirtualCameraActor.CameraBody;
 
-                if (m_VirtualCameraActor.LocalPositionEnabled)
+                if (IsAnchorActive())
                 {
-                    transform.localPosition = m_VirtualCameraActor.LocalPosition;
-                }
+                    if (m_LastAnchorSessionID != m_AnchorSessionID)
+                    {
+                        m_LastAnchorSessionID = m_AnchorSessionID;
+                        m_AnchorPose = null;
+                        m_AnchorEuler = null;
+                    }
 
-                if (m_VirtualCameraActor.LocalEulerAnglesEnabled)
+                    var settings = m_AnchorSettings.Value;
+
+                    if (!m_AnchorEuler.HasValue)
+                    {
+                        m_AnchorEuler = m_AnchorTarget.eulerAngles;
+                    }
+
+                    m_AnchorEuler = MathUtility.ClosestEuler(m_AnchorTarget.rotation, m_AnchorEuler.Value);
+
+                    var anchorPosition = m_AnchorTarget.TransformPoint(settings.PositionOffset);
+                    var anchorPose = new Pose()
+                    {
+                        position = AnchorUtility.GetAnchorPosition(anchorPosition, settings),
+                        rotation = AnchorUtility.GetAnchorOrientation(m_AnchorEuler.Value, settings)
+                    };
+
+                    if (!m_AnchorPose.HasValue)
+                    {
+                        m_AnchorPose = anchorPose;
+                    }
+
+                    if (settings.Damping.Enabled)
+                    {
+                        anchorPose = VirtualCameraDamping.Calculate(m_AnchorPose.Value, anchorPose, settings.Damping, deltaTime);
+                    }
+
+                    if (m_VirtualCameraActor.LocalPositionEnabled)
+                    {
+                        var localPosition = m_VirtualCameraActor.LocalPosition;
+
+                        transform.position = anchorPose.rotation * localPosition + anchorPose.position;
+                    }
+
+                    if (m_VirtualCameraActor.LocalEulerAnglesEnabled)
+                    {
+                        var localRotation = Quaternion.Euler(m_VirtualCameraActor.LocalEulerAngles);
+
+                        transform.rotation = anchorPose.rotation * localRotation;
+                    }
+
+                    m_AnchorPose = anchorPose;
+                }
+                else
                 {
-                    transform.localEulerAngles = m_VirtualCameraActor.LocalEulerAngles;
+                    m_AnchorPose = null;
+                    m_AnchorEuler = null;
+
+                    if (m_VirtualCameraActor.LocalPositionEnabled)
+                    {
+                        transform.localPosition = m_VirtualCameraActor.LocalPosition;
+                    }
+
+                    if (m_VirtualCameraActor.LocalEulerAnglesEnabled)
+                    {
+                        transform.localEulerAngles = m_VirtualCameraActor.LocalEulerAngles;
+                    }
                 }
 
                 lens.Validate(lensIntrinsics);
@@ -123,6 +194,25 @@ namespace Unity.LiveCapture.VirtualCamera
             previewer.Register(transform, "m_LocalEulerAnglesHint.x");
             previewer.Register(transform, "m_LocalEulerAnglesHint.y");
             previewer.Register(transform, "m_LocalEulerAnglesHint.z");
+        }
+
+        void IAnchorable.AnchorTo(Transform target, AnchorSettings? settings, int? sessionID)
+        {
+            m_AnchorTarget = target;
+            m_AnchorSettings = settings;
+            m_AnchorSessionID = sessionID.GetValueOrDefault(-1);
+        }
+
+        void IAnchorable.GetConfiguration(out Transform target, out AnchorSettings? settings, out int? sessionID)
+        {
+            target = m_AnchorTarget;
+            settings = m_AnchorSettings;
+            sessionID = m_AnchorSessionID;
+        }
+
+        bool IsAnchorActive()
+        {
+            return m_AnchorSettings.HasValue && m_AnchorTarget != null;
         }
     }
 }

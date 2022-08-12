@@ -10,6 +10,7 @@ namespace Unity.LiveCapture
     /// <typeparam name="T">The type of data stored in the buffer.</typeparam>
     public class CircularBuffer<T> : IReadOnlyList<T>
     {
+        readonly Action<T> m_OnDiscard;
         T[] m_Data;
         int m_StartIndex = 0;
         int m_EndIndex = 0;
@@ -25,29 +26,41 @@ namespace Unity.LiveCapture
         public int Capacity => m_Data.Length - 1;
 
         /// <summary>
-        /// Constructs a new <see cref="CircularBuffer{T}"/> instance with a given size.
+        /// Constructs a new <see cref="CircularBuffer{T}"/> instance with an initial capacity.
         /// </summary>
         /// <param name="capacity">The maximum number of elements which can be stored in the collection.</param>
-        public CircularBuffer(int capacity)
+        /// <param name="onDiscard">A callback invoked for each element that is discarded from the buffer.
+        /// This does not include when <see cref="PopFront"/> or <see cref="PopBack"/> are called.</param>
+        public CircularBuffer(int capacity, Action<T> onDiscard = null)
         {
+            m_OnDiscard = onDiscard;
+
             SetCapacity(capacity);
         }
 
+        /// <inheritdoc cref="PushBack"/>
+        public void Add(T value)
+        {
+            // The add method is an alias for PushBack to support initializer syntax
+            PushBack(value);
+        }
+
         /// <summary>
-        /// Adds an element to the buffer at the back. If the buffer is full,
-        /// the front element will be discarded.
+        /// Adds an element to the back of the buffer.
         /// </summary>
+        /// <remarks>
+        /// If the buffer is full, the element at the front of the buffer will be discarded.
+        /// </remarks>
         /// <param name="value">The element to add.</param>
         public void PushBack(T value)
         {
-            // We determine that the buffer is full by checking that the end index
-            // is one less than the start index. This means that the capacity of
-            // the buffer is m_Data.Length - 1, but it allows us to differentiate
-            // between the empty case and the full case using the start and
-            // end indices.
             if (Count == Capacity)
             {
-                // Buffer is full: we're overwriting the front
+                if (m_OnDiscard != null)
+                {
+                    m_OnDiscard(PeekFront());
+                }
+
                 IncrementIndex(ref m_StartIndex);
             }
 
@@ -56,29 +69,21 @@ namespace Unity.LiveCapture
         }
 
         /// <summary>
-        /// Alias for <see cref="PushBack"/> to support initializer syntax.
+        /// Adds an element to the front of the buffer.
         /// </summary>
+        /// <remarks>
+        /// If the buffer is full, the element at the back of the buffer will be discarded.
+        /// </remarks>
         /// <param name="value">The element to add.</param>
-        public void Add(T value)
-        {
-            PushBack(value);
-        }
-
-        /// <summary>
-        /// Adds an element to the buffer at the front. If the buffer is full,
-        /// the back element will be discarded.
-        /// </summary>
-        /// <param name="value"></param>
         public void PushFront(T value)
         {
-            // We determine that the buffer is full by checking that the end index
-            // is one less than the start index. This means that the capacity of
-            // the buffer is m_Data.Length - 1, but it allows us to differentiate
-            // between the empty case and the full case using the start and
-            // end indices.
             if (Count == Capacity)
             {
-                // Buffer is full: we're overwriting the front
+                if (m_OnDiscard != null)
+                {
+                    m_OnDiscard(PeekBack());
+                }
+
                 DecrementIndex(ref m_EndIndex);
             }
 
@@ -93,7 +98,7 @@ namespace Unity.LiveCapture
         public T PopFront()
         {
             PreconditionNotEmpty();
-            var item = Front();
+            var item = PeekFront();
             IncrementIndex(ref m_StartIndex);
             return item;
         }
@@ -105,7 +110,7 @@ namespace Unity.LiveCapture
         public T PopBack()
         {
             PreconditionNotEmpty();
-            var item = Back();
+            var item = PeekBack();
             DecrementIndex(ref m_EndIndex);
             return item;
         }
@@ -114,7 +119,7 @@ namespace Unity.LiveCapture
         /// Get the element at the front of the buffer.
         /// </summary>
         /// <returns>The element at the front of the buffer.</returns>
-        public T Front()
+        public T PeekFront()
         {
             PreconditionNotEmpty();
             return m_Data[m_StartIndex];
@@ -124,7 +129,7 @@ namespace Unity.LiveCapture
         /// Get the element at the back of the buffer.
         /// </summary>
         /// <returns>The element at the back of the buffer.</returns>
-        public T Back()
+        public T PeekBack()
         {
             PreconditionNotEmpty();
             var backIndex = m_EndIndex;
@@ -137,6 +142,14 @@ namespace Unity.LiveCapture
         /// </summary>
         public void Clear()
         {
+            if (m_OnDiscard != null)
+            {
+                foreach (var value in this)
+                {
+                    m_OnDiscard(value);
+                }
+            }
+
             m_StartIndex = 0;
             m_EndIndex = 0;
         }
@@ -144,9 +157,9 @@ namespace Unity.LiveCapture
         /// <summary>
         /// Sets the <see cref="Capacity"/> of the circular buffer.
         /// </summary>
+        /// <remarks>If the new size is smaller than the current <see cref="Count"/>, elements will be truncated from the front.</remarks>
         /// <param name="capacity">The desired capacity of the collection.</param>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if the capacity is not greater than zero.</exception>
-        /// <remarks>If the new size is smaller than the current <see cref="Count"/>, elements will be truncated from the front.</remarks>
         public void SetCapacity(int capacity)
         {
             if (capacity <= 0)
@@ -159,7 +172,11 @@ namespace Unity.LiveCapture
                 return;
             }
 
-            // See note in Add() for the reason we're allocating an extra element
+            // We determine that the buffer is full by checking that the end index
+            // is one less than the start index. This means that the capacity of
+            // the buffer is the array length minus one, but it allows us to differentiate
+            // between the empty case and the full case using the start and
+            // end indices.
             var newArray = new T[capacity + 1];
             var endIndex = 0;
 
@@ -167,7 +184,12 @@ namespace Unity.LiveCapture
             {
                 while (Count > capacity)
                 {
-                    PopFront();
+                    var discardedValue = PopFront();
+
+                    if (m_OnDiscard != null)
+                    {
+                        m_OnDiscard(discardedValue);
+                    }
                 }
 
                 var index = m_StartIndex;

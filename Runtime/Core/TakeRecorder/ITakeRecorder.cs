@@ -85,6 +85,12 @@ namespace Unity.LiveCapture
         /// </summary>
         /// <returns>The current duration in seconds.</returns>
         double GetPreviewDuration();
+
+        /// <summary>
+        /// Returns the time elapsed since the start of the recording.
+        /// </summary>
+        /// <returns>The time elapsed since the start of the recording, in seconds.</returns>
+        double GetRecordingElapsedTime();
     }
 
     interface ITakeRecorderInternal : ITakeRecorder

@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Playables;
@@ -6,7 +7,7 @@ using UnityObject = UnityEngine.Object;
 
 namespace Unity.LiveCapture
 {
-    class PlayableAssetContext : ITakeRecorderContext
+    class PlayableAssetContext : ITakeRecorderContext, IEquatable<PlayableAssetContext>
     {
         const double k_Tick = 0.016666666d;
 
@@ -56,6 +57,27 @@ namespace Unity.LiveCapture
             }
 
             return 0d;
+        }
+
+        public void Play()
+        {
+            var root = m_HierarchyContext.GetRootDirector();
+
+            PlayableDirectorControls.Play(root);
+        }
+
+        public bool IsPlaying()
+        {
+            var root = m_HierarchyContext.GetRootDirector();
+
+            return PlayableDirectorControls.IsPlaying(root);
+        }
+
+        public void Pause()
+        {
+            var root = m_HierarchyContext.GetRootDirector();
+
+            PlayableDirectorControls.Pause(root);
         }
 
         public double GetTime()

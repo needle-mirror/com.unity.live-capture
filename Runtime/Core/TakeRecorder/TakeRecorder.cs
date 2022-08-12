@@ -34,6 +34,12 @@ namespace Unity.LiveCapture
         /// TakeRecorder executes this event when playback has started or stopped.
         /// </summary>
         public static event Action<TakeRecorder> PlaybackStateChanged;
+
+        internal static void ClearSubscribers()
+        {
+            RecordingStateChanged = null;
+            PlaybackStateChanged = null;
+        }
         
         [SerializeField]
         PlayableDirectorContext m_DefaultContext = new PlayableDirectorContext();
@@ -47,16 +53,30 @@ namespace Unity.LiveCapture
         [SerializeField]
         bool m_Live = true;
 
+        [SerializeField]
+        bool m_PlayTakeContent;
+
         List<LiveCaptureDevice> m_RecordingDevices = new List<LiveCaptureDevice>();
         bool m_Recording;
-        bool m_PreviewEnded;
-        double? m_RequestedPreviewTime;
         double m_RecordingStartTime;
-        TakeRecorderPlayer m_Player;
+        Playable m_RecordTimer;
+        bool m_IsPlayingCached;
+        TakeRecorderPlaybackState m_PlaybackState = new TakeRecorderPlaybackState();
         List<ITakeRecorderContextProvider> m_ContextProviders = new List<ITakeRecorderContextProvider>();
         ITakeRecorderContext m_LockedContext;
-        ITakeRecorderContext m_PlaybackContext;
+        ITakeRecorderContext m_RecordContext;
         Texture2D m_Screenshot;
+
+        internal ITakeRecorderContext RecordContext => m_RecordContext;
+        internal ITakeRecorderContext PlaybackContext => m_PlaybackState.Context;
+        // For testing purposes only.
+        internal bool SkipProducingAssets { get; set; }
+        internal bool SkipDeviceReadyCheck { get; set; }
+        internal bool PlayTakeContent
+        {
+            get => m_PlayTakeContent;
+            set => m_PlayTakeContent = value;
+        }
 
         /// <inheritdoc/>
         public FrameRate FrameRate
@@ -110,8 +130,6 @@ namespace Unity.LiveCapture
 
             StopRecording();
             PausePreview();
-            HandlePreviewEnded();
-            m_Player.Destroy();
             DisposeScreenshot();
 
             TakeRecorderUpdateManager.Instance.Unregister(this);
@@ -155,11 +173,6 @@ namespace Unity.LiveCapture
             return m_Devices.Contains(device);
         }
 
-        internal PlayableGraph GetPreviewGraph()
-        {
-            return m_Player.Graph;
-        }
-
         internal void LiveUpdate()
         {
             if (IsLive())
@@ -181,6 +194,9 @@ namespace Unity.LiveCapture
                     }
                 }
             }
+
+            HandleRecordingEnded();
+            PlaybackChangeCheck();
         }
 
         /// <inheritdoc/>
@@ -201,7 +217,7 @@ namespace Unity.LiveCapture
 
             if (IsLive())
             {
-                SetPreviewTime(0d);
+                m_PlaybackState.Stop();
             }
             else
             {
@@ -228,9 +244,10 @@ namespace Unity.LiveCapture
         {
             if (!IsRecording()
                 && IsLive()
-                && TryGetContext(out var context))
+                && TryGetContext(out m_RecordContext))
             {
                 m_Recording = true;
+                m_RecordTimer = StartTimer();
 
                 TakeScreenshot();
                 Prepare();
@@ -261,11 +278,7 @@ namespace Unity.LiveCapture
                 return;
             }
 
-            if (IsPreviewPlaying())
-            {
-                SetPreviewTime(0d);
-            }
-
+            m_PlaybackState.Stop();
             StopRecordingInternal();
         }
 
@@ -283,23 +296,41 @@ namespace Unity.LiveCapture
                     }
                 }
 
-                if (TryGetContext(out var context))
+                if (m_RecordContext.IsValid())
                 {
-                    ProduceTake(context);
+                    m_RecordContext.Pause();
+
+                    ProduceTake(m_RecordContext);
                     Prepare();
                 }
 
+                m_RecordContext = null;
+                
+                StopTimer(ref m_RecordTimer);
                 DisposeScreenshot();
                 NotifyRecordingStateChange();
             }
         }
 
         /// <inheritdoc/>
+        public double GetRecordingElapsedTime()
+        {
+            if (isActiveAndEnabled && IsRecording())
+            {
+                Debug.Assert(m_RecordTimer.IsValid());
+
+                return m_RecordTimer.GetTime();
+            }
+
+            return 0d;
+        }
+
+        /// <inheritdoc/>
         public bool IsPreviewPlaying()
         {
-            if (m_Player.IsValid())
+            if (isActiveAndEnabled && TryGetContext(out var context))
             {
-                return m_Player.IsPlaying;
+                return context.IsPlaying();
             }
 
             return false;
@@ -308,31 +339,57 @@ namespace Unity.LiveCapture
         /// <inheritdoc/>
         public void PlayPreview()
         {
-            if (isActiveAndEnabled && TryGetContext(out m_PlaybackContext))
+            if (isActiveAndEnabled && !m_PlaybackState.IsPlaying() && TryGetContext(out var context))
             {
-                CreatePlayerIfNeeded();
+                var mode = TakeRecorderPlaybackMode.Context;
 
-                var time = GetPreviewTime();
-                var duration = GetPreviewDuration();
+                if (PlayTakeContent)
+                {
+                    mode = TakeRecorderPlaybackMode.Contents;
+                }
 
-                m_Player.Play(time, duration);
+                if (IsRecording())
+                {
+                    mode = TakeRecorderPlaybackMode.Recording;
+                }
 
-                HandlePreviewTimeRequest();
-                NotifyPlaybackStateChange();
+                m_PlaybackState.Play(context, mode);
+
+                PlaybackChangeCheck();
+            }
+        }
+
+        internal void GoToBeginning()
+        {
+            if (isActiveAndEnabled && TryGetContext(out var context))
+            {
+                var time = 0d;
+
+                if (m_PlayTakeContent)
+                {
+                    var slate = context.GetSlate();
+                    var take = slate.Take;
+
+                    if (take != null && take.TryGetContentRange(out var start, out var end))
+                    {
+                        var timeOffset = context.GetTimeOffset();
+
+                        time = start - timeOffset;
+                    }
+                }
+
+                context.SetTime(time);
             }
         }
 
         /// <inheritdoc/>
         public void PausePreview()
         {
-            if (isActiveAndEnabled && IsPreviewPlaying())
+            if (isActiveAndEnabled && TryGetContext(out var context))
             {
-                Debug.Assert(m_Player.IsValid());
+                context.Pause();
 
-                m_Player.Pause();
-
-                HandlePreviewTimeRequest();
-                HandlePreviewEnded();
+                PlaybackChangeCheck();
             }
         }
 
@@ -361,13 +418,11 @@ namespace Unity.LiveCapture
         /// <inheritdoc/>
         public void SetPreviewTime(double time)
         {
-            if (isActiveAndEnabled)
+            if (isActiveAndEnabled && TryGetContext(out var context))
             {
-                CreatePlayerIfNeeded();
+                context.SetTime(time);
 
-                m_Player.SetTime(time, GetPreviewDuration());
-
-                HandlePreviewTimeRequest();
+                PlaybackChangeCheck();
             }
         }
 
@@ -375,58 +430,24 @@ namespace Unity.LiveCapture
         {
             if (TryGetContext(out var context))
             {
+                context.Pause();
                 context.Prepare(IsRecording());
             }
         }
 
-        internal void SetPreviewTimeInternal(double time)
-        {
-            m_RequestedPreviewTime = time;
-        }
-
-        internal void OnPreviewEnded()
-        {
-            // We can't call StopRecordingInternal here as it would trigger:
-            // "A PlayableGraph is being directly or indirectly evaluated recursively."
-            // Calling it in the next update instead.
-            m_PreviewEnded = true;
-        }
-
-        internal void HandlePreviewTimeRequest()
-        {
-            if (!m_RequestedPreviewTime.HasValue)
-                return;
-
-            var time = m_RequestedPreviewTime.Value;
-
-            if (TryGetContext(out var context))
-            {
-                context.SetTime(time);
-
-                Callbacks.InvokeSeekOccurred();
-            }
-
-            m_RequestedPreviewTime = null;
-        }
-
-        void HandlePreviewEnded()
-        {
-            if (!m_PreviewEnded)
-                return;
-
-            m_PreviewEnded = false;
-            m_PlaybackContext = null;
-
-            StopRecordingInternal();
-            NotifyPlaybackStateChange();
-        }
-
         void ProduceTake(ITakeRecorderContext context)
         {
+            if (SkipProducingAssets)
+            {
+                return;
+            }
+
             Debug.Assert(context != null);
 
-            var timeOffset = context.GetTimeOffset();
-            var duration = context.GetDuration();
+            var contextStartTime = context.GetTimeOffset();
+            var contextDuration = context.GetDuration();
+            var recordingStartTime = m_PlaybackState.InitialOffset;
+            var recordingDuration = m_RecordTimer.GetTime();
             var slate = context.GetSlate();
             var resolver = context.GetResolver();
 
@@ -434,8 +455,10 @@ namespace Unity.LiveCapture
             Debug.Assert(resolver != null);
 
             using var takeBuilder = new TakeBuilder(
-                timeOffset,
-                duration,
+                contextStartTime,
+                contextDuration,
+                recordingStartTime,
+                recordingDuration,
                 slate.SceneNumber,
                 slate.ShotName,
                 slate.TakeNumber,
@@ -499,14 +522,11 @@ namespace Unity.LiveCapture
                     }
                 }
             }
-            takeBuilder.AlignTracksByStartTimes(m_RecordingStartTime);
+            takeBuilder.AlignTracks(m_RecordingStartTime);
         }
 
         void Update()
         {
-            HandlePreviewTimeRequest();
-            HandlePreviewEnded();
-
             foreach (var device in m_Devices)
             {
                 if (IsDeviceValid(device) && device.isActiveAndEnabled)
@@ -522,16 +542,7 @@ namespace Unity.LiveCapture
                 }
             }
 
-            if (IsRecording() && !AreDevicesReadyForRecording(m_RecordingDevices))
-            {
-                StopRecording();
-            }
-        }
-
-        void LateUpdate()
-        {
-            HandlePreviewTimeRequest();
-            HandlePreviewEnded();
+            m_PlaybackState.Update();
         }
 
         bool IsDeviceValid(LiveCaptureDevice device)
@@ -546,6 +557,11 @@ namespace Unity.LiveCapture
 
         bool AreDevicesReadyForRecording(IEnumerable<LiveCaptureDevice> devices)
         {
+            if (SkipDeviceReadyCheck)
+            {
+                return true;
+            }
+
             foreach (var device in devices)
             {
                 if (IsDeviceReadyForRecording(device))
@@ -560,16 +576,6 @@ namespace Unity.LiveCapture
         internal bool CanStartRecording()
         {
             return AreDevicesReadyForRecording(m_Devices);
-        }
-
-        void CreatePlayerIfNeeded()
-        {
-            if (m_Player.IsValid())
-            {
-                return;
-            }
-
-            m_Player = TakeRecorderPlayer.Create(this);
         }
 
         void TakeScreenshot()
@@ -651,13 +657,6 @@ namespace Unity.LiveCapture
         {
             context = default(ITakeRecorderContext);
 
-            if (m_PlaybackContext != null && m_PlaybackContext.IsValid())
-            {
-                context = m_PlaybackContext;
-
-                return true;
-            }
-
             if (m_LockedContext != null && m_LockedContext.IsValid())
             {
                 context = m_LockedContext;
@@ -677,7 +676,7 @@ namespace Unity.LiveCapture
                 }
             }
 
-            if (m_ContextProviders.Count == 0)
+            if (m_ContextProviders.Count == 0 && m_DefaultContext.IsValid())
             {
                 context = m_DefaultContext;
 
@@ -709,6 +708,73 @@ namespace Unity.LiveCapture
             {
                 Debug.LogException(e);
             }
+        }
+
+        void PlaybackChangeCheck()
+        {
+            var isPlaying = IsPreviewPlaying();
+
+            if (m_IsPlayingCached != isPlaying)
+            {
+                m_IsPlayingCached = isPlaying;
+
+                NotifyPlaybackStateChange();
+            }
+        }
+
+        void HandleRecordingEnded()
+        {
+            if (IsRecording())
+            {
+                if(!AreDevicesReadyForRecording(m_RecordingDevices))
+                {
+                    StopRecording();
+                }
+                else if (m_RecordContext.IsValid())
+                {
+                    if(m_RecordContext.GetDuration() > 0d && !m_RecordContext.IsPlaying())
+                    {
+                        StopRecordingInternal();
+                    }
+                }
+                else
+                {
+                    StopRecordingInternal();
+                }
+            }
+        }
+
+        static Playable StartTimer()
+        {
+            var graph = PlayableGraph.Create("TakeRecorderTimer");
+            var output = ScriptPlayableOutput.Create(graph, "Output");
+            var playable = Playable.Create(graph);
+            var updateMode = Application.isPlaying
+                ? DirectorUpdateMode.GameTime
+                : DirectorUpdateMode.UnscaledGameTime;
+
+            output.SetSourcePlayable(playable);
+            graph.SetTimeUpdateMode(updateMode);
+            graph.Play();
+
+            return playable;
+        }
+
+        static void StopTimer(ref Playable playable)
+        {
+            if (!playable.IsValid())
+            {
+                return;
+            }
+
+            var graph = playable.GetGraph();
+
+            if (graph.IsValid())
+            {
+                graph.Destroy();
+            }
+
+            playable = Playable.Null;
         }
     }
 }

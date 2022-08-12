@@ -17,7 +17,7 @@ namespace Unity.LiveCapture.VirtualCamera
             //     .TakeWhile(x => x.frameTime <= cutoff)
             //     .LastOrDefault().value;
 
-            if (buffer.Count == 0 || cutoff < buffer.Front().frameTime)
+            if (buffer.Count == 0 || cutoff < buffer.PeekFront().frameTime)
             {
                 return null;
             }

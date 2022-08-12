@@ -186,7 +186,7 @@ namespace Unity.LiveCapture.Mocap
                 m_Animator.name,
                 m_Animator,
                 m_Recorder.Bake(),
-                startTime: m_FirstFrameTime);
+                alignTime: m_FirstFrameTime);
         }
 
         void UpdateRecorder()

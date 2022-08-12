@@ -24,6 +24,16 @@ namespace Unity.LiveCapture
             Initialize();
         }
 
+        public override void OnGraphStop(Playable playable)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
+            }
+#endif
+        }
+
         public override void OnPlayableDestroy(Playable playable)
         {
             if (m_TakeRecorder != null)

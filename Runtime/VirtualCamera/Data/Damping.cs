@@ -7,7 +7,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// Contains the damping data.
     /// </summary>
     [Serializable]
-    struct Damping : IEquatable<Damping>
+    public struct Damping : IEquatable<Damping>
     {
         /// <summary>
         /// A rig that applies no damping.
@@ -81,7 +81,11 @@ namespace Unity.LiveCapture.VirtualCamera
             return obj is Damping damping && Equals(damping);
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Determines whether the <see cref="Damping"/> instances are equal.
+        /// </summary>
+        /// <param name="other">The other <see cref="Damping"/> to compare with the current object.</param>
+        /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>
         public bool Equals(Damping other)
         {
             return Enabled == other.Enabled &&

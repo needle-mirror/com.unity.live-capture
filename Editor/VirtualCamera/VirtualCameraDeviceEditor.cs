@@ -21,6 +21,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             public static GUIContent LensAssetLabel = EditorGUIUtility.TrTextContent("Lens Asset", "The asset that provides the lens intrinsics.");
             public static GUIContent CameraBody = EditorGUIUtility.TrTextContent("Camera Body", "The parameters of the camera's body.");
             public static GUIContent Settings = EditorGUIUtility.TrTextContent("Settings", "The settings of the device.");
+            public static GUIContent AnchorSettings = EditorGUIUtility.TrTextContent("Anchor Settings", "The anchor settings of the device.");
             public static GUIContent Recorder = EditorGUIUtility.TrTextContent("Keyframe Reduction", "Parameters to reduce redundant keyframes in the recorded animations. Higher values reduce the file size but might affect the curve accuracy.");
             public static string VideoNotCompatible = L10n.Tr("Video streaming not supported on Apple silicon.");
             public static GUIContent VideoSettingsButton = EditorGUIUtility.TrTextContent("Open Video Settings", "Open the settings of the video server.");
@@ -101,6 +102,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         SerializedProperty m_LensIntrinsics;
         SerializedProperty m_CameraBody;
         SerializedProperty m_Settings;
+        SerializedProperty m_AnchorDeviceSettings;
         SerializedProperty m_Recorder;
         SerializedProperty m_Snapshots;
         SerializedProperty m_SnapshotLibrary;
@@ -121,6 +123,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             m_LensIntrinsics = serializedObject.FindProperty("m_LensIntrinsics");
             m_CameraBody = serializedObject.FindProperty("m_CameraBody");
             m_Settings = serializedObject.FindProperty("m_Settings");
+            m_AnchorDeviceSettings = serializedObject.FindProperty("m_AnchorDeviceSettings");
             m_Recorder = serializedObject.FindProperty("m_Recorder");
             m_Snapshots = serializedObject.FindProperty("m_Snapshots");
             m_SnapshotLibrary = serializedObject.FindProperty("m_SnapshotLibrary");
@@ -176,7 +179,14 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             LensDrawerUtility.DoLensGUI(m_Lens, m_LensIntrinsics);
 
             EditorGUILayout.PropertyField(m_CameraBody, Contents.CameraBody);
+
             EditorGUILayout.PropertyField(m_Settings, Contents.Settings);
+
+            using (new EditorGUI.DisabledGroupScope(m_Device.IsRecording()))
+            {
+                EditorGUILayout.PropertyField(m_AnchorDeviceSettings, Contents.AnchorSettings);
+            }
+
             EditorGUILayout.PropertyField(m_Recorder, Contents.Recorder);
 
             var controlRect = EditorGUILayout.GetControlRect();

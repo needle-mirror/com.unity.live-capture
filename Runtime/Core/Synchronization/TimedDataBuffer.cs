@@ -37,7 +37,7 @@ namespace Unity.LiveCapture
                 return default;
             }
 
-            return FrameTime.Remap(Front().frameTime, FrameRate, frameRate);
+            return FrameTime.Remap(PeekFront().frameTime, FrameRate, frameRate);
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace Unity.LiveCapture
                 return default;
             }
 
-            return FrameTime.Remap(Back().frameTime, FrameRate, frameRate);
+            return FrameTime.Remap(PeekBack().frameTime, FrameRate, frameRate);
         }
 
         /// <summary>
@@ -70,8 +70,8 @@ namespace Unity.LiveCapture
                 return false;
             }
 
-            oldestSample = Front().frameTime;
-            newestSample = Back().frameTime;
+            oldestSample = PeekFront().frameTime;
+            newestSample = PeekBack().frameTime;
             return true;
         }
 
@@ -125,8 +125,8 @@ namespace Unity.LiveCapture
                 return TimedSampleStatus.DataMissing;
             }
 
-            var(oldestFrameTime, oldestSample) = Front();
-            var(newestFrameTime, newestSample) = Back();
+            var(oldestFrameTime, oldestSample) = PeekFront();
+            var(newestFrameTime, newestSample) = PeekBack();
 
             if (frame < oldestFrameTime)
             {
@@ -189,7 +189,7 @@ namespace Unity.LiveCapture
         internal void Add(FrameTime frameTime, FrameRate frameRate, T value)
         {
             frameTime = FrameTime.Remap(frameTime, frameRate, FrameRate);
-            if (Count == 0 || Back().frameTime < frameTime)
+            if (Count == 0 || PeekBack().frameTime < frameTime)
             {
                 Add((frameTime, value));
             }
@@ -208,7 +208,7 @@ namespace Unity.LiveCapture
         public void Add(double time, T value)
         {
             var frameTime = FrameTime.FromSeconds(FrameRate, time);
-            if (Count == 0 || Back().frameTime < frameTime)
+            if (Count == 0 || PeekBack().frameTime < frameTime)
             {
                 Add((frameTime, value));
             }

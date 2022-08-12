@@ -14,12 +14,17 @@ namespace Unity.LiveCapture
     /// All the takes recorded with the same binding name resolve to the same scene object, which
     /// facilitates swapping takes for playback.
     /// </remarks>
-    public interface ITakeBinding : IEquatable<ITakeBinding>
+    public interface ITakeBinding
     {
         /// <summary>
         /// The type of the value of the binding.
         /// </summary>
         Type Type { get; }
+
+        /// <summary>
+        /// The PropertyName of the binding.
+        /// </summary>
+        PropertyName PropertyName { get; }
 
         /// <summary>
         /// Sets the name of the binding.
