@@ -88,7 +88,7 @@ namespace Unity.LiveCapture
                 time = MathUtility.Clamp(time, 0f, parentClip.duration) + parentClip.start;
                 director = parentDirector;
             }
-            
+
             if (Timeline.MasterDirector == director)
             {
                 // Director.state returns PlayState.Paused when the root playable's IsDone() returns true.

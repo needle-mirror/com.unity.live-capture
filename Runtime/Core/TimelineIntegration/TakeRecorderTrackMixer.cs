@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
@@ -11,8 +12,10 @@ namespace Unity.LiveCapture
         Playable m_Playable;
         PlayableDirector m_Director;
         TakeRecorder m_TakeRecorder;
-        List<PlayableAssetContext> m_Contexts = new List<PlayableAssetContext>();
+        List<ITakeRecorderContext> m_Contexts = new List<ITakeRecorderContext>();
         Dictionary<Playable, float> m_Weights = new Dictionary<Playable, float>();
+
+        public ReadOnlyCollection<ITakeRecorderContext> Contexts => m_Contexts.AsReadOnly();
 
         public override void OnPlayableCreate(Playable playable)
         {
@@ -92,26 +95,26 @@ namespace Unity.LiveCapture
             if (m_TakeRecorder != null)
             {
                 isRecording = m_TakeRecorder.IsRecording();
-                activeContext = m_TakeRecorder.GetContext();
+                activeContext = m_TakeRecorder.Context;
             }
 
             for (var i = 0; i < m_Playable.GetInputCount(); ++i)
             {
-                var context = m_Contexts[i];
+                var context = m_Contexts[i] as PlayableAssetContext;
                 var clip = context.GetClip();
-                var slateAsset = clip.asset as SlatePlayableAsset;
+                var shotAsset = clip.asset as ShotPlayableAsset;
 
-                slateAsset.Migrate(clip.displayName);
+                shotAsset.Migrate(clip.displayName);
 
-                if (slateAsset.AutoClipName)
+                if (shotAsset.AutoClipName)
                 {
-                    clip.displayName = slateAsset.ShotName;
+                    clip.displayName = context.Slate.ShotName;
                 }
 
                 var inputPlayable = (ScriptPlayable<NestedTimelinePlayable>)m_Playable.GetInput(i);
                 var nestedTimeline = inputPlayable.GetBehaviour();
                 var isContextRecording = isRecording && context.Equals(activeContext);
-                var take = isContextRecording ? slateAsset.IterationBase : slateAsset.Take;
+                var take = isContextRecording ? context.IterationBase : context.Take;
                 
                 if (take != null)
                 {

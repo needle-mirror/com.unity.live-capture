@@ -37,11 +37,7 @@ namespace Unity.LiveCapture
         /// </summary>
         protected SettingAsset()
         {
-            if (s_Instance != null)
-            {
-                Debug.LogError($"{nameof(SettingAsset<T>)} already exists. Did you query the singleton in a constructor?");
-            }
-            else
+            if (s_Instance == null)
             {
                 s_Instance = this as T;
             }
@@ -58,6 +54,8 @@ namespace Unity.LiveCapture
                     .Cast<T>()
                     .FirstOrDefault(s => s != null);
             }
+#else
+            s_Instance = Resources.Load<T>(typeof(T).Name);
 #endif
             if (s_Instance == null)
             {
@@ -139,10 +137,10 @@ namespace Unity.LiveCapture
 
             switch (location)
             {
-                #if UNITY_EDITOR
+#if UNITY_EDITOR
                 case Location.PreferencesFolder:
                     return InternalEditorUtility.unityPreferencesFolder + '/' + relativePath;
-                #endif
+#endif
                 case Location.ProjectFolder:
                     return relativePath;
                 default:

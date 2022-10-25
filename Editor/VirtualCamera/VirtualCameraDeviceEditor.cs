@@ -38,8 +38,8 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             public static GUIContent MigrateSnapshotsMigrateButton = EditorGUIUtility.TrTextContent("Migrate Snapshots to Library", "Creates a new Snapshot Library for this device and transfers its snapshots to it.");
             public static GUIContent MigrateSnapshotsDeleteButton = EditorGUIUtility.TrTextContent("Delete Snapshots", "Deletes all snapshots from this device's obsolete storage.");
             public static string PreviewNotAvailable = L10n.Tr("Preview not available.");
-            public static GUIContent ActorCreateNew = EditorGUIUtility.TrTextContent("Create and assign a new actor", "Create a new actor in the scene and assign it to this device.");
-            public static string ActorCreateNewUndo = L10n.Tr("Create and assign a new actor");
+            public static readonly GUIContent ActorLabel = EditorGUIUtility.TrTextContent("Actor", "The actor currently assigned to this device.");
+            public static GUIContent ActorCreateNew = EditorGUIUtility.TrTextContent("Create", "Create a new Virtual Camera Actor and assign it to this device.");
             public static string MissingActorText = L10n.Tr("The device requires a Virtual Camera Actor target.");
             public static string MissingClientText = L10n.Tr("The device requires a connected Client.");
             public static string ReadMoreText = L10n.Tr("read more");
@@ -153,78 +153,89 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
             serializedObject.Update();
 
-            DoActorGUI(m_Actor);
+            DoActorCreateGUI();
 
             if (m_Actor.objectReferenceValue == null)
             {
                 LiveCaptureGUI.HelpBoxWithURL(Contents.MissingActorText, Contents.ReadMoreText,
                     Contents.SetupActorURL, MessageType.Warning);
 
-                DoActorCreateGUI();
+                serializedObject.ApplyModifiedProperties();
             }
-
-            DoChannelsGUI(m_Channels);
-            DoLensAssetField();
-
-            if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+            else
             {
-                EditorGUILayout.HelpBox(Contents.VideoNotCompatible, MessageType.Warning);
-            }
+                DoChannelsGUI(m_Channels);
+                DoLensAssetField();
 
-            if (GUILayout.Button(Contents.VideoSettingsButton))
-            {
-                VideoServerSettingsProvider.Open();
-            }
-
-            LensDrawerUtility.DoLensGUI(m_Lens, m_LensIntrinsics);
-
-            EditorGUILayout.PropertyField(m_CameraBody, Contents.CameraBody);
-
-            EditorGUILayout.PropertyField(m_Settings, Contents.Settings);
-
-            using (new EditorGUI.DisabledGroupScope(m_Device.IsRecording()))
-            {
-                EditorGUILayout.PropertyField(m_AnchorDeviceSettings, Contents.AnchorSettings);
-            }
-
-            EditorGUILayout.PropertyField(m_Recorder, Contents.Recorder);
-
-            var controlRect = EditorGUILayout.GetControlRect();
-            var snapshotsFoldoutLabel = EditorGUI.BeginProperty(controlRect, Contents.Snapshots, m_SnapshotLibrary);
-            m_SnapshotLibrary.isExpanded = EditorGUI.Foldout(controlRect, m_SnapshotLibrary.isExpanded, snapshotsFoldoutLabel, true);
-
-            if (m_SnapshotLibrary.isExpanded)
-            {
-                if (m_Snapshots.arraySize > 0)
+                if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
                 {
-                    DoMigrateSnapshotsGUI();
+                    EditorGUILayout.HelpBox(Contents.VideoNotCompatible, MessageType.Warning);
                 }
-                else
-                {
-                    DoSnapshotsGUI();
-                }
-            }
 
-            serializedObject.ApplyModifiedProperties();
+                if (GUILayout.Button(Contents.VideoSettingsButton))
+                {
+                    VideoServerSettingsProvider.Open();
+                }
+
+                LensDrawerUtility.DoLensGUI(m_Lens, m_LensIntrinsics);
+
+                EditorGUILayout.PropertyField(m_CameraBody, Contents.CameraBody);
+
+                EditorGUILayout.PropertyField(m_Settings, Contents.Settings);
+
+                using (new EditorGUI.DisabledGroupScope(m_Device.IsRecording()))
+                {
+                    EditorGUILayout.PropertyField(m_AnchorDeviceSettings, Contents.AnchorSettings);
+                }
+
+                EditorGUILayout.PropertyField(m_Recorder, Contents.Recorder);
+
+                var controlRect = EditorGUILayout.GetControlRect();
+                var snapshotsFoldoutLabel = EditorGUI.BeginProperty(controlRect, Contents.Snapshots, m_SnapshotLibrary);
+                m_SnapshotLibrary.isExpanded = EditorGUI.Foldout(controlRect, m_SnapshotLibrary.isExpanded, snapshotsFoldoutLabel, true);
+
+                if (m_SnapshotLibrary.isExpanded)
+                {
+                    if (m_Snapshots.arraySize > 0)
+                    {
+                        DoMigrateSnapshotsGUI();
+                    }
+                    else
+                    {
+                        DoSnapshotsGUI();
+                    }
+                }
+
+                serializedObject.ApplyModifiedProperties();
 
 #if URP_10_2_OR_NEWER
-            if (m_Device.Settings.FocusPlane)
-            {
-                RenderFeatureEditor<FocusPlaneRenderer, VirtualCameraScriptableRenderFeature>.OnInspectorGUI();
-            }
+                if (m_Device.Settings.FocusPlane)
+                {
+                    RenderFeatureEditor<FocusPlaneRenderer, VirtualCameraScriptableRenderFeature>.OnInspectorGUI();
+                }
 
-            if (m_Device.Settings.GateMask ||
-                m_Device.Settings.AspectRatioLines ||
-                m_Device.Settings.CenterMarker)
-            {
-                RenderFeatureEditor<FrameLines, VirtualCameraScriptableRenderFeature>.OnInspectorGUI();
-            }
+                if (m_Device.Settings.GateMask ||
+                    m_Device.Settings.AspectRatioLines ||
+                    m_Device.Settings.CenterMarker)
+                {
+                    RenderFeatureEditor<FrameLines, VirtualCameraScriptableRenderFeature>.OnInspectorGUI();
+                }
 #endif
+            }
         }
 
         void DoActorCreateGUI()
         {
-            if (GUILayout.Button(Contents.ActorCreateNew))
+            // Create button style inspired from VolumeEditor.OnInspectorGUI
+            var lineRect = EditorGUILayout.GetControlRect();
+            var fieldWidth = lineRect.width - EditorGUIUtility.labelWidth;
+            var buttonWidth = Mathf.Min(60f, fieldWidth);
+            var fieldRect = new Rect(lineRect.x, lineRect.y, lineRect.width - buttonWidth, lineRect.height);
+            var buttonNewRect = new Rect(fieldRect.xMax, lineRect.y, buttonWidth, lineRect.height);
+
+            EditorGUI.ObjectField(fieldRect, m_Actor);
+
+            if (GUI.Button(buttonNewRect, Contents.ActorCreateNew, EditorStyles.miniButton))
             {
                 if (k_ActorCreateMenuItems.Length == 1)
                 {

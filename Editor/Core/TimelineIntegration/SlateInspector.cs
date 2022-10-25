@@ -8,7 +8,7 @@ namespace Unity.LiveCapture.Editor
 {
     using Editor = UnityEditor.Editor;
 
-    class SlateInspector : IDisposable
+    class TakeRecorderContextInspector : IDisposable
     {
         static class Contents
         {
@@ -36,11 +36,8 @@ namespace Unity.LiveCapture.Editor
         PlayableDirector m_Director;
         List<Take> m_Takes;
         CompactList m_TakeList;
-        ISlate m_Slate;
-        int m_SceneNumber;
-        string m_ShotName;
-        int m_TakeNumber;
-        string m_Description;
+        ITakeRecorderContext m_Context;
+        Slate m_Slate;
         string m_Directory;
         Take m_Take;
         Editor m_Editor;
@@ -59,74 +56,74 @@ namespace Unity.LiveCapture.Editor
             RefreshCache();
         }
 
-        public void OnGUI(ISlate slate, PlayableDirector director)
+        public void OnGUI(ITakeRecorderContext context)
         {
-            m_Director = director;
+            m_Director = context.GetResolver() as PlayableDirector;
 
-            if (m_Slate != slate)
+            if (m_Context != context)
             {
-                m_Slate = slate;
+                m_Context = context;
 
-                PrepareTakes(m_Slate);
+                RefreshCache();
             }
             else
             {
-                HandleSlateChangedExternally();
+                HandleContextChangedExternally();
             }
 
-            using (new EditorGUI.DisabledScope(m_Slate == null))
+            using (new EditorGUI.DisabledScope(m_Context == null))
             {
                 using (var change = new EditorGUI.ChangeCheckScope())
                 {
-                    var sceneNumber = EditorGUILayout.IntField(Contents.SceneNumberLabel, m_SceneNumber);
+                    var sceneNumber = EditorGUILayout.IntField(Contents.SceneNumberLabel, m_Slate.SceneNumber);
 
                     if (change.changed)
                     {
-                        m_SceneNumber = Mathf.Max(1, sceneNumber);
+                        m_Slate.SceneNumber = Mathf.Max(1, sceneNumber);
 
-                        Debug.Assert(m_Slate != null);
+                        Debug.Assert(m_Context != null);
 
-                        Undo.RegisterCompleteObjectUndo(m_Slate.UnityObject, Contents.FieldUndo);
+                        Undo.RegisterCompleteObjectUndo(m_Context.UnityObject, Contents.FieldUndo);
 
-                        m_Slate.SceneNumber = m_SceneNumber;
+                        m_Context.Slate = m_Slate;
 
-                        EditorUtility.SetDirty(m_Slate.UnityObject);
+                        EditorUtility.SetDirty(m_Context.UnityObject);
                     }
                 }
 
                 using (var change = new EditorGUI.ChangeCheckScope())
                 {
-                    var name = EditorGUILayout.DelayedTextField(Contents.ShotNameLabel, m_ShotName);
+                    var name = EditorGUILayout.DelayedTextField(Contents.ShotNameLabel, m_Slate.ShotName);
 
                     if (change.changed && !string.IsNullOrEmpty(name))
                     {
-                        m_ShotName = FileNameFormatter.Instance.Format(name);
+                        m_Slate.ShotName = FileNameFormatter.Instance.Format(name);
 
-                        Debug.Assert(m_Slate != null);
+                        Debug.Assert(m_Context != null);
 
-                        Undo.RegisterCompleteObjectUndo(m_Slate.UnityObject, Contents.FieldUndo);
+                        Undo.RegisterCompleteObjectUndo(m_Context.UnityObject, Contents.FieldUndo);
 
-                        m_Slate.ShotName = m_ShotName;
+                        m_Context.Slate = m_Slate;
 
-                        EditorUtility.SetDirty(m_Slate.UnityObject);
+                        EditorUtility.SetDirty(m_Context.UnityObject);
                     }
                 }
 
                 using (var change = new EditorGUI.ChangeCheckScope())
                 {
-                    var takeNumber = EditorGUILayout.IntField(Contents.TakeNumberLabel, m_TakeNumber);
+                    var takeNumber = EditorGUILayout.IntField(Contents.TakeNumberLabel, m_Slate.TakeNumber);
 
                     if (change.changed)
                     {
-                        m_TakeNumber = Mathf.Max(1, takeNumber);
+                        m_Slate.TakeNumber = Mathf.Max(1, takeNumber);
 
-                        Debug.Assert(m_Slate != null);
+                        Debug.Assert(m_Context != null);
 
-                        Undo.RegisterCompleteObjectUndo(m_Slate.UnityObject, Contents.FieldUndo);
+                        Undo.RegisterCompleteObjectUndo(m_Context.UnityObject, Contents.FieldUndo);
 
-                        m_Slate.TakeNumber = m_TakeNumber;
+                        m_Context.Slate = m_Slate;
 
-                        EditorUtility.SetDirty(m_Slate.UnityObject);
+                        EditorUtility.SetDirty(m_Context.UnityObject);
                     }
                 }
 
@@ -134,21 +131,21 @@ namespace Unity.LiveCapture.Editor
                 {
                     EditorGUILayout.LabelField(Contents.DescriptionLabel, GUIContent.none);
 
-                    var description = EditorGUILayout.TextArea(m_Description,
+                    var description = EditorGUILayout.TextArea(m_Slate.Description,
                         Contents.TextAreaStyle,
                         GUILayout.Height(EditorGUIUtility.singleLineHeight * 2f));
 
                     if (change.changed)
                     {
-                        m_Description = description;
+                        m_Slate.Description = description;
 
-                        Debug.Assert(m_Slate != null);
+                        Debug.Assert(m_Context != null);
 
-                        Undo.RegisterCompleteObjectUndo(m_Slate.UnityObject, Contents.FieldUndo);
+                        Undo.RegisterCompleteObjectUndo(m_Context.UnityObject, Contents.FieldUndo);
 
-                        m_Slate.Description = m_Description;
+                        m_Context.Slate = m_Slate;
 
-                        EditorUtility.SetDirty(m_Slate.UnityObject);
+                        EditorUtility.SetDirty(m_Context.UnityObject);
                     }
                 }
 
@@ -158,15 +155,15 @@ namespace Unity.LiveCapture.Editor
 
                     if (change.changed)
                     {
-                        Debug.Assert(m_Slate != null);
+                        Debug.Assert(m_Context != null);
 
-                        Undo.RegisterCompleteObjectUndo(m_Slate.UnityObject, Contents.FieldUndo);
+                        Undo.RegisterCompleteObjectUndo(m_Context.UnityObject, Contents.FieldUndo);
 
-                        m_Slate.Directory = path;
+                        m_Context.Directory = path;
 
-                        PrepareTakes(m_Slate);
+                        RefreshCache();
 
-                        EditorUtility.SetDirty(m_Slate.UnityObject);
+                        EditorUtility.SetDirty(m_Context.UnityObject);
                     }
                 }
 
@@ -177,7 +174,7 @@ namespace Unity.LiveCapture.Editor
                 }
 
                 DoIterationBaseGUI();
-                DoTakeEditor(director);
+                DoTakeEditor();
             }
         }
 
@@ -185,9 +182,9 @@ namespace Unity.LiveCapture.Editor
         {
             var iterationBase = default(Take);
 
-            if (m_Slate != null)
+            if (m_Context != null)
             {
-                iterationBase = m_Slate.IterationBase;
+                iterationBase = m_Context.IterationBase;
             }
 
             using (new EditorGUILayout.HorizontalScope())
@@ -200,11 +197,11 @@ namespace Unity.LiveCapture.Editor
 
                     if (change.changed)
                     {
-                        Undo.RegisterCompleteObjectUndo(m_Slate.UnityObject, Contents.SetBaseUndo);
+                        Undo.RegisterCompleteObjectUndo(m_Context.UnityObject, Contents.SetBaseUndo);
 
-                        m_Slate.IterationBase = iterationBase;
+                        m_Context.IterationBase = iterationBase;
 
-                        EditorUtility.SetDirty(m_Slate.UnityObject);
+                        EditorUtility.SetDirty(m_Context.UnityObject);
                     }
                 }
 
@@ -242,33 +239,20 @@ namespace Unity.LiveCapture.Editor
             return path;
         }
 
-        void PrepareTakes(ISlate slate)
-        {
-            m_Slate = slate;
-
-            RefreshCache();
-        }
-
         void RefreshCache()
         {
-            if (m_Slate == null)
+            if (m_Context == null)
             {
-                m_SceneNumber = 1;
-                m_ShotName = string.Empty;
-                m_TakeNumber = 1;
-                m_Description = string.Empty;
+                m_Slate = Slate.Empty;
                 m_Directory = string.Empty;
                 m_Take = null;
                 m_Takes = new List<Take>();
             }
             else
             {
-                m_SceneNumber = m_Slate.SceneNumber;
-                m_ShotName = m_Slate.ShotName;
-                m_TakeNumber = m_Slate.TakeNumber;
-                m_Description = m_Slate.Description;
-                m_Directory = m_Slate.Directory;
-                m_Take = m_Slate.Take;
+                m_Slate = m_Context.Slate;
+                m_Directory = m_Context.Directory;
+                m_Take = m_Context.Take;
                 m_Takes = AssetDatabaseUtility.GetAssetsAtPath<Take>(m_Directory);
             }
 
@@ -279,9 +263,9 @@ namespace Unity.LiveCapture.Editor
         {
             var instanceID = 0;
 
-            if (m_Slate != null && m_Slate.UnityObject != null)
+            if (m_Context != null && m_Context.UnityObject != null)
             {
-                instanceID = m_Slate.UnityObject.GetInstanceID();
+                instanceID = m_Context.UnityObject.GetInstanceID();
             }
 
             m_TakeList = new CompactList(m_Takes, $"{instanceID}/takes");
@@ -302,7 +286,7 @@ namespace Unity.LiveCapture.Editor
                 rect.height = EditorGUIUtility.singleLineHeight;
 
                 var selected = m_TakeList.Index == index;
-                var isIterationBase = element == m_Slate.IterationBase;
+                var isIterationBase = element == m_Context.IterationBase;
                 var buttonWidth = 30f;
                 var rect1 = rect;
                 var rect2 = rect;
@@ -345,73 +329,65 @@ namespace Unity.LiveCapture.Editor
 
         void OnSelectCallback()
         {
-            Debug.Assert(m_Slate != null);
+            Debug.Assert(m_Context != null);
 
-            var currentTake = m_Slate.Take;
             var newTake = m_Takes[m_TakeList.Index];
 
-            RegisterDirectorUndo();
-            ClearSceneBindings();
-
-            if (currentTake != newTake)
+            if (m_Context.Take != newTake)
             {
-                Undo.RegisterCompleteObjectUndo(m_Slate.UnityObject, Undo.GetCurrentGroupName());
-
                 m_Take = newTake;
-                m_Slate.Take = newTake;
+
+                RegisterDirectorUndo();
+                Undo.RegisterCompleteObjectUndo(m_Context.UnityObject, Undo.GetCurrentGroupName());
+
+                m_Context.Take = newTake;
 
                 GUI.changed = true;
 
-                EditorUtility.SetDirty(m_Slate.UnityObject);
+                EditorUtility.SetDirty(m_Context.UnityObject);
+                EditorUtility.SetDirty(m_Director);
             }
-
-            SetSceneBindings();
         }
 
         void SetIterationBase(Take iterationBase, string undoMessage)
         {
             RegisterDirectorUndo();
-            ClearSceneBindings();
+            Undo.RegisterCompleteObjectUndo(m_Context.UnityObject, undoMessage);
 
-            Undo.RegisterCompleteObjectUndo(m_Slate.UnityObject, undoMessage);
+            m_Context.IterationBase = iterationBase;
 
-            m_Slate.IterationBase = iterationBase;
-
-            EditorUtility.SetDirty(m_Slate.UnityObject);
-
-            SetSceneBindings();
+            EditorUtility.SetDirty(m_Context.UnityObject);
+            EditorUtility.SetDirty(m_Director);
         }
 
-        void HandleSlateChangedExternally()
+        void HandleContextChangedExternally()
         {
-            if (m_Slate == null)
+            if (m_Context == null)
             {
                 return;
             }
 
-            if (m_Take != m_Slate.Take ||
-                m_SceneNumber != m_Slate.SceneNumber ||
-                m_ShotName != m_Slate.ShotName ||
-                m_Description != m_Slate.Description ||
-                m_Directory != m_Slate.Directory)
+            if (m_Take != m_Context.Take ||
+                m_Slate != m_Context.Slate ||
+                m_Directory != m_Context.Directory)
             {
                 RefreshCache();
             }
         }
 
-        void DoTakeEditor(PlayableDirector director)
+        void DoTakeEditor()
         {
             using (new EditorGUI.DisabledScope(true))
             {
                 EditorGUILayout.ObjectField(Contents.Take, m_Take, typeof(Take), false);
             }
 
-            if (director == null || m_Take == null)
+            if (m_Director == null || m_Take == null)
             {
                 return;
             }
 
-            Editor.CreateCachedEditorWithContext(m_Take, director, m_EditorType, ref m_Editor);
+            Editor.CreateCachedEditorWithContext(m_Take, m_Director, m_EditorType, ref m_Editor);
             
             using (var change = new EditorGUI.ChangeCheckScope())
             {
@@ -419,7 +395,9 @@ namespace Unity.LiveCapture.Editor
 
                 if (change.changed)
                 {
-                    m_Slate.SetSceneBindings(director);
+                    m_Context.ClearSceneBindings();
+                    m_Context.SetSceneBindings();
+                    m_Context.Rebuild();
                 }
             }
         }
@@ -429,26 +407,6 @@ namespace Unity.LiveCapture.Editor
             if (m_Director != null)
             {
                 Undo.RegisterCompleteObjectUndo(m_Director, Undo.GetCurrentGroupName());
-            }
-        }
-
-        void ClearSceneBindings()
-        {
-            if (m_Director != null && m_Slate != null)
-            {
-                m_Slate.ClearSceneBindings(m_Director);
-
-                EditorUtility.SetDirty(m_Director);
-            }
-        }
-
-        void SetSceneBindings()
-        {
-            if (m_Director != null && m_Slate != null)
-            {
-                m_Slate.SetSceneBindings(m_Director);
-
-                EditorUtility.SetDirty(m_Director);
             }
         }
     }

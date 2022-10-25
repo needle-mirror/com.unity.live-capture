@@ -38,9 +38,6 @@ namespace Unity.LiveCapture
         internal static event Action SynchronizersChanged;
 
         [SerializeField]
-        bool m_DisplayTimecode;
-
-        [SerializeField]
         Synchronizer m_Impl = new Synchronizer();
 
         Coroutine m_CalibrationCoro;
@@ -99,14 +96,6 @@ namespace Unity.LiveCapture
             Impl.Update();
         }
 
-        void OnGUI()
-        {
-            if (m_DisplayTimecode)
-            {
-                GUI.Label(new Rect(10, 10, 100, 20), Impl.CurrentTimecode.ToString());
-            }
-        }
-
         /// <summary>
         /// Starts calibration of the synchronized group.
         /// </summary>
@@ -117,14 +106,14 @@ namespace Unity.LiveCapture
         /// <param name="calibrator">The calibrator to use. If <see langword="null"/>, the default calibrator is used.</param>
         public void StartCalibration(ISynchronizationCalibrator calibrator = null)
         {
-            if (!isActiveAndEnabled) return;
-
-            if (calibrator == null)
+            if (!isActiveAndEnabled)
             {
-                calibrator = new DefaultSyncCalibrator();
+                return;
             }
 
-            m_CalibrationCoro = StartCoroutine(Impl.CalibrationWith(calibrator));
+            calibrator ??= new DefaultSyncCalibrator();
+
+            m_CalibrationCoro = StartCoroutine(Impl.StartCalibration(calibrator));
         }
 
         /// <summary>
@@ -132,6 +121,8 @@ namespace Unity.LiveCapture
         /// </summary>
         public void StopCalibration()
         {
+            Impl.StopCalibration();
+
             if (m_CalibrationCoro != null)
             {
                 StopCoroutine(m_CalibrationCoro);

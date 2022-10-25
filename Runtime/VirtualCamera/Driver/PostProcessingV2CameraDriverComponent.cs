@@ -15,7 +15,7 @@ namespace Unity.LiveCapture.VirtualCamera
         [SerializeField, HideInInspector]
         PostProcessProfile m_Profile;
         DepthOfField m_DepthOfField;
-        
+
         /// <summary>
         /// Camera to be driven by this component.
         /// </summary>

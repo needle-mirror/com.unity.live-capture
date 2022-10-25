@@ -101,22 +101,22 @@ namespace Unity.LiveCapture.VirtualCamera
 
         public void AddInputKeyframe(InputSample sample)
         {
-            m_InputKeyframes.Add(sample.Time, sample);
+            m_InputKeyframes.Add(sample, sample.Time);
         }
 
         public void AddFocusDistanceKeyframe(double time, float value)
         {
-            m_FocusDistanceKeyframes.Add(time, value);
+            m_FocusDistanceKeyframes.Add(value, time);
         }
 
         public void AddFocalLengthKeyframe(double time, float value)
         {
-            m_FocalLengthKeyframes.Add(time, value);
+            m_FocalLengthKeyframes.Add(value, time);
         }
 
         public void AddApertureKeyframe(double time, float value)
         {
-            m_ApertureKeyframes.Add(time, value);
+            m_ApertureKeyframes.Add(value, time);
         }
 
         public void AddLensKeyframe(double time, Lens lens)
@@ -128,7 +128,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         public FrameRate GetBufferFrameRate()
         {
-            return m_InputKeyframes.FrameRate;
+            return m_InputKeyframes.GetFrameRate();
         }
 
         public bool TryGetBufferRange(out FrameTime oldestSample, out FrameTime newestSample)

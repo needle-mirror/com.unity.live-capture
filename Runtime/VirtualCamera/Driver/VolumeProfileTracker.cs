@@ -7,9 +7,9 @@ namespace Unity.LiveCapture.VirtualCamera
     class VolumeProfileTracker
     {
         public static VolumeProfileTracker Instance { get; } = new VolumeProfileTracker();
-        
+
         Dictionary<ScriptableObject, UnityObject> m_Profiles = new Dictionary<ScriptableObject, UnityObject>();
- 
+
         public bool TryRegisterProfileOwner(ScriptableObject profile, UnityObject obj)
         {
             if (profile == null || obj == null)

@@ -29,7 +29,7 @@ To install the Live Capture package, follow the instructions in the [Package Man
 
 | Requirements |  |
 |---|---|
-| **Unity Editor**   | **Unity Editor 2020.3.16f1** or later version. |
+| **Unity Editor**   | **Unity Editor 2021.3** or later version. |
 | **Platform**       | Windows or macOS. |
 
 <a name="install-app"></a>

@@ -123,6 +123,29 @@ namespace {typeof(FaceBlendShapePose).Namespace}
 
             generator.AppendLine(
                 $@"        }}
+
+        /// <summary>
+        /// Linearly interpolates between <paramref name=""a""/> and <paramref name=""b""/> by factor <paramref name=""t""/>.
+        /// </summary>
+        /// <remarks><br/>
+        /// * When <paramref name=""t""/> is 0 <paramref name=""result""/> is set to <paramref name=""a""/>.
+        /// * When <paramref name=""t""/> is 1 <paramref name=""result""/> is set to  <paramref name=""b""/>.
+        /// * When <paramref name=""t""/> is 0.5 <paramref name=""result""/> is set to the midpoint of <paramref name=""a""/> and <paramref name=""b""/>.
+        /// </remarks>
+        /// <param name=""a"">The pose to interpolate from.</param>
+        /// <param name=""b"">To pose to interpolate to.</param>
+        /// <param name=""t"">The interpolation factor.</param>
+        /// <param name=""result"">The interpolated pose.</param>
+        public static void LerpUnclamped(in FaceBlendShapePose a, in FaceBlendShapePose b, float t, out FaceBlendShapePose result)
+        {{");
+
+            foreach (var name in FaceBlendShapePose.Shapes)
+            {
+                generator.AppendLine($"            result.{name} = Mathf.LerpUnclamped(a.{name}, b.{name}, t);");
+            }
+
+            generator.AppendLine(
+                $@"        }}
     }}
 }}");
 

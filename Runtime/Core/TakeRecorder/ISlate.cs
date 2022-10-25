@@ -3,11 +3,11 @@ using UnityObject = UnityEngine.Object;
 namespace Unity.LiveCapture
 {
     /// <summary>
-    /// Represents a slate. A slate stores information about the shot and the take to play. The
-    /// <see cref="TakeRecorder"/> uses that information to name and store the recorded take in the
-    /// right directory.
+    /// Represents a shot. A shot stores information about the take to play, the slate used, and the
+    /// output directory. The <see cref="TakeRecorder"/> uses that information to name and store the
+    /// recorded takes in the correct directory.
     /// </summary>
-    public interface ISlate
+    public interface IShot
     {
         /// <summary>
         /// The UnityEngine.Object that stores the serialized data (if any).
@@ -23,30 +23,9 @@ namespace Unity.LiveCapture
         string Directory { get; set; }
 
         /// <summary>
-        /// The number associated with the scene to record.
+        /// The slate associated with the shot to record.
         /// </summary>
-        int SceneNumber { get; set; }
-
-        /// <summary>
-        /// The name of the shot stored in the slate.
-        /// </summary>
-        /// <remarks>
-        /// The recorded takes automatically inherit from this name.
-        /// </remarks>
-        string ShotName { get; set; }
-
-        /// <summary>
-        /// The number associated with the take to record.
-        /// </summary>
-        /// <remarks>
-        /// The number increments after recording a take.
-        /// </remarks>
-        int TakeNumber { get; set; }
-
-        /// <summary>
-        /// The description of the shot stored in the slate.
-        /// </summary>
-        string Description { get; set; }
+        Slate Slate { get; set; }
 
         /// <summary>
         /// The selected take of the slate.

@@ -48,9 +48,9 @@ namespace Unity.LiveCapture.Mocap.Editor
             m_Device = (MocapGroup)target;
             m_Animator = serializedObject.FindProperty("m_Animator");
             m_Devices = serializedObject.FindProperty("m_Devices");
-            m_TimeSource = serializedObject.FindProperty("m_TimeSource"); 
+            m_TimeSource = serializedObject.FindProperty("m_TimeSource");
 
-            CreateDeviceList(); 
+            CreateDeviceList();
         }
 
         void OnDisable()
@@ -113,9 +113,9 @@ namespace Unity.LiveCapture.Mocap.Editor
                     s_CreateDeviceMenuItems = AttributeUtility.GetAllTypes<CreateDeviceMenuItemAttribute>()
                         .Where(t => typeof(IMocapDevice).IsAssignableFrom(t.type));
                 }
-                
+
                 var menu = MenuUtility.CreateMenu(s_CreateDeviceMenuItems, t => true, (type, attribute) => CreateDevice(type));
-                menu.ShowAsContext(); 
+                menu.ShowAsContext();
             };
         }
 
@@ -139,9 +139,9 @@ namespace Unity.LiveCapture.Mocap.Editor
 
             EditorGUILayout.PropertyField(m_Animator, Contents.Animator);
 
-            DoTimeSourceGUI(); 
+            DoTimeSourceGUI();
 
-            EditorGUILayout.Space(); 
+            EditorGUILayout.Space();
 
             DoListGUI();
 
@@ -159,7 +159,7 @@ namespace Unity.LiveCapture.Mocap.Editor
         void DoTimeSourceGUI()
         {
             var formatter = new UniqueNameFormatter();
-            
+
             formatter.Format("None");
 
             var devices = m_Device.Devices;
@@ -189,7 +189,7 @@ namespace Unity.LiveCapture.Mocap.Editor
 
         void DoSelectedGUI()
         {
-            var index = m_List.index; 
+            var index = m_List.index;
 
             if (index < 0 || index >= m_Devices.arraySize)
                 return;
@@ -211,9 +211,9 @@ namespace Unity.LiveCapture.Mocap.Editor
 
                     CreateCachedEditor(device, null, ref m_Editor);
 
-                    if (m_Editor != null) 
+                    if (m_Editor != null)
                     {
-                        m_Editor.OnInspectorGUI(); 
+                        m_Editor.OnInspectorGUI();
                     }
                 }
             }
@@ -224,7 +224,7 @@ namespace Unity.LiveCapture.Mocap.Editor
             m_TransformsFoldout = EditorGUILayout.Foldout(m_TransformsFoldout, Contents.RecordingTransforms, true);
 
             if (!m_TransformsFoldout)
-                return; 
+                return;
 
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUI.DisabledScope(true))
@@ -241,7 +241,7 @@ namespace Unity.LiveCapture.Mocap.Editor
                     {
                         if (transform == null)
                             continue;
-                        
+
                         EditorGUILayout.ObjectField(transform, typeof(Transform), true);
                     }
                 }

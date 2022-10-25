@@ -12,9 +12,13 @@ namespace Unity.LiveCapture
         string m_TakeNameFormat = k_DefaultTakeNameFormat;
         [SerializeField]
         string m_AssetNameFormat = k_DefaultAssetNameFormat;
+        [SerializeReference]
+        ISyncProvider m_SyncProvider = null;
 
         public string TakeNameFormat => string.IsNullOrWhiteSpace(m_TakeNameFormat) ? k_DefaultTakeNameFormat : m_TakeNameFormat;
         public string AssetNameFormat => string.IsNullOrWhiteSpace(m_AssetNameFormat) ? k_DefaultAssetNameFormat : m_AssetNameFormat;
+
+        internal ISyncProvider SyncProvider => m_SyncProvider;
 
         /// <summary>
         /// Resets the settings to the default values.
@@ -23,6 +27,7 @@ namespace Unity.LiveCapture
         {
             m_TakeNameFormat = k_DefaultTakeNameFormat;
             m_AssetNameFormat = k_DefaultAssetNameFormat;
+            m_SyncProvider = null;
         }
     }
 }

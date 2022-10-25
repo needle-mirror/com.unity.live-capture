@@ -16,9 +16,23 @@ namespace Unity.LiveCapture
 #if UNITY_EDITOR
 #pragma warning disable 414
         [SerializeField, HideInInspector]
-        bool m_Expanded = true;
+        bool m_IsSelected;
 #pragma warning restore 414
+
+        internal bool IsSelected => m_IsSelected;
 #endif
+
+        /// <summary>
+        /// Checks the connection state.
+        /// </summary>
+        /// <returns>True if the connection is enabled.</returns>
+        public abstract bool IsEnabled();
+
+        /// <summary>
+        /// Enables or disables the connection.
+        /// </summary>
+        /// <param name="enabled">The new connection state.</param>
+        public abstract void SetEnabled(bool enabled);
 
         /// <summary>
         /// Called when the connection is created.
@@ -76,7 +90,7 @@ namespace Unity.LiveCapture
         /// <param name="save">Should the connection's serialized data be re-written to disk.</param>
         protected void OnChanged(bool save)
         {
-            ConnectionManager.Instance.OnConnectionChanged();
+            ConnectionManager.Instance.OnConnectionChanged(this);
 
             if (save)
             {

@@ -18,25 +18,21 @@ namespace Unity.LiveCapture.Mocap
     /// implement support for third-party motion capture devices.
     /// </summary>
     /// <typeparam name="T">The type of data the device uses each frame to pose the actor.</typeparam>
-    public abstract class MocapDevice<T> : LiveCaptureDevice, ITimedDataSource, IMocapDevice
+    public abstract class MocapDevice<T> : LiveCaptureDevice, IMocapDevice
     {
-        static readonly FrameRate k_SyncBufferNominalFrameRate = StandardFrameRate.FPS_60_00;
+        [Serializable]
+        class TimedDataSource : TimedDataSource<T>
+        {
+        }
 
         [SerializeField]
         Animator m_Animator;
         [SerializeField]
         MocapRecorder m_Recorder = new MocapRecorder();
         [SerializeField, HideInInspector]
-        string m_Guid;
-        [SerializeField, HideInInspector]
-        FrameTime m_SyncPresentationOffset;
-        [SerializeField, HideInInspector]
-        bool m_IsSynchronized;
-        [SerializeField, HideInInspector]
-        int m_BufferSize = 1;
+        TimedDataSource m_SyncBuffer = new TimedDataSource();
 
         MocapGroup m_MocapGroup;
-        TimedDataBuffer<T> m_SyncBuffer;
         double? m_FirstFrameTime;
         double m_CurrentFrameTime;
         bool m_IsRecording;
@@ -59,48 +55,28 @@ namespace Unity.LiveCapture.Mocap
             }
         }
 
-        /// <inheritdoc/>
-        public ISynchronizer Synchronizer { get; set; }
-
-        /// <inheritdoc />
-        public FrameRate FrameRate => m_SyncBuffer.FrameRate;
-
-        /// <inheritdoc/>
-        public int BufferSize
+        /// <summary>
+        /// The number of data samples per second.
+        /// </summary>
+        protected FrameRate FrameRate
         {
-            get => m_BufferSize;
-            set
-            {
-                m_BufferSize = value;
-                m_SyncBuffer?.SetCapacity(value);
-            }
+            get => m_SyncBuffer.FrameRate;
+            set => m_SyncBuffer.FrameRate = value;
         }
 
-        /// <inheritdoc/>
-        public int? MaxBufferSize => null;
-
-        /// <inheritdoc/>
-        public int? MinBufferSize => null;
-
-        /// <inheritdoc/>
-        public FrameTime PresentationOffset
+        /// <summary>
+        /// The interpolator to use when presenting values between frame samples.
+        /// </summary>
+        protected IInterpolator<T> Interpolator
         {
-            get => m_SyncPresentationOffset;
-            set => m_SyncPresentationOffset = value;
+            get => m_SyncBuffer.Interpolator;
+            set => m_SyncBuffer.Interpolator = value;
         }
 
-        /// <inheritdoc/>
-        public bool IsSynchronized
-        {
-            get => m_IsSynchronized;
-            set => m_IsSynchronized = value;
-        }
-
-        /// <inheritdoc/>
-        public string Id => m_Guid;
-
-        /// <inheritdoc/>
-        public string FriendlyName { get; protected set; }
+        /// <summary>
+        /// The synchronized data buffer.
+        /// </summary>
+        public ITimedDataSource SyncBuffer => m_SyncBuffer;
 
         /// <summary>
         /// Editor-only function that Unity calls when the script is loaded or a value changes in the Inspector.
@@ -111,62 +87,9 @@ namespace Unity.LiveCapture.Mocap
         /// </remarks>
         public virtual void OnValidate()
         {
+            m_SyncBuffer.SourceObject = this;
+
             ValidateRecorder();
-        }
-
-        /// <inheritdoc />
-        public bool TryGetBufferRange(out FrameTime oldestSample, out FrameTime newestSample)
-        {
-            return m_SyncBuffer.TryGetBufferRange(out oldestSample, out newestSample);
-        }
-
-        /// <inheritdoc/>
-        public TimedSampleStatus PresentAt(Timecode timecode, FrameRate frameRate)
-        {
-            Debug.Assert(IsSynchronized, "Attempted to call PresentAt() when data source is not being synchronized");
-
-            // Get the frame time with respect to our buffer's frame rate
-            var requestedFrameTime = FrameTime.Remap(timecode.ToFrameTime(frameRate), frameRate, m_SyncBuffer.FrameRate);
-
-            // Apply offset (at our buffer's frame rate)
-            var presentationTime = requestedFrameTime + PresentationOffset;
-
-            var status = m_SyncBuffer.TryGetSample(presentationTime, out var frame);
-
-            if (status != TimedSampleStatus.DataMissing)
-            {
-                var frameTime = FrameTime.Remap(presentationTime, m_SyncBuffer.FrameRate, frameRate);
-
-                PresentAt(frame, frameTime, frameRate);
-
-                m_CurrentFrameTime = frameTime.ToSeconds(frameRate);
-            }
-
-            return status;
-        }
-
-        void PresentAt(T frame, FrameTime frameTime, FrameRate frameRate)
-        {
-            if (m_AddingFrame)
-            {
-                return;
-            }
-
-            m_AddingFrame = true;
-
-            try
-            {
-                ProcessFrame(frame);
-                UpdateRecorder(frameTime, frameRate);
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-            }
-            finally
-            {
-                m_AddingFrame = false;
-            }
         }
 
         /// <summary>
@@ -174,10 +97,8 @@ namespace Unity.LiveCapture.Mocap
         /// </summary>
         protected virtual void OnEnable()
         {
-            TimedDataSourceManager.Instance.EnsureIdIsValid(ref m_Guid);
-            TimedDataSourceManager.Instance.Register(this);
-
-            m_SyncBuffer = new TimedDataBuffer<T>(k_SyncBufferNominalFrameRate, m_BufferSize);
+            m_SyncBuffer.FramePresented += PresentAt;
+            m_SyncBuffer.Enable();
 
             RegisterLiveProperties();
         }
@@ -187,11 +108,12 @@ namespace Unity.LiveCapture.Mocap
         /// </summary>
         /// <remaks>
         /// This is also called when the object is destroyed and can be used for any cleanup code.
-        ///  When scripts are reloaded after compilation has finished, OnDisable will be called, followed by an OnEnable after the script has been loaded.
+        /// When scripts are reloaded after compilation has finished, OnDisable will be called, followed by an OnEnable after the script has been loaded.
         /// </remaks>
         protected virtual void OnDisable()
         {
-            TimedDataSourceManager.Instance.Unregister(this);
+            m_SyncBuffer.Disable();
+            m_SyncBuffer.FramePresented -= PresentAt;
 
             RestoreLiveProperties();
         }
@@ -252,31 +174,33 @@ namespace Unity.LiveCapture.Mocap
         }
 
         /// <summary>
-        /// Adds a new frame of data to the process queue.
+        /// Process a new frame of data.
         /// </summary>
         /// <param name="frame">The frame to add.</param>
-        /// <param name="timecode">The timecode of the frame.</param>
-        /// <param name="frameRate">The frame rate the timecode runs into.</param>
-        protected void AddFrame(T frame, Timecode timecode, FrameRate frameRate)
+        /// <param name="frameTime">The timecode of the frame. When <see langword="null"/>, a timecode will be generated.</param>
+        protected void AddFrame(T frame, FrameTimeWithRate? frameTime)
         {
-            // Guard re-entry. We are calling ProcessCurrentFrame, from which the user could attempt
+            // Guard re-entry. We are calling ProcessFrame, from which the user could attempt
             // to call AddFrame again, entering in an infinite loop.
             if (m_AddingFrame)
             {
                 return;
             }
 
-            if (IsSynchronized)
+            if (m_SyncBuffer.IsSynchronized)
             {
-                m_SyncBuffer?.Add(timecode, frameRate, frame);
+                if (frameTime == null)
+                {
+                    m_SyncBuffer.AddSampleWithGeneratedTime(frame);
+                }
+                else
+                {
+                    m_SyncBuffer.AddSample(frame, frameTime.Value);
+                }
             }
             else
             {
-                var frameTime = timecode.ToFrameTime(frameRate);
-
-                PresentAt(frame, frameTime, frameRate);
-
-                m_CurrentFrameTime = frameTime.ToSeconds(frameRate);
+                PresentAt(frame, frameTime ?? TimedDataSource.GenerateFrameTime(m_SyncBuffer.FrameRate));
             }
         }
 
@@ -314,11 +238,11 @@ namespace Unity.LiveCapture.Mocap
         }
 
         /// <summary>
-        /// Invalidates the synchronization frame buffer by clearing any queued frame.
+        /// Clears all frames in the synchronization buffer.
         /// </summary>
         protected void ResetSyncBuffer()
         {
-            m_SyncBuffer?.Clear();
+            m_SyncBuffer.ClearBuffer();
         }
 
         /// <inheritdoc/>
@@ -339,22 +263,48 @@ namespace Unity.LiveCapture.Mocap
                 alignTime: m_FirstFrameTime);
         }
 
-        void UpdateRecorder(FrameTime frameTime, FrameRate frameRate)
+        void PresentAt(T frame, FrameTimeWithRate time)
+        {
+            if (m_AddingFrame)
+            {
+                return;
+            }
+
+            m_AddingFrame = true;
+
+            try
+            {
+                ProcessFrame(frame);
+                UpdateRecorder(time);
+
+                m_CurrentFrameTime = time.ToSeconds();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            finally
+            {
+                m_AddingFrame = false;
+            }
+        }
+
+        void UpdateRecorder(in FrameTimeWithRate frameTime)
         {
             if (IsRecording() && m_MocapGroup == null)
             {
-                var time = frameTime.ToSeconds(frameRate);
+                var time = frameTime.ToSeconds();
 
                 m_FirstFrameTime ??= time;
                 m_Recorder.Record(time - m_FirstFrameTime.Value);
             }
         }
 
-       /// <summary>
-       ///  Tries to retrieve the mocap group for this mocap source.
-       /// </summary>
-       /// <param name="mocapGroup">MocapGroup for this MocapDevice</param>
-       /// <returns>True if the mocap group exists</returns>
+        /// <summary>
+        /// Tries to retrieve the mocap group this device belongs to.
+        /// </summary>
+        /// <param name="mocapGroup">Returns the mocap group this device belongs to.</param>
+        /// <returns>True if the mocap group exists.</returns>
         bool IMocapDevice.TryGetMocapGroup(out MocapGroup mocapGroup)
         {
             mocapGroup = m_MocapGroup;
@@ -362,18 +312,18 @@ namespace Unity.LiveCapture.Mocap
             return m_MocapGroup != null;
         }
 
-       /// <summary>
-       /// Gets the current frame time.
-       /// </summary>
-       /// <returns>The current frame time</returns>
-       double IMocapDevice.GetCurrentFrameTime()
+        /// <summary>
+        /// Gets the current frame time.
+        /// </summary>
+        /// <returns>The current frame time</returns>
+        double IMocapDevice.GetCurrentFrameTime()
         {
             return m_CurrentFrameTime;
         }
 
-       /// <summary>
-       /// Invokes the delegate that handles a recording state change.
-       /// </summary>
+        /// <summary>
+        /// Invokes the delegate that handles a recording state change.
+        /// </summary>
         void IMocapDevice.InvokeRecordingChanged()
         {
             OnRecordingChanged();

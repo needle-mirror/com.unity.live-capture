@@ -1,17 +1,47 @@
 # Troubleshooting
 
-## ***I can't get the app to connect to the editor***
+#### I can't get the app to connect to the Unity Editor
+<br />
 
-Ensure that you have:
+1. On your mobile device, make sure that the network permission is granted:
 
-* The proper [network setup](setup-network.md) on your Editor workstation. Most connection issues arise from incorrect network configurations.
-* Created a server in the Live Capture window.
-* Started the server in the Editor by pressing the **Start** button in the Live Capture window.
-* WiFi enabled on both the iPad/iPhone and the Editor workstation and they are connected to the same network.
+  a. Go to the mobile device Settings page.  
+  b. Scroll down to the app you're using: Virtual Camera or Face Capture.  
+  c. Select the app and verify that Local Network is enabled.
+<br /><br />
 
-If you still can't connect: on the app, switch to **Manual** mode and manually enter the port and IP. The port is shown in the Live Capture window. Try all of the different IP values from the **Available Interfaces** section of the Live Capture window until you find one that works.
+2. On your mobile device and Unity Editor workstation, make sure that:  
+  * WiFi is enabled.
+  * Both are connected to the same network.
+<br /><br />
 
-## ***I'm connected but nothing is happening in the editor***
+3. In the Unity Editor, make sure you have:  
+  * Created a [connection server](setup-connecting.md) in the Connections window.
+  * Started the server by clicking **Start** in this window.
+<br /><br />
+
+4. On **Windows** only:
+
+  * If you're connected to a trusted private WiFi network such as a home or company network:
+    * In Windows settings, verify that your WiFi network profile is [set to Private](setup-network.md#private-wi-fi-network-setup).
+    * In the Unity Editor, in the Connections window, if you see a "Firewall is not configured" warning, select **Configure Firewall**.
+    * If you're using a 3rd party software instead of the default Windows Defender firewall, you need to manually [configure a firewall rule](setup-network.md#manual-firewall-rule-configuration) in this 3rd party software.
+<br /><br />
+
+  * If you're connected to a public WiFi network, you have two options:
+    * Manually [configure a firewall rule](setup-network.md#manual-firewall-rule-configuration) for this public network (Unity's automatic firewall configuration has no effect on public network firewall settings), OR
+    * Switch your WiFi network profile to [Private](setup-network.md#private-wi-fi-network-setup).<br />**Warning:** This last solution has **security risks** if you can't fully trust the public network you're using.
+<br /><br />
+
+5. If you still can't connect:
+
+  a. On the mobile device, switch to **Manual** mode to manually enter the server port and IP address.  
+  b. In the Unity Editor, see the Connections window to know the server's **Port** and the **Available Interfaces** (IP addresses).  
+  c. On the mobile device, try all of the different IP address values until you find one that works.
+<br /><br />
+
+#### I'm connected but nothing is happening in the Unity Editor
+<br />
 
 Ensure that:
 * There is a **Take Recorder** object in your scene (**GameObject > Live Capture > Take Recorder**).

@@ -49,7 +49,7 @@ namespace Unity.LiveCapture.Mocap
             m_Scale = new Vector3Curve(relativePath, "m_LocalScale", k_TransformType);
             m_Rotation = new EulerCurve(relativePath, "m_LocalEulerAngles", k_TransformType);
         }
-        
+
         /// <inheritdoc/>
         public void AddKey(double time, Transform value)
         {
@@ -74,7 +74,7 @@ namespace Unity.LiveCapture.Mocap
                 m_Rotation.AddKey(time, rotation.Value);
 
             if (scale.HasValue)
-                m_Scale.AddKey(time, scale.Value); 
+                m_Scale.AddKey(time, scale.Value);
         }
 
         /// <inheritdoc/>

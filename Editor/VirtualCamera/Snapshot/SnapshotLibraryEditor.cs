@@ -94,7 +94,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             {
                 var element = m_Snapshots.GetArrayElementAtIndex(index);
                 var screenshot = element.FindPropertyRelative("m_Screenshot").objectReferenceValue as Texture2D;
-                var slate = element.FindPropertyRelative("m_Slate").objectReferenceValue as ISlate;
+                var shotAsset = element.FindPropertyRelative("m_Slate").objectReferenceValue as ShotPlayableAsset;
                 var frameRate = new FrameRate(
                     element.FindPropertyRelative("m_FrameRate.m_Numerator").intValue,
                     element.FindPropertyRelative("m_FrameRate.m_Denominator").intValue,
@@ -132,8 +132,10 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
                 var slateField = string.Empty;
                 var timecode = Timecode.FromSeconds(frameRate, time);
 
-                if (slate != null)
+                if (shotAsset != null)
                 {
+                    var slate = shotAsset.Slate;
+
                     slateField = $"[{slate.SceneNumber.ToString("D3")}] {slate.ShotName} TC [{timecode}]";
                 }
                 else

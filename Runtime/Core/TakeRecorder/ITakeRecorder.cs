@@ -1,3 +1,5 @@
+using UnityObject = UnityEngine.Object;
+
 namespace Unity.LiveCapture
 {
     /// <summary>
@@ -11,12 +13,9 @@ namespace Unity.LiveCapture
         FrameRate FrameRate { get; set; }
 
         /// <summary>
-        /// The selected slate to use for recording.
+        /// The current <see cref="IShot"/> to record to.
         /// </summary>
-        /// <returns>
-        /// The selected slate.
-        /// </returns>
-        ISlate GetActiveSlate();
+        IShot Shot { get; }
 
         /// <summary>
         /// Indicates whether the take recorder is ready for recording.
@@ -101,15 +100,10 @@ namespace Unity.LiveCapture
         bool IsEnabled { get; }
 
         /// <summary>
-        /// Changes the current playback time of the slate.
+        /// Activates the shot associated with the provided object and sets the time.
         /// </summary>
-        /// <param name="slate">The slate.</param>
-        /// <param name="time">The current time in seconds.</param>
-        void SetPreviewTime(ISlate slate, double time);
-
-        /// <summary>
-        /// Prepares the current context for playback.
-        /// </summary>
-        void Prepare();
+        /// <param name="obj">The object associated with the shot.</param>
+        /// <param name="time">The time in seconds.</param>
+        void SetPreviewTime(UnityObject obj, double time);
     }
 }

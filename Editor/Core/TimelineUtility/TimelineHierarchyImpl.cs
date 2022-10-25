@@ -89,7 +89,7 @@ namespace Unity.LiveCapture.Editor
 
                 Debug.Assert(parent != null);
                 Debug.Assert(clip != null);
-                
+
                 if (!parent.enabled)
                     continue;
 

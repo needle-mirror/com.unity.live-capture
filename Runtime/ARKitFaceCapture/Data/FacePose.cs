@@ -45,5 +45,26 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// The orientation of the right eye transform.
         /// </summary>
         public Quaternion RightEyeOrientation;
+
+        /// <summary>
+        /// Interpolates between <paramref name="a"/> and <paramref name="b"/> by factor <paramref name="t"/>.
+        /// </summary>
+        /// <remarks><br/>
+        /// * When <paramref name="t"/> is 0 <paramref name="result"/> is set to <paramref name="a"/>.
+        /// * When <paramref name="t"/> is 1 <paramref name="result"/> is set to  <paramref name="b"/>.
+        /// * When <paramref name="t"/> is 0.5 <paramref name="result"/> is set to the midpoint of <paramref name="a"/> and <paramref name="b"/>.
+        /// </remarks>
+        /// <param name="a">The pose to interpolate from.</param>
+        /// <param name="b">To pose to interpolate to.</param>
+        /// <param name="t">The interpolation factor.</param>
+        /// <param name="result">The interpolated pose.</param>
+        public static void Interpolate(in FacePose a, in FacePose b, float t, out FacePose result)
+        {
+            FaceBlendShapePose.LerpUnclamped(a.BlendShapes, b.BlendShapes, t, out result.BlendShapes);
+            result.HeadPosition = Vector3.LerpUnclamped(a.HeadPosition, b.HeadPosition, t);
+            result.HeadOrientation = Quaternion.SlerpUnclamped(a.HeadOrientation, b.HeadOrientation, t);
+            result.LeftEyeOrientation = Quaternion.SlerpUnclamped(a.LeftEyeOrientation, b.LeftEyeOrientation, t);
+            result.RightEyeOrientation = Quaternion.SlerpUnclamped(a.RightEyeOrientation, b.RightEyeOrientation, t);
+        }
     }
 }

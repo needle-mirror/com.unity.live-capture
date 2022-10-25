@@ -21,7 +21,7 @@ namespace Unity.LiveCapture
         long m_CreationTime;
         [SerializeField, TextArea(2, 4)]
         string m_Description;
-        [SerializeField]
+        [SerializeField, Rating]
         int m_Rating;
         [SerializeField, OnlyStandardFrameRates]
         FrameRate m_FrameRate;

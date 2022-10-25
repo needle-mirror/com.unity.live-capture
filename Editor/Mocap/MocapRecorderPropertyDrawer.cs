@@ -6,6 +6,8 @@ namespace Unity.LiveCapture.Mocap.Editor
     [CustomPropertyDrawer(typeof(MocapRecorder))]
     class MocapRecorderPropertyDrawer : PropertyDrawer
     {
+        const float k_Separator = 2f;
+
         static class Contents
         {
             public static readonly GUIContent Channels = new GUIContent("Channels", "Display a list of transform data channels for this device.");
@@ -15,6 +17,9 @@ namespace Unity.LiveCapture.Mocap.Editor
         }
 
         SerializedProperty m_Animator;
+
+        float LineHeight => EditorGUIUtility.singleLineHeight;
+        float RowHeight => LineHeight + k_Separator;
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
@@ -27,7 +32,7 @@ namespace Unity.LiveCapture.Mocap.Editor
                 lineCount += arraySize;
             }
 
-            return GetLineHeight() * lineCount + 2.5f;
+            return RowHeight * lineCount;
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -69,18 +74,18 @@ namespace Unity.LiveCapture.Mocap.Editor
                     }
 
                     var buttonArrayPosition = new Rect(position);
-                    
+
                     buttonArrayPosition.xMax = labelPosition.x;
 
                     var width = buttonArrayPosition.width / 3f;
-                    
+
                     var button1 = new Rect(buttonArrayPosition);
                     button1.width = width;
 
                     var button2 = new Rect(buttonArrayPosition);
                     button2.x += width;
                     button2.width = width;
-                    
+
                     var button3 = new Rect(buttonArrayPosition);
                     button3.x += width * 2f;
                     button3.width = width;
@@ -107,19 +112,14 @@ namespace Unity.LiveCapture.Mocap.Editor
             }
         }
 
-        float GetLineHeight()
-        {
-            return EditorGUIUtility.singleLineHeight;
-        }
-
         void BeginLine(ref Rect position)
         {
-            position.height = GetLineHeight();
+            position.height = LineHeight;
         }
 
         void NextLine(ref Rect position)
         {
-            position.y += position.height + 2f;
+            position.y += RowHeight;
         }
     }
 }

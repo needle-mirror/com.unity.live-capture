@@ -80,7 +80,7 @@ namespace Unity.LiveCapture
             {
                 m_Mode = TakeRecorderPlaybackMode.None;
             }
-            else if (m_Mode == TakeRecorderPlaybackMode.Contents && m_Context.GetSlate().Take == null)
+            else if (m_Mode == TakeRecorderPlaybackMode.Contents && m_Context.Take == null)
             {
                 m_Mode = TakeRecorderPlaybackMode.Context;
             }
@@ -98,8 +98,7 @@ namespace Unity.LiveCapture
 
             if (m_Mode == TakeRecorderPlaybackMode.Contents)
             {
-                var slate = m_Context.GetSlate();
-                var take = slate.Take;
+                var take = m_Context.Take;
 
                 if (take != null && take.TryGetContentRange(out var rangeStart, out var rangeEnd))
                 {

@@ -207,7 +207,7 @@ namespace Unity.LiveCapture
             {
                 offset = clip.start;
             }
-            
+
             PlayableDirectorControls.SetTime(context.Director, time + offset);
         }
     }

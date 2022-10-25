@@ -10,11 +10,6 @@ namespace Unity.LiveCapture
         public T Value { get; set; }
     }
 
-    interface IInterpolator<T>
-    {
-        T Interpolate(in T a, in T b, float t);
-    }
-
     class Sampler<T> : IEnumerator<Sample<T>> where T : struct
     {
         enum State

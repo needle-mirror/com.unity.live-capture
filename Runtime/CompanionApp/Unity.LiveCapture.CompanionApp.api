@@ -18,13 +18,33 @@ namespace Unity.LiveCapture.CompanionApp
         protected virtual void OnEnable();
         protected virtual void OnRecordingChanged();
         protected virtual void OnRegisterLiveProperties(Unity.LiveCapture.IPropertyPreviewer previewer);
-        protected virtual void OnSlateChanged(Unity.LiveCapture.ISlate slate);
+        protected virtual void OnShotChanged(Unity.LiveCapture.IShot shot);
         protected void RegisterLiveProperties();
         protected void RestoreLiveProperties();
         public void SetClient(TClient client, bool rememberAssignment);
         public virtual void StartRecording();
         public virtual void StopRecording();
         public virtual void UpdateClient();
+    }
+
+    [Unity.LiveCapture.CreateConnectionMenuItem(@"Companion App Server", 0)] public class CompanionAppServer : Unity.LiveCapture.Connection
+    {
+        public static event System.Action<Unity.LiveCapture.CompanionApp.ICompanionAppClient> ClientConnected;
+        public static event System.Action<Unity.LiveCapture.CompanionApp.ICompanionAppClient> ClientDisconnected;
+        public bool AutoStartOnPlay { get; set; }
+        public int ClientCount { get; }
+        public bool IsRunning { get; }
+        public int Port { get; set; }
+        public CompanionAppServer() {}
+        public static void DeregisterClientConnectHandler(System.Func<Unity.LiveCapture.CompanionApp.ICompanionAppClient, bool> handler);
+        public System.Collections.Generic.IEnumerable<Unity.LiveCapture.CompanionApp.ICompanionAppClient> GetClients();
+        public virtual string GetName();
+        protected virtual void OnDisable();
+        protected virtual void OnEnable();
+        public virtual void OnUpdate();
+        public static void RegisterClientConnectHandler(System.Func<Unity.LiveCapture.CompanionApp.ICompanionAppClient, bool> handler, string name, System.DateTime time);
+        public void StartServer();
+        public void StopServer();
     }
 
     public interface ICompanionAppClient

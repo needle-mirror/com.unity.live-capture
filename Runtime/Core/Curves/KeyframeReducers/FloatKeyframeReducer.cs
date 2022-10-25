@@ -12,7 +12,7 @@ namespace Unity.LiveCapture
         {
             var minValue = kFloatMinValue * maxError;
             var reduced = Evaluate(value.time, first, second);
-            
+
             return !DeltaError(value.value, reduced, maxError, minValue);
         }
 

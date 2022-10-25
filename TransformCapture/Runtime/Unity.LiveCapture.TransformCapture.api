@@ -3,7 +3,7 @@
 // make sure the XML doc file is present and located next to the scraped dll
 namespace Unity.LiveCapture.TransformCapture
 {
-    [Unity.LiveCapture.CreateDeviceMenuItem(@"Transform Capture Device", 0)] [UnityEngine.AddComponentMenu(@"")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-component-transform-capture-device.html")] public class TransformCaptureDevice : Unity.LiveCapture.LiveCaptureDevice
+    [Unity.LiveCapture.CreateDeviceMenuItem(@"Transform Capture Device", 0)] [UnityEngine.AddComponentMenu(@"")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@4.0/manual/ref-component-transform-capture-device.html")] public class TransformCaptureDevice : Unity.LiveCapture.LiveCaptureDevice
     {
         public UnityEngine.Animator Actor { get; set; }
         public UnityEngine.AvatarMask AvatarMask { get; set; }

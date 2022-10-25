@@ -17,7 +17,7 @@ namespace Unity.LiveCapture.VirtualCamera
         [SerializeField]
         SerializableGuid m_Screenshot;
         [SerializeField]
-        bool m_IsSlateValid;
+        bool m_IsShotValid;
         [SerializeField]
         int m_SceneNumber;
         [SerializeField]
@@ -57,10 +57,10 @@ namespace Unity.LiveCapture.VirtualCamera
             set => m_Screenshot = value;
         }
 
-        public bool IsSlateValid
+        public bool IsShotValid
         {
-            get => m_IsSlateValid;
-            set => m_IsSlateValid = value;
+            get => m_IsShotValid;
+            set => m_IsShotValid = value;
         }
 
         public int SceneNumber
@@ -103,13 +103,15 @@ namespace Unity.LiveCapture.VirtualCamera
                     descriptor.Screenshot = SerializableGuid.FromString(AssetDatabaseUtility.GetAssetGUID(snapshot.Screenshot));
                 }
 
-                var slate = snapshot.Slate;
-                var isSlateValid = slate != null;
+                var shotAsset = snapshot.Asset as ShotPlayableAsset;
+                var isShotValid = shotAsset != null;
 
-                descriptor.IsSlateValid = isSlateValid;
+                descriptor.IsShotValid = isShotValid;
 
-                if (isSlateValid)
+                if (isShotValid)
                 {
+                    var slate = shotAsset.Slate;
+
                     descriptor.ShotName = slate.ShotName;
                     descriptor.SceneNumber = slate.SceneNumber;
                 }

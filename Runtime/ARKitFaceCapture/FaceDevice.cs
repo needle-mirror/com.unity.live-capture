@@ -1,3 +1,4 @@
+using System;
 using Unity.LiveCapture.CompanionApp;
 using UnityEngine;
 
@@ -14,13 +15,31 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     [CreateDeviceMenuItemAttribute("ARKit Face Device")]
     [AddComponentMenu("Live Capture/ARKit Face Capture/ARKit Face Device")]
     [HelpURL(Documentation.baseURL + "ref-component-arkit-face-device" + Documentation.endURL)]
-    public class FaceDevice : CompanionAppDevice<IFaceClient>, ITimedDataSource
+    public class FaceDevice : CompanionAppDevice<IFaceClient>
     {
-        const int k_OutOfOrderFrameTolerance = -5;
-        const int k_MinTimeShiftTolerance = 15;
+        [Serializable]
+        sealed class TimedDataSource : TimedDataSource<FacePose>
+        {
+            class SampleInterpolator : IInterpolator<FacePose>
+            {
+                public static SampleInterpolator Instance { get; } = new SampleInterpolator();
 
-        [SerializeField, HideInInspector]
-        string m_Guid;
+                /// <inheritdoc />
+                public FacePose Interpolate(in FacePose a, in FacePose b, float t)
+                {
+                    FacePose.Interpolate(a, b, t, out var result);
+                    return result;
+                }
+            }
+
+            /// <inheritdoc />
+            public override void Enable()
+            {
+                Interpolator = SampleInterpolator.Instance;
+
+                base.Enable();
+            }
+        }
 
         [SerializeField]
         FaceActor m_Actor;
@@ -28,34 +47,18 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         [SerializeField, HideInInspector, EnumFlagButtonGroup(100f)]
         FaceChannelFlags m_Channels = FaceChannelFlags.All;
 
-        [SerializeField, HideInInspector]
-        FacePose m_Pose = FacePose.Identity;
-
-        [SerializeField, HideInInspector]
-        FrameTime m_SyncPresentationOffset;
-
-        [SerializeField]
-        bool m_IsSynchronized;
-
-        [SerializeField, HideInInspector]
-        int m_BufferSize = 3;
-
         [SerializeField]
         FaceDeviceRecorder m_Recorder = new FaceDeviceRecorder();
 
-        /// <summary>
-        /// The nominal frame rate used for doing frame number conversions in the synchronization buffer.
-        /// </summary>
-        /// <remarks>
-        /// It doesn't really matter what this value is, but choosing a frame rate that closely
-        /// matches the actual data rate of this source makes the contents of the buffer
-        /// easier to inspect by a human.
-        /// </remarks>
-        static readonly FrameRate k_SyncBufferNominalFrameRate = StandardFrameRate.FPS_60_00;
-        static readonly FrameTime k_OutOfOrderTolerance = new FrameTime(3);
-        TimedDataBuffer<FacePose> m_SyncBuffer;
-        FrameTime m_PresentationFrameTime;
-        FrameTime m_CurrentFrameTime;
+        [SerializeField]
+        TimedDataSource m_SyncBuffer = new TimedDataSource();
+
+        [SerializeField, HideInInspector]
+        FacePose m_Pose = FacePose.Identity;
+
+        FacePose m_ReceivedPose;
+        FacePose m_SynchronizedPose;
+        FrameTimeWithRate? m_LastRecordTime;
 
         /// <summary>
         /// Gets the <see cref="FaceActor"/> currently assigned to this device.
@@ -74,54 +77,10 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             }
         }
 
-        /// <inheritdoc/>
-        public string Id => m_Guid;
-
-        /// <inheritdoc/>
-        string IRegistrable.FriendlyName => name;
-
-        /// <inheritdoc/>
-        public ISynchronizer Synchronizer { get; set; }
-
-        /// <inheritdoc/>
-        public FrameRate FrameRate => m_SyncBuffer.FrameRate;
-
-        /// <inheritdoc/>
-        public int BufferSize
-        {
-            get => m_BufferSize;
-            set
-            {
-                m_SyncBuffer.SetCapacity(value);
-                m_BufferSize = value;
-            }
-        }
-
-        // No minimimum or maximum buffer size
-        /// <inheritdoc/>
-        public int? MaxBufferSize => null;
-        /// <inheritdoc/>
-        public int? MinBufferSize => null;
-
-        /// <inheritdoc/>
-        public FrameTime PresentationOffset
-        {
-            get => m_SyncPresentationOffset;
-            set => m_SyncPresentationOffset = value;
-        }
-
-        /// <inheritdoc />
-        public bool IsSynchronized
-        {
-            get => m_IsSynchronized;
-            set => m_IsSynchronized = value;
-        }
-
-        /// <inheritdoc />
-        public bool TryGetBufferRange(out FrameTime oldestSample, out FrameTime newestSample)
-        {
-            return m_SyncBuffer.TryGetBufferRange(out oldestSample, out newestSample);
-        }
+        /// <summary>
+        /// The synchronized data buffer.
+        /// </summary>
+        public ITimedDataSource SyncBuffer => m_SyncBuffer;
 
         bool TryGetInternalClient(out IFaceClientInternal client)
         {
@@ -137,10 +96,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         {
             base.OnEnable();
 
-            TimedDataSourceManager.Instance.EnsureIdIsValid(ref m_Guid);
-            TimedDataSourceManager.Instance.Register(this);
-
-            m_SyncBuffer = new TimedDataBuffer<FacePose>(k_SyncBufferNominalFrameRate, m_BufferSize);
+            m_SyncBuffer.FramePresented += PresentAt;
+            m_SyncBuffer.Enable();
         }
 
         /// <summary>
@@ -154,11 +111,14 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         {
             base.OnDisable();
 
-            TimedDataSourceManager.Instance.Unregister(this);
+            m_SyncBuffer.Disable();
+            m_SyncBuffer.FramePresented -= PresentAt;
         }
 
         void OnValidate()
         {
+            m_SyncBuffer.SourceObject = this;
+
             m_Recorder.Validate();
         }
 
@@ -189,6 +149,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture
                     m_Recorder.Record(ref m_Pose);
                 };
                 m_Recorder.Prepare();
+
+                m_LastRecordTime = null;
             }
         }
 
@@ -245,7 +207,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
                 return;
             }
 
-            double? startTime = IsSynchronized ? m_Recorder.InitialTime : null;
+            var startTime = m_SyncBuffer.IsSynchronized ? m_Recorder.InitialTime : null;
 
             takeBuilder.CreateAnimationTrack(
                 "Face",
@@ -265,7 +227,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         {
             Debug.Assert(m_Actor != null, "Actor is null");
 
-            Present();
+            m_Pose = m_SyncBuffer.IsSynchronized ? m_SynchronizedPose : m_ReceivedPose;
 
             if (m_Channels.HasFlag(FaceChannelFlags.BlendShapes))
             {
@@ -294,74 +256,51 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             m_Actor.EyeOrientationEnabled = m_Channels.HasFlag(FaceChannelFlags.Eyes);
         }
 
-        /// <inheritdoc/>
-        public TimedSampleStatus PresentAt(Timecode timecode, FrameRate frameRate)
+        void OnFacePoseSampleReceived(FaceSample sample)
         {
-            Debug.Assert(IsSynchronized, "Attempting to call PresentAt() when data source is not being synchronized");
+            m_ReceivedPose = sample.FacePose;
 
-            // Get the frame time with respect to our buffer's frame rate
-            var requestedFrameTime = FrameTime.Remap(timecode.ToFrameTime(frameRate), frameRate, m_SyncBuffer.FrameRate);
+            var time = FrameTimeWithRate.FromSeconds(m_SyncBuffer.FrameRate, sample.Time);
 
-            // Apply offset (at our buffer's frame rate)
-            m_PresentationFrameTime = requestedFrameTime + PresentationOffset;
+            m_SyncBuffer.AddSample(sample.FacePose, time);
 
-            return m_SyncBuffer.TryGetSample(m_PresentationFrameTime, out var _);
-        }
-
-        void Present()
-        {
-            var delta = (m_PresentationFrameTime - m_CurrentFrameTime).FrameNumber;
-
-            if (delta < k_OutOfOrderFrameTolerance || delta > k_MinTimeShiftTolerance)
+            if (!m_SyncBuffer.IsSynchronized)
             {
-                // Device time shift detected. This can happen
-                // 1) on the first update, or client was restarted
-                // 2) when a timecode source was selected/changed on the device
-                // 3) if there is a really long gap between pose samples, and the clocks have drifted
-                m_CurrentFrameTime = m_PresentationFrameTime;
-                m_SyncBuffer.Clear();
+                Record(ref sample.FacePose, time);
             }
 
-            if (IsRecording())
+            Refresh();
+        }
+
+        void PresentAt(FacePose value, FrameTimeWithRate time)
+        {
+            m_SynchronizedPose = value;
+
+            if (m_LastRecordTime != null)
             {
-                while (m_CurrentFrameTime <= m_PresentationFrameTime)
+                foreach (var sample in m_SyncBuffer.GetSamplesInRange(m_LastRecordTime.Value.Time, time.Time))
                 {
-                    if (m_SyncBuffer.TryGetSample(m_CurrentFrameTime, out var facePose) == TimedSampleStatus.Ok)
-                    {
-                        var time = m_CurrentFrameTime.ToSeconds(m_SyncBuffer.FrameRate);
+                    var sampleValue = sample.value;
+                    var sampleTime = new FrameTimeWithRate(m_SyncBuffer.FrameRate, sample.time);
 
-                        m_Recorder.Channels = m_Channels;
-                        m_Recorder.Update(time);
-                        m_Recorder.Record(ref facePose);
-                    }
-
-                    m_CurrentFrameTime++;
+                    Record(ref sampleValue, sampleTime);
                 }
             }
             else
             {
-                m_CurrentFrameTime = m_PresentationFrameTime;
-                m_CurrentFrameTime++;
-            }
-
-            if (m_SyncBuffer.TryGetSample(m_PresentationFrameTime, out var pose) != TimedSampleStatus.DataMissing)
-            {
-                m_Pose = pose;
+                Record(ref value, time);
             }
         }
 
-        void OnFacePoseSampleReceived(FaceSample sample)
+        void Record(ref FacePose pose, FrameTimeWithRate time)
         {
-            if (!IsSynchronized)
+            if (IsRecording())
             {
-                m_PresentationFrameTime = FrameTime.FromSeconds(m_SyncBuffer.FrameRate, sample.Time);
+                m_Recorder.Channels = m_Channels;
+                m_Recorder.Update(time.ToSeconds());
+                m_Recorder.Record(ref pose);
+                m_LastRecordTime = time;
             }
-
-            var frameTime = FrameTime.FromSeconds(k_SyncBufferNominalFrameRate, sample.Time);
-
-            m_SyncBuffer.Add(frameTime, k_SyncBufferNominalFrameRate, sample.FacePose);
-
-            Refresh();
         }
     }
 }

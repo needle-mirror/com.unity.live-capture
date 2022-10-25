@@ -14,6 +14,7 @@ using System.Runtime.CompilerServices;
 
 // Internal access needed for editor scripts
 [assembly: InternalsVisibleTo("Unity.LiveCapture.Editor")]
+[assembly: InternalsVisibleTo("Unity.LiveCapture.CompanionApp.Editor")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.ARKitFaceCapture.Editor")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.VirtualCamera.Editor")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.Mocap.Editor")]

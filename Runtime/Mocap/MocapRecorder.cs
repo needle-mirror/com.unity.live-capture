@@ -43,7 +43,7 @@ namespace Unity.LiveCapture.Mocap
         [SerializeField]
         SerializableDictionary<Transform, TransformChannels> m_Channels = new SerializableDictionary<Transform, TransformChannels>();
         Dictionary<Transform, (Vector3?, Quaternion?, Vector3?)> m_Frames = new Dictionary<Transform, (Vector3?, Quaternion?, Vector3?)>();
-        Dictionary<Transform, TransformCurve> m_Curves = new Dictionary<Transform, TransformCurve>(); 
+        Dictionary<Transform, TransformCurve> m_Curves = new Dictionary<Transform, TransformCurve>();
         FrameRate m_FrameRate = StandardFrameRate.FPS_24_00;
         PropertyPreviewer m_Previewer;
         HashSet<Transform> m_TransformSet = new HashSet<Transform>();
@@ -163,7 +163,7 @@ namespace Unity.LiveCapture.Mocap
             {
                 return;
             }
-            
+
             if (!m_TransformSet.Contains(transform))
             {
                 m_TransformSet.Add(transform);
@@ -171,7 +171,7 @@ namespace Unity.LiveCapture.Mocap
 
                 RegisterLiveProperties(transform);
             }
-            
+
             if (!m_Frames.TryGetValue(transform, out (Vector3? pos, Quaternion? rot, Vector3? s) value))
             {
                 value = (null, null, null);
@@ -232,7 +232,7 @@ namespace Unity.LiveCapture.Mocap
                     if (value.scale.HasValue)
                         transform.localScale = value.scale.Value;
 
-                    m_Frames[transform] = (null, null, null); 
+                    m_Frames[transform] = (null, null, null);
                 }
             }
         }

@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using UnityEngine;
 using UnityEditor;
 
 using UnityObject = UnityEngine.Object;
@@ -17,23 +16,28 @@ namespace Unity.LiveCapture
         /// </summary>
         /// <typeparam name="T">Type of the asset to load.</typeparam>
         /// <param name="directory">Path of the assets to load.</param>
+        /// <param name="includeSubDirectories">Whether to include child directories in the search or not.</param>
         /// <returns>The list of assets.</returns>
-        public static List<T> GetAssetsAtPath<T>(string directory) where T : UnityObject
+        public static List<T> GetAssetsAtPath<T>(string directory, bool includeSubDirectories = true) where T : UnityObject
         {
             if (string.IsNullOrEmpty(directory))
             {
                 return new List<T>();
             }
 
-            directory = Path.GetDirectoryName($"{directory}/");
-
-            if (!Directory.Exists(directory))
+            if (!Directory.Exists(Path.GetDirectoryName($"{directory}/")))
             {
                 return new List<T>();
             }
 
             var guids = AssetDatabase.FindAssets($"t:{typeof(T).Name}", new[] { directory });
             var paths = guids.Select(guid => AssetDatabase.GUIDToAssetPath(guid));
+
+            if (!includeSubDirectories)
+            {
+                var directoryOS = directory.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+                paths = paths.Where(p => Path.GetDirectoryName(p) == directoryOS);
+            }
 
             return paths.Select(path => AssetDatabase.LoadAssetAtPath<T>(path)).ToList();
         }

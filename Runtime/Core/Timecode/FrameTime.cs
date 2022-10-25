@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Unity.LiveCapture
 {
     /// <summary>
-    /// A struct that represents a time relative to a frame sequence, with an optional subframe value.
+    /// A struct that represents a time relative to a frame sequence.
     /// </summary>
     [Serializable]
     public struct FrameTime : IComparable, IComparable<FrameTime>, IEquatable<FrameTime>
@@ -17,12 +17,12 @@ namespace Unity.LiveCapture
         /// <summary>
         /// The number of the frame in the sequence.
         /// </summary>
-        public int FrameNumber => m_FrameNumber;
+        public readonly int FrameNumber => m_FrameNumber;
 
         /// <summary>
         /// The time within the frame.
         /// </summary>
-        public Subframe Subframe => m_Subframe;
+        public readonly Subframe Subframe => m_Subframe;
 
         /// <summary>
         /// Creates a new <see cref="FrameTime"/> instance.
@@ -85,7 +85,7 @@ namespace Unity.LiveCapture
         /// Gets the frame time rounded down to the start of the current frame.
         /// </summary>
         /// <returns>A <see cref="FrameTime"/> with no subframe component.</returns>
-        public FrameTime Floor()
+        public readonly FrameTime Floor()
         {
             var subframe = new Subframe(0, m_Subframe.Resolution);
             return new FrameTime(m_FrameNumber, subframe);
@@ -95,7 +95,7 @@ namespace Unity.LiveCapture
         /// Gets the frame time rounded up to the start of the next frame.
         /// </summary>
         /// <returns>A <see cref="FrameTime"/> with no subframe component.</returns>
-        public FrameTime Ceil()
+        public readonly FrameTime Ceil()
         {
             var subframe = new Subframe(0, m_Subframe.Resolution);
 
@@ -118,7 +118,7 @@ namespace Unity.LiveCapture
         /// Subframe values exactly half way in a frame are rounded towards negative infinity.
         /// </remarks>
         /// <returns>A <see cref="FrameTime"/> with no subframe component.</returns>
-        public FrameTime Round()
+        public readonly FrameTime Round()
         {
             var subframe = new Subframe(0, m_Subframe.Resolution);
 
@@ -142,7 +142,7 @@ namespace Unity.LiveCapture
         /// The time in seconds since the start of the frame sequence, or <see langword="default"/>
         /// if <paramref name="frameRate"/> is invalid.
         /// </returns>
-        public double ToSeconds(FrameRate frameRate)
+        public readonly double ToSeconds(FrameRate frameRate)
         {
             return frameRate.IsValid && frameRate.Numerator != 0 ? (double)this * frameRate.FrameInterval : default;
         }
@@ -156,7 +156,7 @@ namespace Unity.LiveCapture
         /// * Returns zero when this instance is the same as <paramref name="other"/>.
         /// * Returns a positive value when this instance is greater than <paramref name="other"/>.
         /// </returns>
-        public int CompareTo(FrameTime other)
+        public readonly int CompareTo(FrameTime other)
         {
             if (m_FrameNumber != other.m_FrameNumber)
             {
@@ -174,7 +174,7 @@ namespace Unity.LiveCapture
         /// * Returns zero when this instance is the same as <paramref name="obj"/>.
         /// * Returns a positive value when this instance is greater than <paramref name="obj"/>.
         /// </returns>
-        public int CompareTo(object obj)
+        public readonly int CompareTo(object obj)
         {
             return obj is FrameTime other ? CompareTo(other) : -1;
         }
@@ -184,7 +184,7 @@ namespace Unity.LiveCapture
         /// </summary>
         /// <param name="other">A value to compare with this instance.</param>
         /// <returns><see langword="true"/> if <paramref name="other"/> has the same value as this instance; otherwise, <see langword="false"/>.</returns>
-        public bool Equals(FrameTime other)
+        public readonly bool Equals(FrameTime other)
         {
             return m_FrameNumber == other.m_FrameNumber && m_Subframe == other.m_Subframe;
         }
@@ -195,7 +195,7 @@ namespace Unity.LiveCapture
         /// <param name="obj">An object to compare with this instance.</param>
         /// <returns><see langword="true"/> if <paramref name="obj"/> is an instance of <see cref="FrameTime"/> and equals
         /// the value of this instance; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             return obj is FrameTime other && Equals(other);
         }
@@ -204,7 +204,7 @@ namespace Unity.LiveCapture
         /// Returns the hash code for this instance.
         /// </summary>
         /// <returns>The hash code for this instance.</returns>
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             unchecked
             {
@@ -218,7 +218,7 @@ namespace Unity.LiveCapture
         /// Returns a string that represents the current instance.
         /// </summary>
         /// <returns>A string that represents the current instance.</returns>
-        public override string ToString()
+        public override readonly string ToString()
         {
             return ((double)this).ToString();
         }
@@ -271,23 +271,23 @@ namespace Unity.LiveCapture
         }
 
         /// <summary>
-        /// Determines whether two specified instances of <see cref="FrameTime"/> are equal.
+        /// Indicates whether two specified instances of <see cref="FrameTime"/> are equal.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
-        /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> represent the same value; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> have the same value; otherwise, <see langword="false"/>.</returns>
         public static bool operator==(FrameTime a, FrameTime b) => a.Equals(b);
 
         /// <summary>
-        /// Determines whether two specified instances of <see cref="FrameTime"/> are not equal.
+        /// Indicates whether two specified instances of <see cref="FrameTime"/> are not equal.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
-        /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> do not represent the same value; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> do not have the same value; otherwise, <see langword="false"/>.</returns>
         public static bool operator!=(FrameTime a, FrameTime b) => !a.Equals(b);
 
         /// <summary>
-        /// Determines whether one specified <see cref="FrameTime"/> is later than or the same as another specified <see cref="FrameTime"/>.
+        /// Indicates whether one specified <see cref="FrameTime"/> is later than or the same as another specified <see cref="FrameTime"/>.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
@@ -295,7 +295,7 @@ namespace Unity.LiveCapture
         public static bool operator>=(FrameTime a, FrameTime b) => a.CompareTo(b) >= 0;
 
         /// <summary>
-        /// Determines whether one specified <see cref="FrameTime"/> is earlier than or the same as another specified <see cref="FrameTime"/>.
+        /// Indicates whether one specified <see cref="FrameTime"/> is earlier than or the same as another specified <see cref="FrameTime"/>.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
@@ -303,7 +303,7 @@ namespace Unity.LiveCapture
         public static bool operator<=(FrameTime a, FrameTime b) => a.CompareTo(b) <= 0;
 
         /// <summary>
-        /// Determines whether one specified <see cref="FrameTime"/> is later than another specified <see cref="FrameTime"/>.
+        /// Indicates whether one specified <see cref="FrameTime"/> is later than another specified <see cref="FrameTime"/>.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
@@ -311,7 +311,7 @@ namespace Unity.LiveCapture
         public static bool operator>(FrameTime a, FrameTime b) => a.CompareTo(b) > 0;
 
         /// <summary>
-        /// Determines whether one specified <see cref="FrameTime"/> is earlier than another specified <see cref="FrameTime"/>.
+        /// Indicates whether one specified <see cref="FrameTime"/> is earlier than another specified <see cref="FrameTime"/>.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
@@ -408,7 +408,7 @@ namespace Unity.LiveCapture
         /// </summary>
         /// <param name="a">The frame time.</param>
         /// <param name="b">The frame time to subtract.</param>
-        /// <returns>The difference of <paramref name="a"/> from <paramref name="b"/>.</returns>
+        /// <returns>The subtraction of <paramref name="b"/> from <paramref name="a"/>.</returns>
         /// <exception cref="OverflowException">Thrown if the resulting value is outside the range representable
         /// by the <see cref="FrameTime"/> type.</exception>
         public static FrameTime operator-(FrameTime a, FrameTime b)

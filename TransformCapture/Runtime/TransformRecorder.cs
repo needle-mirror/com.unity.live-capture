@@ -128,7 +128,7 @@ namespace Unity.LiveCapture.TransformCapture
                 m_RotationCurves[i] = new EulerCurve(path, "m_LocalEuler", typeof(Transform));
                 m_RotationCurves[i].FrameRate = frameRate;
                 m_RotationCurves[i].MaxError = RotationError;
-                
+
             }
         }
     }

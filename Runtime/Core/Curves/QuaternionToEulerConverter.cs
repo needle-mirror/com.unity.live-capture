@@ -51,7 +51,7 @@ namespace Unity.LiveCapture
             }
 
             var keyframe = m_Keyframes.Dequeue();
-            
+
             if (m_First)
             {
                 m_First = false;
@@ -88,7 +88,7 @@ namespace Unity.LiveCapture
 
                 return true;
             }
-            
+
             return false;
         }
 
@@ -109,7 +109,7 @@ namespace Unity.LiveCapture
             var outTangent = Vector3.zero;
 
             for (var c = 0; c < 3; ++c)
-            {   
+            {
                 ieuler[c] = Mathf.Repeat(ieuler[c] - euler[c] + 180f, 360f) + euler[c] - 180f;
                 inTangent[c] = 3f * (ieuler[c] - euler[c]) / idt;
 

@@ -51,25 +51,25 @@ namespace Unity.LiveCapture.CompanionApp
         event Action StopRecording;
 
         /// <summary>
-        /// An event invoked when the client wants to start playback on the current <see cref="ISlate"/>.
+        /// An event invoked when the client wants to start playback on the current <see cref="IShot"/>.
         /// </summary>
         event Action StartPlayer;
 
         /// <summary>
-        /// An event invoked when the client wants to stop playback on the current <see cref="ISlate"/>.
+        /// An event invoked when the client wants to stop playback on the current <see cref="IShot"/>.
         /// </summary>
         event Action StopPlayer;
 
         /// <summary>
-        /// An event invoked when the client wants to pause playback on the current <see cref="ISlate"/>.
+        /// An event invoked when the client wants to pause playback on the current <see cref="IShot"/>.
         /// </summary>
         event Action PausePlayer;
 
         /// <summary>
-        /// An event invoked when the client wants to set the playback time in the current <see cref="ISlate"/>.
+        /// An event invoked when the client wants to set the playback time in the current <see cref="IShot"/>.
         /// </summary>
         /// <remarks>
-        /// The event provides the time in seconds from the start of the Slate.
+        /// The event provides the time in seconds from the start of the shot.
         /// </remarks>
         event Action<double> SetPlayerTime;
 
@@ -140,34 +140,34 @@ namespace Unity.LiveCapture.CompanionApp
         void SendFrameRate(FrameRate frameRate);
 
         /// <summary>
-        /// Sends if there a slate assigned to the device to the client.
+        /// Sends if there a valid shot ready or not.
         /// </summary>
-        /// <param name="hasSlate">Is there a slate assigned to the device.</param>
-        void SendHasSlate(bool hasSlate);
+        /// <param name="hasShot">Is there a shot ready.</param>
+        void SendHasShot(bool hasShot);
 
         /// <summary>
-        /// Sends the duration of the current slate to the client.
+        /// Sends the duration of the current shot to the client.
         /// </summary>
-        /// <param name="duration">The duration of the current slate in seconds.</param>
-        void SendSlateDuration(double duration);
+        /// <param name="duration">The duration of the current shot in seconds.</param>
+        void SendShotDuration(double duration);
 
         /// <summary>
-        /// Sends if a slate is currently being previewed to the client.
+        /// Sends if a shot is currently being previewed to the client.
         /// </summary>
-        /// <param name="isPreviewing">Is a slate currently being previewed.</param>
-        void SendSlateIsPreviewing(bool isPreviewing);
+        /// <param name="isPreviewing">Is a shot currently being previewed.</param>
+        void SendIsPreviewing(bool isPreviewing);
 
         /// <summary>
-        /// Sends the slate preview time to the client.
+        /// Sends the shot preview time to the client.
         /// </summary>
         /// <param name="previewTime">The preview time in seconds.</param>
-        void SendSlatePreviewTime(double previewTime);
+        void SendPreviewTime(double previewTime);
 
         /// <summary>
         /// Sends the available take list to the client.
         /// </summary>
-        /// <param name="descriptor">The slate information to send.</param>
-        void SendSlateDescriptor(SlateDescriptor descriptor);
+        /// <param name="descriptor">The shot information to send.</param>
+        void SendShotDescriptor(ShotDescriptor descriptor);
 
         /// <summary>
         /// Sends the name the take recorder will use for the next recording.
@@ -205,15 +205,15 @@ namespace Unity.LiveCapture.CompanionApp
         readonly BoolSender m_IsRecordingSender;
         readonly DataSender<DeviceMode> m_DeviceModeSender;
         readonly DataSender<FrameRate> m_FrameRateSender;
-        readonly BoolSender m_HasSlateSender;
-        readonly DataSender<double> m_SlateDurationSender;
-        readonly DataSender<double> m_SlatePreviewTimeSender;
-        readonly BoolSender m_SlateIsPreviewingSender;
-        readonly BinarySender<int> m_SlateSelectedTakeSender;
-        readonly BinarySender<int> m_SlateIterationBaseSender;
-        readonly BinarySender<int> m_SlateTakeNumberSender;
-        readonly StringSender m_SlateShotNameSender;
-        readonly JsonSender<TakeDescriptorArrayV0> m_SlateTakesSender;
+        readonly BoolSender m_HasShotSender;
+        readonly DataSender<double> m_ShotDurationSender;
+        readonly DataSender<double> m_PreviewTimeSender;
+        readonly BoolSender m_IsPreviewingSender;
+        readonly BinarySender<int> m_SelectedTakeSender;
+        readonly BinarySender<int> m_IterationBaseSender;
+        readonly BinarySender<int> m_TakeNumberSender;
+        readonly StringSender m_ShotNameSender;
+        readonly JsonSender<TakeDescriptorArrayV0> m_TakeListSender;
         readonly StringSender m_NextTakeNameSender;
         readonly StringSender m_NextAssetNameSender;
         readonly TextureSender m_TexturePreviewSender;
@@ -289,15 +289,15 @@ namespace Unity.LiveCapture.CompanionApp
             m_IsRecordingSender = m_Protocol.Add(new BoolSender(CompanionAppMessages.ToClient.IsRecordingChanged));
             m_DeviceModeSender = m_Protocol.Add(new BinarySender<DeviceMode>(CompanionAppMessages.ToClient.DeviceModeChanged));
             m_FrameRateSender = m_Protocol.Add(new BinarySender<FrameRate>(CompanionAppMessages.ToClient.FrameRate));
-            m_HasSlateSender = m_Protocol.Add(new BoolSender(CompanionAppMessages.ToClient.HasSlateChanged));
-            m_SlateDurationSender = m_Protocol.Add(new BinarySender<double>(CompanionAppMessages.ToClient.SlateDurationChanged));
-            m_SlateIsPreviewingSender = m_Protocol.Add(new BoolSender(CompanionAppMessages.ToClient.SlateIsPreviewingChanged));
-            m_SlatePreviewTimeSender = m_Protocol.Add(new BinarySender<double>(CompanionAppMessages.ToClient.SlatePreviewTimeChanged));
-            m_SlateSelectedTakeSender = m_Protocol.Add(new BinarySender<int>(CompanionAppMessages.ToClient.SlateSelectedTake, options: DataOptions.None));
-            m_SlateIterationBaseSender = m_Protocol.Add(new BinarySender<int>(CompanionAppMessages.ToClient.SlateIterationBase, options: DataOptions.None));
-            m_SlateTakeNumberSender = m_Protocol.Add(new BinarySender<int>(CompanionAppMessages.ToClient.SlateTakeNumber, options: DataOptions.None));
-            m_SlateShotNameSender = m_Protocol.Add(new StringSender(CompanionAppMessages.ToClient.SlateShotName, options: DataOptions.None));
-            m_SlateTakesSender = m_Protocol.Add(new JsonSender<TakeDescriptorArrayV0>(CompanionAppMessages.ToClient.SlateTakes_V0, options: DataOptions.None));
+            m_HasShotSender = m_Protocol.Add(new BoolSender(CompanionAppMessages.ToClient.HasShotChanged));
+            m_ShotDurationSender = m_Protocol.Add(new BinarySender<double>(CompanionAppMessages.ToClient.ShotDurationChanged));
+            m_IsPreviewingSender = m_Protocol.Add(new BoolSender(CompanionAppMessages.ToClient.IsPreviewingChanged));
+            m_PreviewTimeSender = m_Protocol.Add(new BinarySender<double>(CompanionAppMessages.ToClient.PreviewTimeChanged));
+            m_SelectedTakeSender = m_Protocol.Add(new BinarySender<int>(CompanionAppMessages.ToClient.SelectedTake, options: DataOptions.None));
+            m_IterationBaseSender = m_Protocol.Add(new BinarySender<int>(CompanionAppMessages.ToClient.IterationBase, options: DataOptions.None));
+            m_TakeNumberSender = m_Protocol.Add(new BinarySender<int>(CompanionAppMessages.ToClient.SlateTakeNumber, options: DataOptions.None));
+            m_ShotNameSender = m_Protocol.Add(new StringSender(CompanionAppMessages.ToClient.SlateShotName, options: DataOptions.None));
+            m_TakeListSender = m_Protocol.Add(new JsonSender<TakeDescriptorArrayV0>(CompanionAppMessages.ToClient.TakeList_V0, options: DataOptions.None));
             m_NextTakeNameSender = m_Protocol.Add(new StringSender(CompanionAppMessages.ToClient.NextTakeName));
             m_NextAssetNameSender = m_Protocol.Add(new StringSender(CompanionAppMessages.ToClient.NextAssetName));
             m_TexturePreviewSender = m_Protocol.Add(new TextureSender(CompanionAppMessages.ToClient.TexturePreview));
@@ -406,37 +406,37 @@ namespace Unity.LiveCapture.CompanionApp
         }
 
         /// <inheritdoc />
-        public void SendHasSlate(bool hasSlate)
+        public void SendHasShot(bool hasShot)
         {
-            m_HasSlateSender.Send(hasSlate);
+            m_HasShotSender.Send(hasShot);
         }
 
         /// <inheritdoc />
-        public void SendSlateDuration(double duration)
+        public void SendShotDuration(double duration)
         {
-            m_SlateDurationSender.Send(duration);
+            m_ShotDurationSender.Send(duration);
         }
 
         /// <inheritdoc />
-        public void SendSlateIsPreviewing(bool isPreviewing)
+        public void SendIsPreviewing(bool isPreviewing)
         {
-            m_SlateIsPreviewingSender.Send(isPreviewing);
+            m_IsPreviewingSender.Send(isPreviewing);
         }
 
         /// <inheritdoc />
-        public void SendSlatePreviewTime(double previewTime)
+        public void SendPreviewTime(double previewTime)
         {
-            m_SlatePreviewTimeSender.Send(previewTime);
+            m_PreviewTimeSender.Send(previewTime);
         }
 
         /// <inheritdoc />
-        public void SendSlateDescriptor(SlateDescriptor descriptor)
+        public void SendShotDescriptor(ShotDescriptor descriptor)
         {
-            m_SlateTakesSender.Send((TakeDescriptorArrayV0)descriptor.Takes);
-            m_SlateSelectedTakeSender.Send(descriptor.SelectedTake);
-            m_SlateIterationBaseSender.Send(descriptor.IterationBase);
-            m_SlateTakeNumberSender.Send(descriptor.TakeNumber);
-            m_SlateShotNameSender.Send(descriptor.ShotName);
+            m_TakeListSender.Send((TakeDescriptorArrayV0)descriptor.Takes);
+            m_SelectedTakeSender.Send(descriptor.SelectedTake);
+            m_IterationBaseSender.Send(descriptor.IterationBase);
+            m_TakeNumberSender.Send(descriptor.Slate.TakeNumber);
+            m_ShotNameSender.Send(descriptor.Slate.ShotName);
         }
 
         /// <inheritdoc />

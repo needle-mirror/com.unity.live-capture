@@ -1,15 +1,11 @@
-using System;
 using UnityEngine;
-using UnityEngine.Playables;
 using UnityEditor;
 using UnityEditor.Timeline;
 
-using UnityObject = UnityEngine.Object;
-
 namespace Unity.LiveCapture.Editor
 {
-    [CustomEditor(typeof(SlatePlayableAsset))]
-    class SlatePlayableAssetEditor : UnityEditor.Editor
+    [CustomEditor(typeof(ShotPlayableAsset))]
+    class ShotPlayableAssetEditor : UnityEditor.Editor
     {
         static class Contents
         {
@@ -24,9 +20,8 @@ namespace Unity.LiveCapture.Editor
         }
 
         SerializedProperty m_AutoClipName;
-        SlatePlayableAsset m_SlateAsset;
-        SlateInspector m_SlateInspector;
-        PlayableDirector m_Director;
+        ShotPlayableAsset m_Asset;
+        TakeRecorderContextInspector m_ContextInspector;
         PlayableAssetContext m_Context;
         TakeRecorder m_TakeRecorder;
 
@@ -34,14 +29,13 @@ namespace Unity.LiveCapture.Editor
         {
             m_AutoClipName = serializedObject.FindProperty("m_AutoClipName");
 
-            m_SlateInspector = new SlateInspector();
-            m_SlateAsset = target as SlatePlayableAsset;
-            m_Director = TimelineEditor.inspectedDirector;
+            m_ContextInspector = new TakeRecorderContextInspector();
+            m_Asset = target as ShotPlayableAsset;
             m_TakeRecorder = TakeRecorder.Main;
 
             var timeline = Timeline.InspectedAsset;
 
-            if (timeline != null && timeline.FindClip(m_SlateAsset, out var clip))
+            if (timeline != null && timeline.FindClip(m_Asset, out var clip))
             {
                 var hierarchyContext = TimelineHierarchyContextUtility.FromTimelineNavigation();
 
@@ -55,12 +49,12 @@ namespace Unity.LiveCapture.Editor
         {
             Undo.undoRedoPerformed -= UndoRedoPerformed;
 
-            m_SlateInspector.Dispose();
+            m_ContextInspector.Dispose();
         }
 
         void UndoRedoPerformed()
         {
-            m_SlateInspector.Refresh();
+            m_ContextInspector.Refresh();
         }
 
         public override void OnInspectorGUI()
@@ -75,7 +69,7 @@ namespace Unity.LiveCapture.Editor
 
             using (var change = new EditorGUI.ChangeCheckScope())
             {
-                m_SlateInspector.OnGUI(m_SlateAsset, m_Director);
+                m_ContextInspector.OnGUI(m_Context);
 
                 if (change.changed)
                 {
@@ -117,11 +111,11 @@ namespace Unity.LiveCapture.Editor
         {
             Debug.Assert(m_TakeRecorder != null);
 
-            var context = m_TakeRecorder.GetContext() as PlayableAssetContext;
+            var context = m_TakeRecorder.Context as PlayableAssetContext;
 
             return m_TakeRecorder.IsLocked()
                 && context != null
-                && m_SlateAsset == context.GetClip().asset
+                && m_Asset == context.GetClip().asset
                 && context.GetHierarchyContext().MatchesTimelineNavigation();
         }
     }

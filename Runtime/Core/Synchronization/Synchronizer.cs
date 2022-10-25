@@ -10,14 +10,11 @@ namespace Unity.LiveCapture
     class Synchronizer : ISynchronizer
     {
         [SerializeField]
-        List<SourceAndStatusBundle> m_SourcesAndStatuses = new List<SourceAndStatusBundle>();
-
-        [SerializeField]
-        [FrameNumber]
-        FrameTime m_GlobalTimeOffset;
-
-        [SerializeField]
         TimecodeSourceRef m_TimecodeSourceRef;
+        [SerializeField]
+        FrameTime m_Delay;
+        [SerializeField]
+        List<SourceAndStatusBundle> m_SourcesAndStatuses = new List<SourceAndStatusBundle>();
 
         /// <inheritdoc/>
         public ITimecodeSource TimecodeSource
@@ -27,40 +24,39 @@ namespace Unity.LiveCapture
         }
 
         /// <summary>
-        /// The offset, in frames, applied to the timecode used for synchronization updates.
+        /// The delay, in frames, applied to the source timecode.
         /// </summary>
         /// <remarks>
-        /// Use a negative value (i.e. a delay) to compensate for high-latency sources.
+        /// Use a positive value to compensate for high-latency data sources.
         /// </remarks>
-        public FrameTime GlobalTimeOffset
+        public FrameTime Delay
         {
-            get => m_GlobalTimeOffset;
-            set => m_GlobalTimeOffset = value;
+            get => m_Delay;
+            set => m_Delay = value;
         }
 
-        public CalibrationStatus CalibrationStatus { get; private set; } = CalibrationStatus.Complete;
+        public CalibrationStatus CalibrationStatus { get; private set; } = CalibrationStatus.Completed;
 
         /// <inheritdoc />
-        public FrameRate? FrameRate
+        public FrameTimeWithRate? PresentTime
         {
             get
             {
-                if (TimecodeSource == null)
+                var currentTime = TimecodeSource?.CurrentTime;
+
+                if (currentTime == null)
+                {
                     return null;
+                }
 
-                return TimecodeSource.FrameRate;
-            }
-        }
+                var value = currentTime.Value;
 
-        /// <inheritdoc />
-        public Timecode? CurrentTimecode
-        {
-            get
-            {
-                if (TimecodeSource == null)
+                if (!value.Rate.IsValid)
+                {
                     return null;
+                }
 
-                return TimecodeSource.Now.AddFrames(TimecodeSource.FrameRate, GlobalTimeOffset);
+                return new FrameTimeWithRate(value.Rate, value.Time - m_Delay);
             }
         }
 
@@ -90,22 +86,37 @@ namespace Unity.LiveCapture
         /// <inheritdoc />
         public bool AddDataSource(ITimedDataSource source)
         {
-            if (source.Synchronizer != null && source.Synchronizer != this)
+            if (source == null || (source.Synchronizer != null && source.Synchronizer != this))
             {
                 return false;
             }
 
-            source.Synchronizer = this;
-            source.IsSynchronized = true;
-            return m_SourcesAndStatuses.AddUnique(new SourceAndStatusBundle(source));
+            if (m_SourcesAndStatuses.AddUnique(new SourceAndStatusBundle(source)))
+            {
+                source.Synchronizer = this;
+                source.IsSynchronized = true;
+                return true;
+            }
+
+            return false;
         }
 
         /// <inheritdoc />
-        public void RemoveDataSource(ITimedDataSource source)
+        public bool RemoveDataSource(ITimedDataSource source)
         {
-            source.IsSynchronized = false;
-            source.Synchronizer = null;
-            m_SourcesAndStatuses.Remove(new SourceAndStatusBundle(source));
+            if (source == null)
+            {
+                return false;
+            }
+
+            if (m_SourcesAndStatuses.Remove(new SourceAndStatusBundle(source)))
+            {
+                source.Synchronizer = null;
+                source.IsSynchronized = false;
+                return true;
+            }
+
+            return false;
         }
 
         public void RemoveDataSource(int index)
@@ -142,22 +153,16 @@ namespace Unity.LiveCapture
         {
             RepairReferences();
 
-            if (CalibrationStatus == CalibrationStatus.InProgress)
-            {
-                return;
-            }
+            var presentTime = PresentTime;
 
-            var frameRate = FrameRate;
-            var timecode = CurrentTimecode;
-
-            if (frameRate == null || timecode == null)
+            if (presentTime == null || CalibrationStatus == CalibrationStatus.InProgress)
             {
                 return;
             }
 
             foreach (var item in m_SourcesAndStatuses)
             {
-                item.PresentAt(timecode.Value, frameRate.Value);
+                item.PresentAt(presentTime.Value);
             }
         }
 
@@ -181,29 +186,42 @@ namespace Unity.LiveCapture
         /// Finds the best synchronization parameters for the current data sources.
         /// </summary>
         /// <param name="calibrator">The calibration method used for finding the optimal settings.</param>
-        /// <returns>The current status of the calibration.</returns>
-        public IEnumerator CalibrationWith(ISynchronizationCalibrator calibrator)
+        /// <returns>The calibration coroutine.</returns>
+        public IEnumerator StartCalibration(ISynchronizationCalibrator calibrator)
         {
             if (calibrator == null)
             {
-                Debug.LogError("calibrator is null");
+                Debug.LogError("calibrator is null.");
+                yield break;
+            }
+            if (CalibrationStatus == CalibrationStatus.InProgress)
+            {
+                Debug.LogError("Calibration is already in progress.");
                 yield break;
             }
 
             CalibrationStatus = CalibrationStatus.InProgress;
-            var dataSources = Enumerable.Range(0, DataSourceCount)
-                .Select(GetDataSource)
-                .Where(source => source != null && source.IsSynchronized)
-                .ToList();
+
+            var dataSources = m_SourcesAndStatuses
+                .Select(s => s.Source)
+                .Where(source => source != null && source.IsSynchronized);
 
             foreach (var result in calibrator.Execute(TimecodeSource, dataSources))
             {
                 CalibrationStatus = result.Status;
-
-                // The calibrator will make per-datasource adjustments
-                // The Synchronizer just needs to care about the GlobalOffset
-                GlobalTimeOffset = result.GlobalTimeOffset;
+                Delay = result.Delay;
                 yield return null;
+            }
+        }
+
+        /// <summary>
+        /// Stops the current calibration.
+        /// </summary>
+        public void StopCalibration()
+        {
+            if (CalibrationStatus == CalibrationStatus.InProgress)
+            {
+                CalibrationStatus = CalibrationStatus.Failed;
             }
         }
 
@@ -233,11 +251,7 @@ namespace Unity.LiveCapture
 
             public ITimedDataSource Source => m_Source.Resolve();
 
-            public TimedSampleStatus Status
-            {
-                get => m_Status;
-                private set => m_Status = value;
-            }
+            public TimedSampleStatus Status => m_Status;
 
             /// <summary>
             /// Tracks whether we want this source to be part of the synchronization group.
@@ -276,7 +290,7 @@ namespace Unity.LiveCapture
                 Source.IsSynchronized = false;
             }
 
-            public void PresentAt(Timecode timecode, FrameRate frameRate)
+            public void PresentAt(FrameTimeWithRate presentTime)
             {
                 if (Source == null)
                     return;
@@ -285,7 +299,7 @@ namespace Unity.LiveCapture
 
                 if (Source.IsSynchronized)
                 {
-                    Status = Source.PresentAt(timecode, frameRate);
+                    m_Status = Source.PresentAt(presentTime);
                 }
             }
 

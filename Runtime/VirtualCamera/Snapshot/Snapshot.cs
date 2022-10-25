@@ -55,9 +55,9 @@ namespace Unity.LiveCapture.VirtualCamera
             set => m_Screenshot = value;
         }
 
-        public ISlate Slate
+        public UnityObject Asset
         {
-            get => m_Slate as ISlate;
+            get => m_Slate;
             set => m_Slate = value as PlayableAsset;
         }
 

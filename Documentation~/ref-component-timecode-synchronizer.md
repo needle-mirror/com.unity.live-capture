@@ -12,7 +12,7 @@ To get a functional Timecode Synchronizer, you must use this component along wit
 |:---|:---|
 | **Display Timecode** | Displays the current timecode in the Game view.<br /><br />**Note:** This timecode display is burnt into the Game view. If you want to export the Game view, you might first need to disable this option. |
 | **Timecode Source** | The timecode source to use as the reference for synchronizing all your connected data sources.<br /><br />The selection list includes all timecode source components present in any GameObject of the current Scene. The mention in parentheses indicates the name of the GameObject that holds the component. |
-| **Global Time Offset** | The offset (in frames) to apply to the global timecode used for synchronization updates. Use a negative value to add a delay and compensate for high-latency sources. |
+| **Delay** | The delay (in frames) applied to the source timecode. Use a positive value to compensate for high-latency data sources. |
 
 ## Timed data sources
 
@@ -20,8 +20,8 @@ To get a functional Timecode Synchronizer, you must use this component along wit
 |:---|:---|
 | **Device Name** | The name of the connected data source. |
 | **Status** | The current timecode synchronization status of the data source.<br />• **synced** (green): The source data is synchronized<br />• **ahead** (yellow): The source data is ahead of the global time<br />• **behind** (yellow): The source data is behind the global time<br />• **no data** (gray): The source data is missing<br />• **no source** (red): The source data is not available |
-| **Buffer** | The input sample timecode buffer size (in frames) applied to the data source. <br /><br />Adjust the value to minimally overlap with buffers of the other data sources. |
-| **Offset** | The offset (in frames) to apply to the data source local timecode to fine-tune latency compensation. |
+| **Buffer** | The sample buffer size (in frames). Larger values may help when synchronizing with high-latency sources at the cost of performance. <br /><br />Adjust the value to minimally overlap with buffers of the other data sources. |
+| **Offset** | The time offset (in frames) applied to sample timecodes. |
 
 ### List management
 
@@ -34,4 +34,4 @@ To get a functional Timecode Synchronizer, you must use this component along wit
 
 ## Calibrate
 
-Use the Calibrate button to automatically adjust the Global Time Offset and all timed data source Buffer values to get all data sources synchronized.
+Use the Calibrate button to automatically adjust the Delay and all timed data source Buffer values so that all data sources are synchronized.

@@ -177,42 +177,42 @@ namespace Unity.LiveCapture.CompanionApp
                     FrameRateReceived?.Invoke(rate);
                 });
             }
-            if (BoolReceiver.TryGet(m_Protocol, CompanionAppMessages.ToClient.HasSlateChanged, out var hasSlateChanged))
+            if (BoolReceiver.TryGet(m_Protocol, CompanionAppMessages.ToClient.HasShotChanged, out var hasSlateChanged))
             {
                 hasSlateChanged.AddHandler(hasSlate =>
                 {
                     HasSlateReceived?.Invoke(hasSlate);
                 });
             }
-            if (BinaryReceiver<double>.TryGet(m_Protocol, CompanionAppMessages.ToClient.SlateDurationChanged, out var slateDurationChanged))
+            if (BinaryReceiver<double>.TryGet(m_Protocol, CompanionAppMessages.ToClient.ShotDurationChanged, out var slateDurationChanged))
             {
                 slateDurationChanged.AddHandler(duration =>
                 {
                     SlateDurationReceived?.Invoke(duration);
                 });
             }
-            if (BoolReceiver.TryGet(m_Protocol, CompanionAppMessages.ToClient.SlateIsPreviewingChanged, out var slateIsPreviewingChanged))
+            if (BoolReceiver.TryGet(m_Protocol, CompanionAppMessages.ToClient.IsPreviewingChanged, out var slateIsPreviewingChanged))
             {
                 slateIsPreviewingChanged.AddHandler(isPreviewing =>
                 {
                     SlateIsPreviewingReceived?.Invoke(isPreviewing);
                 });
             }
-            if (BinaryReceiver<double>.TryGet(m_Protocol, CompanionAppMessages.ToClient.SlatePreviewTimeChanged, out var slatePreviewTimeChanged))
+            if (BinaryReceiver<double>.TryGet(m_Protocol, CompanionAppMessages.ToClient.PreviewTimeChanged, out var slatePreviewTimeChanged))
             {
                 slatePreviewTimeChanged.AddHandler(duration =>
                 {
                     SlatePreviewTimeReceived?.Invoke(duration);
                 });
             }
-            if (BinaryReceiver<int>.TryGet(m_Protocol, CompanionAppMessages.ToClient.SlateSelectedTake, out var slateSelectedTakeChanged))
+            if (BinaryReceiver<int>.TryGet(m_Protocol, CompanionAppMessages.ToClient.SelectedTake, out var slateSelectedTakeChanged))
             {
                 slateSelectedTakeChanged.AddHandler(selectedTake =>
                 {
                     SlateSelectedTakeReceived?.Invoke(selectedTake);
                 });
             }
-            if (BinaryReceiver<int>.TryGet(m_Protocol, CompanionAppMessages.ToClient.SlateIterationBase, out var slateIterationBaseChanged))
+            if (BinaryReceiver<int>.TryGet(m_Protocol, CompanionAppMessages.ToClient.IterationBase, out var slateIterationBaseChanged))
             {
                 slateIterationBaseChanged.AddHandler(iterationBase =>
                 {
@@ -233,7 +233,7 @@ namespace Unity.LiveCapture.CompanionApp
                     SlateShotNameReceived?.Invoke(shotName);
                 });
             }
-            if (JsonReceiver<TakeDescriptorArrayV0>.TryGet(m_Protocol, CompanionAppMessages.ToClient.SlateTakes_V0, out var slateTakesChanged))
+            if (JsonReceiver<TakeDescriptorArrayV0>.TryGet(m_Protocol, CompanionAppMessages.ToClient.TakeList_V0, out var slateTakesChanged))
             {
                 slateTakesChanged.AddHandler(takes =>
                 {

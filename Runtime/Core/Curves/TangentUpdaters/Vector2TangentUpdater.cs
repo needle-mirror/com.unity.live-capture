@@ -13,7 +13,7 @@ namespace Unity.LiveCapture
             var dy = nextKeyframe.Value - keyframe.Value;
             var m = dy.SafeDivide(dx, k_CurveTimeEpsilon);
             var result = keyframe;
-            
+
             result.InTangent = m;
             result.OutTangent = m;
 
@@ -26,7 +26,7 @@ namespace Unity.LiveCapture
             var dy = keyframe.Value - prevKeyframe.Value;
             var m = dy.SafeDivide(dx, k_CurveTimeEpsilon);
             var result = keyframe;
-            
+
             result.InTangent = m;
             result.OutTangent = m;
 
@@ -46,7 +46,7 @@ namespace Unity.LiveCapture
 
             var m = m1 * 0.5f + m2 * 0.5f;
             var result = keyframe;
-            
+
             result.InTangent = m;
             result.OutTangent = m;
 

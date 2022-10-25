@@ -2,6 +2,8 @@ namespace Unity.LiveCapture
 {
     class TakeNameFormatter : WildcardFormatter
     {
+        public static TakeNameFormatter Instance { get; } = new TakeNameFormatter();
+
         internal static class Wildcards
         {
             public const string Scene = "<Scene>";

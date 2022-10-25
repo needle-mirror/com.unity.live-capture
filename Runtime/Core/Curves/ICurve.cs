@@ -62,7 +62,7 @@ namespace Unity.LiveCapture
 
     /// <summary>
     /// Represents an animation curve that can reduce the number of stored keyframes
-    /// by tolerating certain amount of error. 
+    /// by tolerating certain amount of error.
     /// </summary>
     interface IReduceableCurve : ICurve
     {

@@ -35,7 +35,7 @@ namespace Unity.LiveCapture
         {
             if (impl == null)
                 throw new ArgumentNullException(nameof(impl));
-            
+
             m_Impl = impl;
         }
 
@@ -74,7 +74,7 @@ namespace Unity.LiveCapture
             }
 
             var keyframe = m_Keyframes.Dequeue();
-            
+
             if (m_First)
             {
                 m_First = false;
@@ -102,7 +102,7 @@ namespace Unity.LiveCapture
 
                 return true;
             }
-            
+
             return false;
         }
     }

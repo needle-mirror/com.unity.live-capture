@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Unity.LiveCapture
 {
@@ -10,7 +11,6 @@ namespace Unity.LiveCapture
     /// <typeparam name="T">The type of data stored in the buffer.</typeparam>
     public class CircularBuffer<T> : IReadOnlyList<T>
     {
-        readonly Action<T> m_OnDiscard;
         T[] m_Data;
         int m_StartIndex = 0;
         int m_EndIndex = 0;
@@ -26,20 +26,23 @@ namespace Unity.LiveCapture
         public int Capacity => m_Data.Length - 1;
 
         /// <summary>
+        /// A callback invoked for each element that is discarded from the buffer.
+        /// </summary>
+        public Action<T> ElementDiscarded { get; set; }
+
+        /// <summary>
         /// Constructs a new <see cref="CircularBuffer{T}"/> instance with an initial capacity.
         /// </summary>
         /// <param name="capacity">The maximum number of elements which can be stored in the collection.</param>
-        /// <param name="onDiscard">A callback invoked for each element that is discarded from the buffer.
-        /// This does not include when <see cref="PopFront"/> or <see cref="PopBack"/> are called.</param>
-        public CircularBuffer(int capacity, Action<T> onDiscard = null)
+        /// <param name="elementDiscarded">A callback invoked for each element that is discarded from the buffer.</param>
+        public CircularBuffer(int capacity, Action<T> elementDiscarded = null)
         {
-            m_OnDiscard = onDiscard;
-
+            ElementDiscarded = elementDiscarded;
             SetCapacity(capacity);
         }
 
         /// <inheritdoc cref="PushBack"/>
-        public void Add(T value)
+        public void Add(in T value)
         {
             // The add method is an alias for PushBack to support initializer syntax
             PushBack(value);
@@ -52,15 +55,11 @@ namespace Unity.LiveCapture
         /// If the buffer is full, the element at the front of the buffer will be discarded.
         /// </remarks>
         /// <param name="value">The element to add.</param>
-        public void PushBack(T value)
+        public void PushBack(in T value)
         {
             if (Count == Capacity)
             {
-                if (m_OnDiscard != null)
-                {
-                    m_OnDiscard(PeekFront());
-                }
-
+                OnValueDiscarded(PeekFront());
                 IncrementIndex(ref m_StartIndex);
             }
 
@@ -75,20 +74,58 @@ namespace Unity.LiveCapture
         /// If the buffer is full, the element at the back of the buffer will be discarded.
         /// </remarks>
         /// <param name="value">The element to add.</param>
-        public void PushFront(T value)
+        public void PushFront(in T value)
         {
             if (Count == Capacity)
             {
-                if (m_OnDiscard != null)
-                {
-                    m_OnDiscard(PeekBack());
-                }
-
+                OnValueDiscarded(PeekBack());
                 DecrementIndex(ref m_EndIndex);
             }
 
             DecrementIndex(ref m_StartIndex);
             m_Data[m_StartIndex] = value;
+        }
+
+        /// <summary>
+        /// Insets an element into the buffer at the specified index.
+        /// </summary>
+        /// <remarks>
+        /// If the buffer is full, the element at the front of the buffer will be discarded.
+        /// </remarks>
+        /// <param name="index">The index counting from the front of the buffer.</param>
+        /// <param name="value">The element to add.</param>
+        public void PushIndex(int index, in T value)
+        {
+            if (index == Count)
+            {
+                PushBack(value);
+                return;
+            }
+
+            PreconditionInBounds(index);
+
+            if (Count == Capacity)
+            {
+                OnValueDiscarded(PeekFront());
+
+                for (var i = 0; i < index; i++)
+                {
+                    this[i] = this[i + 1];
+                }
+            }
+            else
+            {
+                // duplicate the last element to grow the list
+                PushBack(PeekBack());
+
+                // the last element is already copied, so skip it
+                for (var i = Count - 2; i > index; i--)
+                {
+                    this[i] = this[i - 1];
+                }
+            }
+
+            this[index] = value;
         }
 
         /// <summary>
@@ -119,22 +156,33 @@ namespace Unity.LiveCapture
         /// Get the element at the front of the buffer.
         /// </summary>
         /// <returns>The element at the front of the buffer.</returns>
-        public T PeekFront()
+        public ref readonly T PeekFront()
         {
             PreconditionNotEmpty();
-            return m_Data[m_StartIndex];
+            return ref m_Data[m_StartIndex];
         }
 
         /// <summary>
         /// Get the element at the back of the buffer.
         /// </summary>
         /// <returns>The element at the back of the buffer.</returns>
-        public T PeekBack()
+        public ref readonly T PeekBack()
         {
             PreconditionNotEmpty();
             var backIndex = m_EndIndex;
             DecrementIndex(ref backIndex);
-            return m_Data[backIndex];
+            return ref m_Data[backIndex];
+        }
+
+        /// <summary>
+        /// Gets the element at the specified index in the buffer.
+        /// </summary>
+        /// <param name="index">The index counting from the front of the buffer.</param>
+        /// <returns>The element at the specified index in the buffer.</returns>
+        public ref readonly T PeekIndex(int index)
+        {
+            PreconditionInBounds(index);
+            return ref m_Data[(m_StartIndex + index) % m_Data.Length];
         }
 
         /// <summary>
@@ -142,12 +190,9 @@ namespace Unity.LiveCapture
         /// </summary>
         public void Clear()
         {
-            if (m_OnDiscard != null)
+            foreach (var value in this)
             {
-                foreach (var value in this)
-                {
-                    m_OnDiscard(value);
-                }
+                OnValueDiscarded(value);
             }
 
             m_StartIndex = 0;
@@ -184,12 +229,7 @@ namespace Unity.LiveCapture
             {
                 while (Count > capacity)
                 {
-                    var discardedValue = PopFront();
-
-                    if (m_OnDiscard != null)
-                    {
-                        m_OnDiscard(discardedValue);
-                    }
+                    OnValueDiscarded(PopFront());
                 }
 
                 var index = m_StartIndex;
@@ -209,14 +249,13 @@ namespace Unity.LiveCapture
         /// <inheritdoc />
         public T this[int index]
         {
-            get
-            {
-                PreconditionInBounds(index);
-                return m_Data[(index + m_StartIndex) % m_Data.Length];
-            }
+            get => PeekIndex(index);
             set
             {
                 PreconditionInBounds(index);
+
+                OnValueDiscarded(PeekIndex(index));
+
                 m_Data[(index + m_StartIndex) % m_Data.Length] = value;
             }
         }
@@ -262,6 +301,21 @@ namespace Unity.LiveCapture
         void DecrementIndex(ref int index)
         {
             index = (m_Data.Length + index - 1) % m_Data.Length;
+        }
+
+        void OnValueDiscarded(in T value)
+        {
+            if (ElementDiscarded != null)
+            {
+                try
+                {
+                    ElementDiscarded.Invoke(value);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
+            }
         }
     }
 }

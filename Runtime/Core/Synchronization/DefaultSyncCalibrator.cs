@@ -11,109 +11,264 @@ namespace Unity.LiveCapture
     class DefaultSyncCalibrator : ISynchronizationCalibrator
     {
         /// <summary>
-        /// Required number of consecutive successful synchronization updates for calibration to be accepted.
+        /// The maximum data source timecode difference allowed for calibration.
+        /// A data source whose timecode differs from the others by more than this number of frames is excluded from calibration.
+        /// </summary>
+        public FrameTime OutlierThreshold { get; set; } = new FrameTime(100);
+
+        /// <summary>
+        /// The number of consecutive successful synchronization updates required for calibration to be accepted.
         /// </summary>
         public int RequiredGoodSamples { get; set; } = 60;
 
-        public IEnumerable<CalibrationResult> Execute(ITimecodeSource timecodeSource,
-            IReadOnlyCollection<ITimedDataSource> dataSources)
+        public IEnumerable<CalibrationResult> Execute(ITimecodeSource timecodeSource, IEnumerable<ITimedDataSource> dataSources)
         {
             if (timecodeSource == null || dataSources == null)
             {
-                Debug.LogWarning("Timecode source or data sources are null");
-                yield return new CalibrationResult(CalibrationStatus.Incomplete);
+                Debug.LogWarning("Timecode source or data sources are null.");
+                yield return new CalibrationResult(CalibrationStatus.Failed);
+                yield break;
+            }
+            if (timecodeSource.CurrentTime == null)
+            {
+                Debug.LogWarning("Timecode source does not have a valid time.");
+                yield return new CalibrationResult(CalibrationStatus.Failed);
                 yield break;
             }
 
-            // Step 1: Find the global delay necessary to deal with the highest-latency sources
-            var globalOffset = new FrameTime();
-            foreach (var offset in CalibrateDelayIterative(timecodeSource, dataSources, RequiredGoodSamples))
+            // We try to exclude data sources whose timecodes are outliers compared to the other data sources.
+            // This helps us to ignore incorrectly configured sources and ensure the calibration completes in reasonable time.
+            var sources = GetSortedSourcesWithoutOutliers(timecodeSource, dataSources, OutlierThreshold);
+
+            if (sources.Count == 0)
             {
-                globalOffset = new FrameTime(offset);
-                yield return new CalibrationResult(CalibrationStatus.InProgress, globalTimeOffset: globalOffset,
-                    optimalBufferSizes: null);
+                yield return new CalibrationResult(CalibrationStatus.Completed);
+                yield break;
             }
 
-            // Step 2: Increase buffer sizes until we can sample from each source
-            foreach (var status in CalibrateBufferSizesIterative(timecodeSource, dataSources, globalOffset,
-                RequiredGoodSamples))
+            // Find a decent initial guess for the delay
+            var mostDelayedSource = sources.First();
+
+            if (!mostDelayedSource.TryGetBufferRange(out _, out var newestTime))
             {
-                yield return new CalibrationResult(status, globalTimeOffset: globalOffset,
-                    optimalBufferSizes: dataSources.Select(s => s.BufferSize).ToArray());
+                yield return new CalibrationResult(CalibrationStatus.Failed);
+                yield break;
             }
+
+            var sourceTime = timecodeSource.CurrentTime.Value.Time;
+            var newestTimeInSourceRate = FrameTime.Remap(newestTime, mostDelayedSource.FrameRate, timecodeSource.FrameRate);
+            var delay = (sourceTime - newestTimeInSourceRate).Ceil();
+
+            // Adjust the delay value until it works consistently
+            foreach (var newDelay in CalibrateDelayIterative(timecodeSource, sources, delay, RequiredGoodSamples))
+            {
+                delay = newDelay;
+                yield return new CalibrationResult(CalibrationStatus.InProgress, delay);
+            }
+
+            // Select initial buffer sizes close to the required values
+            CalculateInitialBufferSizes(timecodeSource, sources, delay);
+
+            // Increase buffer sizes until the sources are able to present samples at the delayed time
+            foreach (var status in CalibrateBufferSizesIterative(timecodeSource, sources, delay, RequiredGoodSamples))
+            {
+                yield return new CalibrationResult(status, delay);
+            }
+
+            yield return new CalibrationResult(CalibrationStatus.Completed, delay);
         }
 
-        static IEnumerable<int> CalibrateDelayIterative(
+        static IEnumerable<FrameTime> CalibrateDelayIterative(
             ITimecodeSource timecodeSource,
-            IReadOnlyCollection<ITimedDataSource> dataSources,
+            IEnumerable<ITimedDataSource> dataSources,
+            FrameTime initialDelay,
             int requiredGoodSamples)
         {
-            var frameOffset = 0;
+            var delay = initialDelay;
             var goodSamples = 0;
+
             while (goodSamples < requiredGoodSamples)
             {
-                var currentTime = timecodeSource.Now.AddFrames(timecodeSource.FrameRate, frameOffset);
-                var noExtraLatency = dataSources.All(s =>
-                    s.PresentAt(currentTime, timecodeSource.FrameRate) != TimedSampleStatus.Behind);
+                var sourceTime = timecodeSource.CurrentTime;
 
-                yield return frameOffset;
-
-                if (noExtraLatency)
+                if (sourceTime == null)
                 {
-                    ++goodSamples;
+                    yield break;
+                }
+
+                var presentTime = new FrameTimeWithRate(sourceTime.Value.Rate, sourceTime.Value.Time - delay);
+                var addedDelay = false;
+
+                // grow the buffers of sources that don't have an old enough sample buffered
+                foreach (var source in dataSources)
+                {
+                    if (!source.TryGetBufferRange(out _, out var newestSample))
+                    {
+                        continue;
+                    }
+                    if (presentTime.Time <= FrameTime.Remap(newestSample, source.FrameRate, presentTime.Rate))
+                    {
+                        continue;
+                    }
+
+                    delay++;
+                    addedDelay = true;
+                    break;
+                }
+
+                if (addedDelay)
+                {
+                    goodSamples = 0;
                 }
                 else
                 {
-                    --frameOffset;
-                    goodSamples = 0;
+                    goodSamples++;
                 }
+
+                yield return delay;
             }
         }
 
         static IEnumerable<CalibrationStatus> CalibrateBufferSizesIterative(
             ITimecodeSource timecodeSource,
-            IReadOnlyCollection<ITimedDataSource> dataSources,
-            FrameTime globalOffset,
+            IEnumerable<ITimedDataSource> dataSources,
+            FrameTime delay,
             int requiredGoodSamples)
         {
-            var frameRate = timecodeSource.FrameRate;
-
             var goodSamples = 0;
+
             while (goodSamples < requiredGoodSamples)
             {
-                var timecode = timecodeSource.Now.AddFrames(frameRate, globalOffset);
-                var fastSources = dataSources
-                    .Where(s => s.PresentAt(timecode, frameRate) == TimedSampleStatus.Ahead)
-                    .ToList();
+                var sourceTime = timecodeSource.CurrentTime;
 
-                if (fastSources.Any())
+                if (sourceTime == null)
+                {
+                    yield break;
+                }
+
+                // add a one frame margin so that buffers are a little larger than strictly required
+                var presentTime = new FrameTimeWithRate(sourceTime.Value.Rate, sourceTime.Value.Time - delay - new FrameTime(1));
+                var waitingToFillBuffers = false;
+                var grewBuffers = false;
+
+                // grow the buffers of sources that don't have an old enough sample buffered
+                foreach (var source in dataSources)
+                {
+                    // Only grow buffers that aren't already at their maximum size.
+                    if (source.BufferSize >= (source.MaxBufferSize ?? int.MaxValue))
+                    {
+                        continue;
+                    }
+
+                    if (!source.TryGetBufferRange(out var oldestTime, out var newestTime))
+                    {
+                        continue;
+                    }
+
+                    // Before checking if an adjusted buffer size is good, we need to wait for the buffer to fill.
+                    var frameDelta = (newestTime - oldestTime).Round().FrameNumber;
+
+                    if (frameDelta < source.BufferSize - 1)
+                    {
+                        waitingToFillBuffers = true;
+                        continue;
+                    }
+
+                    // Only grow buffers without samples older then the present time
+                    if (presentTime.Time >= FrameTime.Remap(oldestTime, source.FrameRate, presentTime.Rate))
+                    {
+                        continue;
+                    }
+
+                    source.BufferSize++;
+                    grewBuffers = true;
+                }
+
+                if (grewBuffers)
                 {
                     goodSamples = 0;
-
-                    foreach (var fastSource in fastSources)
-                    {
-                        var requestedBufferSize = fastSource.BufferSize + 1;
-                        if (requestedBufferSize <= (fastSource.MaxBufferSize ?? int.MaxValue))
-                        {
-                            fastSource.BufferSize = requestedBufferSize;
-                        }
-                        else
-                        {
-                            // Proper calibration not possible
-                            yield return CalibrationStatus.Incomplete;
-                            yield break;
-                        }
-                    }
                 }
-                else
+                else if (!waitingToFillBuffers)
                 {
-                    ++goodSamples;
+                    goodSamples++;
                 }
 
                 yield return CalibrationStatus.InProgress;
             }
+        }
 
-            yield return CalibrationStatus.Complete;
+        static List<ITimedDataSource> GetSortedSourcesWithoutOutliers(ITimecodeSource timecodeSource, IEnumerable<ITimedDataSource> dataSources, FrameTime outlierThreshold)
+        {
+            // get the most recent sample times from all sources and sort them
+            var sourceTimes = new List<(ITimedDataSource source, FrameTime time)>();
+
+            foreach (var source in dataSources)
+            {
+                if (!source.TryGetBufferRange(out _, out var newestTime))
+                {
+                    continue;
+                }
+
+                sourceTimes.Add((source, FrameTime.Remap(newestTime, source.FrameRate, timecodeSource.FrameRate)));
+            }
+
+            if (sourceTimes.Count == 0)
+            {
+                return new List<ITimedDataSource>();
+            }
+
+            var sortedSources = sourceTimes
+                .OrderBy(source => source.time)
+                .ToArray();
+
+            // find the largest cluster of sources by their times, breaking ties by distance from the source timecode
+            var sourceTime = timecodeSource.CurrentTime;
+
+            var largestCluster = new List<ITimedDataSource>();
+            var smallestSourceDelta = default(double?);
+
+            foreach (var source in sortedSources)
+            {
+                var cluster = new List<ITimedDataSource>();
+                var sourceDelta = sourceTime != null ? Math.Abs((double)(sourceTime.Value.Time - source.time)) : 0.0;
+
+                foreach (var otherSource in sortedSources)
+                {
+                    if (Math.Abs((double)(otherSource.time - source.time)) <= (double)outlierThreshold)
+                    {
+                        cluster.Add(otherSource.source);
+                    }
+                }
+
+                if (largestCluster.Count < cluster.Count || (largestCluster.Count == cluster.Count && smallestSourceDelta > sourceDelta))
+                {
+                    largestCluster = cluster;
+                    smallestSourceDelta = sourceDelta;
+                }
+            }
+
+            return largestCluster;
+        }
+
+        static void CalculateInitialBufferSizes(ITimecodeSource timecodeSource, IEnumerable<ITimedDataSource> dataSources, FrameTime delay)
+        {
+            var sourceTime = timecodeSource.CurrentTime;
+
+            if (sourceTime == null)
+            {
+                return;
+            }
+
+            var presentTime = new FrameTimeWithRate(sourceTime.Value.Rate, sourceTime.Value.Time - delay);
+
+            foreach (var source in dataSources)
+            {
+                if (source.TryGetBufferRange(out _, out var newestTime))
+                {
+                    var delta = newestTime - presentTime.Remap(source.FrameRate).Time;
+                    source.BufferSize = Mathf.Clamp(delta.Ceil().FrameNumber, source.MinBufferSize ?? 1, source.MaxBufferSize ?? int.MaxValue);
+                }
+            }
         }
     }
 }

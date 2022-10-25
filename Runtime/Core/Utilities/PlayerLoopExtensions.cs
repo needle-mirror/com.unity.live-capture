@@ -54,7 +54,11 @@ namespace Unity.LiveCapture
                 system.AddSubSystem<TSubSystem>(index, update);
             }
 
-            loop.TryUpdate(system);
+            if (!loop.TryUpdate(system))
+            {
+                return false;
+            }
+
             PlayerLoop.SetPlayerLoop(loop);
             return true;
         }
@@ -72,10 +76,16 @@ namespace Unity.LiveCapture
 
             var loop = PlayerLoop.GetCurrentPlayerLoop();
 
-            if (loop.TryFindSubSystem<TSubSystem>(out var subSystem))
+            if (!loop.TryFindSubSystem<TSubSystem>(out var subSystem))
             {
-                subSystem.updateDelegate -= update;
-                loop.TryUpdate(subSystem);
+                return;
+            }
+
+            subSystem.updateDelegate -= update;
+
+            if (!loop.TryUpdate(subSystem))
+            {
+                return;
             }
 
             PlayerLoop.SetPlayerLoop(loop);
@@ -87,20 +97,32 @@ namespace Unity.LiveCapture
         /// <typeparam name="T">The type of subsystem to find.</typeparam>
         /// <param name="system">The system to search.</param>
         /// <param name="result">The returned subsystem.</param>
-        /// <returns>True if a subsystem with a matching type was found; false otherwise.</returns>
+        /// <returns>True if a subsystem with a matching type was found; otherwise, false.</returns>
         public static bool TryFindSubSystem<T>(this PlayerLoopSystem system, out PlayerLoopSystem result)
         {
-            if (system.type == typeof(T))
+            return system.TryFindSubSystem(typeof(T), out result);
+        }
+
+        /// <summary>
+        /// Recursively finds a subsystem of this system by type.
+        /// </summary>
+        /// <param name="system">The system to search.</param>
+        /// <param name="subsystemType">The type of subsystem to find.</param>
+        /// <param name="result">The returned subsystem.</param>
+        /// <returns>True if a subsystem with a matching type was found; otherwise, false.</returns>
+        public static bool TryFindSubSystem(this PlayerLoopSystem system, Type subsystemType, out PlayerLoopSystem result)
+        {
+            if (system.type == subsystemType)
             {
                 result = system;
                 return true;
             }
 
-            if (system.subSystemList != null)
+            if (subsystemType != null && system.subSystemList != null)
             {
                 foreach (var subSystem in system.subSystemList)
                 {
-                    if (subSystem.TryFindSubSystem<T>(out result))
+                    if (subSystem.TryFindSubSystem(subsystemType, out result))
                     {
                         return true;
                     }
@@ -116,7 +138,7 @@ namespace Unity.LiveCapture
         /// </summary>
         /// <param name="system">The system to update.</param>
         /// <param name="subSystemToUpdate">The modified subsystem.</param>
-        /// <returns>True if the subsystem was successfully updated; false otherwise.</returns>
+        /// <returns>True if the subsystem was successfully updated; otherwise, false.</returns>
         public static bool TryUpdate(this ref PlayerLoopSystem system, PlayerLoopSystem subSystemToUpdate)
         {
             if (system.type == subSystemToUpdate.type)
@@ -184,16 +206,25 @@ namespace Unity.LiveCapture
         /// </summary>
         /// <typeparam name="T">The type of the subsystem to search for.</typeparam>
         /// <param name="system">The system to use for the search.</param>
-        /// <returns>The index of the subsystem if found. Otherwise; -1.</returns>
+        /// <returns>The index of the subsystem if found; otherwise, -1.</returns>
         public static int IndexOf<T>(this ref PlayerLoopSystem system)
         {
-            var type = typeof(T);
+            return system.IndexOf(typeof(T));
+        }
 
-            if (system.subSystemList != null)
+        /// <summary>
+        /// Finds the index of the subsystem in the list of subsystems of the provided system.
+        /// </summary>
+        /// <param name="system">The system to use for the search.</param>
+        /// <param name="subsystemType">The type of the subsystem to search for.</param>
+        /// <returns>The index of the subsystem if found; otherwise, -1.</returns>
+        public static int IndexOf(this ref PlayerLoopSystem system, Type subsystemType)
+        {
+            if (subsystemType != null && system.subSystemList != null)
             {
                 for (var i = 0; i < system.subSystemList.Length; ++i)
                 {
-                    if (type == system.subSystemList[i].type)
+                    if (subsystemType == system.subSystemList[i].type)
                     {
                         return i;
                     }

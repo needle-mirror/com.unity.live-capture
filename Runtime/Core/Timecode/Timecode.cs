@@ -48,32 +48,32 @@ namespace Unity.LiveCapture
         /// <summary>
         /// Was this timecode generated taking into account drop frame calculations.
         /// </summary>
-        public bool IsDropFrame => m_IsDropFrame != 0;
+        public readonly bool IsDropFrame => m_IsDropFrame != 0;
 
         /// <summary>
         /// The number of elapsed hours.
         /// </summary>
-        public int Hours => m_Hours;
+        public readonly int Hours => m_Hours;
 
         /// <summary>
         /// The number of elapsed minutes in the current hour.
         /// </summary>
-        public int Minutes => m_Minutes;
+        public readonly int Minutes => m_Minutes;
 
         /// <summary>
         /// The number of elapsed seconds in the current minute.
         /// </summary>
-        public int Seconds => m_Seconds;
+        public readonly int Seconds => m_Seconds;
 
         /// <summary>
         /// The number of elapsed frames in the current second.
         /// </summary>
-        public int Frames => m_Frames;
+        public readonly int Frames => m_Frames;
 
         /// <summary>
         /// The time within the frame.
         /// </summary>
-        public Subframe Subframe => m_Subframe;
+        public readonly Subframe Subframe => m_Subframe;
 
         /// <summary>
         /// Constructs a new <see cref="Timecode"/> from a given time.
@@ -231,7 +231,7 @@ namespace Unity.LiveCapture
         /// Gets the timecode rounded down to the start of the current frame.
         /// </summary>
         /// <returns>A <see cref="Timecode"/> with no subframe component.</returns>
-        public Timecode Floor()
+        public readonly Timecode Floor()
         {
             return new Timecode
             {
@@ -248,7 +248,7 @@ namespace Unity.LiveCapture
         /// Gets the timecode at the center of the current frame.
         /// </summary>
         /// <returns>A <see cref="Timecode"/> at the middle of the frame interval.</returns>
-        public Timecode Center()
+        public readonly Timecode Center()
         {
             return new Timecode
             {
@@ -269,7 +269,7 @@ namespace Unity.LiveCapture
         /// The time in seconds represented by this timecode, or <see langword="default"/>
         /// if <paramref name="frameRate"/> is invalid.
         /// </returns>
-        public double ToSeconds(FrameRate frameRate)
+        public readonly double ToSeconds(FrameRate frameRate)
         {
             return ToFrameTime(frameRate).ToSeconds(frameRate);
         }
@@ -281,7 +281,7 @@ namespace Unity.LiveCapture
         /// <returns>
         /// The frame time represented by this timecode, or <see langword="default"/> if <paramref name="frameRate"/> is invalid.
         /// </returns>
-        public FrameTime ToFrameTime(FrameRate frameRate)
+        public readonly FrameTime ToFrameTime(FrameRate frameRate)
         {
             if (!frameRate.IsValid)
             {
@@ -320,7 +320,7 @@ namespace Unity.LiveCapture
         /// * Returns zero when this instance is the same as <paramref name="other"/>.
         /// * Returns a positive value when this instance is greater than <paramref name="other"/>.
         /// </returns>
-        public int CompareTo(Timecode other)
+        public readonly int CompareTo(Timecode other)
         {
             if (m_Hours != other.m_Hours)
             {
@@ -350,7 +350,7 @@ namespace Unity.LiveCapture
         /// * Returns zero when this instance is the same as <paramref name="obj"/>.
         /// * Returns a positive value when this instance is greater than <paramref name="obj"/>.
         /// </returns>
-        public int CompareTo(object obj)
+        public readonly int CompareTo(object obj)
         {
             return obj is Timecode other ? CompareTo(other) : -1;
         }
@@ -360,7 +360,7 @@ namespace Unity.LiveCapture
         /// </summary>
         /// <param name="other">A value to compare with this instance.</param>
         /// <returns><see langword="true"/> if <paramref name="other"/> has the same value as this instance; otherwise, <see langword="false"/>.</returns>
-        public bool Equals(Timecode other)
+        public readonly bool Equals(Timecode other)
         {
             return
                 m_Hours == other.m_Hours &&
@@ -376,7 +376,7 @@ namespace Unity.LiveCapture
         /// <param name="obj">An object to compare with this instance.</param>
         /// <returns><see langword="true"/> if <paramref name="obj"/> is an instance of <see cref="Timecode"/> and equals
         /// the value of this instance; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             return obj is Timecode other && Equals(other);
         }
@@ -385,7 +385,7 @@ namespace Unity.LiveCapture
         /// Returns the hash code for this instance.
         /// </summary>
         /// <returns>The hash code for this instance.</returns>
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             unchecked
             {
@@ -402,7 +402,7 @@ namespace Unity.LiveCapture
         /// Returns a string that represents the current instance.
         /// </summary>
         /// <returns>A string that represents the current instance.</returns>
-        public override string ToString()
+        public override readonly string ToString()
         {
             if (s_StringBuilder == null)
             {
@@ -430,23 +430,23 @@ namespace Unity.LiveCapture
         }
 
         /// <summary>
-        /// Determines whether two specified instances of <see cref="Timecode"/> are equal.
+        /// Indicates whether two specified instances of <see cref="Timecode"/> are equal.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
-        /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> represent the same value; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> have the same value; otherwise, <see langword="false"/>.</returns>
         public static bool operator==(Timecode a, Timecode b) => a.Equals(b);
 
         /// <summary>
-        /// Determines whether two specified instances of <see cref="Timecode"/> are not equal.
+        /// Indicates whether two specified instances of <see cref="Timecode"/> are not equal.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
-        /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> do not represent the same value; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> do not have the same value; otherwise, <see langword="false"/>.</returns>
         public static bool operator!=(Timecode a, Timecode b) => !a.Equals(b);
 
         /// <summary>
-        /// Determines whether one specified <see cref="Timecode"/> is later than or the same as another specified <see cref="Timecode"/>.
+        /// Indicates whether one specified <see cref="Timecode"/> is later than or the same as another specified <see cref="Timecode"/>.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
@@ -454,7 +454,7 @@ namespace Unity.LiveCapture
         public static bool operator>=(Timecode a, Timecode b) => a.CompareTo(b) >= 0;
 
         /// <summary>
-        /// Determines whether one specified <see cref="Timecode"/> is earlier than or the same as another specified <see cref="Timecode"/>.
+        /// Indicates whether one specified <see cref="Timecode"/> is earlier than or the same as another specified <see cref="Timecode"/>.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
@@ -462,7 +462,7 @@ namespace Unity.LiveCapture
         public static bool operator<=(Timecode a, Timecode b) => a.CompareTo(b) <= 0;
 
         /// <summary>
-        /// Determines whether one specified <see cref="Timecode"/> is later than another specified <see cref="Timecode"/>.
+        /// Indicates whether one specified <see cref="Timecode"/> is later than another specified <see cref="Timecode"/>.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
@@ -470,7 +470,7 @@ namespace Unity.LiveCapture
         public static bool operator>(Timecode a, Timecode b) => a.CompareTo(b) > 0;
 
         /// <summary>
-        /// Determines whether one specified <see cref="Timecode"/> is earlier than another specified <see cref="Timecode"/>.
+        /// Indicates whether one specified <see cref="Timecode"/> is earlier than another specified <see cref="Timecode"/>.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>

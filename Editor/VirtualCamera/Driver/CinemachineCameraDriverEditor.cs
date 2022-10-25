@@ -29,7 +29,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         void OnEnable()
         {
-            
+
         }
 
         public override void OnInspectorGUI()

@@ -33,6 +33,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// Adds a <see cref="TakeBinding{T}"/> to the Take.
         /// </summary>
+        /// <typeparam name="T">The type of binding created. The track type must be derived from ITakeBinding.</typeparam>
         /// <param name="binding">The binding to add.</param>
         /// <param name="value">The object to bind.</param>
         void AddBinding<T>(TakeBinding<T> binding, T value) where T : UnityEngine.Object;

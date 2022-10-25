@@ -13,7 +13,7 @@ namespace Unity.LiveCapture
             {
                 return false;
             }
-            
+
             var timeline = take.Timeline;
 
             if (timeline == null || timeline.outputTrackCount == 0)

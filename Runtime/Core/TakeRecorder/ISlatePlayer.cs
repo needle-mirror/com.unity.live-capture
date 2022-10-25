@@ -3,18 +3,19 @@ using UnityEngine;
 
 namespace Unity.LiveCapture
 {
-    interface ITakeRecorderContext : IEquatable<ITakeRecorderContext>
+    interface ITakeRecorderContext : IShot, IEquatable<ITakeRecorderContext>
     {
         IExposedPropertyTable GetResolver();
-        ISlate GetSlate();
         double GetTimeOffset();
         void Play();
         bool IsPlaying();
         void Pause();
         double GetTime();
         void SetTime(double value);
-        void Prepare(bool isRecording);
+        void Rebuild();
         double GetDuration();
         bool IsValid();
+        void ClearSceneBindings();
+        void SetSceneBindings();
     }
 }

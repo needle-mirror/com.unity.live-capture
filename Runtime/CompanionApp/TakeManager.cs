@@ -8,11 +8,11 @@ namespace Unity.LiveCapture.CompanionApp
 {
     interface ITakeManager
     {
-        void SelectTake(ISlate slate, SerializableGuid guid);
+        void SelectTake(IShot shot, SerializableGuid guid);
         void SetTakeData(TakeDescriptor descriptor);
         void DeleteTake(SerializableGuid guid);
-        void SetIterationBase(ISlate slate, SerializableGuid guid);
-        void ClearIterationBase(ISlate slate);
+        void SetIterationBase(IShot shot, SerializableGuid guid);
+        void ClearIterationBase(IShot shot);
         Texture2D GetAssetPreview<T>(Guid guid) where T : UnityEngine.Object;
     }
 
@@ -51,17 +51,17 @@ namespace Unity.LiveCapture.CompanionApp
             m_AssetPreview = assetPreview;
         }
 
-        public void SelectTake(ISlate slate, SerializableGuid guid)
+        public void SelectTake(IShot shot, SerializableGuid guid)
         {
-            if (slate == null)
+            if (shot == null)
             {
-                throw new ArgumentNullException(nameof(slate));
+                throw new ArgumentNullException(nameof(shot));
             }
 
 #if UNITY_EDITOR
             var take = AssetDatabaseUtility.LoadAssetWithGuid<Take>(guid);
 
-            slate.Take = take;
+            shot.Take = take;
 #endif
         }
 
@@ -106,11 +106,11 @@ namespace Unity.LiveCapture.CompanionApp
 #endif
         }
 
-        public void SetIterationBase(ISlate slate, SerializableGuid guid)
+        public void SetIterationBase(IShot shot, SerializableGuid guid)
         {
-            if (slate == null)
+            if (shot == null)
             {
-                throw new ArgumentNullException(nameof(slate));
+                throw new ArgumentNullException(nameof(shot));
             }
 
 #if UNITY_EDITOR
@@ -118,19 +118,19 @@ namespace Unity.LiveCapture.CompanionApp
 
             if (take != null)
             {
-                slate.IterationBase = take;
+                shot.IterationBase = take;
             }
 #endif
         }
 
-        public void ClearIterationBase(ISlate slate)
+        public void ClearIterationBase(IShot shot)
         {
-            if (slate == null)
+            if (shot == null)
             {
-                throw new ArgumentNullException(nameof(slate));
+                throw new ArgumentNullException(nameof(shot));
             }
 
-            slate.IterationBase = null;
+            shot.IterationBase = null;
         }
 
         public Texture2D GetAssetPreview<T>(Guid guid) where T : UnityEngine.Object

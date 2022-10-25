@@ -4,9 +4,40 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.0.0-pre.2] - 2022-10-25
+
+### Added
+- Setting a take using code will now prepare the bindings automatically and rebuild the playable graph if needed.
+- Live Capture window layouts that can be chosen in the "Window/Live Capture/Layout" sub-menu.
+- New synchronization API used to match the engine update loop to a synchronization signal.
+- New "Getting Started" window to guide new users of the package.
+- New FrameTimeWithRate struct.
+- New TimecodeSourceState class useful when implementing a custom timecode source.
+- Added a default ITimedDataSource implementation.
+- Added methods to CircularBuffer for inserting into the middle of the buffer.
+- ITimedDataSource now includes an Object reference used for undo support.
+- A Take Organizer window. The window allows you to list, multi-edit, and rename Take assets in the project.
+- TimedDataBuffer can interpolate between samples when retrieving a value when an interpolator is assigned.
+- Genlock source can be assigned from the Live Capture project settings.
+
+### Changed
+- Renamed ISlate to IShot and moved slate data into the Slate struct.
+- APIs now use FrameTime or FrameTimeWithRate instead of Timecode.
+- The Connections window has been redesigned and now uses UI Toolkit.
+- Most methods and properties for timecode related types have been made readonly for increased performance.
+- FaceDevice will interpolate between samples when synchronized if needed.
+- Improved Synchronizer calibration algorithm to yield better results.
+- Synchronizer GlobalTimeOffset has changed to Delay and has an inverted value.
+- Synchronization window shows genlock status.
+
+### Fixed
+- Prevent translation misalignments and rotation jumps when rebasing while the mobile device is facing upwards or downwards.
+- The VirtualCameraDevice foldouts are now hidden when no actor is assigned.
+- The VirtualCameraDevice's "Create and assign a new actor" button was renamed and moved. It is now called the "Create" button.
+
 ## [4.0.0-pre.1] - 2022-08-12
 
-### Fix
+### Fixed
 - Synchronize the Take Recorder's playback button state with the Timeline Window's ones.
 - Make sure audio tracks play sound when Takes from the Take Recorder are playing.
 - Make sure Recorder tracks work properly when Takes from the Take Recorder are playing.
@@ -61,7 +92,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Mocap Core library to provide a foundation for vendor specific mocap packages.
 - New Transform Capture Device component to record transform hierarchies.
 
-### Fix
+### Fixed
 - Prevent an error from occurring when stopping the recording while a Live Capture settings window is open.
 - Read the fractional part of the current second from NTP packets correctly.
 - Prevent NTP Timecode Source from failing to initialize networking.
@@ -86,7 +117,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - The TakeRecorderTrack doesn't require a reference to the TakeRecorder anymore.
 - Disabled video streaming on Apple silicon.
 
-### Fix
+### Fixed
 - Improved performance of take directory loading.
 - Fixed actors not able to move using the transform handles when the TakeRecorder is enabled.
 - Context menu of the TakeRecorderTrack.
@@ -111,7 +142,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Removed
   -  LiveCaptureDevice IsLive/SetLive API.
 
-### Fix
+### Fixed
   - Creating actors in Prefab mode doesn't work.  
   - Bug where the camera actor can be left in an indeterminate state if lens postprocessor is reset.
 

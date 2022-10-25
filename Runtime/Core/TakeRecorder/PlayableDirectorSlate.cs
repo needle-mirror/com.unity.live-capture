@@ -6,7 +6,7 @@ using UnityObject = UnityEngine.Object;
 namespace Unity.LiveCapture
 {
     [Serializable]
-    class PlayableDirectorContext : ITakeRecorderContext, ISlate
+    class PlayableDirectorContext : ITakeRecorderContext
     {
         const string k_DefaultDirectory = "Assets/Takes";
         const string k_DefaultName = "New Shot";
@@ -30,6 +30,24 @@ namespace Unity.LiveCapture
         [SerializeField]
         PlayableDirector m_Director;
 
+        public Slate Slate
+        {
+            get => new Slate()
+            {
+                SceneNumber = m_SceneNumber,
+                ShotName = m_ShotName,
+                TakeNumber = m_TakeNumber,
+                Description = m_Description,
+            };
+            set
+            {
+                m_SceneNumber = value.SceneNumber;
+                m_ShotName = value.ShotName;
+                m_TakeNumber = value.TakeNumber;
+                m_Description = value.Description;
+            }
+        }
+
         public UnityObject UnityObject
         {
             get => m_UnityObject;
@@ -46,30 +64,6 @@ namespace Unity.LiveCapture
         {
             get => m_Directory;
             set => m_Directory = value;
-        }
-
-        public int SceneNumber
-        {
-            get => m_SceneNumber;
-            set => m_SceneNumber = value;
-        }
-
-        public string ShotName
-        {
-            get => m_ShotName;
-            set => m_ShotName = value;
-        }
-
-        public int TakeNumber
-        {
-            get => m_TakeNumber;
-            set => m_TakeNumber = value;
-        }
-
-        public string Description
-        {
-            get => m_Description;
-            set => m_Description = value;
         }
 
         public double GetTimeOffset()
@@ -94,8 +88,6 @@ namespace Unity.LiveCapture
             return m_Director;
         }
 
-        bool IsRecording { get; set; }
-
         void SetTake(Take take, ref Take dst)
         {
             if (take == dst)
@@ -103,24 +95,12 @@ namespace Unity.LiveCapture
                 return;
             }
 
-            if (dst != null)
-            {
-                m_Director.ClearSceneBindings(dst.BindingEntries);
-            }
+            ClearSceneBindings();
 
             dst = take;
 
-            if (dst != null)
-            {
-                m_Director.SetSceneBindings(dst.BindingEntries);
-            }
-
-            Prepare();
-        }
-
-        public ISlate GetSlate()
-        {
-            return this;
+            SetSceneBindings();
+            Rebuild();
         }
 
         public void Play()
@@ -154,26 +134,37 @@ namespace Unity.LiveCapture
             }
         }
 
-        public void Prepare(bool isRecording)
+        public void Rebuild()
         {
-            IsRecording = isRecording;
+            if (!IsCurrentContext())
+            {
+                return;
+            }
 
-            Prepare();
-        }
-
-        void Prepare()
-        {
-            var take = IsRecording ? m_IterationBase : m_Take;
+            var isRecording = TakeRecorder.Main.IsRecording();
+            var take = isRecording ? m_IterationBase : m_Take;
             var timeline = take != null ? take.Timeline : null;
 
             if (m_Director.playableAsset != timeline)
             {
                 m_Director.playableAsset = timeline;
-                m_Director.DeferredEvaluate();
 
                 Timeline.TrySetAsMasterDirector(m_Director);
                 Timeline.Repaint();
             }
+            else
+            {
+                m_Director.RebuildGraph();
+            }
+
+            m_Director.DeferredEvaluate();
+        }
+
+        bool IsCurrentContext()
+        {
+            var takeRecorder = TakeRecorder.Main;
+
+            return takeRecorder != null && takeRecorder.Context == this;
         }
 
         public double GetDuration()
@@ -189,12 +180,38 @@ namespace Unity.LiveCapture
             return m_Director != null && isTimelineAvailable;
         }
 
+        public void ClearSceneBindings()
+        {
+            if (m_Take != null)
+            {
+                m_Director.ClearSceneBindings(m_Take.BindingEntries);
+            }
+
+            if (m_IterationBase != null)
+            {
+                m_Director.ClearSceneBindings(m_IterationBase.BindingEntries);
+            }
+        }
+
+        public void SetSceneBindings()
+        {
+            if (m_Take != null)
+            {
+                m_Director.SetSceneBindings(m_Take.BindingEntries);
+            }
+
+            if (m_IterationBase != null)
+            {
+                m_Director.SetSceneBindings(m_IterationBase.BindingEntries);
+            }
+        }
+
         /// <summary>
         /// Determines whether the <see cref="DefaultContext"/> instances are equal.
         /// </summary>
         /// <param name="other">The other <see cref="DefaultContext"/> to compare with the current object.</param>
-        /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>        
-        
+        /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>
+
         public bool Equals(PlayableDirectorContext other)
         {
             return m_Director == other.m_Director
@@ -212,7 +229,7 @@ namespace Unity.LiveCapture
         /// Determines whether the <see cref="ITakeRecorderContext"/> instances are equal.
         /// </summary>
         /// <param name="context">The other <see cref="ITakeRecorderContext"/> to compare with the current object.</param>
-        /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>        
+        /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>
         public bool Equals(ITakeRecorderContext context)
         {
             return context is PlayableDirectorContext other && Equals(other);

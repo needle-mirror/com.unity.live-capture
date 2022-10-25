@@ -54,7 +54,7 @@ namespace Unity.LiveCapture.TransformCapture
             path = AssetDatabase.GenerateUniqueAssetPath(path);
 
             var fileName = Path.GetFileNameWithoutExtension(path);
-            
+
             path = EditorUtility.SaveFilePanelInProject(title, fileName, extension, string.Empty, directory);
 
             if (!string.IsNullOrEmpty(path))

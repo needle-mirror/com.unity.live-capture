@@ -326,5 +326,73 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             NoseSneerLeft = tempNoseSneerRight;
             NoseSneerRight = tempNoseSneerLeft;
         }
+
+        /// <summary>
+        /// Linearly interpolates between <paramref name="a"/> and <paramref name="b"/> by factor <paramref name="t"/>.
+        /// </summary>
+        /// <remarks><br/>
+        /// * When <paramref name="t"/> is 0 <paramref name="result"/> is set to <paramref name="a"/>.
+        /// * When <paramref name="t"/> is 1 <paramref name="result"/> is set to  <paramref name="b"/>.
+        /// * When <paramref name="t"/> is 0.5 <paramref name="result"/> is set to the midpoint of <paramref name="a"/> and <paramref name="b"/>.
+        /// </remarks>
+        /// <param name="a">The pose to interpolate from.</param>
+        /// <param name="b">To pose to interpolate to.</param>
+        /// <param name="t">The interpolation factor.</param>
+        /// <param name="result">The interpolated pose.</param>
+        public static void LerpUnclamped(in FaceBlendShapePose a, in FaceBlendShapePose b, float t, out FaceBlendShapePose result)
+        {
+            result.BrowDownLeft = Mathf.LerpUnclamped(a.BrowDownLeft, b.BrowDownLeft, t);
+            result.BrowDownRight = Mathf.LerpUnclamped(a.BrowDownRight, b.BrowDownRight, t);
+            result.BrowInnerUp = Mathf.LerpUnclamped(a.BrowInnerUp, b.BrowInnerUp, t);
+            result.BrowOuterUpLeft = Mathf.LerpUnclamped(a.BrowOuterUpLeft, b.BrowOuterUpLeft, t);
+            result.BrowOuterUpRight = Mathf.LerpUnclamped(a.BrowOuterUpRight, b.BrowOuterUpRight, t);
+            result.CheekPuff = Mathf.LerpUnclamped(a.CheekPuff, b.CheekPuff, t);
+            result.CheekSquintLeft = Mathf.LerpUnclamped(a.CheekSquintLeft, b.CheekSquintLeft, t);
+            result.CheekSquintRight = Mathf.LerpUnclamped(a.CheekSquintRight, b.CheekSquintRight, t);
+            result.EyeBlinkLeft = Mathf.LerpUnclamped(a.EyeBlinkLeft, b.EyeBlinkLeft, t);
+            result.EyeBlinkRight = Mathf.LerpUnclamped(a.EyeBlinkRight, b.EyeBlinkRight, t);
+            result.EyeLookDownLeft = Mathf.LerpUnclamped(a.EyeLookDownLeft, b.EyeLookDownLeft, t);
+            result.EyeLookDownRight = Mathf.LerpUnclamped(a.EyeLookDownRight, b.EyeLookDownRight, t);
+            result.EyeLookInLeft = Mathf.LerpUnclamped(a.EyeLookInLeft, b.EyeLookInLeft, t);
+            result.EyeLookInRight = Mathf.LerpUnclamped(a.EyeLookInRight, b.EyeLookInRight, t);
+            result.EyeLookOutLeft = Mathf.LerpUnclamped(a.EyeLookOutLeft, b.EyeLookOutLeft, t);
+            result.EyeLookOutRight = Mathf.LerpUnclamped(a.EyeLookOutRight, b.EyeLookOutRight, t);
+            result.EyeLookUpLeft = Mathf.LerpUnclamped(a.EyeLookUpLeft, b.EyeLookUpLeft, t);
+            result.EyeLookUpRight = Mathf.LerpUnclamped(a.EyeLookUpRight, b.EyeLookUpRight, t);
+            result.EyeSquintLeft = Mathf.LerpUnclamped(a.EyeSquintLeft, b.EyeSquintLeft, t);
+            result.EyeSquintRight = Mathf.LerpUnclamped(a.EyeSquintRight, b.EyeSquintRight, t);
+            result.EyeWideLeft = Mathf.LerpUnclamped(a.EyeWideLeft, b.EyeWideLeft, t);
+            result.EyeWideRight = Mathf.LerpUnclamped(a.EyeWideRight, b.EyeWideRight, t);
+            result.JawForward = Mathf.LerpUnclamped(a.JawForward, b.JawForward, t);
+            result.JawLeft = Mathf.LerpUnclamped(a.JawLeft, b.JawLeft, t);
+            result.JawOpen = Mathf.LerpUnclamped(a.JawOpen, b.JawOpen, t);
+            result.JawRight = Mathf.LerpUnclamped(a.JawRight, b.JawRight, t);
+            result.MouthClose = Mathf.LerpUnclamped(a.MouthClose, b.MouthClose, t);
+            result.MouthDimpleLeft = Mathf.LerpUnclamped(a.MouthDimpleLeft, b.MouthDimpleLeft, t);
+            result.MouthDimpleRight = Mathf.LerpUnclamped(a.MouthDimpleRight, b.MouthDimpleRight, t);
+            result.MouthFrownLeft = Mathf.LerpUnclamped(a.MouthFrownLeft, b.MouthFrownLeft, t);
+            result.MouthFrownRight = Mathf.LerpUnclamped(a.MouthFrownRight, b.MouthFrownRight, t);
+            result.MouthFunnel = Mathf.LerpUnclamped(a.MouthFunnel, b.MouthFunnel, t);
+            result.MouthLeft = Mathf.LerpUnclamped(a.MouthLeft, b.MouthLeft, t);
+            result.MouthLowerDownLeft = Mathf.LerpUnclamped(a.MouthLowerDownLeft, b.MouthLowerDownLeft, t);
+            result.MouthLowerDownRight = Mathf.LerpUnclamped(a.MouthLowerDownRight, b.MouthLowerDownRight, t);
+            result.MouthPressLeft = Mathf.LerpUnclamped(a.MouthPressLeft, b.MouthPressLeft, t);
+            result.MouthPressRight = Mathf.LerpUnclamped(a.MouthPressRight, b.MouthPressRight, t);
+            result.MouthPucker = Mathf.LerpUnclamped(a.MouthPucker, b.MouthPucker, t);
+            result.MouthRight = Mathf.LerpUnclamped(a.MouthRight, b.MouthRight, t);
+            result.MouthRollLower = Mathf.LerpUnclamped(a.MouthRollLower, b.MouthRollLower, t);
+            result.MouthRollUpper = Mathf.LerpUnclamped(a.MouthRollUpper, b.MouthRollUpper, t);
+            result.MouthShrugLower = Mathf.LerpUnclamped(a.MouthShrugLower, b.MouthShrugLower, t);
+            result.MouthShrugUpper = Mathf.LerpUnclamped(a.MouthShrugUpper, b.MouthShrugUpper, t);
+            result.MouthSmileLeft = Mathf.LerpUnclamped(a.MouthSmileLeft, b.MouthSmileLeft, t);
+            result.MouthSmileRight = Mathf.LerpUnclamped(a.MouthSmileRight, b.MouthSmileRight, t);
+            result.MouthStretchLeft = Mathf.LerpUnclamped(a.MouthStretchLeft, b.MouthStretchLeft, t);
+            result.MouthStretchRight = Mathf.LerpUnclamped(a.MouthStretchRight, b.MouthStretchRight, t);
+            result.MouthUpperUpLeft = Mathf.LerpUnclamped(a.MouthUpperUpLeft, b.MouthUpperUpLeft, t);
+            result.MouthUpperUpRight = Mathf.LerpUnclamped(a.MouthUpperUpRight, b.MouthUpperUpRight, t);
+            result.NoseSneerLeft = Mathf.LerpUnclamped(a.NoseSneerLeft, b.NoseSneerLeft, t);
+            result.NoseSneerRight = Mathf.LerpUnclamped(a.NoseSneerRight, b.NoseSneerRight, t);
+            result.TongueOut = Mathf.LerpUnclamped(a.TongueOut, b.TongueOut, t);
+        }
     }
 }

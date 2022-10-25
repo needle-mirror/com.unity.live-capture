@@ -22,11 +22,13 @@ namespace Unity.LiveCapture.Editor
             public static readonly GUIContent WindowTitle = EditorGUIUtility.TrTextContentWithIcon(WindowName, $"{k_IconPath}/LiveCaptureConnectionWindow.png");
             public static readonly Vector2 WindowSize = new Vector2(300f, 100f);
             public static readonly float IndentSize = 16f;
+            public static readonly GUIContent GenlockLabel = EditorGUIUtility.TrTextContent("Genlock Status");
+            public static readonly GUIContent GenlockNameLabel = EditorGUIUtility.TrTextContent("Source Name");
+            public static readonly GUIContent GenlockStatusLabel = EditorGUIUtility.TrTextContent("Sync Status");
+            public static readonly GUIContent GenlockSyncRateLabel = EditorGUIUtility.TrTextContent("Sync Rate", "The pulse rate of the synchronization signal.");
+            public static readonly GUIContent DroppedFramesLabel = EditorGUIUtility.TrTextContent("Dropped Frames", "The number of synchronization signal pulses that have been skipped since activating genlock.");
+            public static readonly GUIContent NoSyncProviderLabel = EditorGUIUtility.TrTextContent("No genlock provider active.");
             public static readonly GUIContent SynchronizerLabel = EditorGUIUtility.TrTextContent("Synchronizers");
-            public static readonly GUIContent TimecodeStatusLabel = EditorGUIUtility.TrTextContent("Timecode Status");
-            public static readonly GUIContent CurrentTimecodeLabel = EditorGUIUtility.TrTextContent("Current Timecode");
-            public static readonly GUIContent FrameRateLabel = EditorGUIUtility.TrTextContent("Frame Rate");
-            public static readonly GUIContent NoTimecodeSourceLabel = EditorGUIUtility.TrTextContent("Assign an active timecode source to the selected synchronizer.");
             public static readonly GUIContent SynchronizerStatusLabel = EditorGUIUtility.TrTextContent("Synchronizer Status");
             public static readonly GUIContent TimedDataSourceDetailsLabel = EditorGUIUtility.TrTextContent(
                 "Open Timed Data Source Details",
@@ -55,11 +57,11 @@ namespace Unity.LiveCapture.Editor
         [SerializeField]
         Vector2 m_Scroll;
         [SerializeField]
-        SynchronizerComponent m_Synchronizer;
-        [SerializeField]
-        bool m_ShowTimecodeStatus = true;
+        bool m_ShowGenlockStatus = true;
         [SerializeField]
         bool m_ShowSynchronizerStatus = true;
+        [SerializeField]
+        SynchronizerComponent m_Synchronizer;
 
         Editor m_Editor;
 
@@ -105,7 +107,7 @@ namespace Unity.LiveCapture.Editor
                 m_Synchronizer = m_SynchronizerList.list[index] as SynchronizerComponent;
             }
 
-            if (m_Synchronizer != null && (m_ShowTimecodeStatus || m_ShowSynchronizerStatus))
+            if (m_Synchronizer != null && m_ShowSynchronizerStatus)
             {
                 EditorApplication.QueuePlayerLoopUpdate();
                 Repaint();
@@ -188,21 +190,6 @@ namespace Unity.LiveCapture.Editor
 
             EditorGUILayout.Space();
 
-            DoSynchronizerSelectionGUI();
-
-            if (m_Synchronizer == null)
-            {
-                return;
-            }
-
-            EditorGUILayout.Space();
-
-            DoTimecodeStatusGUI(m_Synchronizer);
-            DoSynchronizerStatusGUI(m_Synchronizer);
-        }
-
-        void DoSynchronizerSelectionGUI()
-        {
             using (new EditorGUILayout.HorizontalScope())
             {
                 EditorGUILayout.Space(Contents.IndentSize);
@@ -219,13 +206,18 @@ namespace Unity.LiveCapture.Editor
                     }
                 }
             }
+
+            EditorGUILayout.Space();
+
+            DoSynchronizerStatusGUI();
+            DoGenlockStatusGUI();
         }
 
-        void DoTimecodeStatusGUI(SynchronizerComponent synchronizer)
+        void DoGenlockStatusGUI()
         {
-            DoHeaderLayout(ref m_ShowTimecodeStatus, Contents.TimecodeStatusLabel);
+            DoHeaderLayout(ref m_ShowGenlockStatus, Contents.GenlockLabel);
 
-            if (!m_ShowTimecodeStatus)
+            if (!m_ShowGenlockStatus)
             {
                 return;
             }
@@ -238,28 +230,41 @@ namespace Unity.LiveCapture.Editor
 
                 using (new EditorGUILayout.VerticalScope(GUILayout.MaxWidth(float.MaxValue)))
                 {
-                    var source = synchronizer.Synchronizer.TimecodeSource;
+                    var syncProvider = SyncManager.Instance.ActiveSyncProvider;
 
-                    if (source != null)
+                    if (syncProvider != null)
                     {
-                        var timecodeRect = EditorGUILayout.GetControlRect();
-                        timecodeRect = EditorGUI.PrefixLabel(timecodeRect, Contents.CurrentTimecodeLabel);
-                        EditorGUI.LabelField(timecodeRect, synchronizer.Synchronizer.CurrentTimecode.ToString(), EditorStyles.boldLabel);
+                        var nameRect = EditorGUILayout.GetControlRect();
+                        nameRect = EditorGUI.PrefixLabel(nameRect, Contents.GenlockNameLabel);
+                        EditorGUI.LabelField(nameRect, syncProvider.Name);
 
-                        var frameRateRect = EditorGUILayout.GetControlRect();
-                        frameRateRect = EditorGUI.PrefixLabel(frameRateRect, Contents.FrameRateLabel);
-                        EditorGUI.LabelField(frameRateRect, synchronizer.Synchronizer.FrameRate.ToString());
+                        var statusRect = EditorGUILayout.GetControlRect();
+                        statusRect = EditorGUI.PrefixLabel(statusRect, Contents.GenlockStatusLabel);
+                        EditorGUI.LabelField(statusRect, syncProvider.Status.ToString());
+
+                        var syncRateRect = EditorGUILayout.GetControlRect();
+                        syncRateRect = EditorGUI.PrefixLabel(syncRateRect, Contents.GenlockSyncRateLabel);
+                        EditorGUI.LabelField(syncRateRect, syncProvider.SyncRate.ToString());
+
+                        var droppedFramesRect = EditorGUILayout.GetControlRect();
+                        droppedFramesRect = EditorGUI.PrefixLabel(droppedFramesRect, Contents.DroppedFramesLabel);
+                        EditorGUI.LabelField(droppedFramesRect, syncProvider.DroppedFrameCount.ToString());
                     }
                     else
                     {
-                        EditorGUILayout.HelpBox(Contents.NoTimecodeSourceLabel.text, MessageType.Warning);
+                        EditorGUILayout.HelpBox(Contents.NoSyncProviderLabel.text, MessageType.Info);
                     }
                 }
             }
         }
 
-        void DoSynchronizerStatusGUI(SynchronizerComponent synchronizer)
+        void DoSynchronizerStatusGUI()
         {
+            if (m_Synchronizer == null)
+            {
+                return;
+            }
+
             DoHeaderLayout(ref m_ShowSynchronizerStatus, Contents.SynchronizerStatusLabel);
 
             if (!m_ShowSynchronizerStatus)
@@ -275,11 +280,18 @@ namespace Unity.LiveCapture.Editor
 
                 using (new EditorGUILayout.VerticalScope(GUILayout.MaxWidth(float.MaxValue)))
                 {
-                    Editor.CreateCachedEditor(synchronizer, null, ref m_Editor);
+                    Editor.CreateCachedEditor(m_Synchronizer, null, ref m_Editor);
 
                     if (m_Editor is SynchronizerEditor synchronizerEditor)
                     {
-                        synchronizerEditor.DoSyncGUI();
+                        synchronizerEditor.DoTimecodeSourceGUI();
+                        synchronizerEditor.DoDelayGUI();
+                        synchronizerEditor.DoPresentTimecodeGUI();
+
+                        EditorGUILayout.Space();
+
+                        synchronizerEditor.DoSourcesGUI();
+                        synchronizerEditor.DoCalibrationGUI();
                     }
                 }
             }

@@ -30,9 +30,9 @@ namespace Unity.LiveCapture
         public static event Action<Connection> ConnectionRemoved;
 
         /// <summary>
-        /// An event invoked when any <see cref="Connection"/> has been modified.
+        /// An event invoked when a <see cref="Connection"/> has been modified.
         /// </summary>
-        internal static event Action ConnectionChanged;
+        internal static event Action<Connection> ConnectionChanged;
 
         static ConnectionManager s_Instance;
         static bool s_Loading;
@@ -184,7 +184,7 @@ namespace Unity.LiveCapture
             {
                 m_Connections.Add(connection);
                 ConnectionAdded?.Invoke(connection);
-                OnConnectionChanged();
+                OnConnectionChanged(connection);
 
                 Save();
             }
@@ -199,7 +199,7 @@ namespace Unity.LiveCapture
             if (connection != null && m_Connections.Remove(connection))
             {
                 ConnectionRemoved?.Invoke(connection);
-                OnConnectionChanged();
+                OnConnectionChanged(connection);
 
                 Save();
             }
@@ -239,9 +239,9 @@ namespace Unity.LiveCapture
         /// <summary>
         /// Called to invoke the <see cref="ConnectionChanged"/> event.
         /// </summary>
-        internal void OnConnectionChanged()
+        internal void OnConnectionChanged(Connection connection)
         {
-            ConnectionChanged?.Invoke();
+            ConnectionChanged?.Invoke(connection);
         }
 
         static void CreateAndLoad()
@@ -273,9 +273,8 @@ namespace Unity.LiveCapture
             foreach (var connection in s_Instance.m_Connections)
             {
                 ConnectionAdded?.Invoke(connection);
+                OnConnectionChanged(connection);
             }
-
-            OnConnectionChanged();
         }
 
 #if UNITY_EDITOR

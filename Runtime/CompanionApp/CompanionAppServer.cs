@@ -16,7 +16,7 @@ namespace Unity.LiveCapture.CompanionApp
     /// The server used to communicate with the companion apps.
     /// </summary>
     [CreateConnectionMenuItem("Companion App Server")]
-    class CompanionAppServer : Connection
+    public class CompanionAppServer : Connection
     {
         const int k_DefaultPort = 9000;
 
@@ -102,7 +102,7 @@ namespace Unity.LiveCapture.CompanionApp
 #if UNITY_EDITOR
 #pragma warning disable 414
         [SerializeField, HideInInspector]
-        bool m_InterfacesExpanded = false;
+        bool m_InterfacesExpanded = true;
         [SerializeField, HideInInspector]
         bool m_ClientsExpanded = true;
 #pragma warning restore 414
@@ -155,7 +155,27 @@ namespace Unity.LiveCapture.CompanionApp
         /// <summary>
         /// Are clients able to connect to the server.
         /// </summary>
-        public bool IsRunning => m_Server.IsRunning;
+        /// <returns>True if the server is enabled.</returns>
+        public override bool IsEnabled()
+        {
+            return m_Server.IsRunning;
+        }
+
+        /// <summary>
+        /// Starts/stops the server.
+        /// </summary>
+        /// <param name="enabled">The new state of the server.</param>
+        public override void SetEnabled(bool enabled)
+        {
+            if (enabled)
+            {
+                StartServer();
+            }
+            else
+            {
+                StopServer();
+            }
+        }
 
         /// <summary>
         /// The number of clients currently connected to the server.

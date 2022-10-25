@@ -6,8 +6,8 @@ using UnityEditor.Timeline;
 
 namespace Unity.LiveCapture.Editor
 {
-    [CustomTimelineEditor(typeof(SlatePlayableAsset))]
-    class SlatePlayableAssetClipEditor : ClipEditor
+    [CustomTimelineEditor(typeof(ShotPlayableAsset))]
+    class ShotPlayableAssetClipEditor : ClipEditor
     {
         static readonly Color s_LockedColor = new Color(0.23f, 0.33f, 0.43f, 1f);
         static readonly Color s_MarkerColor = new Color(1f, 0.65f,0f, 1f);
@@ -17,8 +17,8 @@ namespace Unity.LiveCapture.Editor
         public override ClipDrawOptions GetClipOptions(TimelineClip clip)
         {
             var options = base.GetClipOptions(clip);
-            var slateAsset = clip.asset as SlatePlayableAsset;
-            var take = slateAsset.Take;
+            var shotAsset = clip.asset as ShotPlayableAsset;
+            var take = shotAsset.Take;
             var director = TimelineEditor.inspectedDirector;
 
             if (take != null
@@ -39,8 +39,8 @@ namespace Unity.LiveCapture.Editor
 
         void DoTakeContentMarkers(TimelineClip clip, ClipBackgroundRegion region)
         {
-            var slateAsset = clip.asset as SlatePlayableAsset;
-            var take = slateAsset.Take;
+            var shotAsset = clip.asset as ShotPlayableAsset;
+            var take = shotAsset.Take;
 
             if (take.TryGetContentRange(out var start, out var end))
             {
@@ -87,7 +87,7 @@ namespace Unity.LiveCapture.Editor
             }
 
             var lockedContext = takeRecorder.IsLocked()
-                ? takeRecorder.GetContext() as PlayableAssetContext
+                ? takeRecorder.Context as PlayableAssetContext
                 : default(PlayableAssetContext);
             var recordingContext = takeRecorder.RecordContext as PlayableAssetContext;
             var playbackContext = takeRecorder.PlaybackContext as PlayableAssetContext;
@@ -124,17 +124,21 @@ namespace Unity.LiveCapture.Editor
 
         public override void OnCreate(TimelineClip clip, TrackAsset track, TimelineClip clonedFrom)
         {
-            var slateAsset = clip.asset as SlatePlayableAsset;
-            var take = slateAsset.Take;
+            var shotAsset = clip.asset as ShotPlayableAsset;
+            var take = shotAsset.Take;
 
             if (take != null)
             {
                 var assetPath = AssetDatabase.GetAssetPath(take);
 
-                slateAsset.Directory = Path.GetDirectoryName(assetPath);
-                slateAsset.SceneNumber = take.SceneNumber;
-                slateAsset.ShotName = take.ShotName;
-                slateAsset.TakeNumber = take.TakeNumber + 1;
+                shotAsset.Directory = Path.GetDirectoryName(assetPath);
+                shotAsset.Slate = new Slate()
+                {
+                    SceneNumber = take.SceneNumber,
+                    ShotName = take.ShotName,
+                    TakeNumber = take.TakeNumber + 1,
+                    Description = string.Empty
+                };
 
                 clip.displayName = take.ShotName;
 
@@ -154,20 +158,20 @@ namespace Unity.LiveCapture.Editor
                     // {
                     //     Debug.LogException(e);
                     // }
-                    // 
+                    //
                     // reset the duration as the newly assigned values may have changed the default
                     // if (playableAsset != null)
                     // {
                     //     var candidateDuration = playableAsset.duration;
-                    // 
+                    //
                     //     if (!double.IsInfinity(candidateDuration) && candidateDuration > 0)
                     //         newClip.duration = Math.Min(Math.Max(candidateDuration, TimelineClip.kMinDuration), TimelineClip.kMaxTimeValue);
                     // }
 
-                    slateAsset.SetDurationOverride(float.PositiveInfinity);
+                    shotAsset.SetDurationOverride(float.PositiveInfinity);
                     EditorApplication.delayCall += () =>
                     {
-                        slateAsset.SetDurationOverride(null);
+                        shotAsset.SetDurationOverride(null);
                     };
                 }
             }

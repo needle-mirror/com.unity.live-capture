@@ -92,29 +92,47 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public ISlate GetActiveSlate()
+        public IShot Shot => Context;
+
+        internal ITakeRecorderContext Context
         {
-            if (TryGetContext(out var context))
+            get
             {
-                return context.GetSlate();
+                TryGetContext(out var context);
+                return context;
             }
-
-            return null;
-        }
-
-        /// <inheritdoc/>
-        void ITakeRecorderInternal.SetPreviewTime(ISlate slate, double time)
-        {
-            
         }
 
         /// <inheritdoc/>
         bool ITakeRecorderInternal.IsEnabled => isActiveAndEnabled;
 
         /// <inheritdoc/>
-        void ITakeRecorderInternal.Prepare()
+        void ITakeRecorderInternal.SetPreviewTime(UnityObject obj, double time)
         {
-            Prepare();
+            if (TryFindContext(obj, out var context))
+            {
+                context.SetTime(time);
+            }
+        }
+
+        bool TryFindContext(UnityObject obj, out ITakeRecorderContext context)
+        {
+            context = null;
+
+            foreach (var contextProvider in m_ContextProviders)
+            {
+                foreach (var ctx in contextProvider.Contexts)
+                {
+                    if (ctx.UnityObject == obj)
+                    {
+                        context = ctx;
+
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         void OnEnable()
@@ -250,7 +268,7 @@ namespace Unity.LiveCapture
                 m_RecordTimer = StartTimer();
 
                 TakeScreenshot();
-                Prepare();
+                RebuildContext();
                 PlayPreview();
 
                 m_RecordingStartTime = DateTime.Now.TimeOfDay.TotalSeconds;
@@ -301,7 +319,7 @@ namespace Unity.LiveCapture
                     m_RecordContext.Pause();
 
                     ProduceTake(m_RecordContext);
-                    Prepare();
+                    RebuildContext();
                 }
 
                 m_RecordContext = null;
@@ -367,8 +385,7 @@ namespace Unity.LiveCapture
 
                 if (m_PlayTakeContent)
                 {
-                    var slate = context.GetSlate();
-                    var take = slate.Take;
+                    var take = context.Take;
 
                     if (take != null && take.TryGetContentRange(out var start, out var end))
                     {
@@ -426,12 +443,12 @@ namespace Unity.LiveCapture
             }
         }
 
-        void Prepare()
+        void RebuildContext()
         {
             if (TryGetContext(out var context))
             {
                 context.Pause();
-                context.Prepare(IsRecording());
+                context.Rebuild();
             }
         }
 
@@ -448,10 +465,9 @@ namespace Unity.LiveCapture
             var contextDuration = context.GetDuration();
             var recordingStartTime = m_PlaybackState.InitialOffset;
             var recordingDuration = m_RecordTimer.GetTime();
-            var slate = context.GetSlate();
+            var slate = context.Slate;
             var resolver = context.GetResolver();
 
-            Debug.Assert(slate != null);
             Debug.Assert(resolver != null);
 
             using var takeBuilder = new TakeBuilder(
@@ -463,9 +479,9 @@ namespace Unity.LiveCapture
                 slate.ShotName,
                 slate.TakeNumber,
                 slate.Description,
-                slate.Directory,
+                context.Directory,
                 DateTime.Now,
-                slate.IterationBase,
+                context.IterationBase,
                 FrameRate,
                 m_Screenshot,
                 resolver);
@@ -481,19 +497,15 @@ namespace Unity.LiveCapture
                 takeBuilder.Take.Duration = timeline.duration;
             }
 
+            slate.TakeNumber++;
+
+            context.Take = takeBuilder.Take;
+            context.Slate = slate;
+
             var director = resolver as PlayableDirector;
 
-            if (director != null)
-                slate.ClearSceneBindings(director);
-
-            slate.TakeNumber++;
-            slate.Take = takeBuilder.Take;
-
-            if (director != null)
-                slate.SetSceneBindings(director);
-
             SetDirty(director);
-            SetDirty(slate.UnityObject);
+            SetDirty(context.UnityObject);
         }
 
         void SetDirty(UnityObject obj)
@@ -618,16 +630,6 @@ namespace Unity.LiveCapture
         internal bool HasExternalContextProvider()
         {
             return m_ContextProviders.Count > 0;
-        }
-
-        internal ITakeRecorderContext GetContext()
-        {
-            if (TryGetContext(out var context))
-            {
-                return context;
-            }
-
-            return null;
         }
 
         internal void LockContext()

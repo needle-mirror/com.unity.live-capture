@@ -38,7 +38,7 @@ namespace Unity.LiveCapture
         /// <remarks>
         /// This value is in the range [0, <see name="resolution"/> - 1].
         /// </remarks>
-        public int Value => Mathf.Clamp(m_Subframe, 0, Resolution - 1);
+        public readonly int Value => Mathf.Clamp(m_Subframe, 0, Resolution - 1);
 
         /// <summary>
         /// The number of possible subframe values in the frame.
@@ -46,7 +46,7 @@ namespace Unity.LiveCapture
         /// <remarks>
         /// This value is in the range [1, <see cref="MaxResolution"/>]
         /// </remarks>
-        public int Resolution => Mathf.Clamp(m_Resolution, 1, MaxResolution);
+        public readonly int Resolution => Mathf.Clamp(m_Resolution, 1, MaxResolution);
 
         /// <summary>
         /// Creates a new <see cref="Subframe"/> instance.
@@ -96,7 +96,7 @@ namespace Unity.LiveCapture
         /// Gets the subframe value as a <see cref="float"/>.
         /// </summary>
         /// <returns>The subframe value in the range [0, 1].</returns>
-        public float AsFloat()
+        public readonly float AsFloat()
         {
             return (float)Value / Resolution;
         }
@@ -105,7 +105,7 @@ namespace Unity.LiveCapture
         /// Gets the subframe value as a <see cref="double"/>.
         /// </summary>
         /// <returns>The subframe value in the range [0, 1].</returns>
-        public double AsDouble()
+        public readonly double AsDouble()
         {
             return (double)Value / Resolution;
         }
@@ -119,9 +119,9 @@ namespace Unity.LiveCapture
         /// * Returns zero when this instance is the same as <paramref name="other"/>.
         /// * Returns a positive value when this instance is greater than <paramref name="other"/>.
         /// </returns>
-        public int CompareTo(Subframe other)
+        public readonly int CompareTo(Subframe other)
         {
-            GetComparableValues(ref this, ref other, out var a, out var b);
+            GetComparableValues(in this, in other, out var a, out var b);
             return a.CompareTo(b);
         }
 
@@ -134,7 +134,7 @@ namespace Unity.LiveCapture
         /// * Returns zero when this instance is the same as <paramref name="obj"/>.
         /// * Returns a positive value when this instance is greater than <paramref name="obj"/>.
         /// </returns>
-        public int CompareTo(object obj)
+        public readonly int CompareTo(object obj)
         {
             return obj is Subframe other ? CompareTo(other) : -1;
         }
@@ -144,9 +144,9 @@ namespace Unity.LiveCapture
         /// </summary>
         /// <param name="other">A value to compare with this instance.</param>
         /// <returns><see langword="true"/> if <paramref name="other"/> has the same value as this instance; otherwise, <see langword="false"/>.</returns>
-        public bool Equals(Subframe other)
+        public readonly bool Equals(Subframe other)
         {
-            GetComparableValues(ref this, ref other, out var a, out var b);
+            GetComparableValues(in this, in other, out var a, out var b);
             return a == b;
         }
 
@@ -156,7 +156,7 @@ namespace Unity.LiveCapture
         /// <param name="obj">An object to compare with this instance.</param>
         /// <returns><see langword="true"/> if <paramref name="obj"/> is an instance of <see cref="Subframe"/> and equals
         /// the value of this instance; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             return obj is Subframe other && Equals(other);
         }
@@ -165,7 +165,7 @@ namespace Unity.LiveCapture
         /// Returns the hash code for this instance.
         /// </summary>
         /// <returns>The hash code for this instance.</returns>
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             unchecked
             {
@@ -179,29 +179,29 @@ namespace Unity.LiveCapture
         /// Returns a string that represents the current instance.
         /// </summary>
         /// <returns>A string that represents the current instance.</returns>
-        public override string ToString()
+        public override readonly string ToString()
         {
             return AsFloat().ToString();
         }
 
         /// <summary>
-        /// Determines whether two specified instances of <see cref="Subframe"/> are equal.
+        /// Indicates whether two specified instances of <see cref="Subframe"/> are equal.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
-        /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> represent the same value; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> have the same value; otherwise, <see langword="false"/>.</returns>
         public static bool operator==(Subframe a, Subframe b) => a.Equals(b);
 
         /// <summary>
-        /// Determines whether two specified instances of <see cref="Subframe"/> are not equal.
+        /// Indicates whether two specified instances of <see cref="Subframe"/> are not equal.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
-        /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> do not represent the same value; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> do not have the same value; otherwise, <see langword="false"/>.</returns>
         public static bool operator!=(Subframe a, Subframe b) => !a.Equals(b);
 
         /// <summary>
-        /// Determines whether one specified <see cref="Subframe"/> is later than or the same as another specified <see cref="Subframe"/>.
+        /// Indicates whether one specified <see cref="Subframe"/> is later than or the same as another specified <see cref="Subframe"/>.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
@@ -209,7 +209,7 @@ namespace Unity.LiveCapture
         public static bool operator>=(Subframe a, Subframe b) => a.CompareTo(b) >= 0;
 
         /// <summary>
-        /// Determines whether one specified <see cref="Subframe"/> is earlier than or the same as another specified <see cref="Subframe"/>.
+        /// Indicates whether one specified <see cref="Subframe"/> is earlier than or the same as another specified <see cref="Subframe"/>.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
@@ -217,7 +217,7 @@ namespace Unity.LiveCapture
         public static bool operator<=(Subframe a, Subframe b) => a.CompareTo(b) <= 0;
 
         /// <summary>
-        /// Determines whether one specified <see cref="Subframe"/> is later than another specified <see cref="Subframe"/>.
+        /// Indicates whether one specified <see cref="Subframe"/> is later than another specified <see cref="Subframe"/>.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
@@ -225,7 +225,7 @@ namespace Unity.LiveCapture
         public static bool operator>(Subframe a, Subframe b) => a.CompareTo(b) > 0;
 
         /// <summary>
-        /// Determines whether one specified <see cref="Subframe"/> is earlier than another specified <see cref="Subframe"/>.
+        /// Indicates whether one specified <see cref="Subframe"/> is earlier than another specified <see cref="Subframe"/>.
         /// </summary>
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
@@ -252,7 +252,7 @@ namespace Unity.LiveCapture
             return subframe.AsDouble();
         }
 
-        static void GetComparableValues(ref Subframe s0, ref Subframe s1, out uint v0, out uint v1)
+        static void GetComparableValues(in Subframe s0, in Subframe s1, out uint v0, out uint v1)
         {
             // For comparisons we use the exact value of the subframe without using floating point math using the classic change of base
             // formula. Care must by taken to ensure that the multiplied values cannot overflow by casting to a type big enough to contain

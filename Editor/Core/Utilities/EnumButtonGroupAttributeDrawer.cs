@@ -25,12 +25,20 @@ namespace Unity.LiveCapture.Editor
 
             float SingleLineHeight { get; }
             float StandardVerticalSpacing { get; }
-            float CurrentViewWidth { get; }
+            float PropertyWidth { get; }
             float LabelWidth { get; }
         }
 
         class DefaultGUI : IGui
         {
+            public static DefaultGUI Instance { get; } = new DefaultGUI();
+
+            float m_Width;
+            public float SingleLineHeight => EditorGUIUtility.singleLineHeight;
+            public float StandardVerticalSpacing => EditorGUIUtility.standardVerticalSpacing;
+            public float PropertyWidth => m_Width;
+            public float LabelWidth => EditorGUIUtility.labelWidth;
+
             public bool Toggle(Rect position, bool value, GUIContent content)
             {
                 return GUI.Toggle(position, value, content, EditorStyles.miniButton);
@@ -56,10 +64,13 @@ namespace Unity.LiveCapture.Editor
                 EditorGUI.EndProperty();
             }
 
-            public float SingleLineHeight => EditorGUIUtility.singleLineHeight;
-            public float StandardVerticalSpacing => EditorGUIUtility.standardVerticalSpacing;
-            public float CurrentViewWidth => EditorGUIUtility.currentViewWidth;
-            public float LabelWidth => EditorGUIUtility.labelWidth;
+            public void Update(Rect position)
+            {
+                if (Event.current.type == EventType.Repaint)
+                {
+                    m_Width = position.width;
+                }
+            }
         }
 
         protected struct EnumValue
@@ -173,15 +184,8 @@ namespace Unity.LiveCapture.Editor
         // We reuse the same GUIContent to avoid allocations.
         static readonly GUIContent k_TmpGUIContent = new GUIContent();
 
-        static readonly IGui k_Gui = new DefaultGUI();
-
-        IGui m_Gui = k_Gui;
-
         // Meant to allow tests to override the GUI API.
-        internal IGui Gui
-        {
-            set => m_Gui = value;
-        }
+        internal IGui Gui { get; set; } = DefaultGUI.Instance;
 
         // Returns the list of enum values visible in the UI.
         // We filter out hidden entries such as *None* or *All*.
@@ -228,14 +232,14 @@ namespace Unity.LiveCapture.Editor
         {
             var enumValues = GetDisplayedEnumValues(property);
             UpdateLayout(enumValues.Count, out _, out _, out var rows);
-            return rows * m_Gui.SingleLineHeight + (rows - 1) * m_Gui.StandardVerticalSpacing;
+            return rows * Gui.SingleLineHeight + (rows - 1) * Gui.StandardVerticalSpacing;
         }
 
         // Update layout values describing the grid of displayed enum values.
         void UpdateLayout(int entryCount, out float rowWidth, out int columns, out int rows)
         {
-            var segmentWidth = m_Gui.GetSegmentWidth(this);
-            rowWidth = Mathf.Max(0, m_Gui.CurrentViewWidth - m_Gui.LabelWidth - 40);
+            var segmentWidth = Gui.GetSegmentWidth(this);
+            rowWidth = Mathf.Max(0, Gui.PropertyWidth - Gui.LabelWidth - 2f);
             columns = Mathf.Max(1, Mathf.FloorToInt(rowWidth / segmentWidth));
             rows = Mathf.CeilToInt((float)entryCount / columns);
         }
@@ -290,10 +294,15 @@ namespace Unity.LiveCapture.Editor
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
+            if (Gui == DefaultGUI.Instance)
+            {
+                DefaultGUI.Instance.Update(position);
+            }
+
             var hasDescriptions = TryGetDescriptions(fieldInfo, out var descriptions);
 
-            label = m_Gui.BeginProperty(position, label, property);
-            m_Gui.LabelField(new Rect(position.x, position.y, EditorGUIUtility.labelWidth, position.height), label);
+            label = Gui.BeginProperty(position, label, property);
+            Gui.LabelField(new Rect(position.x, position.y, EditorGUIUtility.labelWidth, position.height), label);
 
             var enumValues = GetDisplayedEnumValues(property);
 
@@ -320,12 +329,12 @@ namespace Unity.LiveCapture.Editor
                     k_TmpGUIContent.tooltip = null;
                 }
 
-                entry.NewSelected = m_Gui.Toggle(entryRect, entry.Selected, k_TmpGUIContent);
+                entry.NewSelected = Gui.Toggle(entryRect, entry.Selected, k_TmpGUIContent);
                 enumValues[i] = entry;
             }
 
             UpdatePropertyValue(property, enumValues);
-            m_Gui.EndProperty();
+            Gui.EndProperty();
         }
 
         // Returns the local rect to draw an enum value.
@@ -333,9 +342,9 @@ namespace Unity.LiveCapture.Editor
         {
             // Hardcoded 3px to fix right padding.
             return new Rect(
-                m_Gui.LabelWidth + 3 + segmentWidth * column,
-                row * (m_Gui.SingleLineHeight + m_Gui.StandardVerticalSpacing),
-                segmentWidth, m_Gui.SingleLineHeight);
+                Gui.LabelWidth + 3 + segmentWidth * column,
+                row * (Gui.SingleLineHeight + Gui.StandardVerticalSpacing),
+                segmentWidth, Gui.SingleLineHeight);
         }
     }
 }

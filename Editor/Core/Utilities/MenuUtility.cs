@@ -3,20 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Unity.LiveCapture.Editor
 {
     static class MenuUtility
     {
-        public static GenericMenu CreateMenu<TMember, TAttribute>(
+        public static void CreateMenu<TMember, TAttribute>(
             IEnumerable<(TMember, TAttribute[])> attributes,
-            Func<TMember, bool> isEnabled,
-            Action<TMember, TAttribute> menuFunction
+            Action<TMember, TAttribute> addItem,
+            Action<string> addSeparator
         )
             where TAttribute : MenuPathAttribute
         {
-            var menu = new GenericMenu();
-
             var subMenuMinPriorities = new Dictionary<string, int>();
             var subMenuMaxPriorities = new Dictionary<string, int>();
 
@@ -38,7 +37,7 @@ namespace Unity.LiveCapture.Editor
                         {
                             var sharedCharCount = subMenu.Zip(preceding.Key, (c1, c2) => c1 == c2).TakeWhile(b => b).Count();
                             var sharedPath = subMenu.Substring(0, sharedCharCount) + "/";
-                            menu.AddSeparator(sharedPath);
+                            addSeparator(sharedPath);
                         }
                     }
 
@@ -47,14 +46,28 @@ namespace Unity.LiveCapture.Editor
                 else if (attribute.Priority - subMenuMaxPriorities[subMenu] > 10)
                 {
                     // separate items in the same submenu
-                    menu.AddSeparator(subMenu == string.Empty ? string.Empty : subMenu + "/");
+                    addSeparator(subMenu == string.Empty ? string.Empty : subMenu + "/");
                 }
 
                 subMenuMaxPriorities[subMenu] = attribute.Priority;
 
                 // add the item that creates the device
-                var item = new GUIContent(attribute.ItemName);
+                addItem(member, attribute);
+            }
+        }
 
+        public static GenericMenu CreateMenu<TMember, TAttribute>(
+            IEnumerable<(TMember, TAttribute[])> attributes,
+            Func<TMember, bool> isEnabled,
+            Action<TMember, TAttribute> menuFunction
+        )
+            where TAttribute : MenuPathAttribute
+        {
+            var menu = new GenericMenu();
+
+            Action<TMember, TAttribute> addMenuItem = (member, attribute) =>
+            {
+                var item = new GUIContent(attribute.ItemName);
                 if (isEnabled(member))
                 {
                     menu.AddItem(item, false, () =>
@@ -66,9 +79,31 @@ namespace Unity.LiveCapture.Editor
                 {
                     menu.AddDisabledItem(item);
                 }
-            }
+            };
+
+            CreateMenu(attributes, addMenuItem, menu.AddSeparator);
 
             return menu;
+        }
+
+        public static void SetupMenu<TMember, TAttribute>(
+            DropdownMenu menu,
+            IEnumerable<(TMember, TAttribute[])> attributes,
+            Func<TMember, bool> isEnabled,
+            Action<TMember, TAttribute> menuFunction
+        )
+            where TAttribute : MenuPathAttribute
+        {
+            Action<TMember, TAttribute> addMenuItem = (member, attribute) =>
+            {
+                menu.AppendAction(
+                    attribute.ItemName,
+                    action => menuFunction?.Invoke(member, attribute),
+                    action => isEnabled(member) ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled
+                );
+            };
+
+            CreateMenu(attributes, addMenuItem, menu.AppendSeparator);
         }
     }
 }

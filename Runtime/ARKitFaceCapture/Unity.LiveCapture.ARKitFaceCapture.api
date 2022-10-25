@@ -3,7 +3,7 @@
 // make sure the XML doc file is present and located next to the scraped dll
 namespace Unity.LiveCapture.ARKitFaceCapture
 {
-    [UnityEngine.AddComponentMenu(@"Live Capture/ARKit Face Capture/ARKit Face Actor")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-component-arkit-face-actor.html")] [UnityEngine.RequireComponent(typeof(UnityEngine.Animator))] public sealed class FaceActor : UnityEngine.MonoBehaviour, Unity.LiveCapture.IPreviewable
+    [UnityEngine.AddComponentMenu(@"Live Capture/ARKit Face Capture/ARKit Face Actor")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@4.0/manual/ref-component-arkit-face-actor.html")] [UnityEngine.RequireComponent(typeof(UnityEngine.Animator))] public sealed class FaceActor : UnityEngine.MonoBehaviour, Unity.LiveCapture.IPreviewable
     {
         public UnityEngine.Animator Animator { get; }
         public Unity.LiveCapture.ARKitFaceCapture.FaceMapper Mapper { get; }
@@ -131,20 +131,14 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         public static Unity.LiveCapture.ARKitFaceCapture.FaceBlendShape[] Shapes { get; }
         public void FlipHorizontally();
         public float GetValue(Unity.LiveCapture.ARKitFaceCapture.FaceBlendShape location);
+        public static void LerpUnclamped(ref Unity.LiveCapture.ARKitFaceCapture.FaceBlendShapePose a, ref Unity.LiveCapture.ARKitFaceCapture.FaceBlendShapePose b, float t, out Unity.LiveCapture.ARKitFaceCapture.FaceBlendShapePose result);
         public void SetValue(Unity.LiveCapture.ARKitFaceCapture.FaceBlendShape location, float value);
     }
 
-    [Unity.LiveCapture.CreateDeviceMenuItem(@"ARKit Face Device", 0)] [UnityEngine.AddComponentMenu(@"Live Capture/ARKit Face Capture/ARKit Face Device")] [UnityEngine.ExcludeFromPreset] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-component-arkit-face-device.html")] public class FaceDevice : Unity.LiveCapture.CompanionApp.CompanionAppDevice<Unity.LiveCapture.ARKitFaceCapture.IFaceClient>, Unity.LiveCapture.IRegistrable, Unity.LiveCapture.ITimedDataSource
+    [Unity.LiveCapture.CreateDeviceMenuItem(@"ARKit Face Device", 0)] [UnityEngine.AddComponentMenu(@"Live Capture/ARKit Face Capture/ARKit Face Device")] [UnityEngine.ExcludeFromPreset] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@4.0/manual/ref-component-arkit-face-device.html")] public class FaceDevice : Unity.LiveCapture.CompanionApp.CompanionAppDevice<Unity.LiveCapture.ARKitFaceCapture.IFaceClient>
     {
         public Unity.LiveCapture.ARKitFaceCapture.FaceActor Actor { get; set; }
-        public virtual int BufferSize { get; set; }
-        public virtual Unity.LiveCapture.FrameRate FrameRate { get; }
-        public virtual string Id { get; }
-        public virtual bool IsSynchronized { get; set; }
-        public virtual System.Nullable<int> MaxBufferSize { get; }
-        public virtual System.Nullable<int> MinBufferSize { get; }
-        public virtual Unity.LiveCapture.FrameTime PresentationOffset { get; set; }
-        public virtual Unity.LiveCapture.ISynchronizer Synchronizer { get; set; }
+        public Unity.LiveCapture.ITimedDataSource SyncBuffer { get; }
         public FaceDevice() {}
         protected virtual string GetAssetName();
         public virtual bool IsReady();
@@ -155,8 +149,6 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         protected virtual void OnEnable();
         protected virtual void OnRecordingChanged();
         protected virtual void OnRegisterLiveProperties(Unity.LiveCapture.IPropertyPreviewer previewer);
-        public virtual Unity.LiveCapture.TimedSampleStatus PresentAt(Unity.LiveCapture.Timecode timecode, Unity.LiveCapture.FrameRate frameRate);
-        public virtual bool TryGetBufferRange(out Unity.LiveCapture.FrameTime oldestSample, out Unity.LiveCapture.FrameTime newestSample);
         public virtual void UpdateDevice();
         public virtual void Write(Unity.LiveCapture.ITakeBuilder takeBuilder);
     }
@@ -188,7 +180,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
 
 namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
 {
-    [UnityEngine.CreateAssetMenu(fileName = @"NewFaceMapper", menuName = @"Live Capture/ARKit Face Capture/Mapper")] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-component-arkit-default-face-mapper.html")] public class DefaultFaceMapper : Unity.LiveCapture.ARKitFaceCapture.FaceMapper
+    [UnityEngine.CreateAssetMenu(fileName = @"NewFaceMapper", menuName = @"Live Capture/ARKit Face Capture/Mapper")] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@4.0/manual/ref-component-arkit-default-face-mapper.html")] public class DefaultFaceMapper : Unity.LiveCapture.ARKitFaceCapture.FaceMapper
     {
         public DefaultFaceMapper() {}
         public virtual void ApplyBlendShapesToRig(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor, Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache cache, ref Unity.LiveCapture.ARKitFaceCapture.FaceBlendShapePose pose, bool continuous);
@@ -196,6 +188,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
         public virtual void ApplyHeadPositionToRig(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor, Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache cache, ref UnityEngine.Vector3 headPosition, bool continuous);
         public virtual void ApplyHeadRotationToRig(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor, Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache cache, ref UnityEngine.Quaternion headOrientation, bool continuous);
         public virtual Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache CreateCache(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor);
+        protected virtual void OnValidate();
         public virtual void RegisterPreviewableProperties(Unity.LiveCapture.ARKitFaceCapture.FaceActor actor, Unity.LiveCapture.ARKitFaceCapture.FaceMapperCache cache, Unity.LiveCapture.IPropertyPreviewer previewer);
     }
 }

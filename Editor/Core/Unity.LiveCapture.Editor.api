@@ -6,15 +6,34 @@ namespace Unity.LiveCapture.Editor
     [UnityEditor.CustomEditor(typeof(Unity.LiveCapture.Connection), true)] public class ConnectionEditor : UnityEditor.Editor
     {
         public ConnectionEditor() {}
-        protected void DoToolbarMenu();
+        public virtual UnityEngine.UIElements.VisualElement CreateInfoGUI();
+        public virtual UnityEngine.UIElements.VisualElement CreateSettingsGUI();
+        protected virtual UnityEngine.UIElements.VisualElement CreateToolbar();
         protected virtual void OnEnable();
-        public virtual void OnInspectorGUI();
-        public virtual void OnToolbarGUI();
+        public virtual void StartInspection();
+        public virtual void StopInspection();
+        protected static class Classes
+        {
+            public const string IndentContent = indent-content;
+            public const string SpaceContent = space-content;
+            public const string ToolbarSelected = connection-toolbar-selected;
+        }
+        protected static class Constants
+        {
+            public static readonly UnityEngine.Color IndicatorStarted;
+            public static readonly UnityEngine.Color IndicatorStopped;
+        }
+        protected static class IDs
+        {
+            public const string ToolbarIndicator = indicator;
+            public const string ToolbarTitle = title;
+            public const string ToolbarToggle = toggle;
+        }
     }
 
-    public class ConnectionWindow : UnityEditor.EditorWindow
+    public class ConnectionsWindow : UnityEditor.EditorWindow
     {
-        public ConnectionWindow() {}
+        public ConnectionsWindow() {}
         [UnityEditor.MenuItem(@"Window/Live Capture/Connections")] public static void ShowWindow();
     }
 

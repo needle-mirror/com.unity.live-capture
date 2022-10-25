@@ -11,26 +11,25 @@ namespace Unity.LiveCapture.Editor
     [CustomEditor(typeof(SynchronizerComponent))]
     class SynchronizerEditor : UnityEditor.Editor
     {
-        static class Contents
+        internal static class Contents
         {
             public static readonly string AddDataSource = "Add Data Source";
             public static readonly string RemoveDataSource = "Remove Data Source";
-            public static readonly GUIContent DisplayTimecodeLabel = EditorGUIUtility.TrTextContent(
-                "Display Timecode",
-                "Display the current timecode in the Game View (as a burn-in).");
             public static readonly GUIContent TimecodeSourceLabel = EditorGUIUtility.TrTextContent(
                 "Timecode Source",
                 "The timecode source that corresponds to the primary clock, giving the global time.");
             public static readonly GUIContent AddIcon = EditorGUIUtility.IconContent("Toolbar Plus More@2x");
-            public static readonly GUIContent GlobalTimeOffsetLabel = EditorGUIUtility.TrTextContent(
-                "Global Time Offset",
-                "The time offset in frames applied to the synchronization timecode. " +
-                "Use a negative value (i.e. a delay) to compensate for high-latency sources.");
+            public static readonly GUIContent DelayLabel = EditorGUIUtility.TrTextContent(
+                "Delay",
+                "The delay, in frames, applied to the source timecode. " +
+                "Use a positive value to compensate for high-latency sources.");
+            public static readonly GUIContent PresentTimecodeLabel = EditorGUIUtility.TrTextContent("Current Timecode");
+            public static readonly GUIContent PresentRateLabel = EditorGUIUtility.TrTextContent("Frame Rate");
             public static readonly GUIContent DataSourcesLabel = EditorGUIUtility.TrTextContent("Timed data sources");
             public static readonly GUIContent StatusLabel = EditorGUIUtility.TrTextContent("Status");
-            public static readonly GUIContent BufferSizeLabel = EditorGUIUtility.TrTextContent("Buffer", "Buffer size in frames");
-            public static readonly GUIContent LocalOffsetLabel = EditorGUIUtility.TrTextContent("Offset", "Local time offset in frames");
-            public static readonly GUIContent FrameRateLabel = EditorGUIUtility.TrTextContent("Rate", "The frame rate of the source");
+            public static readonly GUIContent BufferSizeLabel = EditorGUIUtility.TrTextContent("Buffer", "Buffer size in frames.");
+            public static readonly GUIContent LocalOffsetLabel = EditorGUIUtility.TrTextContent("Offset", "Local time offset in frames.");
+            public static readonly GUIContent FrameRateLabel = EditorGUIUtility.TrTextContent("Rate", "The frame rate of the source.");
             public static readonly GUIContent CalibrateLabel = EditorGUIUtility.TrTextContent("Calibrate");
             public static readonly GUIContent StopCalibrateLabel = EditorGUIUtility.TrTextContent("Stop Calibration");
             public static readonly GUIContent OpenSyncWindowLabel = EditorGUIUtility.TrTextContent(
@@ -44,22 +43,21 @@ namespace Unity.LiveCapture.Editor
 
         static IEnumerable<(Type, CreateTimecodeSourceMenuItemAttribute[])> s_CreateTimecodeSourceMenuItems;
 
-        SynchronizerComponent m_Synchronizer;
-
-        SerializedProperty m_DataSourcesProperty;
-        ReorderableList m_DataSourceList;
-
-        SerializedProperty m_DisplayTimecodeProperty;
-        SerializedProperty m_GlobalTimeOffsetProperty;
         SerializedProperty m_TimecodeSourceProperty;
+        SerializedProperty m_DelayProperty;
+        SerializedProperty m_DataSourcesProperty;
+
+        SynchronizerComponent m_Synchronizer;
+        ReorderableList m_DataSourceList;
 
         void OnEnable()
         {
             m_Synchronizer = target as SynchronizerComponent;
-            m_DisplayTimecodeProperty = serializedObject.FindProperty("m_DisplayTimecode");
+
             m_TimecodeSourceProperty = serializedObject.FindProperty("m_Impl.m_TimecodeSourceRef");
-            m_GlobalTimeOffsetProperty = serializedObject.FindProperty("m_Impl.m_GlobalTimeOffset");
+            m_DelayProperty = serializedObject.FindProperty("m_Impl.m_Delay");
             m_DataSourcesProperty = serializedObject.FindProperty("m_Impl.m_SourcesAndStatuses");
+
             CreateDataSourcesList();
         }
 
@@ -182,7 +180,13 @@ namespace Unity.LiveCapture.Editor
 
         public override void OnInspectorGUI()
         {
-            DoSyncGUI();
+            DoTimecodeSourceGUI();
+            DoDelayGUI();
+
+            EditorGUILayout.Space();
+
+            DoSourcesGUI();
+            DoCalibrationGUI();
 
             EditorGUILayout.Space();
 
@@ -196,26 +200,10 @@ namespace Unity.LiveCapture.Editor
             }
         }
 
-        public void DoSyncGUI()
+        public void DoTimecodeSourceGUI()
         {
             serializedObject.Update();
 
-            EditorGUILayout.PropertyField(m_DisplayTimecodeProperty, Contents.DisplayTimecodeLabel);
-            DoTimecodeSourceGUI();
-            EditorGUILayout.PropertyField(m_GlobalTimeOffsetProperty, Contents.GlobalTimeOffsetLabel);
-
-            EditorGUILayout.Space();
-
-            var listRect = EditorGUILayout.GetControlRect(false, m_DataSourceList.GetHeight());
-            m_DataSourceList.DoList(listRect);
-
-            serializedObject.ApplyModifiedProperties();
-
-            DoCalibrationGUI();
-        }
-
-        void DoTimecodeSourceGUI()
-        {
             var timecodeSourceRect = EditorGUILayout.GetControlRect();
             var addSourceRect = new Rect(timecodeSourceRect)
             {
@@ -243,9 +231,46 @@ namespace Unity.LiveCapture.Editor
             }
 
             GUI.Label(addSourceRect, Contents.AddIcon);
+
+            serializedObject.ApplyModifiedProperties();
         }
 
-        void DoCalibrationGUI()
+        public void DoDelayGUI()
+        {
+            serializedObject.Update();
+
+            EditorGUILayout.PropertyField(m_DelayProperty, Contents.DelayLabel);
+
+            serializedObject.ApplyModifiedProperties();
+        }
+
+        public void DoPresentTimecodeGUI()
+        {
+            var presentTime = m_Synchronizer.Synchronizer.PresentTime;
+
+            if (presentTime != null)
+            {
+                var timecodeRect = EditorGUILayout.GetControlRect();
+                timecodeRect = EditorGUI.PrefixLabel(timecodeRect, Contents.PresentTimecodeLabel);
+                EditorGUI.LabelField(timecodeRect, presentTime.Value.ToTimecode().ToString(), EditorStyles.boldLabel);
+
+                var frameRateRect = EditorGUILayout.GetControlRect();
+                frameRateRect = EditorGUI.PrefixLabel(frameRateRect, Contents.PresentRateLabel);
+                EditorGUI.LabelField(frameRateRect, presentTime.Value.Rate.ToString());
+            }
+        }
+
+        public void DoSourcesGUI()
+        {
+            serializedObject.Update();
+
+            var listRect = EditorGUILayout.GetControlRect(false, m_DataSourceList.GetHeight());
+            m_DataSourceList.DoList(listRect);
+
+            serializedObject.ApplyModifiedProperties();
+        }
+
+        public void DoCalibrationGUI()
         {
             var calibrationStatus = m_Synchronizer.Impl.CalibrationStatus;
 

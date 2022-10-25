@@ -1,0 +1,16 @@
+// This file is generated. Do not modify by hand.
+// XML documentation file not found. To check if public methods have XML comments,
+// make sure the XML doc file is present and located next to the scraped dll
+namespace Unity.LiveCapture.Ntp
+{
+    [Unity.LiveCapture.CreateTimecodeSourceMenuItem(@"NTP Timecode Source", 0)] [UnityEngine.AddComponentMenu(@"Live Capture/Timecode/NTP Timecode Source")] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@4.0/manual/ref-component-ntp-timecode-source.html")] public class NtpTimecodeSource : Unity.LiveCapture.TimecodeSource
+    {
+        public virtual Unity.LiveCapture.FrameRate FrameRate { get; }
+        public virtual string FriendlyName { get; }
+        public NtpTimecodeSource() {}
+        public void ForceUpdate();
+        protected virtual void OnDisable();
+        protected virtual void OnEnable();
+        protected virtual bool TryPollTimecode(out Unity.LiveCapture.FrameRate frameRate, out Unity.LiveCapture.Timecode timecode);
+    }
+}

@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+<<<<<<<< HEAD:Packages/com.unity.live-capture/Editor/Core/Synchronization/TimecodeSources/Ltc.meta
+guid: 24756ed9bc65bd34cb7df1eef58a05dd
+========
+guid: 331cb70c49d78d44a984eff218634596
+>>>>>>>> develop:Packages/com.unity.live-capture/Editor/Core/Synchronization/TimecodeSources/Ntp.meta
+folderAsset: yes
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

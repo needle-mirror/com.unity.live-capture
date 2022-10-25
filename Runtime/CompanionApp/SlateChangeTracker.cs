@@ -1,15 +1,12 @@
 namespace Unity.LiveCapture.CompanionApp
 {
     /// <summary>
-    /// Use this class for tracking changes in a slate.
+    /// Use this class for tracking changes in a <see cref="IShot"/>.
     /// </summary>
-    class SlateChangeTracker
+    class ShotChangeTracker
     {
-        ISlate m_Slate;
-        int m_SceneNumber;
-        string m_ShotName;
-        int m_TakeNumber;
-        string m_Description;
+        IShot m_Shot;
+        Slate m_Slate;
         Take m_Take;
         Take m_IterationBase;
 
@@ -18,11 +15,8 @@ namespace Unity.LiveCapture.CompanionApp
         /// </summary>
         public void Reset()
         {
-            m_Slate = null;
-            m_SceneNumber = 0;
-            m_ShotName = string.Empty;
-            m_TakeNumber = 0;
-            m_Description = string.Empty;
+            m_Shot = null;
+            m_Slate = Slate.Empty;
             m_Take = null;
             m_IterationBase = null;
         }
@@ -31,29 +25,24 @@ namespace Unity.LiveCapture.CompanionApp
         /// Checks whether the given slate is different from a previous call to this method.
         /// </summary>
         /// <returns> true if different; otherwise, false.</returns>
-        public bool Changed(ISlate slate)
+        public bool Changed(IShot shot)
         {
-            var changed = m_Slate != slate;
+            var changed = m_Shot != shot;
 
-            if (slate != null)
+            if (shot != null)
             {
-                changed |= m_SceneNumber != slate.SceneNumber;
-                changed |= m_ShotName != slate.ShotName;
-                changed |= m_TakeNumber != slate.TakeNumber;
-                changed |= m_Description != slate.Description;
-                changed |= m_Take != slate.Take;
-                changed |= m_IterationBase != slate.IterationBase;
+                var slate = shot.Slate;
 
-                m_Slate = null;
-                m_SceneNumber = slate.SceneNumber;
-                m_ShotName = slate.ShotName;
-                m_TakeNumber = slate.TakeNumber;
-                m_Description = slate.Description;
-                m_Take = slate.Take;
-                m_IterationBase = slate.IterationBase;
+                changed |= m_Slate != slate;
+                changed |= m_Take != shot.Take;
+                changed |= m_IterationBase != shot.IterationBase;
+
+                m_Slate = slate;
+                m_Take = shot.Take;
+                m_IterationBase = shot.IterationBase;
             }
 
-            m_Slate = slate;
+            m_Shot = shot;
 
             return changed;
         }

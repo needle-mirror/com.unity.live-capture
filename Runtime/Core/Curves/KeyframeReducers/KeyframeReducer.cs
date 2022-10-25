@@ -110,7 +110,7 @@ namespace Unity.LiveCapture
                     while (canReduce && index1 >= 0)
                     {
                         var test = m_Buffer[index1];
-                        
+
                         canReduce = m_Impl.CanReduce(test, Current, second, MaxError);
 
                         --index1;

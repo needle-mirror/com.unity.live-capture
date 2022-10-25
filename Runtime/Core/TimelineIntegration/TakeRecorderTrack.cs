@@ -9,7 +9,7 @@ namespace Unity.LiveCapture
     /// <summary>
     /// Timeline track that you can use to play and record a <see cref="Take"/>.
     /// </summary>
-    [TrackClipType(typeof(SlatePlayableAsset))]
+    [TrackClipType(typeof(ShotPlayableAsset))]
     [HelpURL(Documentation.baseURL + "take-system-setting-up-timeline" + Documentation.endURL)]
     class TakeRecorderTrack : TrackAsset
     {
@@ -53,7 +53,7 @@ namespace Unity.LiveCapture
 
             foreach (var clip in GetClips())
             {
-                var slateAsset = clip.asset as SlatePlayableAsset;
+                var slateAsset = clip.asset as ShotPlayableAsset;
                 var take = slateAsset.Take;
                 var iterationBase = slateAsset.IterationBase;
 

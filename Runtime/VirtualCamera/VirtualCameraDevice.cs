@@ -4,6 +4,7 @@ using System.Linq;
 using Unity.LiveCapture.CompanionApp;
 using Unity.LiveCapture.VirtualCamera.Rigs;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
@@ -413,14 +414,14 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
         /// <summary>
-        /// The device calls this method when the slate has changed.
+        /// The device calls this method when the shot has changed.
         /// </summary>
-        /// <param name="slate">The <see cref="ISlate"/> that changed.</param>
-        protected override void OnSlateChanged(ISlate slate)
+        /// <param name="shot">The <see cref="IShot"/> that changed.</param>
+        protected override void OnShotChanged(IShot shot)
         {
             if (TryGetInternalClient(out var client))
             {
-                client.SendVirtualCameraTrackMetadataListDescriptor(VcamTrackMetadataListDescriptor.Create(slate));
+                client.SendVirtualCameraTrackMetadataListDescriptor(VcamTrackMetadataListDescriptor.Create(shot));
             }
         }
 
@@ -487,14 +488,16 @@ namespace Unity.LiveCapture.VirtualCamera
 
             if (takeRecorder != null)
             {
-                var slate = takeRecorder.GetActiveSlate();
-
-                snapshot.Slate = slate;
                 snapshot.Time = takeRecorder.GetPreviewTime();
                 snapshot.FrameRate = takeRecorder.FrameRate;
 
-                if (slate != null)
+                var shot = takeRecorder.Shot;
+
+                if (shot != null)
                 {
+                    var slate = shot.Slate;
+
+                    snapshot.Asset = shot.UnityObject;
                     shotName = slate.ShotName;
                     sceneNumber = slate.SceneNumber;
                 }
@@ -534,7 +537,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
             if (takeRecorderInternal != null)
             {
-                takeRecorderInternal.SetPreviewTime(snapshot.Slate, snapshot.Time);
+                takeRecorderInternal.SetPreviewTime(snapshot.Asset, snapshot.Time);
             }
 
             Refresh();
@@ -1219,6 +1222,12 @@ namespace Unity.LiveCapture.VirtualCamera
         void OnRebasingReceived(bool rebasing)
         {
             var settings = Settings;
+
+            if (!settings.Rebasing && rebasing)
+            {
+                m_Rig.InitializeJoystickValues();
+            }
+
             settings.Rebasing = rebasing;
             Settings = settings;
         }
@@ -1592,26 +1601,36 @@ namespace Unity.LiveCapture.VirtualCamera
         public int? MinBufferSize => m_Processor.MinBufferSize;
 
         /// <inheritdoc/>
-        public FrameTime PresentationOffset
+        public FrameTime Offset
         {
             get => m_SyncPresentationOffset;
             set => m_SyncPresentationOffset = value;
         }
 
         /// <inheritdoc />
+        Object ITimedDataSource.UndoTarget => this;
+
+        /// <inheritdoc />
         public bool TryGetBufferRange(out FrameTime oldestSample, out FrameTime newestSample)
         {
-            return m_Processor.TryGetBufferRange(out oldestSample, out newestSample);
+            if (m_Processor.TryGetBufferRange(out oldestSample, out newestSample))
+            {
+                oldestSample += m_SyncPresentationOffset;
+                newestSample += m_SyncPresentationOffset;
+                return true;
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>
-        public TimedSampleStatus PresentAt(Timecode timecode, FrameRate frameRate)
+        public TimedSampleStatus PresentAt(FrameTimeWithRate presentTime)
         {
             Debug.Assert(IsSynchronized, "Attempting to call PresentAt() when data source is not being synchronized");
 
-            var requestedFrameTime = FrameTime.Remap(timecode.ToFrameTime(frameRate), frameRate, m_Processor.GetBufferFrameRate());
+            var requestedFrameTime = FrameTime.Remap(presentTime.Time, presentTime.Rate, m_Processor.GetBufferFrameRate());
 
-            m_PresentationFrameTime = requestedFrameTime + PresentationOffset;
+            m_PresentationFrameTime = requestedFrameTime - m_SyncPresentationOffset;
 
             return m_Processor.GetStatusAt(m_PresentationFrameTime);
         }

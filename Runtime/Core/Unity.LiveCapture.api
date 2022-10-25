@@ -23,16 +23,15 @@ namespace Unity.LiveCapture
 
     public struct CalibrationResult
     {
-        public readonly Unity.LiveCapture.FrameTime GlobalTimeOffset;
-        public readonly int[] OptimalBufferSizes;
+        public readonly Unity.LiveCapture.FrameTime Delay;
         public readonly Unity.LiveCapture.CalibrationStatus Status;
-        public CalibrationResult(Unity.LiveCapture.CalibrationStatus status, Unity.LiveCapture.FrameTime globalTimeOffset = default(Unity.LiveCapture.FrameTime), int[] optimalBufferSizes = default(int[])) {}
+        public CalibrationResult(Unity.LiveCapture.CalibrationStatus status, Unity.LiveCapture.FrameTime delay = default(Unity.LiveCapture.FrameTime)) {}
     }
 
     public enum CalibrationStatus
     {
-        [UnityEngine.InspectorName(@"Complete")] public const Unity.LiveCapture.CalibrationStatus Complete = 1;
-        [UnityEngine.InspectorName(@"Incomplete")] public const Unity.LiveCapture.CalibrationStatus Incomplete = 2;
+        [UnityEngine.InspectorName(@"Complete")] public const Unity.LiveCapture.CalibrationStatus Completed = 1;
+        [UnityEngine.InspectorName(@"Failed")] public const Unity.LiveCapture.CalibrationStatus Failed = 2;
         [UnityEngine.InspectorName(@"In Progress")] public const Unity.LiveCapture.CalibrationStatus InProgress = 0;
         public int value__;
     }
@@ -41,17 +40,20 @@ namespace Unity.LiveCapture
     {
         public int Capacity { get; }
         public virtual int Count { get; }
+        public System.Action<T> ElementDiscarded { get; set; }
         public virtual T this[int index] { get; set; }
-        public CircularBuffer(int capacity, System.Action<T> onDiscard = default(System.Action<T>)) {}
-        public void Add(T value);
+        public CircularBuffer(int capacity, System.Action<T> elementDiscarded = default(System.Action<T>)) {}
+        public void Add(ref T value);
         public void Clear();
         [System.Runtime.CompilerServices.IteratorStateMachine(typeof(Unity.LiveCapture.CircularBuffer<>))] public virtual System.Collections.Generic.IEnumerator<T> GetEnumerator();
-        public T PeekBack();
-        public T PeekFront();
+        [return: System.Runtime.CompilerServices.IsReadOnly] public T& modreq(System.Runtime.InteropServices.InAttribute) PeekBack();
+        [return: System.Runtime.CompilerServices.IsReadOnly] public T& modreq(System.Runtime.InteropServices.InAttribute) PeekFront();
+        [return: System.Runtime.CompilerServices.IsReadOnly] public T& modreq(System.Runtime.InteropServices.InAttribute) PeekIndex(int index);
         public T PopBack();
         public T PopFront();
-        public void PushBack(T value);
-        public void PushFront(T value);
+        public void PushBack(ref T value);
+        public void PushFront(ref T value);
+        public void PushIndex(int index, ref T value);
         public void SetCapacity(int capacity);
     }
 
@@ -206,6 +208,33 @@ namespace Unity.LiveCapture
         public virtual string ToString();
     }
 
+    public struct FrameTimeWithRate : System.IComparable, System.IComparable<Unity.LiveCapture.FrameTimeWithRate>, System.IEquatable<Unity.LiveCapture.FrameTimeWithRate>
+    {
+        public Unity.LiveCapture.FrameRate Rate { get; }
+        public Unity.LiveCapture.FrameTime Time { get; }
+        public FrameTimeWithRate(Unity.LiveCapture.FrameRate rate, Unity.LiveCapture.FrameTime time) {}
+        public virtual int CompareTo(object obj);
+        public virtual int CompareTo(Unity.LiveCapture.FrameTimeWithRate other);
+        public virtual bool Equals(object obj);
+        public virtual bool Equals(Unity.LiveCapture.FrameTimeWithRate other);
+        public static Unity.LiveCapture.FrameTimeWithRate FromSeconds(Unity.LiveCapture.FrameRate frameRate, double time);
+        public virtual int GetHashCode();
+        public static Unity.LiveCapture.FrameTimeWithRate operator +(Unity.LiveCapture.FrameTimeWithRate a, Unity.LiveCapture.FrameTimeWithRate b);
+        public static Unity.LiveCapture.FrameTimeWithRate operator --(Unity.LiveCapture.FrameTimeWithRate a);
+        public static bool operator ==(Unity.LiveCapture.FrameTimeWithRate a, Unity.LiveCapture.FrameTimeWithRate b);
+        public static bool operator >(Unity.LiveCapture.FrameTimeWithRate a, Unity.LiveCapture.FrameTimeWithRate b);
+        public static bool operator >=(Unity.LiveCapture.FrameTimeWithRate a, Unity.LiveCapture.FrameTimeWithRate b);
+        public static Unity.LiveCapture.FrameTimeWithRate operator ++(Unity.LiveCapture.FrameTimeWithRate a);
+        public static bool operator !=(Unity.LiveCapture.FrameTimeWithRate a, Unity.LiveCapture.FrameTimeWithRate b);
+        public static bool operator <(Unity.LiveCapture.FrameTimeWithRate a, Unity.LiveCapture.FrameTimeWithRate b);
+        public static bool operator <=(Unity.LiveCapture.FrameTimeWithRate a, Unity.LiveCapture.FrameTimeWithRate b);
+        public static Unity.LiveCapture.FrameTimeWithRate operator -(Unity.LiveCapture.FrameTimeWithRate a, Unity.LiveCapture.FrameTimeWithRate b);
+        public Unity.LiveCapture.FrameTimeWithRate Remap(Unity.LiveCapture.FrameRate frameRate);
+        public double ToSeconds();
+        public virtual string ToString();
+        public Unity.LiveCapture.Timecode ToTimecode();
+    }
+
     public interface ICurve
     {
         public abstract System.Type BindingType { get; }
@@ -220,6 +249,11 @@ namespace Unity.LiveCapture
     public interface ICurve<T> : Unity.LiveCapture.ICurve
     {
         public abstract void AddKey(double time, T value);
+    }
+
+    public interface IInterpolator<T>
+    {
+        public abstract T Interpolate(T& modreq(System.Runtime.InteropServices.InAttribute) a, T& modreq(System.Runtime.InteropServices.InAttribute) b, float t);
     }
 
     public class IntegerCurve : Unity.LiveCapture.ICurve, Unity.LiveCapture.ICurve<int>
@@ -252,33 +286,41 @@ namespace Unity.LiveCapture
         public abstract string Id { get; }
     }
 
-    public interface ISlate
+    public interface IShot
     {
-        public abstract string Description { get; set; }
         public abstract string Directory { get; set; }
         public abstract Unity.LiveCapture.Take IterationBase { get; set; }
-        public abstract int SceneNumber { get; set; }
-        public abstract string ShotName { get; set; }
+        public abstract Unity.LiveCapture.Slate Slate { get; set; }
         public abstract Unity.LiveCapture.Take Take { get; set; }
-        public abstract int TakeNumber { get; set; }
         public abstract UnityEngine.Object UnityObject { get; }
     }
 
     public interface ISynchronizationCalibrator
     {
-        public abstract System.Collections.Generic.IEnumerable<Unity.LiveCapture.CalibrationResult> Execute(Unity.LiveCapture.ITimecodeSource timecodeSource, System.Collections.Generic.IReadOnlyCollection<Unity.LiveCapture.ITimedDataSource> dataSources);
+        public abstract System.Collections.Generic.IEnumerable<Unity.LiveCapture.CalibrationResult> Execute(Unity.LiveCapture.ITimecodeSource timecodeSource, System.Collections.Generic.IEnumerable<Unity.LiveCapture.ITimedDataSource> dataSources);
     }
 
     public interface ISynchronizer
     {
-        public abstract System.Nullable<Unity.LiveCapture.Timecode> CurrentTimecode { get; }
         public abstract int DataSourceCount { get; }
-        public abstract System.Nullable<Unity.LiveCapture.FrameRate> FrameRate { get; }
+        public abstract System.Nullable<Unity.LiveCapture.FrameTimeWithRate> PresentTime { get; }
         public abstract Unity.LiveCapture.ITimecodeSource TimecodeSource { get; set; }
         public abstract bool AddDataSource(Unity.LiveCapture.ITimedDataSource source);
         public abstract Unity.LiveCapture.ITimedDataSource GetDataSource(int index);
-        public abstract void RemoveDataSource(Unity.LiveCapture.ITimedDataSource source);
+        public abstract bool RemoveDataSource(Unity.LiveCapture.ITimedDataSource source);
         public abstract void Update();
+    }
+
+    public interface ISyncProvider
+    {
+        public abstract int DroppedFrameCount { get; }
+        public abstract System.Nullable<int> LastPulseCountDelta { get; }
+        public abstract string Name { get; }
+        public abstract Unity.LiveCapture.SyncStatus Status { get; }
+        public abstract Unity.LiveCapture.FrameRate SyncRate { get; }
+        public abstract void StartSynchronizing();
+        public abstract void StopSynchronizing();
+        public abstract bool WaitForNextPulse();
     }
 
     public interface ITakeBinding
@@ -311,7 +353,7 @@ namespace Unity.LiveCapture
     public interface ITakeRecorder
     {
         public abstract Unity.LiveCapture.FrameRate FrameRate { get; set; }
-        public abstract Unity.LiveCapture.ISlate GetActiveSlate();
+        public abstract Unity.LiveCapture.IShot Shot { get; }
         public abstract double GetPreviewDuration();
         public abstract double GetPreviewTime();
         public abstract double GetRecordingElapsedTime();
@@ -328,8 +370,8 @@ namespace Unity.LiveCapture
 
     public interface ITimecodeSource : Unity.LiveCapture.IRegistrable
     {
+        public abstract System.Nullable<Unity.LiveCapture.FrameTimeWithRate> CurrentTime { get; }
         public abstract Unity.LiveCapture.FrameRate FrameRate { get; }
-        public abstract Unity.LiveCapture.Timecode Now { get; }
     }
 
     public interface ITimedDataSource : Unity.LiveCapture.IRegistrable
@@ -339,9 +381,10 @@ namespace Unity.LiveCapture
         public abstract bool IsSynchronized { get; set; }
         public abstract System.Nullable<int> MaxBufferSize { get; }
         public abstract System.Nullable<int> MinBufferSize { get; }
-        public abstract Unity.LiveCapture.FrameTime PresentationOffset { get; set; }
+        public abstract Unity.LiveCapture.FrameTime Offset { get; set; }
         public abstract Unity.LiveCapture.ISynchronizer Synchronizer { get; set; }
-        public abstract Unity.LiveCapture.TimedSampleStatus PresentAt(Unity.LiveCapture.Timecode timecode, Unity.LiveCapture.FrameRate frameRate);
+        public abstract UnityEngine.Object UndoTarget { get; }
+        public abstract Unity.LiveCapture.TimedSampleStatus PresentAt(Unity.LiveCapture.FrameTimeWithRate presentTime);
         public abstract bool TryGetBufferRange(out Unity.LiveCapture.FrameTime oldestSample, out Unity.LiveCapture.FrameTime newestSample);
     }
 
@@ -383,6 +426,20 @@ namespace Unity.LiveCapture
         public virtual void Register(UnityEngine.Component component, string propertyName);
         public virtual void Register(UnityEngine.GameObject go, string propertyName);
         public void Restore();
+    }
+
+    public struct Slate : System.IEquatable<Unity.LiveCapture.Slate>
+    {
+        public string Description { get; set; }
+        public int SceneNumber { get; set; }
+        public string ShotName { get; set; }
+        public int TakeNumber { get; set; }
+        public virtual bool Equals(object obj);
+        public virtual bool Equals(Unity.LiveCapture.Slate other);
+        public virtual int GetHashCode();
+        public static bool operator ==(Unity.LiveCapture.Slate a, Unity.LiveCapture.Slate b);
+        public static bool operator !=(Unity.LiveCapture.Slate a, Unity.LiveCapture.Slate b);
+        public virtual string ToString();
     }
 
     public enum StandardFrameRate
@@ -434,7 +491,7 @@ namespace Unity.LiveCapture
         public virtual string ToString();
     }
 
-    [UnityEngine.AddComponentMenu(@"Live Capture/Timecode Synchronizer")] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-component-timecode-synchronizer.html")] public class SynchronizerComponent : UnityEngine.MonoBehaviour
+    [UnityEngine.AddComponentMenu(@"Live Capture/Timecode Synchronizer")] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@4.0/manual/ref-component-timecode-synchronizer.html")] public class SynchronizerComponent : UnityEngine.MonoBehaviour
     {
         public Unity.LiveCapture.ISynchronizer Synchronizer { get; }
         public SynchronizerComponent() {}
@@ -442,14 +499,49 @@ namespace Unity.LiveCapture
         public void StopCalibration();
     }
 
-    [Unity.LiveCapture.CreateTimecodeSourceMenuItem(@"System Clock Timecode Source", 0)] [UnityEngine.AddComponentMenu(@"Live Capture/Timecode/System Clock Timecode Source")] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-component-system-clock-timecode-source.html")] public class SystemClockTimecodeSource : UnityEngine.MonoBehaviour, Unity.LiveCapture.IRegistrable, Unity.LiveCapture.ITimecodeSource
+    public class SyncManager
     {
-        public virtual Unity.LiveCapture.FrameRate FrameRate { get; set; }
+        public event System.Action<Unity.LiveCapture.ISyncProvider> SyncProviderActivated;
+        public event System.Action<Unity.LiveCapture.ISyncProvider> SyncProviderDeactivated;
+        public Unity.LiveCapture.ISyncProvider ActiveSyncProvider { get; }
+        public static Unity.LiveCapture.SyncManager Instance { get; }
+        public SyncManager() {}
+    }
+
+    public abstract class SyncProvider : Unity.LiveCapture.ISyncProvider
+    {
+        public virtual int DroppedFrameCount { get; }
+        public virtual System.Nullable<int> LastPulseCountDelta { get; }
+        public abstract string Name { get; }
+        protected virtual bool RunInEditMode { get; }
+        public virtual Unity.LiveCapture.SyncStatus Status { get; protected set; }
+        public abstract Unity.LiveCapture.FrameRate SyncRate { get; }
+        protected SyncProvider() {}
+        protected virtual void OnStart();
+        protected virtual void OnStop();
+        protected abstract bool OnWaitForNextPulse(out int pulseCount);
+    }
+
+    [System.AttributeUsage(4, Inherited = false)] public class SyncProviderAttribute : Unity.LiveCapture.MenuPathAttribute
+    {
+        public SyncProviderAttribute(string itemName, int priority = 0) {}
+    }
+
+    public enum SyncStatus
+    {
+        public const Unity.LiveCapture.SyncStatus NotSynchronized = 2;
+        public const Unity.LiveCapture.SyncStatus Stopped = 0;
+        public const Unity.LiveCapture.SyncStatus Synchronized = 1;
+        public int value__;
+    }
+
+    [Unity.LiveCapture.CreateTimecodeSourceMenuItem(@"System Clock Timecode Source", 0)] [UnityEngine.AddComponentMenu(@"Live Capture/Timecode/System Clock Timecode Source")] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@4.0/manual/ref-component-system-clock-timecode-source.html")] public class SystemClockTimecodeSource : Unity.LiveCapture.TimecodeSource
+    {
+        public virtual Unity.LiveCapture.FrameRate FrameRate { get; }
         public virtual string FriendlyName { get; }
-        public virtual string Id { get; }
-        public virtual Unity.LiveCapture.Timecode Now { get; }
         public Unity.LiveCapture.SystemClockTimecodeSource.ClockType Type { get; set; }
         public SystemClockTimecodeSource() {}
+        protected virtual bool TryPollTimecode(out Unity.LiveCapture.FrameRate frameRate, out Unity.LiveCapture.Timecode timecode);
         public enum ClockType
         {
             public const Unity.LiveCapture.SystemClockTimecodeSource.ClockType GameTime = 0;
@@ -485,13 +577,13 @@ namespace Unity.LiveCapture
         public virtual void SetValue(UnityEngine.Object value, UnityEngine.IExposedPropertyTable resolver);
     }
 
-    [UnityEngine.AddComponentMenu(@"Live Capture/Take Recorder")] [UnityEngine.DefaultExecutionOrder(-10)] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@3.0/manual/ref-component-take-recorder.html")] [UnityEngine.RequireComponent(typeof(UnityEngine.Playables.PlayableDirector))] public class TakeRecorder : UnityEngine.MonoBehaviour, Unity.LiveCapture.ITakeRecorder, Unity.LiveCapture.ITakeRecorderInternal
+    [UnityEngine.AddComponentMenu(@"Live Capture/Take Recorder")] [UnityEngine.DefaultExecutionOrder(-10)] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExcludeFromPreset] [UnityEngine.ExecuteAlways] [UnityEngine.HelpURL(@"https://docs.unity3d.com/Packages/com.unity.live-capture@4.0/manual/ref-component-take-recorder.html")] [UnityEngine.RequireComponent(typeof(UnityEngine.Playables.PlayableDirector))] public class TakeRecorder : UnityEngine.MonoBehaviour, Unity.LiveCapture.ITakeRecorder, Unity.LiveCapture.ITakeRecorderInternal
     {
         public static event System.Action<Unity.LiveCapture.TakeRecorder> PlaybackStateChanged;
         public static event System.Action<Unity.LiveCapture.TakeRecorder> RecordingStateChanged;
         public virtual Unity.LiveCapture.FrameRate FrameRate { get; set; }
+        public virtual Unity.LiveCapture.IShot Shot { get; }
         public TakeRecorder() {}
-        public virtual Unity.LiveCapture.ISlate GetActiveSlate();
         public virtual double GetPreviewDuration();
         public virtual double GetPreviewTime();
         public virtual double GetRecordingElapsedTime();
@@ -504,6 +596,15 @@ namespace Unity.LiveCapture
         public virtual void SetPreviewTime(double time);
         public virtual void StartRecording();
         public virtual void StopRecording();
+    }
+
+    [Unity.LiveCapture.SyncProvider(@"Testy/Test1", 0)] public class TestSyncProvider : Unity.LiveCapture.SyncProvider
+    {
+        public virtual string Name { get; }
+        protected virtual bool RunInEditMode { get; }
+        public virtual Unity.LiveCapture.FrameRate SyncRate { get; }
+        public TestSyncProvider() {}
+        protected virtual bool OnWaitForNextPulse(out int pulseCount);
     }
 
     public struct Timecode : System.IComparable, System.IComparable<Unity.LiveCapture.Timecode>, System.IEquatable<Unity.LiveCapture.Timecode>
@@ -536,6 +637,18 @@ namespace Unity.LiveCapture
         public virtual string ToString();
     }
 
+    public abstract class TimecodeSource : UnityEngine.MonoBehaviour, Unity.LiveCapture.IRegistrable, Unity.LiveCapture.ITimecodeSource
+    {
+        public virtual System.Nullable<Unity.LiveCapture.FrameTimeWithRate> CurrentTime { get; }
+        public abstract Unity.LiveCapture.FrameRate FrameRate { get; }
+        public virtual string FriendlyName { get; }
+        public virtual string Id { get; }
+        protected TimecodeSource() {}
+        protected virtual void OnDisable();
+        protected virtual void OnEnable();
+        protected abstract bool TryPollTimecode(out Unity.LiveCapture.FrameRate frameRate, out Unity.LiveCapture.Timecode timecode);
+    }
+
     [System.Reflection.DefaultMember(@"Item")] public sealed class TimecodeSourceManager : System.Collections.Generic.IEnumerable<Unity.LiveCapture.ITimecodeSource>, System.Collections.IEnumerable
     {
         public event System.Action<Unity.LiveCapture.ITimecodeSource> Added;
@@ -561,17 +674,49 @@ namespace Unity.LiveCapture
         public Unity.LiveCapture.ITimecodeSource Resolve();
     }
 
+    public class TimecodeSourceState : System.IDisposable
+    {
+        public System.Nullable<Unity.LiveCapture.FrameTimeWithRate> CurrentTime { get; }
+        public TimecodeSourceState(System.Func<System.Nullable<Unity.LiveCapture.FrameTimeWithRate>> pollFrameTime) {}
+        public virtual void Dispose();
+    }
+
     [System.Runtime.CompilerServices.TupleElementNames(Mono.Cecil.CustomAttributeArgument[])] public class TimedDataBuffer<T> : Unity.LiveCapture.CircularBuffer<System.ValueTuple<Unity.LiveCapture.FrameTime, T>>
     {
-        public Unity.LiveCapture.FrameRate FrameRate { get; }
-        public TimedDataBuffer(Unity.LiveCapture.FrameRate frameRate, int capacity = 5) {}
-        public void Add(double time, T value);
-        public void Add(Unity.LiveCapture.Timecode timecode, Unity.LiveCapture.FrameRate frameRate, T value);
-        public System.Nullable<Unity.LiveCapture.FrameTime> GetNewestSampleTime(Unity.LiveCapture.FrameRate frameRate);
-        public System.Nullable<Unity.LiveCapture.FrameTime> GetOldestSampleTime(Unity.LiveCapture.FrameRate frameRate);
+        public Unity.LiveCapture.IInterpolator<T> Interpolator { get; set; }
+        public TimedDataBuffer(Unity.LiveCapture.FrameRate frameRate, int capacity = 5, System.Action<T> sampleDiscard = default(System.Action<T>)) {}
+        public void Add(ref T value, double time);
+        public void Add(ref T value, ref Unity.LiveCapture.FrameTimeWithRate time);
+        public Unity.LiveCapture.FrameRate GetFrameRate();
+        [System.Runtime.CompilerServices.IteratorStateMachine(typeof(Unity.LiveCapture.TimedDataBuffer<>))] [return: System.Runtime.CompilerServices.TupleElementNames(Mono.Cecil.CustomAttributeArgument[])] public System.Collections.Generic.IEnumerable<System.ValueTuple<Unity.LiveCapture.FrameTime, T>> GetSamplesInRange(Unity.LiveCapture.FrameTime from, Unity.LiveCapture.FrameTime to);
+        public void SetFrameRate(Unity.LiveCapture.FrameRate frameRate);
         public bool TryGetBufferRange(out Unity.LiveCapture.FrameTime oldestSample, out Unity.LiveCapture.FrameTime newestSample);
         public Unity.LiveCapture.TimedSampleStatus TryGetSample(Unity.LiveCapture.FrameTime frame, out T sampleValue);
-        public Unity.LiveCapture.TimedSampleStatus TryGetSample(Unity.LiveCapture.Timecode timecode, Unity.LiveCapture.FrameRate frameRate, out T sampleValue);
+    }
+
+    public abstract class TimedDataSource<T> : Unity.LiveCapture.IRegistrable, Unity.LiveCapture.ITimedDataSource
+    {
+        public event System.Action<T, Unity.LiveCapture.FrameTimeWithRate> FramePresented;
+        public virtual int BufferSize { get; set; }
+        public bool Enabled { get; }
+        public virtual Unity.LiveCapture.FrameRate FrameRate { get; set; }
+        public Unity.LiveCapture.IInterpolator<T> Interpolator { get; set; }
+        public virtual bool IsSynchronized { get; set; }
+        public virtual System.Nullable<int> MaxBufferSize { get; }
+        public virtual System.Nullable<int> MinBufferSize { get; }
+        public virtual Unity.LiveCapture.FrameTime Offset { get; set; }
+        public UnityEngine.Object SourceObject { get; set; }
+        public virtual Unity.LiveCapture.ISynchronizer Synchronizer { get; set; }
+        protected TimedDataSource() {}
+        public void AddSample(ref T value, ref Unity.LiveCapture.FrameTimeWithRate time);
+        public void AddSampleWithGeneratedTime(ref T value);
+        public void ClearBuffer();
+        public virtual void Disable();
+        public virtual void Enable();
+        public static Unity.LiveCapture.FrameTimeWithRate GenerateFrameTime(ref Unity.LiveCapture.FrameRate frameRate);
+        [System.Runtime.CompilerServices.IteratorStateMachine(typeof(Unity.LiveCapture.TimedDataSource<>))] [return: System.Runtime.CompilerServices.TupleElementNames(Mono.Cecil.CustomAttributeArgument[])] public System.Collections.Generic.IEnumerable<System.ValueTuple<Unity.LiveCapture.FrameTime, T>> GetSamplesInRange(Unity.LiveCapture.FrameTime from, Unity.LiveCapture.FrameTime to);
+        public virtual bool TryGetBufferRange(out Unity.LiveCapture.FrameTime oldestSample, out Unity.LiveCapture.FrameTime newestSample);
+        public Unity.LiveCapture.TimedSampleStatus TryGetSample(Unity.LiveCapture.FrameTime frame, out T value);
     }
 
     [System.Reflection.DefaultMember(@"Item")] public sealed class TimedDataSourceManager : System.Collections.Generic.IEnumerable<Unity.LiveCapture.ITimedDataSource>, System.Collections.IEnumerable

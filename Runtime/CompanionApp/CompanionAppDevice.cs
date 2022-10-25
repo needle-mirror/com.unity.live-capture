@@ -24,7 +24,7 @@ namespace Unity.LiveCapture.CompanionApp
         bool m_ClientRegistered;
         bool m_Recording;
         TClient m_Client;
-        readonly SlateChangeTracker m_SlateChangeTracker = new SlateChangeTracker();
+        readonly ShotChangeTracker m_ShotChangeTracker = new ShotChangeTracker();
         readonly TakeNameFormatter m_TakeNameFormatter = new TakeNameFormatter();
         string m_LastAssetName;
         PropertyPreviewer m_Previewer;
@@ -159,7 +159,7 @@ namespace Unity.LiveCapture.CompanionApp
 
             CompanionAppServer.DeregisterClientConnectHandler(OnClientConnected);
 
-            m_SlateChangeTracker.Reset();
+            m_ShotChangeTracker.Reset();
 
             if (TryGetInternalClient(out var client))
             {
@@ -241,10 +241,10 @@ namespace Unity.LiveCapture.CompanionApp
             {
                 SendDeviceState(takeRecorder.IsLive());
 
-                var slate = takeRecorder.GetActiveSlate();
-                var hasSlate = slate != null;
-                var slateChanged = m_SlateChangeTracker.Changed(slate);
-                var take = hasSlate ? slate.Take : null;
+                var shot = takeRecorder.Shot;
+                var hasContext = shot != null;
+                var contextChanged = m_ShotChangeTracker.Changed(shot);
+                var take = hasContext ? shot.Take : null;
 
                 var assetName = GetAssetName();
                 var assetNameChanged = assetName != m_LastAssetName;
@@ -255,23 +255,27 @@ namespace Unity.LiveCapture.CompanionApp
                     var isPlaying = takeRecorder.IsPreviewPlaying();
 
                     client.SendFrameRate(takeRecorder.IsLive() || take == null ? takeRecorder.FrameRate : take.FrameRate);
-                    client.SendHasSlate(hasSlate);
-                    client.SendSlateDuration(takeRecorder.GetPreviewDuration());
-                    client.SendSlateIsPreviewing(isPlaying);
+                    client.SendHasShot(hasContext);
+                    client.SendShotDuration(takeRecorder.GetPreviewDuration());
+                    client.SendIsPreviewing(takeRecorder.IsPreviewPlaying());
 
                     if (!isPlaying && IsRecording())
                     {
-                        client.SendSlatePreviewTime(takeRecorder.GetRecordingElapsedTime());
+                        client.SendPreviewTime(takeRecorder.GetRecordingElapsedTime());
                     }
                     else
                     {
-                        client.SendSlatePreviewTime(takeRecorder.GetPreviewTime());
+                        client.SendPreviewTime(takeRecorder.GetPreviewTime());
                     }
 
-                    if (slateChanged || assetNameChanged)
+                    if (contextChanged || assetNameChanged)
                     {
-                        if (hasSlate)
+                        if (hasContext)
+                        {
+                            var slate = shot.Slate;
+
                             m_TakeNameFormatter.ConfigureTake(slate.SceneNumber, slate.ShotName, slate.TakeNumber);
+                        }
                         else
                             m_TakeNameFormatter.ConfigureTake(0, "Shot", 0);
 
@@ -280,9 +284,9 @@ namespace Unity.LiveCapture.CompanionApp
                     }
                 }
 
-                if (slateChanged)
+                if (contextChanged)
                 {
-                    SendSlateDescriptor(slate);
+                    SendShotDescriptor(shot);
                 }
             }
 
@@ -311,10 +315,10 @@ namespace Unity.LiveCapture.CompanionApp
         protected virtual void OnRecordingChanged() {}
 
         /// <summary>
-        /// The device calls this method when the slate has changed.
+        /// The device calls this method when the shot has changed.
         /// </summary>
-        /// <param name="slate">The <see cref="ISlate"/> that changed.</param>
-        protected virtual void OnSlateChanged(ISlate slate) {}
+        /// <param name="shot">The <see cref="IShot"/> that changed.</param>
+        protected virtual void OnShotChanged(IShot shot) {}
 
         /// <summary>
         /// The device calls this method when a live performance starts and properties are about to change.
@@ -331,7 +335,7 @@ namespace Unity.LiveCapture.CompanionApp
             {
                 return;
             }
-            
+
             RestoreLiveProperties();
 
             if (IsReady())
@@ -470,24 +474,24 @@ namespace Unity.LiveCapture.CompanionApp
             }
         }
 
-        void SendSlateDescriptor()
+        void SendShotDescriptor()
         {
             var takeRecorder = GetTakeRecorder();
 
             if (takeRecorder != null)
             {
-                SendSlateDescriptor(takeRecorder.GetActiveSlate());
+                SendShotDescriptor(takeRecorder.Shot);
             }
         }
 
-        void SendSlateDescriptor(ISlate slate)
+        void SendShotDescriptor(IShot shot)
         {
             if (TryGetInternalClient(out var client))
             {
-                client.SendSlateDescriptor(SlateDescriptor.Create(slate));
+                client.SendShotDescriptor(ShotDescriptor.Create(shot));
             }
 
-            OnSlateChanged(slate);
+            OnShotChanged(shot);
         }
 
         void ClientSetSelectedTake(Guid guid)
@@ -496,11 +500,9 @@ namespace Unity.LiveCapture.CompanionApp
 
             if (takeRecorder != null)
             {
-                TakeManager.Default.SelectTake(takeRecorder.GetActiveSlate(), guid);
+                TakeManager.Default.SelectTake(takeRecorder.Shot, guid);
 
-                takeRecorder.Prepare();
-
-                SendSlateDescriptor();
+                SendShotDescriptor();
                 Refresh();
             }
         }
@@ -509,7 +511,7 @@ namespace Unity.LiveCapture.CompanionApp
         {
             TakeManager.Default.SetTakeData(descriptor);
 
-            SendSlateDescriptor();
+            SendShotDescriptor();
             Refresh();
         }
 
@@ -517,7 +519,7 @@ namespace Unity.LiveCapture.CompanionApp
         {
             TakeManager.Default.DeleteTake(guid);
 
-            SendSlateDescriptor();
+            SendShotDescriptor();
             Refresh();
         }
 
@@ -527,13 +529,11 @@ namespace Unity.LiveCapture.CompanionApp
 
             if (takeRecorder != null)
             {
-                var slate = takeRecorder.GetActiveSlate();
+                var shot = takeRecorder.Shot;
 
-                TakeManager.Default.SetIterationBase(slate, guid);
+                TakeManager.Default.SetIterationBase(shot, guid);
 
-                takeRecorder.Prepare();
-
-                SendSlateDescriptor(slate);
+                SendShotDescriptor(shot);
                 Refresh();
             }
         }
@@ -544,13 +544,11 @@ namespace Unity.LiveCapture.CompanionApp
 
             if (takeRecorder != null)
             {
-                var slate = takeRecorder.GetActiveSlate();
+                var shot = takeRecorder.Shot;
 
-                TakeManager.Default.ClearIterationBase(slate);
+                TakeManager.Default.ClearIterationBase(shot);
 
-                takeRecorder.Prepare();
-
-                SendSlateDescriptor(slate);
+                SendShotDescriptor(shot);
                 Refresh();
             }
         }

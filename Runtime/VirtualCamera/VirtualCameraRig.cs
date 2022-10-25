@@ -330,6 +330,22 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
             state.Refresh(settings);
         }
 
+        /// <summary>
+        /// Sets up JoystickAngles based on the current AR orientation.
+        /// Call this method before enabling joystick tilt & roll rotation mode (like when enabling rebasing).
+        /// </summary>
+        public static void InitializeJoystickValues(this ref VirtualCameraRigState state)
+        {
+            var AREuler = state.ARPose.rotation.eulerAngles;
+            if (Mathf.Abs(state.ARPose.forward.y) > 0.99f)
+            {
+                // Hack to simulate worldX,worldY,localZ rotation order at singularities while still using the default worldZ,worldX,worldY rotation order.
+                // ARPose at singularities has 0 pan, all the twist is contained in roll. We want 0 pan and all the twist contained in pan instead.
+                state.JoystickAngles.y -= AREuler.z;
+                state.JoystickAngles.z -= AREuler.z;
+            }
+        }
+
         static void ComputePose(this ref VirtualCameraRigState state, VirtualCameraRigSettings settings)
         {
             state.LocalPose.position = state.ARPose.position + state.JoystickPosition;
@@ -337,13 +353,6 @@ namespace Unity.LiveCapture.VirtualCamera.Rigs
             if (settings.Rebasing)
             {
                 var AREuler = state.ARPose.rotation.eulerAngles;
-                if (Mathf.Abs(state.ARPose.forward.y) > 0.99f)
-                {
-                    // Hack to simulate worldX,worldY,localZ rotation order at singularities while still using the default worldZ,worldX,worldY rotation order
-                    AREuler.y -= AREuler.z;
-                    AREuler.z = 0f;
-                }
-
                 state.LocalPose.rotation.eulerAngles = state.JoystickAngles + AREuler;
             }
             else

@@ -22,9 +22,6 @@ namespace Unity.LiveCapture.Editor
             public static readonly Vector2 WindowSize = new Vector2(500f, 100f);
 
             public static readonly string FieldUndo = "Inspector";
-            public static readonly GUIContent GlobalTimeOffsetTooltip = EditorGUIUtility.TrTextContent("",
-                "The time offset in frames applied to the synchronization timecode. " +
-                "Use a negative value (i.e. a delay) to compensate for high-latency sources.");
             public static readonly GUIContent NoValueText = EditorGUIUtility.TrTextContent("N/A");
             public static readonly GUIContent LeftArrowIcon = EditorGUIUtility.IconContent("back@2x");
             public static readonly GUIContent RightArrowIcon = EditorGUIUtility.IconContent("forward@2x");
@@ -85,7 +82,7 @@ namespace Unity.LiveCapture.Editor
         }
 
         static float s_TimingGraphPixelsPerFrame = 8f;
-        static readonly Dictionary<ISynchronizer, FrameTime?> s_SyncTimeCache = new Dictionary<ISynchronizer, FrameTime?>();
+        static readonly Dictionary<ISynchronizer, FrameTimeWithRate?> s_SyncTimeCache = new Dictionary<ISynchronizer, FrameTimeWithRate?>();
         static readonly Dictionary<ITimedDataSource, DataSourceState> s_DataSourceStateCache = new Dictionary<ITimedDataSource, DataSourceState>();
 
         [SerializeField]
@@ -309,18 +306,18 @@ namespace Unity.LiveCapture.Editor
                                             rect.y = rect.center.y;
                                             rect.height = EditorGUIUtility.singleLineHeight;
 
-                                            var offset = EditorGUI.FloatField(rect, (float)synchronizer.Impl.GlobalTimeOffset);
+                                            var delay = FrameNumberDrawer.DoField(rect, GUIContent.none, synchronizer.Impl.Delay);
 
                                             if (change.changed)
                                             {
                                                 Undo.RegisterCompleteObjectUndo(synchronizer, Contents.FieldUndo);
-                                                synchronizer.Impl.GlobalTimeOffset = FrameTime.FromFrameTime(offset);
+                                                synchronizer.Impl.Delay = delay;
                                                 EditorUtility.SetDirty(synchronizer);
                                             }
                                         }
                                     }
 
-                                    EditorGUI.LabelField(rect, Contents.GlobalTimeOffsetTooltip);
+                                    EditorGUI.LabelField(rect, new GUIContent(string.Empty, SynchronizerEditor.Contents.DelayLabel.tooltip));
                                     break;
                                 }
                                 case TreeViewColumns.FrameRate:
@@ -331,7 +328,7 @@ namespace Unity.LiveCapture.Editor
                                         rect.y = rect.center.y;
                                         rect.height = EditorGUIUtility.singleLineHeight;
 
-                                        var frameRate = synchronizer.Impl.FrameRate;
+                                        var frameRate = synchronizer.Impl.TimecodeSource?.FrameRate;
 
                                         if (frameRate != null && frameRate.Value.IsValid)
                                         {
@@ -394,7 +391,7 @@ namespace Unity.LiveCapture.Editor
                                     break;
                                 case TreeViewColumns.Offset:
                                     CenterRectUsingSingleLineHeight(ref rect);
-                                    SourceAndStatusBundlePropertyDrawer.DoPresentationOffsetGUI(rect, source);
+                                    SourceAndStatusBundlePropertyDrawer.DoOffsetGUI(rect, source);
                                     break;
                                 case TreeViewColumns.FrameRate:
                                     CenterRectUsingSingleLineHeight(ref rect);
@@ -403,12 +400,12 @@ namespace Unity.LiveCapture.Editor
                                 case TreeViewColumns.OldestSample:
                                 {
                                     CenterRectUsingSingleLineHeight(ref rect);
-                                    var frameRate = synchronizer.FrameRate;
+                                    var frameTime = synchronizer.PresentTime;
 
-                                    if (frameRate.HasValue && frameRate.Value.IsValid &&
+                                    if (frameTime.HasValue && frameTime.Value.Rate.IsValid &&
                                         TryGetSourceState(source, out var state) && state.OldestSampleTime.HasValue)
                                     {
-                                        var timecode = Timecode.FromFrameTime(frameRate.Value, state.OldestSampleTime.Value);
+                                        var timecode = Timecode.FromFrameTime(frameTime.Value.Rate, state.OldestSampleTime.Value);
                                         EditorGUI.LabelField(rect, timecode.ToString());
                                     }
                                     else
@@ -420,12 +417,12 @@ namespace Unity.LiveCapture.Editor
                                 case TreeViewColumns.NewestSample:
                                 {
                                     CenterRectUsingSingleLineHeight(ref rect);
-                                    var frameRate = synchronizer.FrameRate;
+                                    var frameTime = synchronizer.PresentTime;
 
-                                    if (frameRate.HasValue && frameRate.Value.IsValid &&
+                                    if (frameTime.HasValue && frameTime.Value.Rate.IsValid &&
                                         TryGetSourceState(source, out var state) && state.NewestSampleTime.HasValue)
                                     {
-                                        var timecode = Timecode.FromFrameTime(frameRate.Value, state.NewestSampleTime.Value);
+                                        var timecode = Timecode.FromFrameTime(frameTime.Value.Rate, state.NewestSampleTime.Value);
                                         EditorGUI.LabelField(rect, timecode.ToString());
                                     }
                                     else
@@ -462,8 +459,7 @@ namespace Unity.LiveCapture.Editor
                 height = EditorGUIUtility.singleLineHeight,
             };
 
-            var timecode = Timecode.FromFrameTime(synchronizer.FrameRate.Value, syncTime.Value);
-            EditorGUI.LabelField(LabelRect, timecode.ToString());
+            EditorGUI.LabelField(LabelRect, syncTime.Value.ToTimecode().ToString());
         }
 
         static void DoTimingGraphAxisGUI(Rect rect)
@@ -563,8 +559,8 @@ namespace Unity.LiveCapture.Editor
             }
 
             // Check if the buffer rect is visible in the graph. If not, show an arrow indicating which direction it is in.
-            var bufferMin = center + s_TimingGraphPixelsPerFrame * (float)(state.OldestSampleTime - syncTime.Value);
-            var bufferMax = center + s_TimingGraphPixelsPerFrame * (float)(state.NewestSampleTime - syncTime.Value);
+            var bufferMin = center + s_TimingGraphPixelsPerFrame * (float)(state.OldestSampleTime - syncTime.Value.Time);
+            var bufferMax = center + s_TimingGraphPixelsPerFrame * (float)(state.NewestSampleTime - syncTime.Value.Time);
 
             const float margin = 10f;
 
@@ -590,7 +586,7 @@ namespace Unity.LiveCapture.Editor
 
                 EditorGUI.DrawRect(BufferRect, Contents.GraphWhite);
 
-                if (state.OldestSampleTime <= syncTime.Value && syncTime.Value <= state.NewestSampleTime)
+                if (state.OldestSampleTime <= syncTime.Value.Time && syncTime.Value.Time <= state.NewestSampleTime)
                 {
                     EditorGUI.DrawRect(globalTimeLineRect, Contents.GraphGreen);
                 }
@@ -608,7 +604,7 @@ namespace Unity.LiveCapture.Editor
             }
         }
 
-        static bool TryGetSyncTime(ISynchronizer synchronizer, out FrameTime? syncTime)
+        static bool TryGetSyncTime(ISynchronizer synchronizer, out FrameTimeWithRate? syncTime)
         {
             if (synchronizer == null)
             {
@@ -618,13 +614,7 @@ namespace Unity.LiveCapture.Editor
 
             if (!s_SyncTimeCache.TryGetValue(synchronizer, out syncTime))
             {
-                var frameRate = synchronizer.FrameRate;
-                var timecode = synchronizer.CurrentTimecode;
-
-                syncTime = frameRate != null && frameRate.Value.IsValid && timecode != null
-                    ? timecode.Value.ToFrameTime(frameRate.Value)
-                    : default(FrameTime?);
-
+                syncTime = synchronizer.PresentTime;
                 s_SyncTimeCache.Add(synchronizer, syncTime);
             }
 
@@ -646,16 +636,12 @@ namespace Unity.LiveCapture.Editor
                     FrameRate = source.FrameRate,
                 };
 
-                if (source.Synchronizer != null)
-                {
-                    var syncFrameRate = source.Synchronizer.FrameRate;
+                var syncFrameRate = source.Synchronizer?.PresentTime?.Rate;
 
-                    if (syncFrameRate != null && syncFrameRate.Value.IsValid && source.TryGetBufferRange(out var oldestSample, out var newestSample))
-                    {
-                        var offset = source.PresentationOffset;
-                        state.OldestSampleTime = FrameTime.Remap(oldestSample - offset, state.FrameRate, syncFrameRate.Value);
-                        state.NewestSampleTime = FrameTime.Remap(newestSample - offset, state.FrameRate, syncFrameRate.Value);
-                    }
+                if (syncFrameRate != null && syncFrameRate.Value.IsValid && source.TryGetBufferRange(out var oldestSample, out var newestSample))
+                {
+                    state.OldestSampleTime = FrameTime.Remap(oldestSample, source.FrameRate, syncFrameRate.Value);
+                    state.NewestSampleTime = FrameTime.Remap(newestSample, source.FrameRate, syncFrameRate.Value);
                 }
 
                 s_DataSourceStateCache.Add(source, state);

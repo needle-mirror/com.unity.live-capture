@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -14,9 +15,9 @@ namespace Unity.LiveCapture.Editor
             public static readonly GUIContent BufferSizeTooltip = EditorGUIUtility.TrTextContent("",
                 "The number of data frames to buffer for this data source. " +
                 "Adjust the value to get a consistent overlap between the synchronized data sources.");
-            public static readonly GUIContent OffsetFramesTooltip = EditorGUIUtility.TrTextContent("",
-                "The time offset to apply to this data source timecode, in frames. " +
-                "This should typically match the time delay between timecode generation and data sampling for a single frame.");
+            public static readonly GUIContent OffsetTooltip = EditorGUIUtility.TrTextContent("",
+                "The time offset applied to sample timecodes, in frames. " +
+                "This value should typically match the time delay between timecode generation and data sampling for a single frame.");
             public static readonly GUIContent SourceUnavailableText = EditorGUIUtility.TrTextContent("Source unavailable", "The data source is disabled or deleted.");
 
             public const float HandleSize = 18f;
@@ -97,7 +98,7 @@ namespace Unity.LiveCapture.Editor
             DoSourceNameGUI(sourceNameRect, source);
             DoFrameRateGUI(frameRateRect, source);
             DoBufferSizeGUI(bufferFieldRect, source);
-            DoPresentationOffsetGUI(offsetFieldRect, source);
+            DoOffsetGUI(offsetFieldRect, source);
         }
 
         public static void DoStatusGUI(Rect rect, Synchronizer.SourceAndStatusBundle sourceAndStatus)
@@ -170,18 +171,18 @@ namespace Unity.LiveCapture.Editor
 
                 if (change.changed)
                 {
-                    var sourceObject = source as Object;
+                    var undoTarget = source.UndoTarget;
 
-                    if (sourceObject != null)
+                    if (undoTarget != null)
                     {
-                        Undo.RegisterCompleteObjectUndo(sourceObject, Contents.FieldUndo);
+                        Undo.RegisterCompleteObjectUndo(undoTarget, Contents.FieldUndo);
                     }
 
                     source.BufferSize = Mathf.Clamp(bufferSize, min, max);
 
-                    if (sourceObject != null)
+                    if (undoTarget != null)
                     {
-                        EditorUtility.SetDirty(sourceObject);
+                        EditorUtility.SetDirty(undoTarget);
                     }
                 }
             }
@@ -189,31 +190,31 @@ namespace Unity.LiveCapture.Editor
             EditorGUI.LabelField(rect, Contents.BufferSizeTooltip);
         }
 
-        public static void DoPresentationOffsetGUI(Rect rect, ITimedDataSource source)
+        public static void DoOffsetGUI(Rect rect, ITimedDataSource source)
         {
             using (var change = new EditorGUI.ChangeCheckScope())
             {
-                var offset = EditorGUI.FloatField(rect, (float)source.PresentationOffset);
+                var newOffset = FrameNumberDrawer.DoField(rect, GUIContent.none, source.Offset);
 
                 if (change.changed)
                 {
-                    var sourceObject = source as Object;
+                    var undoTarget = source.UndoTarget;
 
-                    if (sourceObject != null)
+                    if (undoTarget != null)
                     {
-                        Undo.RegisterCompleteObjectUndo(sourceObject, Contents.FieldUndo);
+                        Undo.RegisterCompleteObjectUndo(undoTarget, Contents.FieldUndo);
                     }
 
-                    source.PresentationOffset = FrameTime.FromFrameTime(offset);
+                    source.Offset = newOffset;
 
-                    if (sourceObject != null)
+                    if (undoTarget != null)
                     {
-                        EditorUtility.SetDirty(sourceObject);
+                        EditorUtility.SetDirty(undoTarget);
                     }
                 }
             }
 
-            EditorGUI.LabelField(rect, Contents.OffsetFramesTooltip);
+            EditorGUI.LabelField(rect, Contents.OffsetTooltip);
         }
     }
 }
