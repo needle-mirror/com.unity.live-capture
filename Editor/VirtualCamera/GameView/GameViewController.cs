@@ -32,29 +32,17 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
     class VirtualCameraDeviceProxy : IVirtualCameraDeviceProxy
     {
-        VirtualCameraDevice m_Device;
-
-        public VirtualCameraDevice Device
-        {
-            set => m_Device = value;
-        }
+        public VirtualCameraDevice Device { get; set; }
 
         public Vector2 ReticlePosition
         {
-            get => m_Device.Settings.ReticlePosition;
-            set => m_Device.SetReticlePosition(value);
+            get => Device.Settings.ReticlePosition;
+            set => Device.SetReticlePosition(value);
         }
 
-        public FocusMode FocusMode => m_Device.Settings.FocusMode;
+        public FocusMode FocusMode => Device.Settings.FocusMode;
 
-        public bool IsLive
-        {
-            get
-            {
-                var takeRecorder = m_Device.GetTakeRecorder();
-                return takeRecorder != null && takeRecorder.IsLive();
-            }
-        }
+        public bool IsLive => TakeRecorder.IsLive;
     }
 
     class LiveCaptureBridge : ILiveCaptureBridge
@@ -127,7 +115,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         const string k_FocusReticlePrefabPath = "Packages/com.unity.live-capture/Runtime/VirtualCamera/FocusReticle/FocusReticle.prefab";
 
-        public event Action<Vector2> OnReticlePositionChanged = delegate {};
+        public event Action<Vector2> OnReticlePositionChanged = delegate { };
 
         readonly CoordinatesTransform m_CoordinatesTransform = new CoordinatesTransform();
         readonly FocusReticleControllerImplementation m_FocusReticleControllerImplementation = new FocusReticleControllerImplementation();

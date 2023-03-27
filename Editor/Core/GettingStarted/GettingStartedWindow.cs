@@ -73,7 +73,7 @@ namespace Unity.LiveCapture.Editor
 
             rootVisualElement.Q<Button>(Names.VirtualCamera).clickable.clicked += () => Application.OpenURL(URLs.VirtualCamera);
             rootVisualElement.Q<Button>(Names.FaceCapture).clicked += () => Application.OpenURL(URLs.FaceCapture);
-            rootVisualElement.Q<Button>(Names.Download).clicked += () => QRCodeWindow.DisplayModal();;
+            rootVisualElement.Q<Button>(Names.Download).clicked += () => QRCodeWindow.DisplayModal();
             rootVisualElement.Q<Button>(Names.ConnectionIssues).clicked += () => Application.OpenURL(URLs.ConnectionIssues);
             rootVisualElement.Q<Button>(Names.FaceCaptureSample).clicked += OnFaceCaptureSampleClicked;
             rootVisualElement.Q<Button>(Names.Documentation).clicked += () => Application.OpenURL(URLs.Docs);

@@ -88,7 +88,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             m_List.Reorderable = true;
             m_List.ItemHeight = k_SnapshotElementHeight;
             m_List.ShowSearchBar = false;
-            m_List.DrawElementCallback = (r, i) => {};
+            m_List.DrawElementCallback = (r, i) => { };
             m_List.ElementHeightCallback = (i) => 0f;
             m_List.DrawListItemCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
             {
@@ -134,9 +134,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
                 if (shotAsset != null)
                 {
-                    var slate = shotAsset.Slate;
-
-                    slateField = $"[{slate.SceneNumber.ToString("D3")}] {slate.ShotName} TC [{timecode}]";
+                    slateField = $"[{shotAsset.SceneNumber.ToString("D3")}] {shotAsset.ShotName} TC [{timecode}]";
                 }
                 else
                 {

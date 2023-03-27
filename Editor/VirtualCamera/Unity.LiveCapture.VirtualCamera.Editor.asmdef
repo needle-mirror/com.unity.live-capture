@@ -15,7 +15,8 @@
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.RenderPipelines.Core.Editor",
         "Cinemachine",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.Cinemachine"
     ],
     "includePlatforms": [
         "Editor"
@@ -38,14 +39,14 @@
             "define": "VP_CINEMACHINE_2_4_0"
         },
         {
+            "name": "com.unity.cinemachine",
+            "expression": "3.0.0-pre.1",
+            "define": "CINEMACHINE_3_0_0_OR_NEWER"
+        },
+        {
             "name": "com.unity.render-pipelines.universal",
             "expression": "10.2.2",
             "define": "URP_10_2_OR_NEWER"
-        },
-        {
-            "name": "com.unity.inputsystem",
-            "expression": "1.0.2",
-            "define": "INPUTSYSTEM_1_0_2_OR_NEWER"
         }
     ],
     "noEngineReferences": false

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
@@ -28,11 +29,12 @@ namespace Unity.LiveCapture
         /// </summary>
         TimelineAsset MasterAsset { get; }
 
-        bool TrySetAsMasterDirector(PlayableDirector director);
+        void SetAsMasterDirector(PlayableDirector director);
         void Play();
         void Pause();
         void SetGlobalTime(double time);
         void Repaint();
+        List<PlayableDirector> GetSubTimelines(TimelineClip clip, PlayableDirector director);
     }
 
     /// <summary>
@@ -79,11 +81,9 @@ namespace Unity.LiveCapture
             return MasterDirector != null && MasterDirector.playableGraph.IsValid();
         }
 
-        public static bool TrySetAsMasterDirector(PlayableDirector director)
+        public static void SetAsMasterDirector(PlayableDirector director)
         {
-            var result = Instance.m_Impl?.TrySetAsMasterDirector(director);
-
-            return result.Value;
+            Instance.m_Impl?.SetAsMasterDirector(director);
         }
 
         public static void Play()
@@ -104,6 +104,11 @@ namespace Unity.LiveCapture
         public static void Repaint()
         {
             Instance.m_Impl?.Repaint();
+        }
+
+        public static List<PlayableDirector> GetSubTimelines(TimelineClip clip, PlayableDirector director)
+        {
+            return Instance.m_Impl?.GetSubTimelines(clip, director);
         }
     }
 }

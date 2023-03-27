@@ -103,6 +103,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             FaceActor actor,
             FaceMapperCache cache,
             IPropertyPreviewer previewer
-        ) {}
+        )
+        { }
     }
 }

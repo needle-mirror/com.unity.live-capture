@@ -167,7 +167,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> represent the same value; otherwise, <see langword="false"/>.</returns>
-        public static bool operator==(FrameTimeWithRate a, FrameTimeWithRate b) => a.Equals(b);
+        public static bool operator ==(FrameTimeWithRate a, FrameTimeWithRate b) => a.Equals(b);
 
         /// <summary>
         /// Determines whether two specified instances of <see cref="FrameTimeWithRate"/> are not equal.
@@ -175,7 +175,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> do not represent the same value; otherwise, <see langword="false"/>.</returns>
-        public static bool operator!=(FrameTimeWithRate a, FrameTimeWithRate b) => !a.Equals(b);
+        public static bool operator !=(FrameTimeWithRate a, FrameTimeWithRate b) => !a.Equals(b);
 
         /// <summary>
         /// Determines whether one specified <see cref="FrameTimeWithRate"/> is later than or the same as another specified <see cref="FrameTimeWithRate"/>.
@@ -183,7 +183,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is later than or the same as <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator>=(FrameTimeWithRate a, FrameTimeWithRate b) => a.CompareTo(b) >= 0;
+        public static bool operator >=(FrameTimeWithRate a, FrameTimeWithRate b) => a.CompareTo(b) >= 0;
 
         /// <summary>
         /// Determines whether one specified <see cref="FrameTimeWithRate"/> is earlier than or the same as another specified <see cref="FrameTimeWithRate"/>.
@@ -191,7 +191,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is earlier than or the same as <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator<=(FrameTimeWithRate a, FrameTimeWithRate b) => a.CompareTo(b) <= 0;
+        public static bool operator <=(FrameTimeWithRate a, FrameTimeWithRate b) => a.CompareTo(b) <= 0;
 
         /// <summary>
         /// Determines whether one specified <see cref="FrameTimeWithRate"/> is later than another specified <see cref="FrameTimeWithRate"/>.
@@ -199,7 +199,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is later than <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator>(FrameTimeWithRate a, FrameTimeWithRate b) => a.CompareTo(b) > 0;
+        public static bool operator >(FrameTimeWithRate a, FrameTimeWithRate b) => a.CompareTo(b) > 0;
 
         /// <summary>
         /// Determines whether one specified <see cref="FrameTimeWithRate"/> is earlier than another specified <see cref="FrameTimeWithRate"/>.
@@ -207,7 +207,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is earlier than <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator<(FrameTimeWithRate a, FrameTimeWithRate b) => a.CompareTo(b) < 0;
+        public static bool operator <(FrameTimeWithRate a, FrameTimeWithRate b) => a.CompareTo(b) < 0;
 
         /// <summary>
         /// Increments a <see cref="FrameTimeWithRate"/> by a single frame.
@@ -216,7 +216,7 @@ namespace Unity.LiveCapture
         /// <returns>The incremented frame time.</returns>
         /// <exception cref="OverflowException">Thrown if the resulting value is outside the range representable
         /// by the <see cref="FrameTimeWithRate"/> type.</exception>
-        public static FrameTimeWithRate operator++(FrameTimeWithRate a)
+        public static FrameTimeWithRate operator ++(FrameTimeWithRate a)
         {
             var time = a.m_Time;
             return new FrameTimeWithRate(a.m_Rate, ++time);
@@ -230,7 +230,7 @@ namespace Unity.LiveCapture
         /// <returns>The sum of <paramref name="a"/> and <paramref name="b"/>.</returns>
         /// <exception cref="OverflowException">Thrown if the resulting value is outside the range representable
         /// by the <see cref="FrameTimeWithRate"/> type.</exception>
-        public static FrameTimeWithRate operator+(FrameTimeWithRate a, FrameTimeWithRate b)
+        public static FrameTimeWithRate operator +(FrameTimeWithRate a, FrameTimeWithRate b)
         {
             return new FrameTimeWithRate(a.m_Rate, a.m_Time + FrameTime.Remap(b.m_Time, b.m_Rate, a.m_Rate));
         }
@@ -242,7 +242,7 @@ namespace Unity.LiveCapture
         /// <returns>The decremented frame time.</returns>
         /// <exception cref="OverflowException">Thrown if the resulting value is outside the range representable
         /// by the <see cref="FrameTimeWithRate"/> type.</exception>
-        public static FrameTimeWithRate operator--(FrameTimeWithRate a)
+        public static FrameTimeWithRate operator --(FrameTimeWithRate a)
         {
             var time = a.m_Time;
             return new FrameTimeWithRate(a.m_Rate, --time);
@@ -256,7 +256,7 @@ namespace Unity.LiveCapture
         /// <returns>The difference of <paramref name="a"/> from <paramref name="b"/>.</returns>
         /// <exception cref="OverflowException">Thrown if the resulting value is outside the range representable
         /// by the <see cref="FrameTimeWithRate"/> type.</exception>
-        public static FrameTimeWithRate operator-(FrameTimeWithRate a, FrameTimeWithRate b)
+        public static FrameTimeWithRate operator -(FrameTimeWithRate a, FrameTimeWithRate b)
         {
             return new FrameTimeWithRate(a.m_Rate, a.m_Time - FrameTime.Remap(b.m_Time, b.m_Rate, a.m_Rate));
         }

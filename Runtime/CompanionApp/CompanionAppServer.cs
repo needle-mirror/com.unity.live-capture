@@ -23,12 +23,12 @@ namespace Unity.LiveCapture.CompanionApp
         /// <summary>
         /// The server executes this event when a client has connected.
         /// </summary>
-        public static event Action<ICompanionAppClient> ClientConnected = delegate {};
+        public static event Action<ICompanionAppClient> ClientConnected = delegate { };
 
         /// <summary>
         /// The server executes this event when a client has disconnected.
         /// </summary>
-        public static event Action<ICompanionAppClient> ClientDisconnected = delegate {};
+        public static event Action<ICompanionAppClient> ClientDisconnected = delegate { };
 
         struct ConnectHandler
         {
@@ -84,7 +84,7 @@ namespace Unity.LiveCapture.CompanionApp
 
         static CompanionAppServer()
         {
-            foreach (var(type, attributes) in AttributeUtility.GetAllTypes<ClientAttribute>())
+            foreach (var (type, attributes) in AttributeUtility.GetAllTypes<ClientAttribute>())
             {
                 if (!typeof(CompanionAppClient).IsAssignableFrom(type))
                 {

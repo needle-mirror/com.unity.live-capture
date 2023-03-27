@@ -72,7 +72,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified VideoStreamState are equal; otherwise, false.
         /// </returns>
-        public static bool operator==(VideoStreamState a, VideoStreamState b)
+        public static bool operator ==(VideoStreamState a, VideoStreamState b)
         {
             return a.Equals(b);
         }
@@ -85,7 +85,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified VideoStreamState are different; otherwise, false.
         /// </returns>
-        public static bool operator!=(VideoStreamState a, VideoStreamState b)
+        public static bool operator !=(VideoStreamState a, VideoStreamState b)
         {
             return !(a == b);
         }

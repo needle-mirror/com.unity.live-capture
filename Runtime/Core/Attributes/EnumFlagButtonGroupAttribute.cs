@@ -15,6 +15,6 @@ namespace Unity.LiveCapture
     {
         /// <inheritdoc />
         public EnumFlagButtonGroupAttribute(float width)
-            : base(width) {}
+            : base(width) { }
     }
 }

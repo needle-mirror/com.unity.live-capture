@@ -22,12 +22,12 @@ namespace Unity.LiveCapture.CompanionApp
         where TClient : class, ICompanionAppClient
     {
         bool m_ClientRegistered;
-        bool m_Recording;
         TClient m_Client;
         readonly ShotChangeTracker m_ShotChangeTracker = new ShotChangeTracker();
         readonly TakeNameFormatter m_TakeNameFormatter = new TakeNameFormatter();
         string m_LastAssetName;
         PropertyPreviewer m_Previewer;
+        internal IAssetManager m_AssetManager = AssetManager.Instance;
 
         bool TryGetInternalClient(out ICompanionAppClientInternal client)
         {
@@ -39,8 +39,10 @@ namespace Unity.LiveCapture.CompanionApp
         /// <summary>
         /// This function is called when the object becomes enabled and active.
         /// </summary>
-        protected virtual void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
+
             CompanionAppServer.ClientDisconnected += OnClientDisconnected;
 
             RegisterClient();
@@ -53,22 +55,22 @@ namespace Unity.LiveCapture.CompanionApp
         /// This is also called when the object is destroyed and can be used for any cleanup code.
         ///  When scripts are reloaded after compilation has finished, OnDisable will be called, followed by an OnEnable after the script has been loaded.
         /// </remaks>
-        protected virtual void OnDisable()
+        protected override void OnDisable()
         {
+            base.OnDisable();
+
             CompanionAppServer.ClientDisconnected -= OnClientDisconnected;
             CompanionAppServer.DeregisterClientConnectHandler(OnClientConnected);
 
-            StopRecording();
+            OnStopRecording();
             UnregisterClient();
         }
 
         /// <summary>
         /// This function is called when the behaviour gets destroyed.
         /// </summary>
-        protected override void OnDestroy()
+        protected virtual void OnDestroy()
         {
-            base.OnDestroy();
-
             ClearClient();
         }
 
@@ -79,33 +81,15 @@ namespace Unity.LiveCapture.CompanionApp
         }
 
         /// <inheritdoc/>
-        public override bool IsRecording()
+        protected override void OnStartRecording()
         {
-            return m_Recording;
+            SendRecordingState();
         }
 
         /// <inheritdoc/>
-        public override void StartRecording()
+        protected override void OnStopRecording()
         {
-            if (!m_Recording)
-            {
-                m_Recording = true;
-
-                OnRecordingChanged();
-                SendRecordingState();
-            }
-        }
-
-        /// <inheritdoc/>
-        public override void StopRecording()
-        {
-            if (m_Recording)
-            {
-                m_Recording = false;
-
-                OnRecordingChanged();
-                SendRecordingState();
-            }
+            SendRecordingState();
         }
 
         /// <summary>
@@ -235,59 +219,53 @@ namespace Unity.LiveCapture.CompanionApp
         /// </summary>
         public virtual void UpdateClient()
         {
-            var takeRecorder = GetTakeRecorder();
+            SendDeviceState(TakeRecorder.IsLive);
 
-            if (takeRecorder != null)
+            var nShot = TakeRecorder.Shot;
+            var hasShot = nShot.HasValue;
+            var shot = nShot.GetValueOrDefault();
+            var shotChanged = m_ShotChangeTracker.Changed(nShot);
+            var take = nShot?.Take;
+
+            var assetName = GetAssetName();
+            var assetNameChanged = assetName != m_LastAssetName;
+            m_LastAssetName = assetName;
+
+            if (TryGetInternalClient(out var client))
             {
-                SendDeviceState(takeRecorder.IsLive());
+                var isPlaying = TakeRecorder.IsPreviewPlaying();
 
-                var shot = takeRecorder.Shot;
-                var hasContext = shot != null;
-                var contextChanged = m_ShotChangeTracker.Changed(shot);
-                var take = hasContext ? shot.Take : null;
+                client.SendFrameRate(TakeRecorder.IsLive || take == null ? TakeRecorder.FrameRate : take.FrameRate);
+                client.SendHasShot(hasShot);
+                client.SendShotDuration(TakeRecorder.GetPreviewDuration());
+                client.SendIsPreviewing(isPlaying);
 
-                var assetName = GetAssetName();
-                var assetNameChanged = assetName != m_LastAssetName;
-                m_LastAssetName = assetName;
-
-                if (TryGetInternalClient(out var client))
+                if (!isPlaying && IsRecording)
                 {
-                    var isPlaying = takeRecorder.IsPreviewPlaying();
+                    client.SendPreviewTime(TakeRecorder.GetRecordingElapsedTime());
+                }
+                else
+                {
+                    client.SendPreviewTime(TakeRecorder.GetPreviewTime());
+                }
 
-                    client.SendFrameRate(takeRecorder.IsLive() || take == null ? takeRecorder.FrameRate : take.FrameRate);
-                    client.SendHasShot(hasContext);
-                    client.SendShotDuration(takeRecorder.GetPreviewDuration());
-                    client.SendIsPreviewing(takeRecorder.IsPreviewPlaying());
-
-                    if (!isPlaying && IsRecording())
+                if (shotChanged || assetNameChanged)
+                {
+                    if (hasShot)
                     {
-                        client.SendPreviewTime(takeRecorder.GetRecordingElapsedTime());
+                        m_TakeNameFormatter.ConfigureTake(shot.SceneNumber, shot.Name, shot.TakeNumber);
                     }
                     else
-                    {
-                        client.SendPreviewTime(takeRecorder.GetPreviewTime());
-                    }
+                        m_TakeNameFormatter.ConfigureTake(0, "Shot", 0);
 
-                    if (contextChanged || assetNameChanged)
-                    {
-                        if (hasContext)
-                        {
-                            var slate = shot.Slate;
-
-                            m_TakeNameFormatter.ConfigureTake(slate.SceneNumber, slate.ShotName, slate.TakeNumber);
-                        }
-                        else
-                            m_TakeNameFormatter.ConfigureTake(0, "Shot", 0);
-
-                        client.SendNextTakeName(m_TakeNameFormatter.GetTakeName());
-                        client.SendNextAssetName(m_TakeNameFormatter.GetAssetName());
-                    }
+                    client.SendNextTakeName(m_TakeNameFormatter.GetTakeName());
+                    client.SendNextAssetName(m_TakeNameFormatter.GetAssetName());
                 }
+            }
 
-                if (contextChanged)
-                {
-                    SendShotDescriptor(shot);
-                }
+            if (shotChanged)
+            {
+                SendShotDescriptor(nShot);
             }
 
             SendRecordingState();
@@ -302,29 +280,24 @@ namespace Unity.LiveCapture.CompanionApp
         /// <summary>
         /// The device calls this method when a new client is assigned.
         /// </summary>
-        protected virtual void OnClientAssigned() {}
+        protected virtual void OnClientAssigned() { }
 
         /// <summary>
         /// The device calls this method when the client is unassigned.
         /// </summary>
-        protected virtual void OnClientUnassigned() {}
-
-        /// <summary>
-        /// The device calls this method when the recording state has changed.
-        /// </summary>
-        protected virtual void OnRecordingChanged() {}
+        protected virtual void OnClientUnassigned() { }
 
         /// <summary>
         /// The device calls this method when the shot has changed.
         /// </summary>
-        /// <param name="shot">The <see cref="IShot"/> that changed.</param>
-        protected virtual void OnShotChanged(IShot shot) {}
+        /// <param name="shot">The <see cref="Shot"/> that changed.</param>
+        protected virtual void OnShotChanged(Shot? shot) { }
 
         /// <summary>
         /// The device calls this method when a live performance starts and properties are about to change.
         /// </summary>
         /// <param name="previewer">The <see cref="IPropertyPreviewer"/> to use to register live properties.</param>
-        protected virtual void OnRegisterLiveProperties(IPropertyPreviewer previewer) {}
+        protected virtual void OnRegisterLiveProperties(IPropertyPreviewer previewer) { }
 
         /// <summary>
         /// Registers properties before a live performance to allow to restore their original values later.
@@ -365,97 +338,57 @@ namespace Unity.LiveCapture.CompanionApp
 
         void ClientStartRecording()
         {
-            var takeRecorder = GetTakeRecorder();
-
-            if (takeRecorder != null)
-            {
-                takeRecorder.StartRecording();
-            }
+            TakeRecorder.StartRecording();
 
             Refresh();
         }
 
         void ClientStopRecording()
         {
-            var takeRecorder = GetTakeRecorder();
-
-            if (takeRecorder != null)
-            {
-                takeRecorder.StopRecording();
-            }
+            TakeRecorder.StopRecording();
 
             Refresh();
         }
 
         void ClientSetDeviceMode(DeviceMode deviceMode)
         {
-            var takeRecorder = GetTakeRecorder();
+            TakeRecorder.IsLive = deviceMode == DeviceMode.LiveStream;
 
-            if (takeRecorder != null)
-            {
-                takeRecorder.SetLive(deviceMode == DeviceMode.LiveStream);
-
-                SendDeviceState(takeRecorder.IsLive());
-            }
+            SendDeviceState(TakeRecorder.IsLive);
         }
 
         void ClientStartPlayer()
         {
-            var takeRecorder = GetTakeRecorder();
-
-            if (takeRecorder != null)
-            {
-                takeRecorder.PlayPreview();
-            }
+            TakeRecorder.PlayPreview();
 
             Refresh();
         }
 
         void ClientStopPlayer()
         {
-            var takeRecorder = GetTakeRecorder();
-
-            if (takeRecorder != null)
-            {
-                takeRecorder.PausePreview();
-                takeRecorder.SetPreviewTime(0d);
-            }
+            TakeRecorder.PausePreview();
+            TakeRecorder.SetPreviewTime(0d);
 
             Refresh();
         }
 
         void ClientPausePlayer()
         {
-            var takeRecorder = GetTakeRecorder();
-
-            if (takeRecorder != null)
-            {
-                takeRecorder.PausePreview();
-            }
+            TakeRecorder.PausePreview();
 
             Refresh();
         }
 
         void ClientSetPlayerTime(double time)
         {
-            var takeRecorder = GetTakeRecorder();
-
-            if (takeRecorder != null)
-            {
-                takeRecorder.SetPreviewTime(time);
-            }
+            TakeRecorder.SetPreviewTime(time);
 
             Refresh();
         }
 
         void SendDeviceState()
         {
-            var takeRecorder = GetTakeRecorder();
-
-            if (takeRecorder != null)
-            {
-                SendDeviceState(takeRecorder.IsLive());
-            }
+            SendDeviceState(TakeRecorder.IsLive);
         }
 
         void SendDeviceState(bool isLive)
@@ -470,21 +403,16 @@ namespace Unity.LiveCapture.CompanionApp
         {
             if (TryGetInternalClient(out var client))
             {
-                client.SendRecordingState(IsRecording());
+                client.SendRecordingState(IsRecording);
             }
         }
 
         void SendShotDescriptor()
         {
-            var takeRecorder = GetTakeRecorder();
-
-            if (takeRecorder != null)
-            {
-                SendShotDescriptor(takeRecorder.Shot);
-            }
+            SendShotDescriptor(TakeRecorder.Shot);
         }
 
-        void SendShotDescriptor(IShot shot)
+        void SendShotDescriptor(Shot? shot)
         {
             if (TryGetInternalClient(out var client))
             {
@@ -496,20 +424,36 @@ namespace Unity.LiveCapture.CompanionApp
 
         void ClientSetSelectedTake(Guid guid)
         {
-            var takeRecorder = GetTakeRecorder() as ITakeRecorderInternal;
+            var take = m_AssetManager.Load<Take>(guid);
 
-            if (takeRecorder != null)
-            {
-                TakeManager.Default.SelectTake(takeRecorder.Shot, guid);
+            TakeRecorder.Context.SetTake(take);
 
-                SendShotDescriptor();
-                Refresh();
-            }
+            SendShotDescriptor();
+            Refresh();
         }
 
         void ClientSetTakeData(TakeDescriptor descriptor)
         {
-            TakeManager.Default.SetTakeData(descriptor);
+            var take = m_AssetManager.Load<Take>(descriptor.Guid);
+
+            if (take != null)
+            {
+                var assetName = TakeBuilder.GetAssetName(
+                    descriptor.SceneNumber,
+                    descriptor.ShotName,
+                    descriptor.TakeNumber);
+
+                take.name = assetName;
+                take.SceneNumber = descriptor.SceneNumber;
+                take.ShotName = descriptor.ShotName;
+                take.TakeNumber = descriptor.TakeNumber;
+                take.CreationTime = DateTime.FromBinary(descriptor.CreationTime);
+                take.Description = descriptor.Description;
+                take.Rating = descriptor.Rating;
+                take.FrameRate = descriptor.FrameRate;
+
+                m_AssetManager.Save(take);
+            }
 
             SendShotDescriptor();
             Refresh();
@@ -517,7 +461,7 @@ namespace Unity.LiveCapture.CompanionApp
 
         void ClientDeleteTake(Guid guid)
         {
-            TakeManager.Default.DeleteTake(guid);
+            m_AssetManager.Delete<Take>(guid);
 
             SendShotDescriptor();
             Refresh();
@@ -525,37 +469,27 @@ namespace Unity.LiveCapture.CompanionApp
 
         void ClientSetIterationBase(Guid guid)
         {
-            var takeRecorder = GetTakeRecorder() as ITakeRecorderInternal;
+            var take = m_AssetManager.Load<Take>(guid);
 
-            if (takeRecorder != null)
-            {
-                var shot = takeRecorder.Shot;
-
-                TakeManager.Default.SetIterationBase(shot, guid);
-
-                SendShotDescriptor(shot);
-                Refresh();
-            }
+            SetIterationBase(take);
         }
 
         void ClientClearIterationBase()
         {
-            var takeRecorder = GetTakeRecorder() as ITakeRecorderInternal;
+            SetIterationBase(null);
+        }
 
-            if (takeRecorder != null)
-            {
-                var shot = takeRecorder.Shot;
+        void SetIterationBase(Take take)
+        {
+            TakeRecorder.Context.SetIterationBase(take);
 
-                TakeManager.Default.ClearIterationBase(shot);
-
-                SendShotDescriptor(shot);
-                Refresh();
-            }
+            SendShotDescriptor();
+            Refresh();
         }
 
         void OnTexturePreviewRequested(Guid guid)
         {
-            var texture = TakeManager.Default.GetAssetPreview<Texture2D>(guid);
+            var texture = m_AssetManager.GetPreview<Texture2D>(guid);
 
             if (texture != null && TryGetInternalClient(out var client))
             {

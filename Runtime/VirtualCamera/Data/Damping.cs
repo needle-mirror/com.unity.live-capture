@@ -51,7 +51,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified Damping are equal; otherwise, false.
         /// </returns>
-        public static bool operator==(Damping a, Damping b)
+        public static bool operator ==(Damping a, Damping b)
         {
             return a.Equals(b);
         }
@@ -64,7 +64,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified Damping are different; otherwise, false.
         /// </returns>
-        public static bool operator!=(Damping a, Damping b)
+        public static bool operator !=(Damping a, Damping b)
         {
             return !(a == b);
         }

@@ -33,8 +33,8 @@ namespace Unity.LiveCapture.Editor
         {
             None = 0,
             Private = 1 << 0,
-            Domain  = 1 << 1,
-            Public  = 1 << 2,
+            Domain = 1 << 1,
+            Public = 1 << 2,
         }
 
         struct Rule

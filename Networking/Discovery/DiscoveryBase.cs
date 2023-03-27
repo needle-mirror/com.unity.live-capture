@@ -394,7 +394,7 @@ namespace Unity.LiveCapture.Networking.Discovery
                 // trying to broadcast and checking if an error is thrown.
                 if (isSender)
                 {
-                    socket.SendTo(new byte[0] {}, m_BroadcastEndPoint);
+                    socket.SendTo(new byte[0] { }, m_BroadcastEndPoint);
                 }
 
                 return true;

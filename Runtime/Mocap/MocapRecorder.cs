@@ -97,11 +97,11 @@ namespace Unity.LiveCapture.Mocap
         {
             Debug.Assert(transform != null);
 
-           if (!m_Channels.TryGetValue(transform, out var channels))
-           {
-               channels = TransformChannels.All;
-               m_Channels[transform] = channels;
-           }
+            if (!m_Channels.TryGetValue(transform, out var channels))
+            {
+                channels = TransformChannels.All;
+                m_Channels[transform] = channels;
+            }
 
             return channels;
         }
@@ -305,7 +305,7 @@ namespace Unity.LiveCapture.Mocap
                 m_Previewer = new PropertyPreviewer(driver);
             }
 
-            foreach(var transform in m_Transforms)
+            foreach (var transform in m_Transforms)
             {
                 RegisterLiveProperties(transform);
             }
@@ -342,7 +342,7 @@ namespace Unity.LiveCapture.Mocap
             }
         }
 
-        void ISerializationCallbackReceiver.OnBeforeSerialize() {}
+        void ISerializationCallbackReceiver.OnBeforeSerialize() { }
         void ISerializationCallbackReceiver.OnAfterDeserialize()
         {
             m_TransformSet.Clear();

@@ -56,6 +56,6 @@ namespace Unity.LiveCapture
 
     class Vector2TangentUpdater : TangentUpdater<Keyframe<Vector2>>
     {
-        public Vector2TangentUpdater() : base(Vector2TangentUpdaterImpl.Instance) {}
+        public Vector2TangentUpdater() : base(Vector2TangentUpdaterImpl.Instance) { }
     }
 }

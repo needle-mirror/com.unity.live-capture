@@ -1,4 +1,4 @@
-﻿namespace Unity.LiveCapture
+namespace Unity.LiveCapture
 {
     /// <summary>
     /// The <see cref="ISyncProvider"/> synchronization statuses.

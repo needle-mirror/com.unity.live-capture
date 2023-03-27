@@ -1,5 +1,5 @@
 #if URP_10_2_OR_NEWER || HDRP_10_2_OR_NEWER
-    #define USING_SCRIPTABLE_RENDER_PIPELINE
+#define USING_SCRIPTABLE_RENDER_PIPELINE
 #endif
 using UnityEditor;
 using UnityEngine;

@@ -23,7 +23,7 @@ namespace Unity.LiveCapture.VirtualCamera
             }
 
             int i = 0;
-            var(frameTime, value) = buffer[i];
+            var (frameTime, value) = buffer[i];
             while (frameTime <= cutoff)
             {
                 value = buffer[i++].value;

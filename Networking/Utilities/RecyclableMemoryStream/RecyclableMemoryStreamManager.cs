@@ -69,7 +69,7 @@ namespace Microsoft.IO
         /// Initializes the memory manager with the default block/buffer specifications.
         /// </summary>
         public RecyclableMemoryStreamManager()
-            : this(DefaultBlockSize, DefaultLargeBufferMultiple, DefaultMaximumBufferSize, false) {}
+            : this(DefaultBlockSize, DefaultLargeBufferMultiple, DefaultMaximumBufferSize, false) { }
 
         /// <summary>
         /// Initializes the memory manager with the given block requiredSize.
@@ -80,7 +80,7 @@ namespace Microsoft.IO
         /// <exception cref="ArgumentOutOfRangeException">blockSize is not a positive number, or largeBufferMultiple is not a positive number, or maximumBufferSize is less than blockSize.</exception>
         /// <exception cref="ArgumentException">maximumBufferSize is not a multiple of largeBufferMultiple</exception>
         public RecyclableMemoryStreamManager(int blockSize, int largeBufferMultiple, int maximumBufferSize)
-            : this(blockSize, largeBufferMultiple, maximumBufferSize, false) {}
+            : this(blockSize, largeBufferMultiple, maximumBufferSize, false) { }
 
         /// <summary>
         /// Initializes the memory manager with the given block requiredSize.

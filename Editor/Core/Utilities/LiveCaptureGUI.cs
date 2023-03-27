@@ -96,6 +96,51 @@ namespace Unity.LiveCapture.Editor
             EditorGUILayout.EndHorizontal();
         }
 
+        internal static void HelpStatusWithURL(string message, string linkText, string url, MessageType messageType)
+        {
+            var icon = GUIContent.none;
+
+            switch (messageType)
+            {
+                case MessageType.Info: icon = Contents.InfoIcon; break;
+                case MessageType.Warning: icon = Contents.WarningIcon; break;
+                case MessageType.Error: icon = Contents.ErrorIcon; break;
+            }
+
+            var style = Contents.HelpBoxStyleWithIcon;
+
+            if (messageType == MessageType.None)
+            {
+                style = Contents.HelpBoxStyleNoIcon;
+            }
+
+            var messageContents = new GUIContent(message);
+            var linkContents = new GUIContent(linkText);
+            var buttonSize = Contents.HelpBoxLinkStyle.CalcSize(linkContents);
+            var rect = EditorGUILayout.GetControlRect(false, 20f);
+            var linkRect = new Rect(rect) { x = rect.xMax - buttonSize.x, width = buttonSize.x };
+            var iconRect = new Rect(rect) { width = 0f };
+
+            if (messageType != MessageType.None)
+            {
+                iconRect.width = rect.height;
+            }
+
+            var messageRect = new Rect(rect) { x = iconRect.xMax, xMax = linkRect.xMin };
+
+            EditorGUI.LabelField(messageRect, messageContents);
+
+            if (messageType != MessageType.None)
+            {
+                GUI.Label(iconRect, icon);
+            }
+
+            if (GUI.Button(linkRect, linkContents, Contents.HelpBoxLinkStyle))
+            {
+                Application.OpenURL(url);
+            }
+        }
+
         public static void DrawFixMeBox(GUIContent message, Action action)
         {
             EditorGUILayout.BeginHorizontal();

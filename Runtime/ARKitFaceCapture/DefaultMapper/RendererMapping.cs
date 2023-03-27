@@ -42,7 +42,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper
 
             foreach (var binding in Bindings)
             {
-                var key = (location : binding.Location, shapeIndex : binding.ShapeIndex);
+                var key = (location: binding.Location, shapeIndex: binding.ShapeIndex);
 
                 if (usedKeys.Contains(key))
                 {

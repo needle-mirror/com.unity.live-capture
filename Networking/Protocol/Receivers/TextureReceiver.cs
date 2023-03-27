@@ -142,7 +142,7 @@ namespace Unity.LiveCapture.Networking.Protocols
                     {
                         unsafe
                         {
-                            fixed(void* streamPtr = &buffer.Array[buffer.Offset + stream.Position])
+                            fixed (void* streamPtr = &buffer.Array[buffer.Offset + stream.Position])
                             {
                                 texture.LoadRawTextureData((IntPtr)streamPtr, length);
                                 texture.Apply(true);

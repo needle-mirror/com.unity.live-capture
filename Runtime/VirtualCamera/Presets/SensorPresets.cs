@@ -80,7 +80,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified SensorPreset are equal; otherwise, false.
         /// </returns>
-        public static bool operator==(SensorPreset left, SensorPreset right)
+        public static bool operator ==(SensorPreset left, SensorPreset right)
         {
             return left.Equals(right);
         }
@@ -93,7 +93,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified SensorPreset are different; otherwise, false.
         /// </returns>
-        public static bool operator!=(SensorPreset left, SensorPreset right)
+        public static bool operator !=(SensorPreset left, SensorPreset right)
         {
             return !left.Equals(right);
         }

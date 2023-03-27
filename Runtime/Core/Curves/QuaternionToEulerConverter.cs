@@ -14,7 +14,7 @@ namespace Unity.LiveCapture
 
         object IEnumerator.Current => Current;
 
-        void IDisposable.Dispose() {}
+        void IDisposable.Dispose() { }
 
         public void Reset()
         {

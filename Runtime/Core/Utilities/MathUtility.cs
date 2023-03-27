@@ -394,7 +394,7 @@ namespace Unity.LiveCapture
 
         public static float Magnitude(this Quaternion q)
         {
-            return Mathf.Sqrt(Quaternion.Dot(q,q));
+            return Mathf.Sqrt(Quaternion.Dot(q, q));
         }
 
         public static bool CompareApproximately(float f0, float f1, float epsilon = 0.000001F)

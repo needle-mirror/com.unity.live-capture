@@ -25,10 +25,8 @@ namespace Unity.LiveCapture.ARKitFaceCapture.Editor
         SerializedProperty m_Channels;
         SerializedProperty m_Recorder;
 
-        protected override void OnEnable()
+        void OnEnable()
         {
-            base.OnEnable();
-
             m_Device = target as FaceDevice;
 
             m_Actor = serializedObject.FindProperty("m_Actor");
@@ -38,8 +36,6 @@ namespace Unity.LiveCapture.ARKitFaceCapture.Editor
 
         protected override void OnDeviceGUI()
         {
-            DoClientGUI();
-
             if (m_Device.GetClient() == null)
             {
                 LiveCaptureGUI.HelpBoxWithURL(Contents.MissingClientText, Contents.ReadMoreText,

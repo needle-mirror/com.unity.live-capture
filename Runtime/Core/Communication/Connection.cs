@@ -79,7 +79,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// Unity calls this method regularly to update the connection.
         /// </summary>
-        public virtual void OnUpdate() {}
+        public virtual void OnUpdate() { }
 
         /// <summary>
         /// Call this when the connection's state or serialized data has been modified.

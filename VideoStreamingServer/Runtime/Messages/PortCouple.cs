@@ -25,7 +25,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server.Messages
         /// Initializes a new instance of the <see cref="PortCouple"/> class.
         /// </summary>
         public PortCouple()
-        {}
+        { }
         /// <summary>
         /// Initializes a new instance of the <see cref="PortCouple"/> class.
         /// </summary>

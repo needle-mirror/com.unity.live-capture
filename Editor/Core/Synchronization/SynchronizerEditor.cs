@@ -146,7 +146,7 @@ namespace Unity.LiveCapture.Editor
                 }
 
                 // Find out if the data source is already part of another synchronization group
-                if (source.Synchronizer is {} oldSynchronizer)
+                if (source.Synchronizer is { } oldSynchronizer)
                 {
                     // Track down the SynchronizerComponent that owns the Synchronizer instance.
                     // Undo tracking requires a UnityEngine.Object target.

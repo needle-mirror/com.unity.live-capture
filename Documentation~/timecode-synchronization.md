@@ -1,12 +1,12 @@
 # Timecode synchronization
 
-The Live Capture package includes features that allow you to temporally synchronize all compatible Live Capture devices connected to the Unity Editor according to a centralized timecode source.
+The Live Capture package includes features that allow you to temporally synchronize all compatible Live Capture devices connected to Unity according to a centralized timecode source.
 
 ## Main use cases
 
-**Takes with multiple devices:** If you record takes that simultaneously involve multiple capture devices, you might need to mark the start of the recording for each device with a reliable timecode to ensure all recordings can be correctly aligned and effectively synchronized when replayed using Timeline or exported to a third party software.
+**Recording takes with multiple devices:** If you record takes that simultaneously involve multiple capture devices, you might need to mark the start of the recording for each device with a reliable timecode to ensure all recordings can be correctly aligned and effectively synchronized when replayed using Timeline or exported to a third party software.
 
-**Live scenarios:** If you use the Unity Editor for real-time output, you need to synchronize all external inputs via a timecode provided with each input sample, so that each frame output by the engine is temporally coherent.
+**Live scenarios:** If you use Unity for real-time output, you need to synchronize all external inputs via a timecode provided with each input sample, so that each frame output by the engine is temporally coherent.
 
 ## Overall concept
 
@@ -43,8 +43,18 @@ Additionally, the Live Capture package provides a means to use the Unity Editor 
 ## Timecode Synchronizer structure
 
 In the Unity Editor, a Timecode Synchronizer typically consists of a GameObject with:
-* A [Timecode Synchronizer component](ref-component-timecode-synchronizer.md)
+* A [Timecode Synchronizer](ref-component-timecode-synchronizer.md) component
 * A Timecode source component from the available ones:
   * [LTC Timecode Source](ref-component-ltc-timecode-source.md)
   * [NTP Timecode Source](ref-component-ntp-timecode-source.md)
   * [System Clock Timecode Source](ref-component-system-clock-timecode-source.md)
+
+## Tools
+
+The Live Capture package includes windows in the Unity Editor used to manage timecode synchronization:
+* [Synchronization Window](ref-window-synchronization.md)
+* [Timed Data Source Details Window](ref-window-data-source-details.md)
+
+## Related topics
+
+* [Genlock](genlock.md)

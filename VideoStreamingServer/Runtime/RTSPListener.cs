@@ -210,7 +210,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
             catch (Exception error)
             {
                 _logger.LogFormat(LogType.Warning, "Unknow Error", error);
-//                throw;
+                //                throw;
             }
 
             _logger.Log("Connection Close");
@@ -428,7 +428,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                         currentReadingState = ReadingState.MoreInterleavedData;
                         break;
                     case ReadingState.MoreInterleavedData:
-                        // apparently non blocking
+                    // apparently non blocking
                     {
                         int byteCount = commandStream.Read(currentMessage.Data, byteReaden, size - byteReaden);
                         if (byteCount <= 0)
@@ -546,7 +546,8 @@ namespace Unity.LiveCapture.VideoStreaming.Server
             data[2] = (byte)((frame.Length & 0xFF00) >> 8);
             data[3] = (byte)((frame.Length & 0x00FF));
             System.Array.Copy(frame, 0, data, 4, frame.Length);
-            lock (_stream) {
+            lock (_stream)
+            {
                 _stream.Write(data, 0, data.Length);
             }
         }

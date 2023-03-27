@@ -21,19 +21,10 @@ namespace Unity.LiveCapture
         public override Playable CreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount)
         {
             var director = go.GetComponent<PlayableDirector>();
-            var takeRecorder = TakeRecorder.Main;
-
-            if (takeRecorder != null && takeRecorder.GetComponent<PlayableDirector>() == director)
-            {
-                Debug.LogWarning($"{nameof(TakeRecorderTrack)} ({name}) is referencing the same {nameof(TakeRecorder)} component as the one in which it is playing.");
-
-                return Playable.Create(graph, inputCount);
-            }
-
             var mixerPlayable = ScriptPlayable<TakeRecorderTrackMixer>.Create(graph, inputCount);
             var mixer = mixerPlayable.GetBehaviour();
 
-            mixer.Construct(director, takeRecorder, GetClips());
+            mixer.Construct(director, this);
 
             return mixerPlayable;
         }
@@ -53,9 +44,9 @@ namespace Unity.LiveCapture
 
             foreach (var clip in GetClips())
             {
-                var slateAsset = clip.asset as ShotPlayableAsset;
-                var take = slateAsset.Take;
-                var iterationBase = slateAsset.IterationBase;
+                var shotAsset = clip.asset as ShotPlayableAsset;
+                var take = shotAsset.Take;
+                var iterationBase = shotAsset.IterationBase;
 
                 if (take != null)
                 {

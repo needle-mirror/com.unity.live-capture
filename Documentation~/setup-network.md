@@ -29,7 +29,7 @@ To enable a proper connection of the Live Capture apps with the Unity Editor:
 
 ## Automatic firewall configuration
 
-1.  Open the **Connections** window by selecting **Menu > Window > Connections**.
+1.  Open the **Connections** window by selecting **Menu > Window > Live Capture > Connections**.
 
 2.  If your firewall is not yet configured for Live Capture, the Connections window displays a "Firewall is not configured" message along with a **Configure Firewall** button. Click on this button.
 

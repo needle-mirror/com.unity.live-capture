@@ -99,12 +99,12 @@ namespace Unity.LiveCapture.VirtualCamera
             return obj is Lens other && Equals(other);
         }
 
-        public static bool operator==(FocusPlaneSettings lhs, FocusPlaneSettings rhs)
+        public static bool operator ==(FocusPlaneSettings lhs, FocusPlaneSettings rhs)
         {
             return lhs.Equals(rhs);
         }
 
-        public static bool operator!=(FocusPlaneSettings lhs, FocusPlaneSettings rhs)
+        public static bool operator !=(FocusPlaneSettings lhs, FocusPlaneSettings rhs)
         {
             return !(lhs == rhs);
         }

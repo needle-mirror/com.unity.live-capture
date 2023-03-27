@@ -6,7 +6,12 @@ using UnityEditor.SceneManagement;
 using UnityEngine.Rendering.HighDefinition;
 #endif
 #if VP_CINEMACHINE_2_4_0
+#if !CINEMACHINE_3_0_0_OR_NEWER
 using Cinemachine;
+using CinemachineCamera = Cinemachine.CinemachineVirtualCamera;
+#else
+using Unity.Cinemachine;
+#endif
 #endif
 
 namespace Unity.LiveCapture.VirtualCamera.Editor
@@ -147,18 +152,23 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             GameObjectUtility.EnsureUniqueNameForSibling(root);
 
             var virtualCameraRoot = new GameObject("Cinemachine Virtual Camera",
-                typeof(CinemachineVirtualCamera));
+                typeof(CinemachineCamera));
 
             Undo.RegisterCreatedObjectUndo(virtualCameraRoot, undoName);
             Undo.SetTransformParent(virtualCameraRoot.transform, root.transform, undoName);
 
-            var virtualCamera = virtualCameraRoot.GetComponent<CinemachineVirtualCamera>();
-            virtualCamera.Follow = root.transform;
+            var virtualCamera = virtualCameraRoot.GetComponent<CinemachineCamera>();
+#if CINEMACHINE_3_0_0_OR_NEWER
+            virtualCameraRoot.AddComponent<CinemachineFollow>();
+            virtualCameraRoot.AddComponent<CinemachineSameAsFollowTarget>();
+#else
             virtualCamera.AddCinemachineComponent<CinemachineTransposer>();
             virtualCamera.AddCinemachineComponent<CinemachineSameAsFollowTarget>();
-
+#endif
+            virtualCamera.Follow = root.transform;
             var driver = root.GetComponent<CinemachineCameraDriver>();
             driver.CinemachineVirtualCamera = virtualCamera;
+
 
             MatchToSceneView(root.transform);
 

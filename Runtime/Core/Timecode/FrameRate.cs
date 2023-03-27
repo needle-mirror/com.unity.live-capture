@@ -246,7 +246,7 @@ namespace Unity.LiveCapture
 
             if (IsNtsc(m_Numerator, m_Denominator))
             {
-                str += m_IsDropFrame ? " DF" :  " NDF";
+                str += m_IsDropFrame ? " DF" : " NDF";
             }
 
             return str;
@@ -258,7 +258,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> have the same value; otherwise, <see langword="false"/>.</returns>
-        public static bool operator==(FrameRate a, FrameRate b) => a.Equals(b);
+        public static bool operator ==(FrameRate a, FrameRate b) => a.Equals(b);
 
         /// <summary>
         /// Indicates whether two specified instances of <see cref="FrameRate"/> are not equal.
@@ -266,7 +266,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> do not have the same value; otherwise, <see langword="false"/>.</returns>
-        public static bool operator!=(FrameRate a, FrameRate b) => !a.Equals(b);
+        public static bool operator !=(FrameRate a, FrameRate b) => !a.Equals(b);
 
         /// <summary>
         /// Indicates whether one specified <see cref="FrameRate"/> is greater than or the same as another specified <see cref="FrameRate"/>.
@@ -274,7 +274,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is greater than or the same as <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator>=(FrameRate a, FrameRate b) => a.CompareTo(b) >= 0;
+        public static bool operator >=(FrameRate a, FrameRate b) => a.CompareTo(b) >= 0;
 
         /// <summary>
         /// Indicates whether one specified <see cref="FrameRate"/> is less than or the same as another specified <see cref="FrameRate"/>.
@@ -282,7 +282,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is less than or the same as <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator<=(FrameRate a, FrameRate b) => a.CompareTo(b) <= 0;
+        public static bool operator <=(FrameRate a, FrameRate b) => a.CompareTo(b) <= 0;
 
         /// <summary>
         /// Indicates whether one specified <see cref="FrameRate"/> is greater than another specified <see cref="FrameRate"/>.
@@ -290,7 +290,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is greater than <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator>(FrameRate a, FrameRate b) => a.CompareTo(b) > 0;
+        public static bool operator >(FrameRate a, FrameRate b) => a.CompareTo(b) > 0;
 
         /// <summary>
         /// Indicates whether one specified <see cref="FrameRate"/> is less than another specified <see cref="FrameRate"/>.
@@ -298,7 +298,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is less than <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator<(FrameRate a, FrameRate b) => a.CompareTo(b) < 0;
+        public static bool operator <(FrameRate a, FrameRate b) => a.CompareTo(b) < 0;
 
         /// <summary>
         /// Computes the multiple of two <see cref="FrameRate"/> values.
@@ -308,7 +308,7 @@ namespace Unity.LiveCapture
         /// <returns>The multiplied frame rate.</returns>
         /// <exception cref="OverflowException">Thrown if the resulting frame rate is not representable
         /// using the <see cref="FrameRate"/> type.</exception>
-        public static FrameRate operator*(FrameRate a, FrameRate b)
+        public static FrameRate operator *(FrameRate a, FrameRate b)
         {
             return new FrameRate(
                 (ulong)a.m_Numerator * b.m_Numerator,
@@ -325,7 +325,7 @@ namespace Unity.LiveCapture
         /// <returns>The quotient.</returns>
         /// <exception cref="OverflowException">Thrown if the resulting frame rate is not representable
         /// using the <see cref="FrameRate"/> type.</exception>
-        public static FrameRate operator/(FrameRate a, FrameRate b)
+        public static FrameRate operator /(FrameRate a, FrameRate b)
         {
             return new FrameRate(
                 (ulong)a.m_Numerator * b.m_Denominator,

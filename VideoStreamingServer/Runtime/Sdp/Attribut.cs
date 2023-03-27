@@ -41,7 +41,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server.Sdp
 
             Contract.EndContractBlock();
 
-            var listValues = value.Split(new char[] {':'}, 2);
+            var listValues = value.Split(new char[] { ':' }, 2);
 
 
             Attribut returnValue;

@@ -22,7 +22,6 @@ namespace Unity.LiveCapture.TransformCapture
         AvatarMask m_AvatarMask;
         [SerializeField]
         TransformRecorder m_Recorder = new TransformRecorder();
-        bool m_Recording;
 
         /// <summary>
         /// The Animator currently assigned to this device.
@@ -47,24 +46,20 @@ namespace Unity.LiveCapture.TransformCapture
             m_Recorder.Validate();
         }
 
-        void OnEnable()
+        /// <inheritdoc/>
+        protected override void OnEnable()
         {
+            base.OnEnable();
+
             PlayerLoopExtensions.RegisterUpdate<PostLateUpdate.DirectorLateUpdate, TransformCaptureRecorderUpdate>(Record);
         }
 
-        void OnDisable()
+        /// <inheritdoc/>
+        protected override void OnDisable()
         {
+            base.OnDisable();
+
             PlayerLoopExtensions.DeregisterUpdate<TransformCaptureRecorderUpdate>(Record);
-        }
-
-        /// <inheritdoc/>
-        public override void UpdateDevice()
-        {
-        }
-
-        /// <inheritdoc/>
-        public override void LiveUpdate()
-        {
         }
 
         /// <inheritdoc/>
@@ -74,29 +69,14 @@ namespace Unity.LiveCapture.TransformCapture
         }
 
         /// <inheritdoc/>
-        public override bool IsRecording()
+        protected override void OnStartRecording()
         {
-            return m_Recording;
-        }
-
-        /// <inheritdoc/>
-        public override void StartRecording()
-        {
-            if (!m_Recording && IsReady())
+            if (IsReady())
             {
-                var frameRate = GetTakeRecorder().FrameRate;
-
-                m_Recorder.Prepare(m_Actor, m_AvatarMask, frameRate);
-                m_Recording = true;
+                m_Recorder.Prepare(m_Actor, m_AvatarMask, TakeRecorder.FrameRate);
 
                 Record();
             }
-        }
-
-        /// <inheritdoc/>
-        public override void StopRecording()
-        {
-            m_Recording = false;
         }
 
         /// <inheritdoc/>
@@ -117,9 +97,9 @@ namespace Unity.LiveCapture.TransformCapture
 
         void Record()
         {
-            if (IsRecording())
+            if (IsRecording)
             {
-                var elapsedTime = (float)GetTakeRecorder().GetRecordingElapsedTime();
+                var elapsedTime = (float)TakeRecorder.GetRecordingElapsedTime();
 
                 m_Recorder.Record(elapsedTime);
             }

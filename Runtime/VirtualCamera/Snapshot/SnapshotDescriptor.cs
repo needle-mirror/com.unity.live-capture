@@ -110,10 +110,8 @@ namespace Unity.LiveCapture.VirtualCamera
 
                 if (isShotValid)
                 {
-                    var slate = shotAsset.Slate;
-
-                    descriptor.ShotName = slate.ShotName;
-                    descriptor.SceneNumber = slate.SceneNumber;
+                    descriptor.ShotName = shotAsset.ShotName;
+                    descriptor.SceneNumber = shotAsset.SceneNumber;
                 }
 
                 descriptor.FrameRate = snapshot.FrameRate;

@@ -69,7 +69,7 @@ namespace Unity.LiveCapture.VirtualCamera.Networking
                 Model = lensAssetDescriptor.m_Model,
                 DefaultValues = new Lens
                 {
-                    FocalLength  = lensAssetDescriptor.m_DefaultFocalLength,
+                    FocalLength = lensAssetDescriptor.m_DefaultFocalLength,
                     FocusDistance = lensAssetDescriptor.m_DefaultFocusDistance,
                     Aperture = lensAssetDescriptor.m_DefaultAperture,
                 },

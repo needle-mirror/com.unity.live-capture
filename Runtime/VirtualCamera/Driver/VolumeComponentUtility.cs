@@ -4,8 +4,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 #if VP_CINEMACHINE_2_4_0
+#if !CINEMACHINE_3_0_0_OR_NEWER
 using Cinemachine;
+using CinemachineCamera = Cinemachine.CinemachineVirtualCamera;
 using Cinemachine.PostFX;
+#else
+using Unity.Cinemachine ;
+#endif
 #endif
 using UnityEngine.Rendering;
 
@@ -78,12 +83,14 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
 #if VP_CINEMACHINE_2_4_0
-        internal static CinemachineVolumeSettings GetOrAddVolumeSettings(CinemachineVirtualCamera virtualCamera)
+        internal static CinemachineVolumeSettings GetOrAddVolumeSettings(CinemachineCamera virtualCamera)
         {
             if (!virtualCamera.TryGetComponent<CinemachineVolumeSettings>(out var volumeSettings))
             {
                 volumeSettings = virtualCamera.gameObject.AddComponent<CinemachineVolumeSettings>();
+#if !CINEMACHINE_3_0_0_OR_NEWER
                 virtualCamera.AddExtension(volumeSettings);
+#endif
             }
 
             return volumeSettings;

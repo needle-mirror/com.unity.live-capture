@@ -8,30 +8,36 @@ To get a functional Timecode Synchronizer, you must use this component along wit
 
 ## General properties
 
-| Property | Function |
-|:---|:---|
-| **Display Timecode** | Displays the current timecode in the Game view.<br /><br />**Note:** This timecode display is burnt into the Game view. If you want to export the Game view, you might first need to disable this option. |
-| **Timecode Source** | The timecode source to use as the reference for synchronizing all your connected data sources.<br /><br />The selection list includes all timecode source components present in any GameObject of the current Scene. The mention in parentheses indicates the name of the GameObject that holds the component. |
-| **Delay** | The delay (in frames) applied to the source timecode. Use a positive value to compensate for high-latency data sources. |
+| Property            | Function                                                                                                                                                                                                                                                                                                                                                                   |
+|:--------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Timecode Source** | The timecode source to use as the reference for synchronizing all your connected data sources.<br/><br/>The dropdown list includes all timecode source components present in any GameObject of the current Scene. The mention in parentheses indicates the name of the GameObject that holds the component.<br/><br/>Use the + (plus) button to add a new timecode source. |
+| **Delay**           | The delay (in frames) applied to the source timecode. Use a positive value to compensate for high-latency data sources.                                                                                                                                                                                                                                                    |
 
 ## Timed data sources
 
-| Property | Function |
-|:---|:---|
-| **Device Name** | The name of the connected data source. |
-| **Status** | The current timecode synchronization status of the data source.<br />• **synced** (green): The source data is synchronized<br />• **ahead** (yellow): The source data is ahead of the global time<br />• **behind** (yellow): The source data is behind the global time<br />• **no data** (gray): The source data is missing<br />• **no source** (red): The source data is not available |
-| **Buffer** | The sample buffer size (in frames). Larger values may help when synchronizing with high-latency sources at the cost of performance. <br /><br />Adjust the value to minimally overlap with buffers of the other data sources. |
-| **Offset** | The time offset (in frames) applied to sample timecodes. |
+| Property        | Function                                                                                                                                                                                                                                                                                                                                                                                              |
+|:----------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Device Name** | The name of the connected data source.                                                                                                                                                                                                                                                                                                                                                                |
+| **Status**      | The current synchronization status of the data source.<br/>• **synced** (green): The data source is synchronized.<br/>• **behind** (yellow): The buffered data is too old (i.e. latency is too high).<br/>• **ahead** (yellow): The buffered data is too new (i.e. synchronization updates are happening too late, buffer is too small).<br/>• **no data** (gray): There is no buffered data.         |
+| **Rate**        | The frame rate of the data source.                                                                                                                                                                                                                                                                                                                                                                    |
+| **Buffer**      | The sample buffer size (in frames). Larger values may help when synchronizing with high-latency sources at the cost of performance. <br /><br />Adjust the value to minimally overlap with buffers of the other data sources.                                                                                                                                                                         |
+| **Offset**      | The time offset (in frames) applied to sample timecodes.                                                                                                                                                                                                                                                                                                                                              |
 
 ### List management
 
-| Control | Function |
-|:---|:---|
-| Handle | Use the handles at the left to manually reorder the list. |
-| Checkbox | Enable or disable the synchronization of the corresponding listed data source. |
-| **+** (plus) | Add a data source to synchronize among the compatible Live Capture devices currently connected to the Unity Editor. |
-| **-** (minus) | Remove the selected data source from the list. |
+| Control       | Function                                                                |
+|:--------------|:------------------------------------------------------------------------|
+| Handle        | Use the handles at the left to manually reorder the list.               |
+| Checkbox      | Enable or disable the synchronization of the corresponding data source. |
+| **+** (plus)  | Add a data source to synchronize to the list.                           |
+| **-** (minus) | Remove the selected data source from the list.                          |
 
-## Calibrate
+## Calibration
 
-Use the Calibrate button to automatically adjust the Delay and all timed data source Buffer values so that all data sources are synchronized.
+Use the **Calibrate** button to automatically adjust the Delay and all timed data source Buffer values so that all data sources are synchronized.
+
+## Window shortcuts 
+
+Use the **Open Synchronization** button to open the [Synchronization Window](ref-window-synchronization.md).
+
+Use the **Open Timed Data Source Details** button to open the [Timed Data Source Details Window](ref-window-data-source-details.md).

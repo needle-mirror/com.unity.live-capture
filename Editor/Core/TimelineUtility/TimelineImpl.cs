@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using UnityEditor;
@@ -44,23 +45,30 @@ namespace Unity.LiveCapture.Editor
         /// <inheritdoc />
         public TimelineAsset MasterAsset => TimelineEditor.masterAsset;
 
-        public bool TrySetAsMasterDirector(PlayableDirector director)
+        public void SetAsMasterDirector(PlayableDirector director)
         {
-            if (TimelineEditor.masterDirector == director &&
-                TimelineEditor.masterAsset == director.playableAsset)
-                return true;
+            if (director != null
+                && TimelineEditor.masterDirector == director
+                && TimelineEditor.masterAsset == director.playableAsset)
+            {
+                return;
+            }
 
             var window = GetOrCreateWindow();
 
             if (window == null)
-                return false;
+            {
+                return;
+            }
 
-            if (window.locked && TimelineEditor.masterDirector != director)
-                return false;
-
-            window.SetTimeline(director);
-
-            return true;
+            if (director == null)
+            {
+                window.ClearTimeline();
+            }
+            else
+            {
+                window.SetTimeline(director);
+            }
         }
 
         public void Play()
@@ -98,6 +106,11 @@ namespace Unity.LiveCapture.Editor
         public void Repaint()
         {
             TimelineEditor.Refresh(RefreshReason.WindowNeedsRedraw);
+        }
+
+        public List<PlayableDirector> GetSubTimelines(TimelineClip clip, PlayableDirector director)
+        {
+            return TimelineHierarchyContextUtility.GetSubTimelines(clip, director);
         }
     }
 }

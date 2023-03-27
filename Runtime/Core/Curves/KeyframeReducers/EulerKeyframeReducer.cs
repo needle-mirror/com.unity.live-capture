@@ -21,6 +21,6 @@ namespace Unity.LiveCapture
 
     class EulerKeyframeReducer : KeyframeReducer<Keyframe<Vector3>>
     {
-        public EulerKeyframeReducer() : base(EulerKeyframeReducerImpl.Instance) {}
+        public EulerKeyframeReducer() : base(EulerKeyframeReducerImpl.Instance) { }
     }
 }

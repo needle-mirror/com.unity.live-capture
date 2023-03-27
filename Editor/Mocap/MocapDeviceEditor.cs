@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEditor;
-using Unity.LiveCapture.Editor;
 
 namespace Unity.LiveCapture.Mocap.Editor
 {
+    using Editor = UnityEditor.Editor;
+
     /// <summary>
     /// The default Inspector for <see cref="Unity.LiveCapture.Mocap.MocapDevice{T}"/>.
     /// </summary>
@@ -11,7 +12,7 @@ namespace Unity.LiveCapture.Mocap.Editor
     /// Inherit from this class when implementing the editor for a custom mocap source device.
     /// </remarks>
     [CustomEditor(typeof(MocapDevice<>), true)]
-    public class MocapDeviceEditor : LiveCaptureDeviceEditor
+    public class MocapDeviceEditor : Editor
     {
         static class Contents
         {
@@ -22,18 +23,20 @@ namespace Unity.LiveCapture.Mocap.Editor
         SerializedProperty m_Animator;
         SerializedProperty m_Recorder;
 
-        /// <inheritdoc/>
-        protected override void OnEnable()
+        /// <summary>
+        /// Called when the editor is being initialized.
+        /// </summary>
+        protected virtual void OnEnable()
         {
-            base.OnEnable();
-
             m_Device = target as IMocapDevice;
             m_Animator = serializedObject.FindProperty("m_Animator");
             m_Recorder = serializedObject.FindProperty("m_Recorder");
         }
 
-        /// <inheritdoc/>
-        protected override void OnDeviceGUI()
+        /// <summary>
+        /// Makes a custom inspector GUI for <see cref="Unity.LiveCapture.Mocap.MocapDevice{T}"/>.
+        /// </summary>
+        public override void OnInspectorGUI()
         {
             serializedObject.Update();
 

@@ -4,6 +4,7 @@ using System.Linq;
 using Unity.LiveCapture.CompanionApp;
 using Unity.LiveCapture.VirtualCamera.Rigs;
 using UnityEngine;
+using UnityEngine.Playables;
 using Object = UnityEngine.Object;
 
 namespace Unity.LiveCapture.VirtualCamera
@@ -19,7 +20,6 @@ namespace Unity.LiveCapture.VirtualCamera
     /// A <see cref="VirtualCameraActor"/> and a <see cref="IVirtualCameraClient"/> must be assigned before the device
     /// is useful. The actor is needed to store live or evaluated playback state and affect the scene.
     /// </remarks>
-    [AddComponentMenu("")]
     [RequireComponent(typeof(FocusPlaneRenderer))]
     [CreateDeviceMenuItemAttribute("Virtual Camera Device")]
     [HelpURL(Documentation.baseURL + "ref-component-virtual-camera-device" + Documentation.endURL)]
@@ -341,8 +341,7 @@ namespace Unity.LiveCapture.VirtualCamera
             }
         }
 
-        /// <inheritdoc/>
-        protected virtual void OnValidate()
+        void OnValidate()
         {
             SetupProcessor();
             ValidateActor();
@@ -416,8 +415,8 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// The device calls this method when the shot has changed.
         /// </summary>
-        /// <param name="shot">The <see cref="IShot"/> that changed.</param>
-        protected override void OnShotChanged(IShot shot)
+        /// <param name="shot">The <see cref="Shot"/> that changed.</param>
+        protected override void OnShotChanged(Shot? shot)
         {
             if (TryGetInternalClient(out var client))
             {
@@ -463,7 +462,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         internal void TakeSnapshot()
         {
-            if (IsRecording() || !this.IsLiveAndReady())
+            if (IsRecording || !this.IsLiveAndReady())
             {
                 return;
             }
@@ -484,23 +483,19 @@ namespace Unity.LiveCapture.VirtualCamera
 
             var sceneNumber = 0;
             var shotName = string.Empty;
-            var takeRecorder = GetTakeRecorder();
 
-            if (takeRecorder != null)
+            snapshot.Time = TakeRecorder.GetPreviewTime();
+            snapshot.FrameRate = TakeRecorder.FrameRate;
+
+            if (TakeRecorder.Context is DirectorContext context)
             {
-                snapshot.Time = takeRecorder.GetPreviewTime();
-                snapshot.FrameRate = takeRecorder.FrameRate;
+                snapshot.Asset = context.GetShotStorage();
+            }
 
-                var shot = takeRecorder.Shot;
-
-                if (shot != null)
-                {
-                    var slate = shot.Slate;
-
-                    snapshot.Asset = shot.UnityObject;
-                    shotName = slate.ShotName;
-                    sceneNumber = slate.SceneNumber;
-                }
+            if (TakeRecorder.Shot is Shot shot)
+            {
+                shotName = shot.Name;
+                sceneNumber = shot.SceneNumber;
             }
 
             snapshot.Screenshot = m_ScreenshotImpl.Take(
@@ -525,7 +520,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         internal void GoToSnapshot(Snapshot snapshot)
         {
-            if (snapshot == null || IsRecording())
+            if (snapshot == null || IsRecording)
             {
                 return;
             }
@@ -533,11 +528,15 @@ namespace Unity.LiveCapture.VirtualCamera
             SetAnchorEnabled(false);
             SetOrigin(snapshot.Pose);
 
-            var takeRecorderInternal = GetTakeRecorder() as ITakeRecorderInternal;
-
-            if (takeRecorderInternal != null)
+            if (TakeRecorder.Context is DirectorContext context)
             {
-                takeRecorderInternal.SetPreviewTime(snapshot.Asset, snapshot.Time);
+                var index = context.IndexOf(null, snapshot.Asset as PlayableAsset);
+
+                if (index != -1)
+                {
+                    context.Selection = index;
+                    context.SetTime(snapshot.Time);
+                }
             }
 
             Refresh();
@@ -555,7 +554,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         internal void LoadSnapshot(Snapshot snapshot)
         {
-            if (snapshot == null || IsRecording())
+            if (snapshot == null || IsRecording)
             {
                 return;
             }
@@ -577,7 +576,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         internal void DeleteSnapshot(int index)
         {
-            if (m_SnapshotLibrary == null || IsRecording())
+            if (m_SnapshotLibrary == null || IsRecording)
             {
                 return;
             }
@@ -750,7 +749,7 @@ namespace Unity.LiveCapture.VirtualCamera
             {
                 Refresh();
 
-                if (IsRecording())
+                if (IsRecording)
                 {
                     m_Recorder.RecordEnableDepthOfField(depthOfFieldEnabled);
                 }
@@ -788,7 +787,7 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
         /// <inheritdoc/>
-        public override void UpdateDevice()
+        protected override void UpdateDevice()
         {
             if (m_ActorAlignRequested)
             {
@@ -808,7 +807,7 @@ namespace Unity.LiveCapture.VirtualCamera
         }
 
         /// <inheritdoc/>
-        public override void LiveUpdate()
+        protected override void LiveUpdate()
         {
             UpdateFocusRigIfNeeded();
             Process();
@@ -1072,26 +1071,20 @@ namespace Unity.LiveCapture.VirtualCamera
             }
         }
 
-        /// <summary>
-        /// The device calls this method when the recording state has changed.
-        /// </summary>
-        protected override void OnRecordingChanged()
+        /// <inheritdoc/>
+        protected override void OnStartRecording()
         {
-            if (IsRecording())
+            base.OnStartRecording();
+
+            m_LensMetadata = m_Lens;
+            m_Recorder.OnReset = () =>
             {
-                var frameRate = GetTakeRecorder().FrameRate;
+                RecordCurrentValues();
+            };
+            m_Recorder.Prepare(m_Channels, TakeRecorder.FrameRate);
 
-                m_LensMetadata = m_Lens;
-
-                m_Recorder.OnReset = () =>
-                {
-                    RecordCurrentValues();
-                };
-                m_Recorder.Prepare(m_Channels, frameRate);
-
-                // Lens interpolation requires continuous updates.
-                Refresh();
-            }
+            // Lens interpolation requires continuous updates.
+            Refresh();
         }
 
         void UpdateRigOriginFromActor()
@@ -1643,7 +1636,7 @@ namespace Unity.LiveCapture.VirtualCamera
             {
                 // Record post-processed samples. Depending on the rate at which PresentAt is called,
                 // we could potentially generate more than one sample per update.
-                if (IsRecording())
+                if (IsRecording)
                 {
                     var time = sample.time;
                     var pose = sample.pose;

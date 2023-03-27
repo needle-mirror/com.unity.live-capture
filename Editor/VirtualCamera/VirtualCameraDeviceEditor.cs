@@ -110,10 +110,8 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         SnapshotLibrary m_EmptySnapshotLibrary;
         UnityEditor.Editor m_SnapshotLibraryEditor;
 
-        protected override void OnEnable()
+        void OnEnable()
         {
-            base.OnEnable();
-
             m_Device = target as VirtualCameraDevice;
 
             m_Actor = serializedObject.FindProperty("m_Actor");
@@ -143,8 +141,6 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         protected override void OnDeviceGUI()
         {
-            DoClientGUI();
-
             if (m_Device.GetClient() == null)
             {
                 LiveCaptureGUI.HelpBoxWithURL(Contents.MissingClientText, Contents.ReadMoreText,
@@ -183,7 +179,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
                 EditorGUILayout.PropertyField(m_Settings, Contents.Settings);
 
-                using (new EditorGUI.DisabledGroupScope(m_Device.IsRecording()))
+                using (new EditorGUI.DisabledGroupScope(m_Device.IsRecording))
                 {
                     EditorGUILayout.PropertyField(m_AnchorDeviceSettings, Contents.AnchorSettings);
                 }
@@ -245,7 +241,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
                 {
                     var menu = new GenericMenu();
 
-                    foreach (var(label, createActorFunc) in k_ActorCreateMenuItems)
+                    foreach (var (label, createActorFunc) in k_ActorCreateMenuItems)
                     {
                         menu.AddItem(label, false, () => AssignAndPingActor(createActorFunc()));
                     }
@@ -265,7 +261,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
             EditorGUIUtility.PingObject(newActor);
 
-            TakeRecorderEditor.RepaintEditors();
+            //TakeRecorderEditor.RepaintEditors();
         }
 
         static SnapshotLibrary CreateSnapshotLibrary(string name)
@@ -319,7 +315,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             }
 
             using (new EditorGUILayout.HorizontalScope())
-            using (new EditorGUI.DisabledScope(m_Device.IsRecording()))
+            using (new EditorGUI.DisabledScope(m_Device.IsRecording))
             {
                 using (new EditorGUI.DisabledScope(!m_Device.IsLiveAndReady()))
                 {

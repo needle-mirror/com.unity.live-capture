@@ -1,7 +1,12 @@
 #if HDRP_10_2_OR_NEWER && VP_CINEMACHINE_2_4_0
 using System;
+#if !CINEMACHINE_3_0_0_OR_NEWER
 using Cinemachine;
+using CinemachineCamera = Cinemachine.CinemachineVirtualCamera;
 using Cinemachine.PostFX;
+#else
+using Unity.Cinemachine;
+#endif
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
@@ -22,7 +27,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// The Cinemachine virtual camera driven by this component.
         /// </summary>
-        public CinemachineVirtualCamera CinemachineVirtualCamera { get; set; }
+        public CinemachineCamera CinemachineVirtualCamera { get; set; }
 
         void PrepareIfNeeded()
         {
@@ -56,7 +61,11 @@ namespace Unity.LiveCapture.VirtualCamera
 
             if (m_Volume != null)
             {
+#if CINEMACHINE_3_0_0_OR_NEWER
+                m_Volume.Profile = m_Profile;
+#else
                 m_Volume.m_Profile = m_Profile;
+#endif
 
                 VolumeProfileTracker.Instance.TryRegisterProfileOwner(m_Profile, m_Volume);
             }
@@ -115,6 +124,15 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             if (CinemachineVirtualCamera != null)
             {
+#if CINEMACHINE_3_0_0_OR_NEWER
+                CinemachineVirtualCamera.Lens.PhysicalProperties.Anamorphism = intrinsics.Anamorphism;
+                CinemachineVirtualCamera.Lens.PhysicalProperties.BarrelClipping = intrinsics.BarrelClipping;
+                CinemachineVirtualCamera.Lens.PhysicalProperties.Curvature = intrinsics.Curvature;
+                CinemachineVirtualCamera.Lens.PhysicalProperties.BladeCount = intrinsics.BladeCount;
+                CinemachineVirtualCamera.Lens.PhysicalProperties.Iso = cameraBody.Iso;
+                CinemachineVirtualCamera.Lens.PhysicalProperties.ShutterSpeed = cameraBody.ShutterSpeed;
+                CinemachineVirtualCamera.Lens.PhysicalProperties.Aperture = lens.Aperture;
+#else
                 CinemachineVirtualCamera.m_Lens.Anamorphism = intrinsics.Anamorphism;
                 CinemachineVirtualCamera.m_Lens.BarrelClipping = intrinsics.BarrelClipping;
                 CinemachineVirtualCamera.m_Lens.Curvature = intrinsics.Curvature;
@@ -122,6 +140,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 CinemachineVirtualCamera.m_Lens.Iso = cameraBody.Iso;
                 CinemachineVirtualCamera.m_Lens.ShutterSpeed = cameraBody.ShutterSpeed;
                 CinemachineVirtualCamera.m_Lens.Aperture = lens.Aperture;
+#endif
             }
         }
     }

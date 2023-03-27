@@ -166,7 +166,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 var rigSettings = GetRigSettings(settings);
                 var applyDamping = ApplyDamping?.Invoke() ?? false;
 
-                if (m_InputKeyframes.GetLatest(CurrentFrameTime) is {} key)
+                if (m_InputKeyframes.GetLatest(CurrentFrameTime) is { } key)
                 {
                     var pose = key.ARPose;
 
@@ -192,7 +192,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
                     isPoseValid = true;
                 }
-                if (m_FocusDistanceKeyframes.GetLatest(CurrentFrameTime) is {} focusDistanceTarget)
+                if (m_FocusDistanceKeyframes.GetLatest(CurrentFrameTime) is { } focusDistanceTarget)
                 {
                     newLens.FocusDistance = Mathf.SmoothDamp(
                         newLens.FocusDistance,
@@ -200,7 +200,7 @@ namespace Unity.LiveCapture.VirtualCamera
                         settings.FocusDistanceDamping, k_MaxSpeed, deltaTime);
                     isLensValid = true;
                 }
-                if (m_FocalLengthKeyframes.GetLatest(CurrentFrameTime) is {} focalLengthTarget)
+                if (m_FocalLengthKeyframes.GetLatest(CurrentFrameTime) is { } focalLengthTarget)
                 {
                     newLens.FocalLength = Mathf.SmoothDamp(
                         newLens.FocalLength,
@@ -208,7 +208,7 @@ namespace Unity.LiveCapture.VirtualCamera
                         settings.FocalLengthDamping, k_MaxSpeed, deltaTime);
                     isLensValid = true;
                 }
-                if (m_ApertureKeyframes.GetLatest(CurrentFrameTime) is {} apertureTarget)
+                if (m_ApertureKeyframes.GetLatest(CurrentFrameTime) is { } apertureTarget)
                 {
                     newLens.Aperture = Mathf.SmoothDamp(
                         newLens.Aperture,

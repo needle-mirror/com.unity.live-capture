@@ -20,10 +20,10 @@ namespace Unity.LiveCapture.Networking
         /// Get the online IPv4 addresses from all network interfaces in the system.
         /// </summary>
         /// <param name="includeLoopback">Include any addresses on the loopback interface.</param>
-        /// <returns>A new array containing the available IP addresses.</returns>
-        public static IPAddress[] GetIPAddresses(bool includeLoopback)
+        /// <returns>A new array containing the available pairs of IP address and the <see cref="NetworkInterface"/> that it belongs to.</returns>
+        public static (IPAddress IP, NetworkInterface Interface)[] GetIPInterfaces(bool includeLoopback)
         {
-            var addresses = new List<IPAddress>();
+            var addresses = new List<(IPAddress, NetworkInterface)>();
 
             foreach (var networkInterface in NetworkInterface.GetAllNetworkInterfaces())
             {
@@ -49,12 +49,22 @@ namespace Unity.LiveCapture.Networking
 
                     if (address.AddressFamily == AddressFamily.InterNetwork)
                     {
-                        addresses.Add(address);
+                        addresses.Add((address, networkInterface));
                     }
                 }
             }
 
             return addresses.ToArray();
+        }
+
+        /// <summary>
+        /// Get the online IPv4 addresses from all network interfaces in the system.
+        /// </summary>
+        /// <param name="includeLoopback">Include any addresses on the loopback interface.</param>
+        /// <returns>A new array containing the available IP addresses.</returns>
+        public static IPAddress[] GetIPAddresses(bool includeLoopback)
+        {
+            return GetIPInterfaces(includeLoopback).Select(x => x.IP).ToArray();
         }
 
         /// <summary>

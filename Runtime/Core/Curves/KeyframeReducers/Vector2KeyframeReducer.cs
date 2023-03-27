@@ -67,6 +67,6 @@ namespace Unity.LiveCapture
 
     class Vector2KeyframeReducer : KeyframeReducer<Keyframe<Vector2>>
     {
-        public Vector2KeyframeReducer() : base(Vector2KeyframeReducerImpl.Instance) {}
+        public Vector2KeyframeReducer() : base(Vector2KeyframeReducerImpl.Instance) { }
     }
 }

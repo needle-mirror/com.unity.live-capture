@@ -94,7 +94,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server.Messages
                 if (value == null)
                     commandArray = new string[] { String.Empty };
                 else
-                    commandArray = value.Split(new char[] {' '}, 3);
+                    commandArray = value.Split(new char[] { ' ' }, 3);
             }
         }
 
@@ -250,7 +250,8 @@ namespace Unity.LiveCapture.VideoStreaming.Server.Messages
             }
             outputString.Append("\r\n");
             byte[] buffer = encoder.GetBytes(outputString.ToString());
-            lock (stream) {
+            lock (stream)
+            {
                 stream.Write(buffer, 0, buffer.Length);
 
                 // Output data

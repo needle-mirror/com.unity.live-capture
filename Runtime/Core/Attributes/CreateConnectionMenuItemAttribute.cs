@@ -6,7 +6,7 @@ namespace Unity.LiveCapture
     /// An attribute placed on <see cref="Connection"/> implementations to specify where
     /// the connection appears in the create connection menu.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class,  Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class CreateConnectionMenuItemAttribute : MenuPathAttribute
     {
         /// <summary>

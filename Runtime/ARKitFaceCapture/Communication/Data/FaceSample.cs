@@ -23,7 +23,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.Networking
                 m_HeadOrientation = sample.FacePose.HeadOrientation,
                 m_LeftEyeOrientation = sample.FacePose.LeftEyeOrientation,
                 m_RightEyeOrientation = sample.FacePose.RightEyeOrientation,
-            };;
+            };
         }
 
         public static explicit operator FaceSample(FaceSampleV0 sample)
@@ -64,7 +64,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.Networking
                 m_HeadOrientation = sample.FacePose.HeadOrientation,
                 m_LeftEyeOrientation = sample.FacePose.LeftEyeOrientation,
                 m_RightEyeOrientation = sample.FacePose.RightEyeOrientation,
-            };;
+            };
         }
 
         public static explicit operator FaceSample(FaceSampleV1 sample)

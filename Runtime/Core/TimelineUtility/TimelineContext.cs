@@ -133,8 +133,10 @@ namespace Unity.LiveCapture
             unchecked
             {
                 var hashCode = m_Director.GetHashCode();
-                hashCode = (hashCode * 397) ^ m_Track.GetHashCode();
-                hashCode = (hashCode * 397) ^ m_Asset.GetHashCode();
+                if (m_Track != null)
+                    hashCode = (hashCode * 397) ^ m_Track.GetHashCode();
+                if (m_Asset != null)
+                    hashCode = (hashCode * 397) ^ m_Asset.GetHashCode();
                 return hashCode;
             }
         }

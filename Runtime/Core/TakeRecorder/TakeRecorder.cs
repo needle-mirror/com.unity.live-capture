@@ -1,318 +1,111 @@
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-using UnityObject = UnityEngine.Object;
+
+using Object = UnityEngine.Object;
 
 namespace Unity.LiveCapture
 {
-    /// <summary>
-    /// A take recorder that manages a set of capture devices.
-    /// </summary>
-    [ExecuteAlways]
-    [DefaultExecutionOrder(-10)]
-    [DisallowMultipleComponent]
-    [ExcludeFromPreset]
-    [RequireComponent(typeof(PlayableDirector))]
-    [AddComponentMenu("Live Capture/Take Recorder")]
-    [HelpURL(Documentation.baseURL + "ref-component-take-recorder" + Documentation.endURL)]
-    public class TakeRecorder : MonoBehaviour, ITakeRecorderInternal
+    class TakeRecorderImpl
     {
-        static List<TakeRecorder> s_Instances = new List<TakeRecorder>();
-        internal static TakeRecorder Main => s_Instances.FirstOrDefault();
+        public static TakeRecorderImpl Instance { get; } = new TakeRecorderImpl(LiveCaptureDeviceManager.Instance);
 
-        /// <summary>
-        /// TakeRecorder executes this event when recording has started or stopped.
-        /// </summary>
-        public static event Action<TakeRecorder> RecordingStateChanged;
-
-        /// <summary>
-        /// TakeRecorder executes this event when playback has started or stopped.
-        /// </summary>
-        public static event Action<TakeRecorder> PlaybackStateChanged;
-
-        internal static void ClearSubscribers()
-        {
-            RecordingStateChanged = null;
-            PlaybackStateChanged = null;
-        }
-        
-        [SerializeField]
-        PlayableDirectorContext m_DefaultContext = new PlayableDirectorContext();
-
-        [SerializeField, OnlyStandardFrameRates]
-        FrameRate m_FrameRate = StandardFrameRate.FPS_30_00;
-
-        [SerializeField]
-        List<LiveCaptureDevice> m_Devices = new List<LiveCaptureDevice>();
-
-        [SerializeField]
-        bool m_Live = true;
-
-        [SerializeField]
-        bool m_PlayTakeContent;
-
+        LiveCaptureDeviceManager m_DeviceManager;
+        ITakeRecorderContext m_Context;
         List<LiveCaptureDevice> m_RecordingDevices = new List<LiveCaptureDevice>();
-        bool m_Recording;
+        bool m_IsLive = true;
         double m_RecordingStartTime;
         Playable m_RecordTimer;
         bool m_IsPlayingCached;
         TakeRecorderPlaybackState m_PlaybackState = new TakeRecorderPlaybackState();
-        List<ITakeRecorderContextProvider> m_ContextProviders = new List<ITakeRecorderContextProvider>();
-        ITakeRecorderContext m_LockedContext;
         ITakeRecorderContext m_RecordContext;
         Texture2D m_Screenshot;
-
         internal ITakeRecorderContext RecordContext => m_RecordContext;
         internal ITakeRecorderContext PlaybackContext => m_PlaybackState.Context;
         // For testing purposes only.
-        internal bool SkipProducingAssets { get; set; }
         internal bool SkipDeviceReadyCheck { get; set; }
-        internal bool PlayTakeContent
-        {
-            get => m_PlayTakeContent;
-            set => m_PlayTakeContent = value;
-        }
+        internal bool SkipProducingAssets { get; set; }
+        public bool PlayTakeContents { get; set; }
 
-        /// <inheritdoc/>
         public FrameRate FrameRate
         {
-            get => m_FrameRate;
-            set
-            {
-                if (!IsRecording())
-                {
-                    m_FrameRate = value;
-                }
-            }
+            get => LiveCaptureSettings.Instance.FrameRate;
+            set => LiveCaptureSettings.Instance.FrameRate = value;
         }
 
-        /// <inheritdoc/>
-        public IShot Shot => Context;
-
-        internal ITakeRecorderContext Context
+        public ITakeRecorderContext Context
         {
             get
             {
                 TryGetContext(out var context);
+
                 return context;
             }
         }
 
-        /// <inheritdoc/>
-        bool ITakeRecorderInternal.IsEnabled => isActiveAndEnabled;
-
-        /// <inheritdoc/>
-        void ITakeRecorderInternal.SetPreviewTime(UnityObject obj, double time)
+        public void LiveUpdate()
         {
-            if (TryFindContext(obj, out var context))
-            {
-                context.SetTime(time);
-            }
-        }
-
-        bool TryFindContext(UnityObject obj, out ITakeRecorderContext context)
-        {
-            context = null;
-
-            foreach (var contextProvider in m_ContextProviders)
-            {
-                foreach (var ctx in contextProvider.Contexts)
-                {
-                    if (ctx.UnityObject == obj)
-                    {
-                        context = ctx;
-
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        void OnEnable()
-        {
-            s_Instances.Add(this);
-
-            TakeRecorderUpdateManager.Instance.Register(this);
-        }
-
-        void OnDisable()
-        {
-            s_Instances.Remove(this);
-
-            StopRecording();
-            PausePreview();
-            DisposeScreenshot();
-
-            TakeRecorderUpdateManager.Instance.Unregister(this);
-        }
-
-        void OnValidate()
-        {
-            m_Devices.RemoveAll(device => !IsDeviceValid(device));
-
-            m_DefaultContext.Director = GetComponent<PlayableDirector>();
-            m_DefaultContext.UnityObject = this;
-        }
-
-        void Awake()
-        {
-            OnValidate();
-        }
-
-        void Reset()
-        {
-            OnValidate();
-
-            var devices = GetComponentsInChildren<LiveCaptureDevice>(true)
-                .Where(d => IsDeviceValid(d));
-
-            m_Devices.AddRange(devices);
-        }
-
-        internal void AddDevice(LiveCaptureDevice device)
-        {
-            m_Devices.AddUnique(device);
-        }
-
-        internal void RemoveDevice(LiveCaptureDevice device)
-        {
-            m_Devices.Remove(device);
-        }
-
-        internal bool ContainsDevice(LiveCaptureDevice device)
-        {
-            return m_Devices.Contains(device);
-        }
-
-        internal void LiveUpdate()
-        {
-            if (IsLive())
-            {
-                foreach (var device in m_Devices)
-                {
-                    if (IsDeviceValid(device)
-                        && device.isActiveAndEnabled
-                        && device.IsReady())
-                    {
-                        try
-                        {
-                            device.LiveUpdate();
-                        }
-                        catch (Exception exception)
-                        {
-                            Debug.LogException(exception);
-                        }
-                    }
-                }
-            }
-
+            UpdateRecordingElapsedTime();
+            HandleIsLiveChanged();
             HandleRecordingEnded();
             PlaybackChangeCheck();
         }
 
-        /// <inheritdoc/>
-        public bool IsLive()
-        {
-            return m_Live;
-        }
-
-        /// <inheritdoc/>
-        public void SetLive(bool value)
-        {
-            if (m_Live == value)
-            {
-                return;
-            }
-
-            m_Live = value;
-
-            if (IsLive())
-            {
-                m_PlaybackState.Stop();
-            }
-            else
-            {
-                StopRecording();
-            }
-        }
-
-        /// <inheritdoc/>
-        public bool IsRecording()
-        {
-            return m_Recording;
-        }
-
-        /// <inheritdoc/>
         public void StartRecording()
         {
-            if (isActiveAndEnabled && CanStartRecording())
+            if (!IsRecording
+                && CanStartRecording()
+                && TryGetContext(out m_RecordContext))
             {
-                StartRecordingInternal();
+                IsRecording = true;
+
+                TakeScreenshot(ref m_Screenshot);
+                RebuildContext();
+
+                m_RecordTimer = StartTimer();
+                m_RecordingStartTime = DateTime.Now.TimeOfDay.TotalSeconds;
+
+                UpdateRecordingElapsedTime();
+                Play();
+
+                foreach (var device in m_DeviceManager.Devices)
+                {
+                    Debug.Assert(device != null);
+
+                    device.InvokeStartRecording();
+                }
+
+                TakeRecorder.InvokeRecordingStateChange();
             }
         }
 
-        internal void StartRecordingInternal()
+        public void StopRecording()
         {
-            if (!IsRecording()
-                && IsLive()
-                && TryGetContext(out m_RecordContext))
+            if (IsRecording)
             {
-                m_Recording = true;
-                m_RecordTimer = StartTimer();
+                IsRecording = false;
 
-                TakeScreenshot();
-                RebuildContext();
-                PlayPreview();
-
-                m_RecordingStartTime = DateTime.Now.TimeOfDay.TotalSeconds;
+                Stop();
 
                 m_RecordingDevices.Clear();
 
-                foreach (var device in m_Devices)
+                foreach (var device in m_DeviceManager.Devices)
                 {
-                    if (IsDeviceReadyForRecording(device))
+                    Debug.Assert(device != null);
+
+                    if (device.IsRecording)
                     {
                         m_RecordingDevices.Add(device);
-                        device.StartRecording();
                     }
+
+                    device.InvokeStopRecording();
                 }
 
-                NotifyRecordingStateChange();
-            }
-        }
-
-        /// <inheritdoc/>
-        public void StopRecording()
-        {
-            if (!IsRecording())
-            {
-                return;
-            }
-
-            m_PlaybackState.Stop();
-            StopRecordingInternal();
-        }
-
-        void StopRecordingInternal()
-        {
-            if (IsRecording())
-            {
-                m_Recording = false;
-
-                foreach (var device in m_RecordingDevices)
-                {
-                    if (IsDeviceValid(device) && device.IsRecording())
-                    {
-                        device.StopRecording();
-                    }
-                }
+                Debug.Assert(m_RecordContext != null);
 
                 if (m_RecordContext.IsValid())
                 {
@@ -322,31 +115,20 @@ namespace Unity.LiveCapture
                     RebuildContext();
                 }
 
+                m_RecordingDevices.Clear();
                 m_RecordContext = null;
-                
+
                 StopTimer(ref m_RecordTimer);
-                DisposeScreenshot();
-                NotifyRecordingStateChange();
+                DisposeScreenshot(ref m_Screenshot);
+                UpdateRecordingElapsedTime();
+
+                TakeRecorder.InvokeRecordingStateChange();
             }
         }
 
-        /// <inheritdoc/>
-        public double GetRecordingElapsedTime()
+        public bool IsPlaying()
         {
-            if (isActiveAndEnabled && IsRecording())
-            {
-                Debug.Assert(m_RecordTimer.IsValid());
-
-                return m_RecordTimer.GetTime();
-            }
-
-            return 0d;
-        }
-
-        /// <inheritdoc/>
-        public bool IsPreviewPlaying()
-        {
-            if (isActiveAndEnabled && TryGetContext(out var context))
+            if (TryGetContext(out var context))
             {
                 return context.IsPlaying();
             }
@@ -354,42 +136,44 @@ namespace Unity.LiveCapture
             return false;
         }
 
-        /// <inheritdoc/>
-        public void PlayPreview()
+        public void Play()
         {
-            if (isActiveAndEnabled && !m_PlaybackState.IsPlaying() && TryGetContext(out var context))
+            if (!m_PlaybackState.IsPlaying() && TryGetContext(out var context))
             {
                 var mode = TakeRecorderPlaybackMode.Context;
 
-                if (PlayTakeContent)
+                if (PlayTakeContents)
                 {
                     mode = TakeRecorderPlaybackMode.Contents;
                 }
 
-                if (IsRecording())
+                if (IsRecording)
                 {
                     mode = TakeRecorderPlaybackMode.Recording;
                 }
 
                 m_PlaybackState.Play(context, mode);
 
-                PlaybackChangeCheck();
+                if (m_PlaybackState.IsPlaying())
+                {
+                    PlaybackChangeCheck();
+                }
             }
         }
 
-        internal void GoToBeginning()
+        public void GoToBeginning()
         {
-            if (isActiveAndEnabled && TryGetContext(out var context))
+            if (TryGetContext(out var context))
             {
                 var time = 0d;
 
-                if (m_PlayTakeContent)
+                if (PlayTakeContents && context.GetSelectedShot() is Shot shot)
                 {
-                    var take = context.Take;
+                    var take = shot.Take;
 
                     if (take != null && take.TryGetContentRange(out var start, out var end))
                     {
-                        var timeOffset = context.GetTimeOffset();
+                        var timeOffset = shot.TimeOffset;
 
                         time = start - timeOffset;
                     }
@@ -400,9 +184,9 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public void PausePreview()
+        public void Pause()
         {
-            if (isActiveAndEnabled && TryGetContext(out var context))
+            if (TryGetContext(out var context))
             {
                 context.Pause();
 
@@ -411,10 +195,10 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public double GetPreviewDuration()
+        public double GetDuration()
         {
             if (TryGetContext(out var context))
-            {   
+            {
                 return context.GetDuration();
             }
 
@@ -422,7 +206,7 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public double GetPreviewTime()
+        public double GetTime()
         {
             if (TryGetContext(out var context))
             {
@@ -432,15 +216,19 @@ namespace Unity.LiveCapture
             return 0d;
         }
 
-        /// <inheritdoc/>
-        public void SetPreviewTime(double time)
+        public void SetTime(double time)
         {
-            if (isActiveAndEnabled && TryGetContext(out var context))
+            if (TryGetContext(out var context))
             {
                 context.SetTime(time);
 
                 PlaybackChangeCheck();
             }
+        }
+
+        public void Stop()
+        {
+            m_PlaybackState.Stop();
         }
 
         void RebuildContext()
@@ -461,11 +249,17 @@ namespace Unity.LiveCapture
 
             Debug.Assert(context != null);
 
-            var contextStartTime = context.GetTimeOffset();
+            var index = context.Selection;
+
+            if (context.GetSelectedShot() is not Shot shot)
+            {
+                return;
+            }
+
+            var contextStartTime = shot.TimeOffset;
             var contextDuration = context.GetDuration();
             var recordingStartTime = m_PlaybackState.InitialOffset;
             var recordingDuration = m_RecordTimer.GetTime();
-            var slate = context.Slate;
             var resolver = context.GetResolver();
 
             Debug.Assert(resolver != null);
@@ -475,13 +269,13 @@ namespace Unity.LiveCapture
                 contextDuration,
                 recordingStartTime,
                 recordingDuration,
-                slate.SceneNumber,
-                slate.ShotName,
-                slate.TakeNumber,
-                slate.Description,
-                context.Directory,
+                shot.SceneNumber,
+                shot.Name,
+                shot.TakeNumber,
+                shot.Description,
+                shot.Directory,
                 DateTime.Now,
-                context.IterationBase,
+                shot.IterationBase,
                 FrameRate,
                 m_Screenshot,
                 resolver);
@@ -497,18 +291,21 @@ namespace Unity.LiveCapture
                 takeBuilder.Take.Duration = timeline.duration;
             }
 
-            slate.TakeNumber++;
+            shot.TakeNumber++;
 
-            context.Take = takeBuilder.Take;
-            context.Slate = slate;
+            var take = takeBuilder.Take;
+
+            shot.Take = take;
+
+            context.SetShot(index, shot);
 
             var director = resolver as PlayableDirector;
 
             SetDirty(director);
-            SetDirty(context.UnityObject);
+            SetDirty(context.GetShotStorage());
         }
 
-        void SetDirty(UnityObject obj)
+        void SetDirty(Object obj)
         {
 #if UNITY_EDITOR
             if (obj != null)
@@ -522,7 +319,7 @@ namespace Unity.LiveCapture
         {
             foreach (var device in m_RecordingDevices)
             {
-                if (IsDeviceValid(device))
+                if (device != null && device.isActiveAndEnabled)
                 {
                     try
                     {
@@ -537,34 +334,19 @@ namespace Unity.LiveCapture
             takeBuilder.AlignTracks(m_RecordingStartTime);
         }
 
-        void Update()
+        public void Update()
         {
-            foreach (var device in m_Devices)
+            if (m_Context != null)
             {
-                if (IsDeviceValid(device) && device.isActiveAndEnabled)
-                {
-                    try
-                    {
-                        device.UpdateDevice();
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogException(e);
-                    }
-                }
+                m_Context.Update();
             }
 
             m_PlaybackState.Update();
         }
 
-        bool IsDeviceValid(LiveCaptureDevice device)
+        bool IsDeviceReady(LiveCaptureDevice device)
         {
-            return device != null && device.transform.parent == transform;
-        }
-
-        bool IsDeviceReadyForRecording(LiveCaptureDevice device)
-        {
-            return IsDeviceValid(device) && device.isActiveAndEnabled && device.IsReady();
+            return device != null && device.isActiveAndEnabled && device.IsLive && device.IsReady();
         }
 
         bool AreDevicesReadyForRecording(IEnumerable<LiveCaptureDevice> devices)
@@ -576,7 +358,7 @@ namespace Unity.LiveCapture
 
             foreach (var device in devices)
             {
-                if (IsDeviceReadyForRecording(device))
+                if (IsDeviceReady(device))
                 {
                     return true;
                 }
@@ -587,161 +369,73 @@ namespace Unity.LiveCapture
 
         internal bool CanStartRecording()
         {
-            return AreDevicesReadyForRecording(m_Devices);
-        }
-
-        void TakeScreenshot()
-        {
-            DisposeScreenshot();
-
-            var camera = LiveCaptureUtility.GetTopCamera();
-
-            if (camera != null)
+            if (IsLive && TryGetContext(out var context) && context.GetSelectedShot() is not null)
             {
-                m_Screenshot = Screenshot.Take(camera);
-            }
-        }
-
-        void DisposeScreenshot()
-        {
-            if (m_Screenshot != null)
-            {
-                if (Application.isPlaying)
-                {
-                    Destroy(m_Screenshot);
-                }
-                else
-                {
-                    DestroyImmediate(m_Screenshot);
-                }
-            }
-        }
-
-        internal void AddContextProvider(ITakeRecorderContextProvider contextProvider)
-        {
-            m_ContextProviders.AddUnique(contextProvider);
-        }
-
-        internal void RemoveContextProvider(ITakeRecorderContextProvider contextProvider)
-        {
-            m_ContextProviders.Remove(contextProvider);
-        }
-
-        internal bool HasExternalContextProvider()
-        {
-            return m_ContextProviders.Count > 0;
-        }
-
-        internal void LockContext()
-        {
-            if (TryGetContext(out var context))
-            {
-                LockContext(context);
-            }
-        }
-
-        internal void LockContext(ITakeRecorderContext context)
-        {
-            m_LockedContext = context;
-        }
-
-        internal void UnlockContext()
-        {
-            m_LockedContext = null;
-        }
-
-        internal bool IsLocked()
-        {
-            return m_LockedContext != null && m_LockedContext.IsValid();
-        }
-
-        bool TryGetContext(out ITakeRecorderContext context)
-        {
-            context = default(ITakeRecorderContext);
-
-            if (m_LockedContext != null && m_LockedContext.IsValid())
-            {
-                context = m_LockedContext;
-
-                return true;
-            }
-
-            foreach (var contextProvider in m_ContextProviders)
-            {
-                var activeContext = contextProvider.GetActiveContext();
-
-                if (activeContext != null)
-                {
-                    context = activeContext;
-
-                    return true;
-                }
-            }
-
-            if (m_ContextProviders.Count == 0 && m_DefaultContext.IsValid())
-            {
-                context = m_DefaultContext;
-
-                return true;
+                return AreDevicesReadyForRecording(m_DeviceManager.Devices);
             }
 
             return false;
         }
 
-        void NotifyRecordingStateChange()
+        static void TakeScreenshot(ref Texture2D texture)
         {
-            try
+            DisposeScreenshot(ref texture);
+
+            var camera = LiveCaptureUtility.GetTopCamera();
+
+            if (camera != null)
             {
-                RecordingStateChanged?.Invoke(this);
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
+                texture = Screenshot.Take(camera);
             }
         }
 
-        void NotifyPlaybackStateChange()
+        static void DisposeScreenshot(ref Texture2D texture)
         {
-            try
+            if (texture != null)
             {
-                PlaybackStateChanged?.Invoke(this);
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
+                if (Application.isPlaying)
+                {
+                    Object.Destroy(texture);
+                }
+                else
+                {
+                    Object.DestroyImmediate(texture);
+                }
+
+                texture = null;
             }
         }
 
         void PlaybackChangeCheck()
         {
-            var isPlaying = IsPreviewPlaying();
+            var isPlaying = IsPlaying();
 
             if (m_IsPlayingCached != isPlaying)
             {
                 m_IsPlayingCached = isPlaying;
 
-                NotifyPlaybackStateChange();
+                TakeRecorder.InvokePlaybackStateChange();
             }
         }
 
         void HandleRecordingEnded()
         {
-            if (IsRecording())
+            if (IsRecording)
             {
-                if(!AreDevicesReadyForRecording(m_RecordingDevices))
+                if (!CanStartRecording())
                 {
                     StopRecording();
                 }
                 else if (m_RecordContext.IsValid())
                 {
-                    if(m_RecordContext.GetDuration() > 0d && !m_RecordContext.IsPlaying())
+                    if (m_RecordContext.GetDuration() > 0d && !m_RecordContext.IsPlaying())
                     {
-                        StopRecordingInternal();
+                        StopRecording();
                     }
                 }
                 else
                 {
-                    StopRecordingInternal();
+                    StopRecording();
                 }
             }
         }
@@ -777,6 +471,231 @@ namespace Unity.LiveCapture
             }
 
             playable = Playable.Null;
+        }
+
+        void HandleIsLiveChanged()
+        {
+            if (m_IsLive != IsLive)
+            {
+                m_IsLive = IsLive;
+
+                TakeRecorder.InvokeLiveStateChange();
+
+                if (m_IsLive)
+                {
+                    Stop();
+                }
+                else
+                {
+                    StopRecording();
+                }
+            }
+        }
+
+        bool TryGetContext(out ITakeRecorderContext context)
+        {
+            context = m_Context;
+
+            return context != null;
+        }
+
+        /// <summary>
+        /// Indicates whether the take recorder is ready for recording.
+        /// </summary>
+        public bool IsLive
+        {
+            get => m_DeviceManager.IsLive;
+            set => m_DeviceManager.IsLive = value;
+        }
+
+        /// <summary>
+        /// Checks whether the take recorder is recording or not.
+        /// </summary>
+        /// <returns>
+        /// true if playing; otherwise, false.
+        /// </returns>
+        public bool IsRecording { get; private set; }
+
+        /// <summary>
+        /// The time elapsed since the start of the recording.
+        /// </summary>
+        public double RecordingElapsedTime { get; internal set; }
+
+        public TakeRecorderImpl(LiveCaptureDeviceManager deviceManager)
+        {
+            if (deviceManager == null)
+            {
+                throw new ArgumentNullException(nameof(deviceManager));
+            }
+
+            m_DeviceManager = deviceManager;
+        }
+
+        public void SetContext(ITakeRecorderContext context)
+        {
+            if (context != m_Context)
+            {
+                Pause();
+                StopRecording();
+
+                m_Context = context;
+            }
+        }
+
+        void UpdateRecordingElapsedTime()
+        {
+            if (m_RecordTimer.IsValid())
+            {
+                RecordingElapsedTime = m_RecordTimer.GetTime();
+            }
+        }
+    }
+
+    /// <summary>
+    /// A take recorder that manages a set of capture devices.
+    /// </summary>
+    //[HelpURL(Documentation.baseURL + "ref-component-take-recorder" + Documentation.endURL)]
+    public static class TakeRecorder
+    {
+        /// <summary>
+        /// TakeRecorder executes this event when live mode has been enabled or disabled.
+        /// </summary>
+        public static event Action LiveStateChanged;
+
+        /// <summary>
+        /// TakeRecorder executes this event when recording has started or stopped.
+        /// </summary>
+        public static event Action RecordingStateChanged;
+
+        /// <summary>
+        /// TakeRecorder executes this event when playback has started or stopped.
+        /// </summary>
+        public static event Action PlaybackStateChanged;
+
+        internal static TakeRecorderImpl Impl { get; set; } = TakeRecorderImpl.Instance;
+
+        internal static void ClearSubscribers()
+        {
+            LiveStateChanged = null;
+            RecordingStateChanged = null;
+            PlaybackStateChanged = null;
+        }
+
+        /// <summary>
+        /// Indicates whether the take recorder is ready for recording.
+        /// </summary>
+        public static bool IsLive
+        {
+            get => Impl.IsLive;
+            set => Impl.IsLive = value;
+        }
+
+        /// <summary>
+        /// Indicates whether or not to play the entire shot or just the range where the
+        /// Take contains recorded data.
+        /// </summary>
+        public static bool PlayTakeContents
+        {
+            get => Impl.PlayTakeContents;
+            set => Impl.PlayTakeContents = value;
+        }
+
+        /// <summary>
+        /// The frame rate to use for recording.
+        /// </summary>
+        public static FrameRate FrameRate
+        {
+            get => Impl.FrameRate;
+            set => Impl.FrameRate = value;
+        }
+
+        /// <summary>
+        /// The current <see cref="Shot"/> to record to.
+        /// </summary>
+        public static Shot? Shot => Context?.GetSelectedShot();
+
+        internal static ITakeRecorderContext Context => Impl.Context;
+
+        internal static void SetContext(ITakeRecorderContext context) => Impl.SetContext(context);
+
+        /// <summary>
+        /// Checks whether the take recorder is recording or not.
+        /// </summary>
+        /// <returns>
+        /// true if playing; otherwise, false.
+        /// </returns>
+        public static bool IsRecording() => Impl.IsRecording;
+
+        /// <summary>
+        /// Starts the recording of a new take for the selected slate.
+        /// </summary>
+        public static void StartRecording() => Impl.StartRecording();
+
+        /// <summary>
+        /// Stops the recording.
+        /// </summary>
+        public static void StopRecording() => Impl.StopRecording();
+
+        /// <summary>
+        /// Returns the time elapsed since the start of the recording.
+        /// </summary>
+        /// <returns>The time elapsed since the start of the recording, in seconds.</returns>
+        public static double GetRecordingElapsedTime() => Impl.RecordingElapsedTime;
+
+        /// <summary>
+        /// Checks whether the take recorder is playing the selected take or not.
+        /// </summary>
+        /// <returns>
+        /// true if playing; otherwise, false.
+        /// </returns>
+        public static bool IsPreviewPlaying() => Impl.IsPlaying();
+
+        /// <summary>
+        /// Starts playing the selected take.
+        /// </summary>
+        public static void PlayPreview() => Impl.Play();
+
+        internal static void GoToBeginning() => Impl.GoToBeginning();
+
+        /// <summary>
+        /// Pauses the playback of the selected take.
+        /// </summary>
+        public static void PausePreview() => Impl.Pause();
+
+        /// <summary>
+        /// Returns the current playback duration of the selected take.
+        /// </summary>
+        /// <returns>The current duration in seconds.</returns>
+        public static double GetPreviewDuration() => Impl.GetDuration();
+
+        /// <summary>
+        /// Returns the current playback time of the selected take.
+        /// </summary>
+        /// <returns>The current time in seconds.</returns>
+        public static double GetPreviewTime() => Impl.GetTime();
+
+        /// <summary>
+        /// Changes the current playback time of the selected take.
+        /// </summary>
+        /// <param name="time">The current time in seconds.</param>
+        public static void SetPreviewTime(double time) => Impl.SetTime(time);
+
+        internal static void InvokeLiveStateChange() => Invoke(LiveStateChanged);
+
+        internal static void InvokeRecordingStateChange() => Invoke(RecordingStateChanged);
+
+        internal static void InvokePlaybackStateChange() => Invoke(PlaybackStateChanged);
+
+        static void Invoke(Action action)
+        {
+            try
+            {
+                action?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
         }
     }
 }

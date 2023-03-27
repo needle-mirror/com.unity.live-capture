@@ -26,7 +26,6 @@ namespace Unity.LiveCapture
     /// </summary>
     class TimelineHierarchy
     {
-        const double k_Tick = 0.016666666d;
         internal static TimelineHierarchy Instance { get; } = new TimelineHierarchy();
 
         ITimelineHierarchyImpl m_Impl;

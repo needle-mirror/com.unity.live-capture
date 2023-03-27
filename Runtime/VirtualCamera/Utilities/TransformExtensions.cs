@@ -7,7 +7,7 @@ namespace Unity.LiveCapture.VirtualCamera
     {
         public static Pose GetPose(this Transform transform, Space space)
         {
-            if(transform == null)
+            if (transform == null)
             {
                 throw new ArgumentNullException(nameof(transform));
             }

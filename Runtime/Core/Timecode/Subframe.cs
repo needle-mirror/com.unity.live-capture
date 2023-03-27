@@ -190,7 +190,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> have the same value; otherwise, <see langword="false"/>.</returns>
-        public static bool operator==(Subframe a, Subframe b) => a.Equals(b);
+        public static bool operator ==(Subframe a, Subframe b) => a.Equals(b);
 
         /// <summary>
         /// Indicates whether two specified instances of <see cref="Subframe"/> are not equal.
@@ -198,7 +198,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> do not have the same value; otherwise, <see langword="false"/>.</returns>
-        public static bool operator!=(Subframe a, Subframe b) => !a.Equals(b);
+        public static bool operator !=(Subframe a, Subframe b) => !a.Equals(b);
 
         /// <summary>
         /// Indicates whether one specified <see cref="Subframe"/> is later than or the same as another specified <see cref="Subframe"/>.
@@ -206,7 +206,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is later than or the same as <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator>=(Subframe a, Subframe b) => a.CompareTo(b) >= 0;
+        public static bool operator >=(Subframe a, Subframe b) => a.CompareTo(b) >= 0;
 
         /// <summary>
         /// Indicates whether one specified <see cref="Subframe"/> is earlier than or the same as another specified <see cref="Subframe"/>.
@@ -214,7 +214,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is earlier than or the same as <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator<=(Subframe a, Subframe b) => a.CompareTo(b) <= 0;
+        public static bool operator <=(Subframe a, Subframe b) => a.CompareTo(b) <= 0;
 
         /// <summary>
         /// Indicates whether one specified <see cref="Subframe"/> is later than another specified <see cref="Subframe"/>.
@@ -222,7 +222,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is later than <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator>(Subframe a, Subframe b) => a.CompareTo(b) > 0;
+        public static bool operator >(Subframe a, Subframe b) => a.CompareTo(b) > 0;
 
         /// <summary>
         /// Indicates whether one specified <see cref="Subframe"/> is earlier than another specified <see cref="Subframe"/>.
@@ -230,7 +230,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is earlier than <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator<(Subframe a, Subframe b) => a.CompareTo(b) < 0;
+        public static bool operator <(Subframe a, Subframe b) => a.CompareTo(b) < 0;
 
         /// <summary>
         /// Gets the value of a <see cref="Subframe"/> as a <see cref="float"/>.

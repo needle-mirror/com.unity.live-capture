@@ -22,14 +22,14 @@ namespace Unity.LiveCapture.VirtualCamera
             m_Descriptors.AddRange(descriptors);
         }
 
-        public static VcamTrackMetadataListDescriptor Create(IShot shot)
+        public static VcamTrackMetadataListDescriptor Create(Shot? shot)
         {
             m_TmpDescriptors.Clear();
 
 #if UNITY_EDITOR
             if (shot != null)
             {
-                var takes = AssetDatabaseUtility.GetAssetsAtPath<Take>(shot.Directory);
+                var takes = AssetDatabaseUtility.GetAssetsAtPath<Take>(shot.Value.Directory);
 
                 foreach (var take in takes)
                 {

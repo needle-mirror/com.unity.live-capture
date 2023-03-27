@@ -47,6 +47,6 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// Frees the resources held by the cache.
         /// </summary>
         /// <param name="disposing">True when dispose was called; false when invoked by the finalizer.</param>
-        protected virtual void OnDispose(bool disposing) {}
+        protected virtual void OnDispose(bool disposing) { }
     }
 }

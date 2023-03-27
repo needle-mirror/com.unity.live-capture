@@ -44,3 +44,31 @@
 .spaced-list > * {
 	margin-bottom: 2px;
 }
+
+#public-warning {
+	margin-top: 4px;
+}
+
+.help-box-container {
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+.help-box-menu {
+	flex-direction: column;
+	flex-grow: 0;
+	flex-shrink: 0;
+}
+
+.help-box-text {
+	margin-left: 3px;
+	font-size: 10px;
+	white-space: normal;
+}
+
+.help-box-button {
+	margin-left: 3px;
+	font-size: 10px;
+	white-space: nowrap;
+	max-width: 100px;
+}

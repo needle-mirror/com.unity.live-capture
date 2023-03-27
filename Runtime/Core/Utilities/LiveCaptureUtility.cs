@@ -44,23 +44,15 @@ namespace Unity.LiveCapture
         }
 
         /// <summary>
-        /// Checks if a <see cref="LiveCaptureDevice" /> is ready and the associated <see cref="TakeRecorder" /> is enabled
-        /// and has live mode set.
+        /// Checks if a <see cref="LiveCaptureDevice" /> is ready, enabled and has live mode set.
         /// </summary>
         /// <param name="device">The device to check.</param>
         /// <returns>True if a device is live and its associated take recorder is live and enabled; false otherwise.</returns>
         public static bool IsLiveAndReady(this LiveCaptureDevice device)
         {
-            var takeRecorder = device.GetTakeRecorder() as ITakeRecorderInternal;
-
-            if (takeRecorder == null)
-            {
-                return false;
-            }
-
-            return takeRecorder.IsEnabled
-                && takeRecorder.IsLive()
+            return LiveCaptureDeviceManager.Instance.IsLive
                 && device.isActiveAndEnabled
+                && device.IsLive
                 && device.IsReady();
         }
 

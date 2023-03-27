@@ -124,7 +124,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified CameraBody are equal; otherwise, false.
         /// </returns>
-        public static bool operator==(CameraBody a, CameraBody b)
+        public static bool operator ==(CameraBody a, CameraBody b)
         {
             return a.Equals(b);
         }
@@ -137,7 +137,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified CameraBody are different; otherwise, false.
         /// </returns>
-        public static bool operator!=(CameraBody a, CameraBody b)
+        public static bool operator !=(CameraBody a, CameraBody b)
         {
             return !(a == b);
         }

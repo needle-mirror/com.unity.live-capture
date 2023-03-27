@@ -114,17 +114,17 @@ namespace Unity.LiveCapture.Networking
         /// <summary>
         /// Invoked when the networking is successfully started.
         /// </summary>
-        public event Action Started = delegate {};
+        public event Action Started = delegate { };
 
         /// <summary>
         /// Invoked after the networking has been shut down.
         /// </summary>
-        public event Action Stopped = delegate {};
+        public event Action Stopped = delegate { };
 
         /// <summary>
         /// Invoked when a connection to a remote is established.
         /// </summary>
-        public event Action<Remote> RemoteConnected = delegate {};
+        public event Action<Remote> RemoteConnected = delegate { };
 
         /// <summary>
         /// Invoked when a remote has disconnected.
@@ -132,7 +132,7 @@ namespace Unity.LiveCapture.Networking
         /// <remarks>
         /// In case of a non-graceful disconnect, the networked instances will attempt to reconnect automatically.
         /// </remarks>
-        public event Action<Remote, DisconnectStatus> RemoteDisconnected = delegate {};
+        public event Action<Remote, DisconnectStatus> RemoteDisconnected = delegate { };
 
         /// <summary>
         /// Creates a new <see cref="NetworkBase"/> instance.
@@ -363,7 +363,7 @@ namespace Unity.LiveCapture.Networking
             DisconnectInternal(Remote.All, graceful);
 
             // ensure all the collections are reset
-            while (m_ConnectionEvents.TryDequeue(out _)) {}
+            while (m_ConnectionEvents.TryDequeue(out _)) { }
             m_RemoteToConnection.Clear();
             m_BufferedMessages.Clear();
             m_MessageHandlers.Clear();

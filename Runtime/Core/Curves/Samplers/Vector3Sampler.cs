@@ -14,6 +14,6 @@ namespace Unity.LiveCapture
 
     class Vector3Sampler : Sampler<Vector3>
     {
-        public Vector3Sampler() : base(Vector3Interpolator.Instance) {}
+        public Vector3Sampler() : base(Vector3Interpolator.Instance) { }
     }
 }

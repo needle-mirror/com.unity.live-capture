@@ -134,7 +134,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified Snapshot are equal; otherwise, false.
         /// </returns>
-        public static bool operator==(Snapshot a, Snapshot b)
+        public static bool operator ==(Snapshot a, Snapshot b)
         {
             if (a is null)
             {
@@ -151,7 +151,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified Snpashot are different; otherwise, false.
         /// </returns>
-        public static bool operator!=(Snapshot a, Snapshot b)
+        public static bool operator !=(Snapshot a, Snapshot b)
         {
             return !(a == b);
         }

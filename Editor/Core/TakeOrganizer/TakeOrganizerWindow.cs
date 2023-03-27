@@ -152,7 +152,8 @@ namespace Unity.LiveCapture.Editor
                             Styles.DragHandle.Draw(dragImageRect, GUIContent.none, false, false, false, false);
                         }
 
-                    } EditorGUILayout.EndHorizontal();
+                    }
+                    EditorGUILayout.EndHorizontal();
                 }
             };
 

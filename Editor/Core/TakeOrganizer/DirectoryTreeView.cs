@@ -48,7 +48,7 @@ namespace Unity.LiveCapture.Editor
 
     class DirectoryTreeViewImpl : TreeView
     {
-        
+
         const int k_RootId = 0;
 
         static class Contents
@@ -126,7 +126,7 @@ namespace Unity.LiveCapture.Editor
                     items.Add(item);
 
                     var path = AssetDatabase.GetAssetPath(property.instanceID);
-                    
+
                     if (m_DirectoriesWithAssets.Contains(path))
                     {
                         item.icon = property.icon;
@@ -156,7 +156,7 @@ namespace Unity.LiveCapture.Editor
 
         protected override void SelectionChanged(IList<int> selectedIds)
         {
-            SelectedTakes = null; 
+            SelectedTakes = null;
 
             if (selectedIds.Count > 0)
             {

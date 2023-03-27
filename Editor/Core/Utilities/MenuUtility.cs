@@ -19,7 +19,7 @@ namespace Unity.LiveCapture.Editor
             var subMenuMinPriorities = new Dictionary<string, int>();
             var subMenuMaxPriorities = new Dictionary<string, int>();
 
-            foreach (var(member, attribute) in attributes
+            foreach (var (member, attribute) in attributes
                      .Select(tuple => (tuple.Item1, tuple.Item2.First()))
                      .OrderBy(tuple => tuple.Item2.Priority))
             {

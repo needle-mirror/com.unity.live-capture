@@ -1,21 +1,19 @@
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
 namespace Unity.LiveCapture
 {
-    class TakeRecorderTrackMixer : PlayableBehaviour, ITakeRecorderContextProvider
+    class TakeRecorderTrackMixer : PlayableBehaviour
     {
         bool m_Initialized;
         Playable m_Playable;
+        TimelineHierarchyContext m_HierarchyContext;
+        TrackAsset m_Track;
         PlayableDirector m_Director;
-        TakeRecorder m_TakeRecorder;
-        List<ITakeRecorderContext> m_Contexts = new List<ITakeRecorderContext>();
+        List<TimelineClip> m_Clips;
         Dictionary<Playable, float> m_Weights = new Dictionary<Playable, float>();
-
-        public ReadOnlyCollection<ITakeRecorderContext> Contexts => m_Contexts.AsReadOnly();
 
         public override void OnPlayableCreate(Playable playable)
         {
@@ -35,14 +33,6 @@ namespace Unity.LiveCapture
                 UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
             }
 #endif
-        }
-
-        public override void OnPlayableDestroy(Playable playable)
-        {
-            if (m_TakeRecorder != null)
-            {
-                m_TakeRecorder.RemoveContextProvider(this);
-            }
         }
 
         public override void ProcessFrame(Playable playable, FrameData info, object playerData)
@@ -82,40 +72,32 @@ namespace Unity.LiveCapture
                 return;
             }
 
-            if (m_TakeRecorder != null)
+            var count = m_Playable.GetInputCount();
+
+            Debug.Assert(m_Clips.Count == count);
+
+            var context = MasterTimelineContext.Instance;
+            var activeContext = TakeRecorder.Context;
+            var isRecording = context == activeContext && TakeRecorder.IsRecording();
+
+            for (var i = 0; i < count; ++i)
             {
-                m_TakeRecorder.AddContextProvider(this);
-            }
+                var clip = m_Clips[i];
+                var asset = clip.asset as ShotPlayableAsset;
 
-            Debug.Assert(m_Contexts.Count == m_Playable.GetInputCount());
+                asset.Migrate(clip.displayName);
 
-            var isRecording = false;
-            var activeContext = default(ITakeRecorderContext);
-            
-            if (m_TakeRecorder != null)
-            {
-                isRecording = m_TakeRecorder.IsRecording();
-                activeContext = m_TakeRecorder.Context;
-            }
-
-            for (var i = 0; i < m_Playable.GetInputCount(); ++i)
-            {
-                var context = m_Contexts[i] as PlayableAssetContext;
-                var clip = context.GetClip();
-                var shotAsset = clip.asset as ShotPlayableAsset;
-
-                shotAsset.Migrate(clip.displayName);
-
-                if (shotAsset.AutoClipName)
+                if (asset.AutoClipName)
                 {
-                    clip.displayName = context.Slate.ShotName;
+                    clip.displayName = asset.ShotName;
                 }
 
+                var index = context.IndexOf(m_HierarchyContext, asset);
                 var inputPlayable = (ScriptPlayable<NestedTimelinePlayable>)m_Playable.GetInput(i);
                 var nestedTimeline = inputPlayable.GetBehaviour();
-                var isContextRecording = isRecording && context.Equals(activeContext);
-                var take = isContextRecording ? context.IterationBase : context.Take;
-                
+                var isContextRecording = isRecording && index == context.Selection;
+                var take = isContextRecording ? asset.IterationBase : asset.Take;
+
                 if (take != null)
                 {
                     SetTrackBindingsIfNeeded(take);
@@ -129,38 +111,15 @@ namespace Unity.LiveCapture
             m_Initialized = true;
         }
 
-        public void Construct(PlayableDirector director,
-            TakeRecorder takeRecorder,
-            IEnumerable<TimelineClip> clips)
+        public void Construct(PlayableDirector director, TrackAsset track)
         {
             Debug.Assert(director != null);
-            Debug.Assert(clips != null);
-            Debug.Assert(m_Contexts.Count == 0);
+            Debug.Assert(track != null);
 
+            m_Track = track;
             m_Director = director;
-            m_TakeRecorder = takeRecorder;
-
-            var hierarchyContext = TimelineHierarchyContextUtility.FromContext(new TimelineContext(director));
-
-            foreach (var clip in clips)
-            {
-                m_Contexts.Add(new PlayableAssetContext(clip, hierarchyContext));
-            }
-        }
-
-        public ITakeRecorderContext GetActiveContext()
-        {
-            Debug.Assert(m_Playable.GetInputCount() == m_Contexts.Count);
-
-            for (var i = 0; i < m_Playable.GetInputCount(); ++i)
-            {
-                if (m_Playable.GetInputWeight(i) == 1f)
-                {
-                    return m_Contexts[i];
-                }
-            }
-
-            return null;
+            m_HierarchyContext = TimelineHierarchyContextUtility.FromContext(new TimelineContext(director));
+            m_Clips = new List<TimelineClip>(track.GetClips());
         }
 
         void SetTrackBindingsIfNeeded(Take take)
@@ -173,7 +132,7 @@ namespace Unity.LiveCapture
             {
                 var track = entry.Track;
                 var binding = entry.Binding;
-                
+
                 if (track == null)
                     continue;
 

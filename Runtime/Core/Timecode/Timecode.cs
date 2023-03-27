@@ -435,7 +435,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> have the same value; otherwise, <see langword="false"/>.</returns>
-        public static bool operator==(Timecode a, Timecode b) => a.Equals(b);
+        public static bool operator ==(Timecode a, Timecode b) => a.Equals(b);
 
         /// <summary>
         /// Indicates whether two specified instances of <see cref="Timecode"/> are not equal.
@@ -443,7 +443,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> do not have the same value; otherwise, <see langword="false"/>.</returns>
-        public static bool operator!=(Timecode a, Timecode b) => !a.Equals(b);
+        public static bool operator !=(Timecode a, Timecode b) => !a.Equals(b);
 
         /// <summary>
         /// Indicates whether one specified <see cref="Timecode"/> is later than or the same as another specified <see cref="Timecode"/>.
@@ -451,7 +451,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is later than or the same as <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator>=(Timecode a, Timecode b) => a.CompareTo(b) >= 0;
+        public static bool operator >=(Timecode a, Timecode b) => a.CompareTo(b) >= 0;
 
         /// <summary>
         /// Indicates whether one specified <see cref="Timecode"/> is earlier than or the same as another specified <see cref="Timecode"/>.
@@ -459,7 +459,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is earlier than or the same as <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator<=(Timecode a, Timecode b) => a.CompareTo(b) <= 0;
+        public static bool operator <=(Timecode a, Timecode b) => a.CompareTo(b) <= 0;
 
         /// <summary>
         /// Indicates whether one specified <see cref="Timecode"/> is later than another specified <see cref="Timecode"/>.
@@ -467,7 +467,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is later than <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator>(Timecode a, Timecode b) => a.CompareTo(b) > 0;
+        public static bool operator >(Timecode a, Timecode b) => a.CompareTo(b) > 0;
 
         /// <summary>
         /// Indicates whether one specified <see cref="Timecode"/> is earlier than another specified <see cref="Timecode"/>.
@@ -475,6 +475,6 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is earlier than <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator<(Timecode a, Timecode b) => a.CompareTo(b) < 0;
+        public static bool operator <(Timecode a, Timecode b) => a.CompareTo(b) < 0;
     }
 }

@@ -9,7 +9,7 @@ namespace Unity.LiveCapture
     /// <remarks>
     /// This only has any effect for timecode sources that inherit from UnityEngine.Component.
     /// </remarks>
-    [AttributeUsage(AttributeTargets.Class,  Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class CreateTimecodeSourceMenuItemAttribute : MenuPathAttribute
     {
         /// <summary>

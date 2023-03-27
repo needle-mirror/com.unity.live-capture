@@ -1,5 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
 using UnityEditor.Timeline;
 
 namespace Unity.LiveCapture.Editor
@@ -48,6 +52,28 @@ namespace Unity.LiveCapture.Editor
             }
 
             yield return new TimelineContext(Timeline.InspectedDirector);
+        }
+
+        /// <summary>
+        /// Gets the sub-timelines for a specific clip if it supports playing nested timelines.
+        /// </summary>
+        /// <param name="clip">The clip with the ControlPlayableAsset.</param>
+        /// <param name="director">The playable director driving the Timeline Clip. This may not be the same as TimelineEditor.inspectedDirector.</param>
+        /// <returns>The sub-timelines to control.</returns>
+        public static List<PlayableDirector> GetSubTimelines(TimelineClip clip, PlayableDirector director)
+        {
+            var editor = CustomTimelineEditorCache.GetClipEditor(clip);
+            List<PlayableDirector> directors = new List<PlayableDirector>();
+            try
+            {
+                editor.GetSubTimelines(clip, director, directors);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+
+            return directors;
         }
     }
 }

@@ -6,7 +6,7 @@ namespace Unity.LiveCapture
     /// An attribute placed on <see cref="LiveCaptureDevice"/> implementations to specify where
     /// the device appears in the create device menu.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class,  Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class CreateDeviceMenuItemAttribute : MenuPathAttribute
     {
         /// <summary>

@@ -46,7 +46,7 @@ namespace Unity.LiveCapture
         public Sample<T> Current { get; private set; }
         object IEnumerator.Current => Current;
 
-        void IDisposable.Dispose() {}
+        void IDisposable.Dispose() { }
 
         protected Sampler(IInterpolator<T> interpolator)
         {

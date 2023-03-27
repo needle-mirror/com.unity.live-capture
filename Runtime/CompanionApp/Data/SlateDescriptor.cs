@@ -10,12 +10,12 @@ namespace Unity.LiveCapture.CompanionApp
     class ShotDescriptor
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public Slate Slate = Slate.Empty;
 
         /// <summary>
-        /// The duration of the slate in seconds.
+        /// The duration of the shot in seconds.
         /// </summary>
         public double Duration;
 
@@ -34,14 +34,15 @@ namespace Unity.LiveCapture.CompanionApp
         /// </summary>
         public TakeDescriptor[] Takes;
 
-        internal static ShotDescriptor Create(IShot shot)
+        internal static ShotDescriptor Create(Shot? nShot)
         {
             var descriptor = new ShotDescriptor();
 #if UNITY_EDITOR
-            if (shot != null)
+            if (nShot is Shot shot)
             {
                 var takes = AssetDatabaseUtility.GetAssetsAtPath<Take>(shot.Directory);
                 descriptor.Slate = shot.Slate;
+                descriptor.Duration = shot.Duration;
                 descriptor.SelectedTake = takes.IndexOf(shot.Take);
                 descriptor.IterationBase = takes.IndexOf(shot.IterationBase);
                 descriptor.Takes = takes.Select(take => TakeDescriptor.Create(take)).ToArray();

@@ -13,6 +13,6 @@ namespace Unity.LiveCapture
     }
     class QuaternionSampler : Sampler<Quaternion>
     {
-        public QuaternionSampler() : base(QuaternionInterpolator.Instance) {}
+        public QuaternionSampler() : base(QuaternionInterpolator.Instance) { }
     }
 }

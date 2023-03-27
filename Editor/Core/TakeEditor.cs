@@ -233,6 +233,9 @@ namespace Unity.LiveCapture.Editor
             // Renaming is done in two separate passes. It's because asset renaming and asset modification (sub-asset renaming)
             // can't be performed inside the same AssetDatabase.StartAssetEditing() scope.
 
+            // Flush any pending Take modifications
+            AssetDatabase.SaveAssets();
+
             var result = true;
 
             try

@@ -10,16 +10,16 @@ namespace Unity.LiveCapture.VirtualCamera
         public Camera Camera { get; set; }
 
         /// <inheritdoc/>
-        public void Dispose() {}
+        public void Dispose() { }
 
         /// <inheritdoc/>
-        public void EnableDepthOfField(bool value) {}
+        public void EnableDepthOfField(bool value) { }
 
         /// <inheritdoc/>
-        public void SetDamping(Damping dampingData) {}
+        public void SetDamping(Damping dampingData) { }
 
         /// <inheritdoc/>
-        public void SetFocusDistance(float focusDistance) {}
+        public void SetFocusDistance(float focusDistance) { }
 
         /// <inheritdoc/>
         public void SetPhysicalCameraProperties(Lens lens, LensIntrinsics intrinsics, CameraBody cameraBody)

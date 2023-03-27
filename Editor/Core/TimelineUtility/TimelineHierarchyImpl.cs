@@ -46,22 +46,6 @@ namespace Unity.LiveCapture.Editor
                 .Where(p => p.playableAsset is TimelineAsset);
         }
 
-        static List<PlayableDirector> GetSubTimelines(TimelineClip clip, PlayableDirector director)
-        {
-            var editor = CustomTimelineEditorCache.GetClipEditor(clip);
-            List<PlayableDirector> directors = new List<PlayableDirector>();
-            try
-            {
-                editor.GetSubTimelines(clip, director, directors);
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-            }
-
-            return directors;
-        }
-
         void SetDirty()
         {
             m_IsDirty = true;
@@ -157,7 +141,7 @@ namespace Unity.LiveCapture.Editor
 
                 foreach (var clip in track.GetClips())
                 {
-                    foreach (var subDirector in GetSubTimelines(clip, director))
+                    foreach (var subDirector in TimelineHierarchyContextUtility.GetSubTimelines(clip, director))
                     {
                         var parents = GetParents(subDirector);
 

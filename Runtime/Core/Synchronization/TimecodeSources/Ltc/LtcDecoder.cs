@@ -97,7 +97,7 @@ namespace Unity.LiveCapture.Ltc
         /// <remarks>
         /// The queue size must not be less then <see cref="k_CodewordLength"/>.
         /// </remarks>
-        (ulong lo, ulong hi)m_Queue;
+        (ulong lo, ulong hi) m_Queue;
 
         /// <summary>
         /// The signal volume in dB.
@@ -281,10 +281,10 @@ namespace Unity.LiveCapture.Ltc
 
             var frame = new Frame
             {
-                frame  = (byte)((s1 & 0xf) + ((s1 >> 8) & 0x3) * 10),
+                frame = (byte)((s1 & 0xf) + ((s1 >> 8) & 0x3) * 10),
                 second = (byte)((s2 & 0xf) + ((s2 >> 8) & 0x7) * 10),
                 minute = (byte)((s3 & 0xf) + ((s3 >> 8) & 0x7) * 10),
-                hour   = (byte)((s4 & 0xf) + ((s4 >> 8) & 0x3) * 10),
+                hour = (byte)((s4 & 0xf) + ((s4 >> 8) & 0x3) * 10),
                 isDropFrame = ((s1 >> 10) & 0x1) == 1,
             };
 
@@ -293,10 +293,10 @@ namespace Unity.LiveCapture.Ltc
 
         static ulong ReverseBits(ulong n)
         {
-            n = ((n >>  1) & 0x5555555555555555ul) | ((n <<  1) & 0xaaaaaaaaaaaaaaaaul);
-            n = ((n >>  2) & 0x3333333333333333ul) | ((n <<  2) & 0xccccccccccccccccul);
-            n = ((n >>  4) & 0x0f0f0f0f0f0f0f0ful) | ((n <<  4) & 0xf0f0f0f0f0f0f0f0ul);
-            n = ((n >>  8) & 0x00ff00ff00ff00fful) | ((n <<  8) & 0xff00ff00ff00ff00ul);
+            n = ((n >> 1) & 0x5555555555555555ul) | ((n << 1) & 0xaaaaaaaaaaaaaaaaul);
+            n = ((n >> 2) & 0x3333333333333333ul) | ((n << 2) & 0xccccccccccccccccul);
+            n = ((n >> 4) & 0x0f0f0f0f0f0f0f0ful) | ((n << 4) & 0xf0f0f0f0f0f0f0f0ul);
+            n = ((n >> 8) & 0x00ff00ff00ff00fful) | ((n << 8) & 0xff00ff00ff00ff00ul);
             n = ((n >> 16) & 0x0000ffff0000fffful) | ((n << 16) & 0xffff0000ffff0000ul);
             n = ((n >> 32) & 0x00000000fffffffful) | ((n << 32) & 0xffffffff00000000ul);
             return n;

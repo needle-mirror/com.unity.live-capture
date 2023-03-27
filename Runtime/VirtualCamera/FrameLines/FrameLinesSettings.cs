@@ -120,12 +120,12 @@ namespace Unity.LiveCapture.VirtualCamera
             }
         }
 
-        public static bool operator==(FrameLinesSettings a, FrameLinesSettings b)
+        public static bool operator ==(FrameLinesSettings a, FrameLinesSettings b)
         {
             return a.Equals(b);
         }
 
-        public static bool operator!=(FrameLinesSettings a, FrameLinesSettings b)
+        public static bool operator !=(FrameLinesSettings a, FrameLinesSettings b)
         {
             return !(a == b);
         }

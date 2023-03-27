@@ -143,7 +143,7 @@ namespace Unity.LiveCapture.Networking
 
             unsafe
             {
-                fixed(void* streamPtr = &buffer.Array[buffer.Offset + stream.Position])
+                fixed (void* streamPtr = &buffer.Array[buffer.Offset + stream.Position])
                 {
                     UnsafeUtility.MemCpy(streamPtr, array.GetUnsafePtr(), array.Length);
                 }

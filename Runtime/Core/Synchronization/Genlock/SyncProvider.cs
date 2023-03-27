@@ -9,13 +9,20 @@ namespace Unity.LiveCapture
     [Serializable]
     public abstract class SyncProvider : ISyncProvider
     {
+        [NonSerialized]
         float? m_LastCaptureDeltaTime;
+        [NonSerialized]
+        bool m_HasShownSyncRateWarning;
+        [NonSerialized]
+        bool m_HasShownVSyncWarning;
+        [NonSerialized]
+        bool m_HasShownCaptureTimeWarning;
 
         /// <inheritdoc />
         public abstract string Name { get; }
 
         /// <inheritdoc />
-        public abstract FrameRate SyncRate { get; }
+        public virtual FrameRate SyncRate => TakeRecorder.FrameRate;
 
         /// <inheritdoc />
         [field: NonSerialized]
@@ -37,13 +44,14 @@ namespace Unity.LiveCapture
         /// <inheritdoc />
         void ISyncProvider.StartSynchronizing()
         {
-            if ((RunInEditMode || Application.isPlaying) && Status == SyncStatus.Stopped)
+            if (Status == SyncStatus.Stopped && (Application.isPlaying || RunInEditMode))
             {
                 Status = SyncStatus.Synchronized;
                 LastPulseCountDelta = null;
                 DroppedFrameCount = 0;
                 m_LastCaptureDeltaTime = null;
 
+                ResetWarnings();
                 OnStart();
             }
         }
@@ -56,6 +64,7 @@ namespace Unity.LiveCapture
                 Status = SyncStatus.Stopped;
                 LastPulseCountDelta = null;
                 DroppedFrameCount = 0;
+
                 if (m_LastCaptureDeltaTime != null)
                 {
                     Time.captureDeltaTime = 0;
@@ -74,30 +83,32 @@ namespace Unity.LiveCapture
                 return false;
             }
 
-            if (!CanSync() || !OnWaitForNextPulse(out var pulseCount))
+            if (!CanSync() || !OnWaitForNextPulse(out var pulseCount) || pulseCount < 0)
             {
                 Status = SyncStatus.NotSynchronized;
                 LastPulseCountDelta = null;
+
                 if (m_LastCaptureDeltaTime != null)
                 {
                     Time.captureDeltaTime = 0;
                     m_LastCaptureDeltaTime = null;
                 }
+
                 return false;
             }
 
-            Status = SyncStatus.Synchronized;
-
-            // if multiple pulses have occurred since the last update, then at least one pulse was skipped over, meaning a
-            // frame was dropped.
-            if (pulseCount > 1)
+            // If multiple pulses have occurred since the last update, then at least one pulse was skipped over, meaning a
+            // frame was dropped. Only check for dropped frames if the provider was synchronized last frame.
+            if (Status == SyncStatus.Synchronized && pulseCount > 1)
             {
                 var droppedFrames = pulseCount - 1;
                 DroppedFrameCount += droppedFrames;
                 Debug.LogWarning($"Dropped {droppedFrames} frame{(droppedFrames != 1 ? "s" : string.Empty)}.");
             }
 
+            Status = SyncStatus.Synchronized;
             LastPulseCountDelta = pulseCount;
+            ResetWarnings();
 
             // The engine time should progress based on the synchronization signal rate and pulse count, not the platform time.
             // This helps make synchronized data feeds have better temporal coherence with other engine systems. To achieve
@@ -107,22 +118,6 @@ namespace Unity.LiveCapture
 
             Time.captureDeltaTime = deltaTime;
             m_LastCaptureDeltaTime = deltaTime;
-            return true;
-        }
-
-        bool CanSync()
-        {
-            if (m_LastCaptureDeltaTime.HasValue && m_LastCaptureDeltaTime.Value != Time.captureDeltaTime)
-            {
-                Debug.LogWarning($"The sync provider requires exclusive control of Time.captureDeltaTime, but it is being set elsewhere.");
-                return false;
-            }
-            if (QualitySettings.vSyncCount != 0)
-            {
-                Debug.LogWarning($"A sync provider is used, but Vsync is enabled. Disable Vsync in the Quality Settings to enable synchronization.");
-                return false;
-            }
-
             return true;
         }
 
@@ -138,7 +133,7 @@ namespace Unity.LiveCapture
         /// <summary>
         /// Called when the sync provider becomes inactive.
         /// </summary>
-        protected virtual void OnStop() {}
+        protected virtual void OnStop() { }
 
         /// <summary>
         /// Blocks execution on the current thread until the next synchronization signal pulse is received.
@@ -146,5 +141,53 @@ namespace Unity.LiveCapture
         /// <param name="pulseCount">The number of synchronization signal pulses since this method was last called.</param>
         /// <returns><see langword="true"/> when a pulse was successfully received; otherwise, <see langword="false"/>.</returns>
         protected abstract bool OnWaitForNextPulse(out int pulseCount);
+
+        bool CanSync()
+        {
+            var canSync = true;
+
+            if (!SyncRate.IsValid || SyncRate.Numerator <= 0)
+            {
+                canSync = false;
+                LogWarning(
+                    $"Genlock source \"{Name}\" has an invalid sync rate ({SyncRate}). Specify a valid sync rate to enable genlock.",
+                    ref m_HasShownSyncRateWarning
+                );
+            }
+            if (QualitySettings.vSyncCount != 0)
+            {
+                canSync = false;
+                LogWarning(
+                    $"A genlock source is active, but VSync is enabled. Disable VSync in the Quality Settings to enable genlock.",
+                    ref m_HasShownVSyncWarning
+                );
+            }
+            if (m_LastCaptureDeltaTime != null && m_LastCaptureDeltaTime.Value != Time.captureDeltaTime)
+            {
+                canSync = false;
+                LogWarning(
+                    $"Genlock sources require exclusive control of Time.captureDeltaTime, but it is being set by another script.",
+                    ref m_HasShownCaptureTimeWarning
+                );
+            }
+
+            return canSync;
+        }
+
+        void ResetWarnings()
+        {
+            m_HasShownSyncRateWarning = false;
+            m_HasShownVSyncWarning = false;
+            m_HasShownCaptureTimeWarning = false;
+        }
+
+        static void LogWarning(string warning, ref bool hasShownWarning)
+        {
+            if (!hasShownWarning)
+            {
+                Debug.LogWarning(warning);
+                hasShownWarning = true;
+            }
+        }
     }
 }

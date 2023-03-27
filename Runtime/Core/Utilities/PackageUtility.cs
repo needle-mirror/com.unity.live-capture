@@ -7,7 +7,7 @@ namespace Unity.LiveCapture
     {
         public static Version GetVersion(string version)
         {
-            var versionNumbers = Regex.Split(version, @"\D+");;
+            var versionNumbers = Regex.Split(version, @"\D+");
 
             if (versionNumbers.Length >= 4)
             {

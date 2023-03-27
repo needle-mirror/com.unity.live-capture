@@ -209,7 +209,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified LensIntrinsics are equal; otherwise, false.
         /// </returns>
-        public static bool operator==(LensIntrinsics a, LensIntrinsics b)
+        public static bool operator ==(LensIntrinsics a, LensIntrinsics b)
         {
             return a.Equals(b);
         }
@@ -222,7 +222,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified LensIntrinsics are different; otherwise, false.
         /// </returns>
-        public static bool operator!=(LensIntrinsics a, LensIntrinsics b)
+        public static bool operator !=(LensIntrinsics a, LensIntrinsics b)
         {
             return !(a == b);
         }

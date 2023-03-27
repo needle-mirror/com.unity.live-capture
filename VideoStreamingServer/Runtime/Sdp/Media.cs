@@ -13,14 +13,14 @@ namespace Unity.LiveCapture.VideoStreaming.Server.Sdp
             // Example is   'video 0 RTP/AVP 26;
             this.mediaString = mediaString;
 
-            var parts = mediaString.Split(new char[] { ' ' } , 4);
+            var parts = mediaString.Split(new char[] { ' ' }, 4);
 
             if (parts.Count() >= 1)
             {
-                if (parts[0].Equals("video")) MediaType =  MediaTypes.video;
+                if (parts[0].Equals("video")) MediaType = MediaTypes.video;
                 else if (parts[0].Equals("audio")) MediaType = MediaTypes.audio;
                 else if (parts[0].Equals("text")) MediaType = MediaTypes.text;
-                else if (parts[0].Equals("application")) MediaType =  MediaTypes.application;
+                else if (parts[0].Equals("application")) MediaType = MediaTypes.application;
                 else if (parts[0].Equals("message")) MediaType = MediaTypes.message;
                 else MediaType = MediaTypes.unknown; // standard does allow for future types to be defined
             }

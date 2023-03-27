@@ -5,6 +5,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Unity.LiveCapture.Editor.Internal;
 
 namespace Unity.LiveCapture.Editor
 {
@@ -14,6 +15,10 @@ namespace Unity.LiveCapture.Editor
     [CustomPropertyDrawer(typeof(EnumButtonGroupAttribute))]
     class EnumButtonGroupAttributeDrawer : PropertyDrawer
     {
+        const int k_InspectorPaddingLeft = 18;
+        const int k_InspectorPaddingRight = 4;
+        const int k_VerticalScrollBarWidth = 18;
+
         // An interface allowing us to mock GUI calls in tests.
         internal interface IGui
         {
@@ -25,19 +30,20 @@ namespace Unity.LiveCapture.Editor
 
             float SingleLineHeight { get; }
             float StandardVerticalSpacing { get; }
-            float PropertyWidth { get; }
+            float CurrentViewWidth { get; }
             float LabelWidth { get; }
+            float Indent { get; }
         }
 
         class DefaultGUI : IGui
         {
             public static DefaultGUI Instance { get; } = new DefaultGUI();
 
-            float m_Width;
             public float SingleLineHeight => EditorGUIUtility.singleLineHeight;
             public float StandardVerticalSpacing => EditorGUIUtility.standardVerticalSpacing;
-            public float PropertyWidth => m_Width;
+            public float CurrentViewWidth => EditorGUIUtility.currentViewWidth;
             public float LabelWidth => EditorGUIUtility.labelWidth;
+            public float Indent => EditorGUIUtilityInternal.Indent;
 
             public bool Toggle(Rect position, bool value, GUIContent content)
             {
@@ -62,14 +68,6 @@ namespace Unity.LiveCapture.Editor
             public void EndProperty()
             {
                 EditorGUI.EndProperty();
-            }
-
-            public void Update(Rect position)
-            {
-                if (Event.current.type == EventType.Repaint)
-                {
-                    m_Width = position.width;
-                }
             }
         }
 
@@ -231,15 +229,16 @@ namespace Unity.LiveCapture.Editor
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             var enumValues = GetDisplayedEnumValues(property);
-            UpdateLayout(enumValues.Count, out _, out _, out var rows);
+            UpdateLayout(enumValues.Count, out _, out var rows);
             return rows * Gui.SingleLineHeight + (rows - 1) * Gui.StandardVerticalSpacing;
         }
 
         // Update layout values describing the grid of displayed enum values.
-        void UpdateLayout(int entryCount, out float rowWidth, out int columns, out int rows)
+        void UpdateLayout(int entryCount, out int columns, out int rows)
         {
             var segmentWidth = Gui.GetSegmentWidth(this);
-            rowWidth = Mathf.Max(0, Gui.PropertyWidth - Gui.LabelWidth - 2f);
+            var rowWidth = Mathf.Max(0, Gui.CurrentViewWidth - Gui.LabelWidth - Gui.Indent
+                - k_InspectorPaddingLeft - k_InspectorPaddingRight - k_VerticalScrollBarWidth);
             columns = Mathf.Max(1, Mathf.FloorToInt(rowWidth / segmentWidth));
             rows = Mathf.CeilToInt((float)entryCount / columns);
         }
@@ -294,11 +293,6 @@ namespace Unity.LiveCapture.Editor
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            if (Gui == DefaultGUI.Instance)
-            {
-                DefaultGUI.Instance.Update(position);
-            }
-
             var hasDescriptions = TryGetDescriptions(fieldInfo, out var descriptions);
 
             label = Gui.BeginProperty(position, label, property);
@@ -306,8 +300,9 @@ namespace Unity.LiveCapture.Editor
 
             var enumValues = GetDisplayedEnumValues(property);
 
-            UpdateLayout(enumValues.Count, out var rowWidth, out var columns, out _);
+            UpdateLayout(enumValues.Count, out var columns, out _);
 
+            var rowWidth = position.width - Gui.LabelWidth;
             var entryWidth = rowWidth / Mathf.Min(columns, enumValues.Count);
 
             for (var i = 0; i != enumValues.Count; ++i)

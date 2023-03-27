@@ -202,7 +202,7 @@ namespace Unity.LiveCapture.Editor
                 var x = takeItem1.Value;
                 var y = takeItem2.Value;
 
-                switch(Sorting)
+                switch (Sorting)
                 {
                     case TakeTreeView.Columns.Asset:
                         return x.name.CompareTo(y.name) * Multiplyer;
@@ -232,7 +232,7 @@ namespace Unity.LiveCapture.Editor
 
         class TakeItem : AssetItem<Take>
         {
-            public TakeItem(Take value, int depth, string displayName) : base(value, depth, displayName) {}
+            public TakeItem(Take value, int depth, string displayName) : base(value, depth, displayName) { }
         }
 
         const int k_RootId = 0;
@@ -305,7 +305,7 @@ namespace Unity.LiveCapture.Editor
                 {
                     Selection = Array.Empty<Take>();
                 }
-                
+
                 SetSelection(Selection
                     .Select(t => t.GetInstanceID())
                     .ToList());
@@ -346,17 +346,17 @@ namespace Unity.LiveCapture.Editor
         }
 
         protected override void RowGUI(RowGUIArgs args)
-		{
-			var item = args.item;
+        {
+            var item = args.item;
 
-			for (var i = 0; i < args.GetNumVisibleColumns(); ++i)
-			{
-				CellGUI(args.GetCellRect(i), item, (TakeTreeView.Columns) args.GetColumn(i), ref args);
-			}
-		}
+            for (var i = 0; i < args.GetNumVisibleColumns(); ++i)
+            {
+                CellGUI(args.GetCellRect(i), item, (TakeTreeView.Columns)args.GetColumn(i), ref args);
+            }
+        }
 
-        void CellGUI (Rect rect, TreeViewItem item, TakeTreeView.Columns column, ref RowGUIArgs args)
-		{
+        void CellGUI(Rect rect, TreeViewItem item, TakeTreeView.Columns column, ref RowGUIArgs args)
+        {
             var take = (item as TakeItem).Value;
 
             switch (column)
@@ -399,7 +399,7 @@ namespace Unity.LiveCapture.Editor
 
         protected override void SelectionChanged(IList<int> selectedIds)
         {
-            Selection = null; 
+            Selection = null;
 
             if (selectedIds.Count > 0)
             {
@@ -411,7 +411,7 @@ namespace Unity.LiveCapture.Editor
         }
 
         void OnSortingChanged(MultiColumnHeader header)
-        {   
+        {
             Sort(GetRows());
         }
 
@@ -423,13 +423,13 @@ namespace Unity.LiveCapture.Editor
             {
                 m_Comparer.Sorting = (TakeTreeView.Columns)index;
                 m_Comparer.SortedAscending = m_Header.GetColumn(index).sortedAscending;
-                
+
                 var sortedItems = rows
                     .OrderBy(i => i, m_Comparer)
                     .ToList();
 
                 rows.Clear();
-                
+
                 foreach (var item in sortedItems)
                 {
                     rows.Add(item);

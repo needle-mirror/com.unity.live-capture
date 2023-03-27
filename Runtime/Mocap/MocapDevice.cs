@@ -8,7 +8,6 @@ namespace Unity.LiveCapture.Mocap
         Animator Animator { get; set; }
         bool TryGetMocapGroup(out MocapGroup mocapGroup);
         double GetCurrentFrameTime();
-        void InvokeRecordingChanged();
         void RegisterLiveProperties();
         void RestoreLiveProperties();
     }
@@ -35,11 +34,8 @@ namespace Unity.LiveCapture.Mocap
         MocapGroup m_MocapGroup;
         double? m_FirstFrameTime;
         double m_CurrentFrameTime;
-        bool m_IsRecording;
         bool m_AddingFrame;
-
-        // Avoiding "The same field name is serialized multiple times in the class or its parent class."
-        Transform m_CachedParent2;
+        Transform m_CachedParent;
 
         /// <summary>
         /// The Animator component this device operates.
@@ -85,33 +81,29 @@ namespace Unity.LiveCapture.Mocap
         /// You would usually use this to perform an action after a value changes in the Inspector;
         /// for example, making sure that data stays within a certain range.
         /// </remarks>
-        public virtual void OnValidate()
+        protected virtual void OnValidate()
         {
             m_SyncBuffer.SourceObject = this;
 
             ValidateRecorder();
         }
 
-        /// <summary>
-        /// This function is called when the object becomes enabled and active.
-        /// </summary>
-        protected virtual void OnEnable()
+        /// <inheritdoc/>
+        protected override void OnEnable()
         {
+            Validate();
+
             m_SyncBuffer.FramePresented += PresentAt;
             m_SyncBuffer.Enable();
 
             RegisterLiveProperties();
         }
 
-        /// <summary>
-        /// This function is called when the behaviour becomes disabled.
-        /// </summary>
-        /// <remaks>
-        /// This is also called when the object is destroyed and can be used for any cleanup code.
-        /// When scripts are reloaded after compilation has finished, OnDisable will be called, followed by an OnEnable after the script has been loaded.
-        /// </remaks>
-        protected virtual void OnDisable()
+        /// <inheritdoc/>
+        protected override void OnDisable()
         {
+            base.OnDisable();
+
             m_SyncBuffer.Disable();
             m_SyncBuffer.FramePresented -= PresentAt;
 
@@ -119,53 +111,26 @@ namespace Unity.LiveCapture.Mocap
         }
 
         /// <inheritdoc/>
-        public sealed override bool IsRecording()
+        protected sealed override void OnStartRecording()
         {
-            if (m_MocapGroup != null)
+            if (m_MocapGroup == null)
             {
-                return m_MocapGroup.IsRecording();
-            }
-
-            return m_IsRecording;
-        }
-
-        /// <inheritdoc/>
-        public sealed override void StartRecording()
-        {
-            if (m_MocapGroup != null)
-            {
-                return;
-            }
-
-            if (!IsRecording())
-            {
-                m_IsRecording = true;
                 m_FirstFrameTime = null;
-                m_Recorder.FrameRate = GetTakeRecorder().FrameRate;
+                m_Recorder.FrameRate = TakeRecorder.FrameRate;
                 m_Recorder.Clear();
-
-                OnRecordingChanged();
             }
+
+            OnRecordingChanged();
         }
 
         /// <inheritdoc/>
-        public sealed override void StopRecording()
+        protected sealed override void OnStopRecording()
         {
-            if (m_MocapGroup != null)
-            {
-                return;
-            }
-
-            if (IsRecording())
-            {
-                m_IsRecording = false;
-
-                OnRecordingChanged();
-            }
+            OnRecordingChanged();
         }
 
         /// <inheritdoc/>
-        public override void LiveUpdate()
+        protected override void LiveUpdate()
         {
             if (m_MocapGroup == null)
             {
@@ -291,7 +256,7 @@ namespace Unity.LiveCapture.Mocap
 
         void UpdateRecorder(in FrameTimeWithRate frameTime)
         {
-            if (IsRecording() && m_MocapGroup == null)
+            if (IsRecording && m_MocapGroup == null)
             {
                 var time = frameTime.ToSeconds();
 
@@ -322,14 +287,6 @@ namespace Unity.LiveCapture.Mocap
         }
 
         /// <summary>
-        /// Invokes the delegate that handles a recording state change.
-        /// </summary>
-        void IMocapDevice.InvokeRecordingChanged()
-        {
-            OnRecordingChanged();
-        }
-
-        /// <summary>
         /// Registers the animated transforms to prevent Unity from marking Prefabs or the Scene
         /// as modified when you preview animations.
         /// </summary>
@@ -349,13 +306,13 @@ namespace Unity.LiveCapture.Mocap
         /// <summary>
         /// The device calls this method when the recording state changes.
         /// </summary>
-        protected virtual void OnRecordingChanged() {}
+        protected virtual void OnRecordingChanged() { }
 
-        /// <inheritdoc/>
-        protected override void OnDestroy()
+        /// <summary>
+        /// This function is called when the behaviour gets destroyed.
+        /// </summary>
+        protected virtual void OnDestroy()
         {
-            base.OnDestroy();
-
             Unregister();
         }
 
@@ -369,30 +326,42 @@ namespace Unity.LiveCapture.Mocap
             return m_Recorder;
         }
 
-        internal override void Update()
+        void Update()
         {
-            base.Update();
+            ParentChangeCheck();
+        }
 
-            Validate();
+        void ParentChangeCheck()
+        {
+            var parent = transform.parent;
+
+            if (m_CachedParent != parent)
+            {
+                m_CachedParent = transform.parent;
+
+                Validate();
+            }
         }
 
         internal void Validate()
         {
             var parent = transform.parent;
 
-            if (m_CachedParent2 != parent)
+            if (m_MocapGroup != null && m_MocapGroup.transform != parent)
             {
                 Unregister();
-
-                if (parent != null)
-                    m_MocapGroup = parent.GetComponent<MocapGroup>();
-                else
-                    m_MocapGroup = null;
-
-                Register();
-
-                m_CachedParent2 = parent;
             }
+
+            if (parent != null && parent.TryGetComponent<MocapGroup>(out m_MocapGroup))
+            {
+                base.OnDisable();
+            }
+            else
+            {
+                base.OnEnable();
+            }
+
+            Register();
         }
 
         void Register()

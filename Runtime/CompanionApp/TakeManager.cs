@@ -3,17 +3,16 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+using Object = UnityEngine.Object;
 
 namespace Unity.LiveCapture.CompanionApp
 {
-    interface ITakeManager
+    interface IAssetManager
     {
-        void SelectTake(IShot shot, SerializableGuid guid);
-        void SetTakeData(TakeDescriptor descriptor);
-        void DeleteTake(SerializableGuid guid);
-        void SetIterationBase(IShot shot, SerializableGuid guid);
-        void ClearIterationBase(IShot shot);
-        Texture2D GetAssetPreview<T>(Guid guid) where T : UnityEngine.Object;
+        void Save(Object obj);
+        T Load<T>(Guid guid) where T : Object;
+        void Delete<T>(Guid guid) where T : Object;
+        Texture2D GetPreview<T>(Guid guid) where T : UnityEngine.Object;
     }
 
     interface IAssetPreview
@@ -38,102 +37,50 @@ namespace Unity.LiveCapture.CompanionApp
         }
     }
 
-    class TakeManager : ITakeManager
+    class AssetManager : IAssetManager
     {
-        public static TakeManager Default { get; } = new TakeManager();
+        public static AssetManager Instance { get; } = new AssetManager();
 
         IAssetPreview m_AssetPreview;
 
-        public TakeManager() : this(new EditorAssetPreview()) {}
+        public AssetManager() : this(new EditorAssetPreview()) { }
 
-        public TakeManager(IAssetPreview assetPreview)
+        public AssetManager(IAssetPreview assetPreview)
         {
             m_AssetPreview = assetPreview;
         }
 
-        public void SelectTake(IShot shot, SerializableGuid guid)
+        public void Save(Object asset)
         {
-            if (shot == null)
-            {
-                throw new ArgumentNullException(nameof(shot));
-            }
-
 #if UNITY_EDITOR
-            var take = AssetDatabaseUtility.LoadAssetWithGuid<Take>(guid);
-
-            shot.Take = take;
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
 #endif
         }
 
-        public void SetTakeData(TakeDescriptor descriptor)
+        public T Load<T>(Guid guid) where T : Object
         {
+            var asset = default(T);
 #if UNITY_EDITOR
-            var take = AssetDatabaseUtility.LoadAssetWithGuid<Take>(descriptor.Guid);
-
-            if (take != null)
-            {
-                var assetName = TakeBuilder.GetAssetName(
-                    descriptor.SceneNumber,
-                    descriptor.ShotName,
-                    descriptor.TakeNumber);
-
-                take.name = assetName;
-                take.SceneNumber = descriptor.SceneNumber;
-                take.ShotName = descriptor.ShotName;
-                take.TakeNumber = descriptor.TakeNumber;
-                take.CreationTime = DateTime.FromBinary(descriptor.CreationTime);
-                take.Description = descriptor.Description;
-                take.Rating = descriptor.Rating;
-                take.FrameRate = descriptor.FrameRate;
-
-                EditorUtility.SetDirty(take);
-
-                AssetDatabase.SaveAssets();
-            }
+            asset = AssetDatabaseUtility.LoadAssetWithGuid<T>(guid);
 #endif
+            return asset;
         }
 
-        public void DeleteTake(SerializableGuid guid)
+        public void Delete<T>(Guid guid) where T : Object
         {
 #if UNITY_EDITOR
-            var path = AssetDatabase.GUIDToAssetPath(guid.ToString());
-            var take = AssetDatabase.LoadAssetAtPath<Take>(path);
+            var path = AssetDatabaseUtility.GUIDToAssetPath(guid);
+            var asset = AssetDatabase.LoadAssetAtPath<T>(path);
 
-            if (take != null)
+            if (asset != null)
             {
                 AssetDatabase.DeleteAsset(path);
             }
 #endif
         }
 
-        public void SetIterationBase(IShot shot, SerializableGuid guid)
-        {
-            if (shot == null)
-            {
-                throw new ArgumentNullException(nameof(shot));
-            }
-
-#if UNITY_EDITOR
-            var take = AssetDatabaseUtility.LoadAssetWithGuid<Take>(guid);
-
-            if (take != null)
-            {
-                shot.IterationBase = take;
-            }
-#endif
-        }
-
-        public void ClearIterationBase(IShot shot)
-        {
-            if (shot == null)
-            {
-                throw new ArgumentNullException(nameof(shot));
-            }
-
-            shot.IterationBase = null;
-        }
-
-        public Texture2D GetAssetPreview<T>(Guid guid) where T : UnityEngine.Object
+        public Texture2D GetPreview<T>(Guid guid) where T : UnityEngine.Object
         {
             return m_AssetPreview.GetAssetPreview<T>(guid);
         }

@@ -11,7 +11,7 @@ namespace Unity.LiveCapture.Mocap.Editor
     using Editor = UnityEditor.Editor;
 
     [CustomEditor(typeof(MocapGroup), true)]
-    class MocapGroupEditor : LiveCaptureDeviceEditor
+    class MocapGroupEditor : Editor
     {
         static IEnumerable<(Type, CreateDeviceMenuItemAttribute[])> s_CreateDeviceMenuItems;
 
@@ -41,10 +41,8 @@ namespace Unity.LiveCapture.Mocap.Editor
         bool m_TransformsFoldout;
         Editor m_Editor;
 
-        protected override void OnEnable()
+        void OnEnable()
         {
-            base.OnEnable();
-
             m_Device = (MocapGroup)target;
             m_Animator = serializedObject.FindProperty("m_Animator");
             m_Devices = serializedObject.FindProperty("m_Devices");
@@ -71,7 +69,7 @@ namespace Unity.LiveCapture.Mocap.Editor
             {
                 var element = m_Devices.GetArrayElementAtIndex(index);
                 var device = element.objectReferenceValue as LiveCaptureDevice;
-                var isDeviceEnabled = device != null ? device.enabled : false;
+                var isLive = device != null ? device.IsLive : false;
 
                 var buttonRect = rect;
                 buttonRect.width = 15f;
@@ -86,13 +84,13 @@ namespace Unity.LiveCapture.Mocap.Editor
 
                 using (var change = new EditorGUI.ChangeCheckScope())
                 {
-                    isDeviceEnabled = GUI.Toggle(buttonRect, isDeviceEnabled, Contents.EnableToggle);
+                    isLive = GUI.Toggle(buttonRect, isLive, Contents.EnableToggle);
 
                     if (change.changed)
                     {
                         Undo.RegisterCompleteObjectUndo(device, Contents.UndoEnableDevice);
 
-                        device.enabled = isDeviceEnabled;
+                        device.IsLive = isLive;
 
                         EditorUtility.SetDirty(device);
                         EditorApplication.QueuePlayerLoopUpdate();
@@ -133,7 +131,7 @@ namespace Unity.LiveCapture.Mocap.Editor
             EditorGUIUtility.PingObject(go);
         }
 
-        protected override void OnDeviceGUI()
+        public override void OnInspectorGUI()
         {
             serializedObject.Update();
 

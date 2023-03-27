@@ -207,7 +207,7 @@ mode                =    <"> *Method <"> | Method
                         if (subPart.Length < 2)
                             throw new ArgumentException("interleaved value invalid", "aTransportString");
 
-                        returnValue.Interleaved =  PortCouple.Parse(subPart[1]);
+                        returnValue.Interleaved = PortCouple.Parse(subPart[1]);
                         break;
                     case "APPEND":
                         returnValue.IsAppend = true;

@@ -1,6 +1,7 @@
 using System;
 using UnityEditor;
 using UnityEngine;
+using Unity.LiveCapture.Editor.Internal;
 
 namespace Unity.LiveCapture.Editor
 {
@@ -26,6 +27,11 @@ namespace Unity.LiveCapture.Editor
             // only that IMGUIContainer fails to setup a correct contextWidth;
             EditorGUIUtility.labelWidth = Mathf.Max(width * 0.45f - 40, 120f);
             EditorGUIUtility.hierarchyMode = true;
+            // Some custom Editors use EditorGUIUtility.CurrentViewWidth. This property returns the size
+            // of the window currently rendering the gui. Editors assume the window is the InspectorWindow
+            // and not a region of a window rendering through an IMGUIContainer. We can fix all the Editors
+            // that use that property by setting it to the container's width.
+            EditorGUIUtilityInternal.CurrentViewWidth = width;
             EditorGUILayout.BeginVertical(style);
         }
 
@@ -36,6 +42,7 @@ namespace Unity.LiveCapture.Editor
                 EditorGUILayout.EndVertical();
                 EditorGUIUtility.labelWidth = m_LabelWidth;
                 EditorGUIUtility.hierarchyMode = m_HierarchyMode;
+                EditorGUIUtilityInternal.CurrentViewWidth = -1f;
 
                 m_Disposed = true;
             }

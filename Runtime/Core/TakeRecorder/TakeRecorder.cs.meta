@@ -1,13 +1,11 @@
 fileFormatVersion: 2
-guid: 6f2c132feb88d6345985a670b685927d
+guid: 995add57300074e16b65c1bea2f1d504
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences:
-  - m_NullPlayableAsset: {fileID: 11400000, guid: a42ca493bba0c314e86e05cbd6ec9ddf,
-      type: 2}
+  defaultReferences: []
   executionOrder: 0
-  icon: {fileID: 2800000, guid: 6d9be6a92d4da7c4cafeeb636a6ddc3a, type: 3}
+  icon: {instanceID: 0}
   userData: 
   assetBundleName: 
   assetBundleVariant: 

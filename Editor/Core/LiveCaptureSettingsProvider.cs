@@ -17,6 +17,7 @@ namespace Unity.LiveCapture.Editor
         {
             public static readonly GUIContent SettingMenuIcon = EditorGUIUtility.IconContent("_Popup");
             public static readonly GUIContent ResetLabel = EditorGUIUtility.TrTextContent("Reset", "Reset to default.");
+            public static readonly GUIContent FrameRate = EditorGUIUtility.TrTextContent("Frame Rate", "The frame rate to use for recording.");
             public static readonly GUIContent TakeNameFormatLabel = EditorGUIUtility.TrTextContent("Take Name Format", "The format of the file name of the output take.");
             public static readonly GUIContent AssetNameFormatLabel = EditorGUIUtility.TrTextContent("Asset Name Format", "The format of the file name of the generated assets.");
             public static readonly GUIContent SyncSectionLabel = EditorGUIUtility.TrTextContent("Genlock");
@@ -27,6 +28,7 @@ namespace Unity.LiveCapture.Editor
         static (Type type, SyncProviderAttribute[] attributes)[] s_SyncProviderTypes;
 
         SerializedObject m_SerializedObject;
+        SerializedProperty m_FrameRate;
         SerializedProperty m_TakeNameFormatProp;
         SerializedProperty m_AssetNameFormatProp;
         SerializedProperty m_SyncProviderProp;
@@ -40,7 +42,7 @@ namespace Unity.LiveCapture.Editor
         }
 
         public LiveCaptureSettingsProvider(string path, SettingsScope scopes, IEnumerable<string> keywords = null)
-            : base(path, scopes, keywords) {}
+            : base(path, scopes, keywords) { }
 
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {
@@ -79,6 +81,7 @@ namespace Unity.LiveCapture.Editor
             using (var change = new EditorGUI.ChangeCheckScope())
             using (new SettingsWindowGUIScope())
             {
+                EditorGUILayout.PropertyField(m_FrameRate, Contents.FrameRate);
                 EditorGUILayout.PropertyField(m_TakeNameFormatProp, Contents.TakeNameFormatLabel);
                 EditorGUILayout.PropertyField(m_AssetNameFormatProp, Contents.AssetNameFormatLabel);
 
@@ -192,6 +195,7 @@ namespace Unity.LiveCapture.Editor
         void InitializeWithCurrentSettings()
         {
             m_SerializedObject = new SerializedObject(LiveCaptureSettings.Instance);
+            m_FrameRate = m_SerializedObject.FindProperty("m_FrameRate");
             m_TakeNameFormatProp = m_SerializedObject.FindProperty("m_TakeNameFormat");
             m_AssetNameFormatProp = m_SerializedObject.FindProperty("m_AssetNameFormat");
             m_SyncProviderProp = m_SerializedObject.FindProperty("m_SyncProvider");

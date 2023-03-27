@@ -276,7 +276,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> have the same value; otherwise, <see langword="false"/>.</returns>
-        public static bool operator==(FrameTime a, FrameTime b) => a.Equals(b);
+        public static bool operator ==(FrameTime a, FrameTime b) => a.Equals(b);
 
         /// <summary>
         /// Indicates whether two specified instances of <see cref="FrameTime"/> are not equal.
@@ -284,7 +284,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> do not have the same value; otherwise, <see langword="false"/>.</returns>
-        public static bool operator!=(FrameTime a, FrameTime b) => !a.Equals(b);
+        public static bool operator !=(FrameTime a, FrameTime b) => !a.Equals(b);
 
         /// <summary>
         /// Indicates whether one specified <see cref="FrameTime"/> is later than or the same as another specified <see cref="FrameTime"/>.
@@ -292,7 +292,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is later than or the same as <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator>=(FrameTime a, FrameTime b) => a.CompareTo(b) >= 0;
+        public static bool operator >=(FrameTime a, FrameTime b) => a.CompareTo(b) >= 0;
 
         /// <summary>
         /// Indicates whether one specified <see cref="FrameTime"/> is earlier than or the same as another specified <see cref="FrameTime"/>.
@@ -300,7 +300,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is earlier than or the same as <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator<=(FrameTime a, FrameTime b) => a.CompareTo(b) <= 0;
+        public static bool operator <=(FrameTime a, FrameTime b) => a.CompareTo(b) <= 0;
 
         /// <summary>
         /// Indicates whether one specified <see cref="FrameTime"/> is later than another specified <see cref="FrameTime"/>.
@@ -308,7 +308,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is later than <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator>(FrameTime a, FrameTime b) => a.CompareTo(b) > 0;
+        public static bool operator >(FrameTime a, FrameTime b) => a.CompareTo(b) > 0;
 
         /// <summary>
         /// Indicates whether one specified <see cref="FrameTime"/> is earlier than another specified <see cref="FrameTime"/>.
@@ -316,7 +316,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is earlier than <paramref name="b"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool operator<(FrameTime a, FrameTime b) => a.CompareTo(b) < 0;
+        public static bool operator <(FrameTime a, FrameTime b) => a.CompareTo(b) < 0;
 
         /// <summary>
         /// Increments a <see cref="FrameTime"/> by a single frame.
@@ -325,7 +325,7 @@ namespace Unity.LiveCapture
         /// <returns>The incremented frame time.</returns>
         /// <exception cref="OverflowException">Thrown if the resulting value is outside the range representable
         /// by the <see cref="FrameTime"/> type.</exception>
-        public static FrameTime operator++(FrameTime a)
+        public static FrameTime operator ++(FrameTime a)
         {
             var frameNumber = a.m_FrameNumber;
 
@@ -345,7 +345,7 @@ namespace Unity.LiveCapture
         /// <returns>The sum of <paramref name="a"/> and <paramref name="b"/>.</returns>
         /// <exception cref="OverflowException">Thrown if the resulting value is outside the range representable
         /// by the <see cref="FrameTime"/> type.</exception>
-        public static FrameTime operator+(FrameTime a, FrameTime b)
+        public static FrameTime operator +(FrameTime a, FrameTime b)
         {
             // If one of the subframe resolutions is a multiple of the other other, we can produce an exact result.
             // Otherwise, we compute the best approximate result with the larger resolution.
@@ -391,7 +391,7 @@ namespace Unity.LiveCapture
         /// <returns>The decremented frame time.</returns>
         /// <exception cref="OverflowException">Thrown if the resulting value is outside the range representable
         /// by the <see cref="FrameTime"/> type.</exception>
-        public static FrameTime operator--(FrameTime a)
+        public static FrameTime operator --(FrameTime a)
         {
             var frameNumber = a.m_FrameNumber;
 
@@ -411,7 +411,7 @@ namespace Unity.LiveCapture
         /// <returns>The subtraction of <paramref name="b"/> from <paramref name="a"/>.</returns>
         /// <exception cref="OverflowException">Thrown if the resulting value is outside the range representable
         /// by the <see cref="FrameTime"/> type.</exception>
-        public static FrameTime operator-(FrameTime a, FrameTime b)
+        public static FrameTime operator -(FrameTime a, FrameTime b)
         {
             // If one of the subframe resolutions is a multiple of the other other, we can produce an exact result.
             // Otherwise, we compute the best approximate result with the larger resolution.

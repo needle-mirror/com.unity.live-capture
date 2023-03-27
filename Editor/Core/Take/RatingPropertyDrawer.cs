@@ -79,7 +79,7 @@ namespace Unity.LiveCapture.Editor
 
         static int s_InitialValue;
         static int DoSlider(Rect position, int controlId, int value, int max, bool relative = false, float relativeDistance = 100f)
-        {   
+        {
             if (relative && Event.current.type == EventType.MouseDown)
             {
                 s_InitialValue = value;
@@ -190,7 +190,7 @@ namespace Unity.LiveCapture.Editor
         {
             var aspect = content.image.width / content.image.height;
 
-            rect.x += (rect.width - aspect*rect.height) * 0.5f;
+            rect.x += (rect.width - aspect * rect.height) * 0.5f;
             EditorGUI.LabelField(rect, content);
         }
     }

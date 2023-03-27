@@ -14,12 +14,12 @@ namespace Unity.LiveCapture.CompanionApp.Editor
 
         static void OnClientConnected(ICompanionAppClient client)
         {
-            TakeRecorderEditor.RepaintEditors();
+            TakeRecorderWindow.RepaintWindow();
         }
 
         static void OnClientDisconnected(ICompanionAppClient client)
         {
-            TakeRecorderEditor.RepaintEditors();
+            TakeRecorderWindow.RepaintWindow();
         }
     }
 }

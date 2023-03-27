@@ -46,8 +46,6 @@ namespace Unity.LiveCapture
             set => m_AutoClipName = value;
         }
 
-        public Object UnityObject => this;
-
         public string Directory
         {
             get => m_Directory;
@@ -66,22 +64,28 @@ namespace Unity.LiveCapture
             set => m_IterationBase = value;
         }
 
-        public Slate Slate
+        public int SceneNumber
         {
-            get => new Slate()
-            {
-                SceneNumber = m_SceneNumber,
-                ShotName = m_ShotName,
-                TakeNumber = m_TakeNumber,
-                Description = m_Description,
-            };
-            set
-            {
-                m_SceneNumber = value.SceneNumber;
-                m_ShotName = value.ShotName;
-                m_TakeNumber = value.TakeNumber;
-                m_Description = value.Description;
-            }
+            get => m_SceneNumber;
+            set => m_SceneNumber = value;
+        }
+
+        public string ShotName
+        {
+            get => m_ShotName;
+            set => m_ShotName = value;
+        }
+
+        public int TakeNumber
+        {
+            get => m_TakeNumber;
+            set => m_TakeNumber = value;
+        }
+
+        public string Description
+        {
+            get => m_Description;
+            set => m_Description = value;
         }
 
         internal void Migrate(string clipName)

@@ -12,6 +12,16 @@ namespace Unity.LiveCapture.Editor
         /// <inheritdoc />
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
+            var numeratorProp = property.FindPropertyRelative("m_Numerator");
+            var denominatorProp = property.FindPropertyRelative("m_Denominator");
+            var isDropFrameProp = property.FindPropertyRelative("m_IsDropFrame");
+
+            if (numeratorProp == null || denominatorProp == null || isDropFrameProp == null)
+            {
+                base.OnGUI(position, property, label);
+                return;
+            }
+
             using (var prop = new EditorGUI.PropertyScope(position, label, property))
             using (var change = new EditorGUI.ChangeCheckScope())
             {
@@ -19,10 +29,6 @@ namespace Unity.LiveCapture.Editor
                 {
                     position = EditorGUI.PrefixLabel(position, prop.content);
                 }
-
-                var numeratorProp = property.FindPropertyRelative("m_Numerator");
-                var denominatorProp = property.FindPropertyRelative("m_Denominator");
-                var isDropFrameProp = property.FindPropertyRelative("m_IsDropFrame");
 
                 var frameRate = new FrameRate(numeratorProp.intValue, denominatorProp.intValue, isDropFrameProp.boolValue);
 

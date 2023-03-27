@@ -14,6 +14,6 @@ namespace Unity.LiveCapture
 
     class FloatSampler : Sampler<float>
     {
-        public FloatSampler() : base(FloatInterpolator.Instance) {}
+        public FloatSampler() : base(FloatInterpolator.Instance) { }
     }
 }

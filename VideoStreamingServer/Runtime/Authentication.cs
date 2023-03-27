@@ -95,30 +95,30 @@ namespace Unity.LiveCapture.VideoStreaming.Server
                     message_method = received_message.Command.Split(' ')[0];
                     message_uri = received_message.Command.Split(' ')[1];
                 }
-                catch {}
+                catch { }
 
                 foreach (string value in values)
                 {
-                    string[] tuple = value.Trim().Split(new char[] {'='}, 2); // split on first '='
+                    string[] tuple = value.Trim().Split(new char[] { '=' }, 2); // split on first '='
                     if (tuple.Length == 2 && tuple[0].Equals("username"))
                     {
-                        auth_header_username = tuple[1].Trim(new char[] {' ', '\"'}); // trim space and quotes
+                        auth_header_username = tuple[1].Trim(new char[] { ' ', '\"' }); // trim space and quotes
                     }
                     else if (tuple.Length == 2 && tuple[0].Equals("realm"))
                     {
-                        auth_header_realm = tuple[1].Trim(new char[] {' ', '\"'}); // trim space and quotes
+                        auth_header_realm = tuple[1].Trim(new char[] { ' ', '\"' }); // trim space and quotes
                     }
                     else if (tuple.Length == 2 && tuple[0].Equals("nonce"))
                     {
-                        auth_header_nonce = tuple[1].Trim(new char[] {' ', '\"'}); // trim space and quotes
+                        auth_header_nonce = tuple[1].Trim(new char[] { ' ', '\"' }); // trim space and quotes
                     }
                     else if (tuple.Length == 2 && tuple[0].Equals("uri"))
                     {
-                        auth_header_uri = tuple[1].Trim(new char[] {' ', '\"'}); // trim space and quotes
+                        auth_header_uri = tuple[1].Trim(new char[] { ' ', '\"' }); // trim space and quotes
                     }
                     else if (tuple.Length == 2 && tuple[0].Equals("response"))
                     {
-                        auth_header_response = tuple[1].Trim(new char[] {' ', '\"'}); // trim space and quotes
+                        auth_header_response = tuple[1].Trim(new char[] { ' ', '\"' }); // trim space and quotes
                     }
                 }
 

@@ -5,7 +5,8 @@
         "Unity.LiveCapture",
         "Unity.LiveCapture.Networking",
         "Unity.Timeline",
-        "Unity.Timeline.Editor"
+        "Unity.Timeline.Editor",
+        "Unity.InternalAPIEditorBridge.011"
     ],
     "includePlatforms": [
         "Editor"

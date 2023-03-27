@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using Unity.LiveCapture.Editor;
 using Unity.LiveCapture.Networking;
 using UnityEditor;
@@ -19,11 +20,14 @@ namespace Unity.LiveCapture.CompanionApp.Editor
             public const string InfoNoClientSection = "no-client-section";
             public const string InfoClientSection = "client-section";
             public const string InfoClients = "client-list";
-            public const string LearnMoreButton = "learn-more-button";
+            public const string InfoLearnMoreButton = "learn-more-button";
 
             public const string SettingsPort = "port";
             public const string SettingsPortHelpBox = "port-warning";
             public const string SettingsInterfaces = "interfaces";
+            public const string SettingsPublicWarning = "public-warning";
+            public const string SettingsPublicWarningInfo = "public-warning-info";
+            public const string SettingsPublicWarningDismiss = "public-warning-dismiss";
 
             public const string ClientName = "client-name";
             public const string ClientType = "client-type";
@@ -32,6 +36,9 @@ namespace Unity.LiveCapture.CompanionApp.Editor
         static class Constant
         {
             public const string TroubleshootingURL = Documentation.baseURL + "troubleshooting" + Documentation.endURL;
+            public const string NetworkSetupURL = Documentation.baseURL + "setup-network" + Documentation.endURL;
+
+            public const string DimissedPublicNetworkWarningKey = "dismissed-public-network-warning";
 
             public const long UpdateInterval = 16;
             public const long PortRefreshInterval = 2000;
@@ -54,11 +61,16 @@ namespace Unity.LiveCapture.CompanionApp.Editor
         PropertyField m_SettingsPort;
         HelpBox m_SettingsPortHelpBox;
         VisualElement m_SettingsInterfaces;
+        HelpBox m_SettingsPublicNetworkWarning;
 
         CompanionAppServer m_Connection;
         List<ICompanionAppClient> m_Clients = new List<ICompanionAppClient>();
         bool m_ShowPortHelpBox;
-        IPAddress[] m_Addresses = {};
+        (IPAddress, NetworkInterface)[] m_Addresses = { };
+        bool m_HasPublicNetworks;
+        bool m_PublicWarningDimissed;
+
+        NetworkListManagerThreaded m_NLM;
 
         SerializedProperty m_ClientsExpanded;
         SerializedProperty m_InterfacesExpanded;
@@ -75,12 +87,16 @@ namespace Unity.LiveCapture.CompanionApp.Editor
 
             m_ClientsExpanded = serializedObject.FindProperty("m_ClientsExpanded");
             m_InterfacesExpanded = serializedObject.FindProperty("m_InterfacesExpanded");
+
+            m_NLM = new NetworkListManagerThreaded();
         }
 
         void OnDisable()
         {
             CompanionAppServer.ClientConnected -= ClientConnected;
             CompanionAppServer.ClientDisconnected -= ClientDisconnected;
+
+            m_NLM.Dispose();
         }
 
         void UpdateInterfaces()
@@ -97,8 +113,19 @@ namespace Unity.LiveCapture.CompanionApp.Editor
 
             for (var i = 0; i < m_SettingsInterfaces.childCount && i < m_Addresses.Length; i++)
             {
+                var (ipAddress, networkInterface) = m_Addresses[i];
+
+                var found = m_NLM.TryGetIsPublic(networkInterface, out var isPublic);
+
                 var label = m_SettingsInterfaces.hierarchy.ElementAt(i) as Label;
-                label.text = m_Addresses[i].ToString();
+                if (found && isPublic)
+                {
+                    label.text = ipAddress.ToString() + " [Public Network]";
+                }
+                else
+                {
+                    label.text = ipAddress.ToString();
+                }
             }
 
             if (m_Addresses.Length == 0)
@@ -117,7 +144,7 @@ namespace Unity.LiveCapture.CompanionApp.Editor
             m_InfoNoClientSection = root.Q<VisualElement>(ID.InfoNoClientSection);
             m_InfoClientSection = root.Q<VisualElement>(ID.InfoClientSection);
             m_InfoClients = root.Q<VisualElement>(ID.InfoClients);
-            root.Q<Button>(ID.LearnMoreButton).clickable.clicked += () => Application.OpenURL(Constant.TroubleshootingURL);
+            root.Q<Button>(ID.InfoLearnMoreButton).clickable.clicked += () => Application.OpenURL(Constant.TroubleshootingURL);
 
             var clientsFoldout = root.Q<Foldout>();
             clientsFoldout.BindProperty(m_ClientsExpanded);
@@ -155,6 +182,16 @@ namespace Unity.LiveCapture.CompanionApp.Editor
 
             m_SettingsInterfaces = root.Q<VisualElement>(ID.SettingsInterfaces);
 
+            m_SettingsPublicNetworkWarning = root.Q<HelpBox>(ID.SettingsPublicWarning);
+
+            root.Q<Button>(ID.SettingsPublicWarningInfo).clickable.clicked += () => Application.OpenURL(Constant.NetworkSetupURL);
+
+            root.Q<Button>(ID.SettingsPublicWarningDismiss).clickable.clicked += () =>
+            {
+                m_SettingsPublicNetworkWarning.SetDisplay(false);
+                SessionState.SetBool(Constant.DimissedPublicNetworkWarningKey, true);
+            };
+
             var interfacesFoldout = root.Q<Foldout>();
             interfacesFoldout.BindProperty(m_InterfacesExpanded);
 
@@ -174,6 +211,9 @@ namespace Unity.LiveCapture.CompanionApp.Editor
             m_SettingsPortHelpBox.SetDisplay(m_ShowPortHelpBox && !m_Connection.IsEnabled());
 
             UpdateInterfaces();
+
+            var shouldDimiss = SessionState.GetBool(Constant.DimissedPublicNetworkWarningKey, false);
+            m_SettingsPublicNetworkWarning.SetDisplay(m_HasPublicNetworks && !shouldDimiss);
         }
 
         void ClientConnected(ICompanionAppClient client)
@@ -255,7 +295,13 @@ namespace Unity.LiveCapture.CompanionApp.Editor
 
         void RefreshInterfaces()
         {
-            m_Addresses = NetworkUtilities.GetIPAddresses(false);
+            m_Addresses = NetworkUtilities.GetIPInterfaces(false);
+
+            m_HasPublicNetworks = m_Addresses.Any(x =>
+            {
+                var found = m_NLM.TryGetIsPublic(x.Item2, out var isPublic);
+                return found && isPublic;
+            });
         }
     }
 }

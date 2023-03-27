@@ -33,7 +33,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         }
 
         public SnapshotSettingsProvider(string path, SettingsScope scopes, IEnumerable<string> keywords = null)
-            : base(path, scopes, keywords) {}
+            : base(path, scopes, keywords) { }
 
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {

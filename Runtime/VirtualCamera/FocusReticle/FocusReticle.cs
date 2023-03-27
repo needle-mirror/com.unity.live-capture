@@ -31,7 +31,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// Invoked on completion of the animation. Can be used to deactivate the reticle GameObject for example.
         /// </summary>
-        public event Action AnimationComplete = delegate {};
+        public event Action AnimationComplete = delegate { };
 
         void Awake()
         {

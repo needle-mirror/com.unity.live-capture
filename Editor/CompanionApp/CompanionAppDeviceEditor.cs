@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using Unity.LiveCapture.Editor;
 using UnityEditor;
@@ -7,8 +5,10 @@ using UnityEngine;
 
 namespace Unity.LiveCapture.CompanionApp.Editor
 {
+    using Editor = UnityEditor.Editor;
+
     [CustomEditor(typeof(CompanionAppDevice<>), true)]
-    class CompanionAppDeviceEditor<TClient> : LiveCaptureDeviceEditor where TClient : class, ICompanionAppClient
+    class CompanionAppDeviceEditor<TClient> : Editor where TClient : class, ICompanionAppClient
     {
         static class Contents
         {
@@ -25,7 +25,8 @@ namespace Unity.LiveCapture.CompanionApp.Editor
         {
             using (var change = new EditorGUI.ChangeCheckScope())
             {
-                base.OnInspectorGUI();
+                DoClientGUI();
+                OnDeviceGUI();
 
                 if (change.changed)
                 {
@@ -39,11 +40,11 @@ namespace Unity.LiveCapture.CompanionApp.Editor
             }
         }
 
-        /// <inheritdoc/>
-        protected override void OnDeviceGUI()
+        /// <summary>
+        /// Draws the Inspector for the inspected device.
+        /// </summary>
+        protected virtual void OnDeviceGUI()
         {
-            DoClientGUI();
-
             serializedObject.Update();
 
             DrawPropertiesExcluding(serializedObject, s_ExcludeProperties);
@@ -58,7 +59,7 @@ namespace Unity.LiveCapture.CompanionApp.Editor
         {
             var device = target as CompanionAppDevice<TClient>;
 
-            using (new EditorGUI.DisabledScope(device.GetTakeRecorder() == null))
+            using (new EditorGUI.DisabledScope(!device.isActiveAndEnabled))
             {
                 DoClientGUIInternal();
             }
@@ -129,7 +130,7 @@ namespace Unity.LiveCapture.CompanionApp.Editor
                 return server
                     .GetClients()
                     .OfType<TClient>()
-                    .ToArray();;
+                    .ToArray();
             }
             return new TClient[0];
         }

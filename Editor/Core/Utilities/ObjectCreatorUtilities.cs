@@ -6,13 +6,14 @@ namespace Unity.LiveCapture.Editor
 {
     static class ObjectCreatorUtilities
     {
-        [MenuItem("GameObject/Live Capture/Take Recorder", false, 10)]
-        public static GameObject CreateTakeRecorder()
+
+        [MenuItem("GameObject/Live Capture/Shot Player", isValidateFunction: false, priority: 5)]
+        public static GameObject CreateShotPlayer()
         {
-            var name = "Take Recorder";
-            var undoName = "Create Take Recorder";
+            var name = "Shot Player";
+            var undoName = "Create Shot Player";
             var selectedTransform = Selection.activeTransform;
-            var go = new GameObject(name, typeof(TakeRecorder));
+            var go = new GameObject(name, typeof(ShotPlayer));
 
             StageUtility.PlaceGameObjectInCurrentStage(go);
             Undo.RegisterCreatedObjectUndo(go, undoName);

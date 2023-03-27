@@ -46,9 +46,9 @@ namespace Unity.LiveCapture.VirtualCamera
             CameraDriverUpdateManager.Instance.Unregister(this);
         }
 
-        protected virtual void Awake() {}
-        protected virtual void OnDestroy() {}
-        protected virtual void OnValidate() {}
+        protected virtual void Awake() { }
+        protected virtual void OnDestroy() { }
+        protected virtual void OnValidate() { }
 
         bool TryGetImplementation(out ICameraDriverImpl impl)
         {
@@ -58,7 +58,7 @@ namespace Unity.LiveCapture.VirtualCamera
             {
                 impl = GetImplementation();
             }
-            catch {}
+            catch { }
 
             return impl != null;
         }

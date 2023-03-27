@@ -77,7 +77,7 @@ namespace Unity.LiveCapture.Networking
         /// <param name="a">The first remote.</param>
         /// <param name="b">The second remote.</param>
         /// <returns>True if the remotes are equivalent; false otherwise.</returns>
-        public static bool operator==(Remote a, Remote b) => ReferenceEquals(a, b) || (!(a is null) && a.Equals(b));
+        public static bool operator ==(Remote a, Remote b) => ReferenceEquals(a, b) || (!(a is null) && a.Equals(b));
 
         /// <summary>
         /// Determines whether two remotes handles are not equivalent.
@@ -85,6 +85,6 @@ namespace Unity.LiveCapture.Networking
         /// <param name="a">The first remote.</param>
         /// <param name="b">The second remote.</param>
         /// <returns>True if the remotes are not equivalent; false otherwise.</returns>
-        public static bool operator!=(Remote a, Remote b) => !(a == b);
+        public static bool operator !=(Remote a, Remote b) => !(a == b);
     }
 }

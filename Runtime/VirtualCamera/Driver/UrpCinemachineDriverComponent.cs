@@ -1,7 +1,12 @@
 #if URP_10_2_OR_NEWER && VP_CINEMACHINE_2_4_0
 using System;
+#if !CINEMACHINE_3_0_0_OR_NEWER
 using Cinemachine;
 using Cinemachine.PostFX;
+using CinemachineCamera = Cinemachine.CinemachineVirtualCamera;
+#else
+using Unity.Cinemachine
+#endif
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Rendering;
@@ -24,7 +29,8 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <summary>
         /// The Cinemachine virtual camera driven by this component.
         /// </summary>
-        public CinemachineVirtualCamera CinemachineVirtualCamera { get; set; }
+
+        public CinemachineCamera CinemachineVirtualCamera { get; set; }
 
         void PrepareIfNeeded()
         {
@@ -59,7 +65,11 @@ namespace Unity.LiveCapture.VirtualCamera
 
             if (m_Volume != null)
             {
+#if CINEMACHINE_3_0_0_OR_NEWER
+                m_Volume.Profile = m_Profile;
+#else
                 m_Volume.m_Profile = m_Profile;
+#endif
 
                 VolumeProfileTracker.Instance.TryRegisterProfileOwner(m_Profile, m_Volume);
             }

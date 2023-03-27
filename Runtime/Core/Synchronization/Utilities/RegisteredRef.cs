@@ -94,7 +94,7 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> represent the same value; otherwise, <see langword="false"/>.</returns>
-        public static bool operator==(RegisteredRef<T> a, RegisteredRef<T> b) => a.Equals(b);
+        public static bool operator ==(RegisteredRef<T> a, RegisteredRef<T> b) => a.Equals(b);
 
         /// <summary>
         /// Determines whether two specified instances of <see cref="RegisteredRef{T}"/> are not equal.
@@ -102,6 +102,6 @@ namespace Unity.LiveCapture
         /// <param name="a">The first instance to compare.</param>
         /// <param name="b">The second instance to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> and <paramref name="b"/> do not represent the same value; otherwise, <see langword="false"/>.</returns>
-        public static bool operator!=(RegisteredRef<T> a, RegisteredRef<T> b) => !(a == b);
+        public static bool operator !=(RegisteredRef<T> a, RegisteredRef<T> b) => !(a == b);
     }
 }

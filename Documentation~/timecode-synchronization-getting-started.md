@@ -35,7 +35,7 @@ In addition, this scenario specifically requires:
 2. Add an **LTC Timecode Source** component to this same GameObject.
 
 
-## Select the proper timecode sources
+## Select the timecode sources
 
 1. In the Unity Editor:
 

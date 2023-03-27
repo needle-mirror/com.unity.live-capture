@@ -29,7 +29,7 @@ namespace Unity.LiveCapture
 
         object IEnumerator.Current => Current;
 
-        void IDisposable.Dispose() {}
+        void IDisposable.Dispose() { }
 
         public KeyframeReducer(IKeyframeReducerImpl<T> impl, int maxSearchWindow = kMaxSearchWindow)
         {
@@ -98,8 +98,8 @@ namespace Unity.LiveCapture
 
             do
             {
-                var index2 = Mathf.Min(m_MaxSearchWindow, m_Buffer.Count-1);
-                var index1 = index2-1;
+                var index2 = Mathf.Min(m_MaxSearchWindow, m_Buffer.Count - 1);
+                var index1 = index2 - 1;
                 var keyFound = false;
 
                 while (index1 >= 0)

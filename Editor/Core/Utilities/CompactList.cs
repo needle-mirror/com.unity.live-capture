@@ -1032,7 +1032,7 @@ namespace Unity.LiveCapture.Editor
 
                     // do not auto-scroll to the new selection, it can be confusing to the user
                     var item = GetItemUnderMouse(listRect, itemCount);
-                    m_Index = IsSearchActive ? m_SearchElementToItem.Reverse[item] : item;;
+                    m_Index = IsSearchActive ? m_SearchElementToItem.Reverse[item] : item;
                     SessionState.SetInt($"{m_StatePath}/index", m_Index);
 
                     // Prevent consuming the right mouse event in order to enable context menus

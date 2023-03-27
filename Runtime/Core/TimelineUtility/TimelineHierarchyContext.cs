@@ -18,7 +18,7 @@ namespace Unity.LiveCapture
         /// </summary>
         public IEnumerable<TimelineContext> Hierarchy => m_Hierarchy;
 
-        protected TimelineHierarchyContext() {}
+        protected TimelineHierarchyContext() { }
 
         /// <summary>
         /// Constructs a hierarchy contexts from an enumeration of <see cref="TimelineContext"/>.
@@ -37,7 +37,7 @@ namespace Unity.LiveCapture
         {
             var builder = new StringBuilder();
 
-            for (var i = m_Hierarchy.Count-1; i >= 0; --i)
+            for (var i = m_Hierarchy.Count - 1; i >= 0; --i)
             {
                 var context = m_Hierarchy[i];
 
@@ -60,6 +60,11 @@ namespace Unity.LiveCapture
 
         public bool Equals(TimelineHierarchyContext other)
         {
+            if (other == null)
+            {
+                return false;
+            }
+
             return m_Hierarchy.SequenceEqual(other.m_Hierarchy);
         }
 
@@ -83,7 +88,13 @@ namespace Unity.LiveCapture
         {
             unchecked
             {
-                var hashCode = m_Hierarchy.GetHashCode();
+                var hashCode = 397;
+
+                foreach (var ctx in m_Hierarchy)
+                {
+                    hashCode = (hashCode * 397) ^ ctx.GetHashCode();
+                }
+
                 return hashCode;
             }
         }
@@ -98,8 +109,7 @@ namespace Unity.LiveCapture
         public static bool IsValid(this TimelineHierarchyContext context)
         {
             return context != null
-                && context.TryGetRootAndTimeOffset(out var root, out var timeOffset)
-                && root.playableGraph.IsValid();
+                && context.TryGetRootAndTimeOffset(out var root, out var timeOffset);
         }
 
         /// <summary>

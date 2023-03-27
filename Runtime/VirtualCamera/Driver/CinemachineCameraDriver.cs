@@ -1,6 +1,11 @@
 using UnityEngine;
 #if VP_CINEMACHINE_2_4_0
-using Cinemachine;
+#if !CINEMACHINE_3_0_0_OR_NEWER
+using Cinemachine ;
+using CinemachineCamera = Cinemachine.CinemachineVirtualCamera;
+#else
+using Unity.Cinemachine ;
+#endif
 #endif
 
 namespace Unity.LiveCapture.VirtualCamera
@@ -22,7 +27,7 @@ namespace Unity.LiveCapture.VirtualCamera
 #endif
         ICameraDriverImpl m_Impl;
 
-        public CinemachineVirtualCamera CinemachineVirtualCamera
+        public CinemachineCamera CinemachineVirtualCamera
         {
             get => m_CinemachineComponent.CinemachineVirtualCamera;
             set
@@ -82,7 +87,11 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         public override Camera GetCamera()
         {
+#if !CINEMACHINE_3_0_0_OR_NEWER
             var brain = CinemachineCore.Instance.FindPotentialTargetBrain(CinemachineVirtualCamera);
+#else
+             var brain = CinemachineCore.FindPotentialTargetBrain(CinemachineVirtualCamera);
+#endif
             if (brain != null)
                 return brain.OutputCamera;
 

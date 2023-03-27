@@ -48,6 +48,6 @@ namespace Unity.LiveCapture
     }
     class QuaternionKeyframeReducer : KeyframeReducer<Keyframe<Quaternion>>
     {
-        public QuaternionKeyframeReducer() : base(QuaternionKeyframeReducerImpl.Instance) {}
+        public QuaternionKeyframeReducer() : base(QuaternionKeyframeReducerImpl.Instance) { }
     }
 }

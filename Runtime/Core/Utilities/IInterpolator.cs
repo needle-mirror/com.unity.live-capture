@@ -1,4 +1,4 @@
-﻿namespace Unity.LiveCapture
+namespace Unity.LiveCapture
 {
     /// <summary>
     /// An interface that provides interpolation functionality.

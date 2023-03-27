@@ -44,6 +44,6 @@ namespace Unity.LiveCapture
 
     class FloatKeyframeReducer : KeyframeReducer<Keyframe>
     {
-        public FloatKeyframeReducer() : base(FloatKeyframeReducerImpl.Instance) {}
+        public FloatKeyframeReducer() : base(FloatKeyframeReducerImpl.Instance) { }
     }
 }

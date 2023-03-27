@@ -11,3 +11,4 @@
 | **E** | Face tracking indicator | Indicates the current face tracking status.<br /><br />This indicator becomes red when the app is unable to detect a face, for example when the face is partially or totally outside the tracking area boundaries. |
 | **F** | Help | Tap this icon to enter or exit the app Help Mode.<br /><br />In Help Mode, tap any control to display a tooltip describing its function. |
 | **G** | Record button | Use this button to start/stop recording a face animation take.<br /><br />When you start a recording, the app displays a pre-recording countdown and then sends a command to the Unity Editor to start recording a take. |
+| **H** | Calibrate button | Use this button to calibrate this device to a subject's neutral pose, or to clear the calibration.<br /><br />**Note:** The latest calibration state affects the actual recorded data. |

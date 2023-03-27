@@ -345,7 +345,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified CameraState are equal; otherwise, false.
         /// </returns>
-        public static bool operator==(Settings a, Settings b)
+        public static bool operator ==(Settings a, Settings b)
         {
             return a.Equals(b);
         }
@@ -358,7 +358,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified CameraState are different; otherwise, false.
         /// </returns>
-        public static bool operator!=(Settings a, Settings b)
+        public static bool operator !=(Settings a, Settings b)
         {
             return !(a == b);
         }

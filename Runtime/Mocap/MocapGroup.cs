@@ -22,7 +22,6 @@ namespace Unity.LiveCapture.Mocap
         LiveCaptureDevice m_TimeSource;
         MocapRecorder m_Recorder = new MocapRecorder();
         double? m_FirstFrameTime;
-        bool m_Recording;
 
         internal IReadOnlyList<LiveCaptureDevice> Devices => m_Devices;
 
@@ -39,12 +38,6 @@ namespace Unity.LiveCapture.Mocap
         public override bool IsReady()
         {
             return m_Animator != null;
-        }
-
-        /// <inheritdoc/>
-        public override bool IsRecording()
-        {
-            return m_Recording;
         }
 
         internal MocapRecorder GetRecorder()
@@ -86,92 +79,66 @@ namespace Unity.LiveCapture.Mocap
         }
 
         /// <inheritdoc/>
-        public override void UpdateDevice()
+        protected override void UpdateDevice()
         {
             m_Recorder.Animator = m_Animator;
 
-            foreach (var device in m_Devices)
+            ForeachDevice(device =>
             {
                 if (device is IMocapDevice source)
                 {
                     source.Animator = m_Animator;
-                    device.SetTakeRecorderOverride(GetTakeRecorder());
-
-                    if (device.isActiveAndEnabled)
-                    {
-                        try
-                        {
-                            device.UpdateDevice();
-                        }
-                        catch (Exception exception)
-                        {
-                            Debug.LogException(exception);
-                        }
-                    }
                 }
-            }
+
+                if (device.isActiveAndEnabled)
+                {
+                    device.InvokeUpdateDevice();
+                }
+            });
 
             UpdateRecorder();
         }
 
         /// <inheritdoc/>
-        public override void LiveUpdate()
+        protected override void LiveUpdate()
         {
-            foreach (var device in m_Devices)
+            ForeachDevice(device =>
             {
-                if (device is IMocapDevice source)
+                if (IsDeviceValid(device)
+                    && device.isActiveAndEnabled
+                    && device.IsLive
+                    && device.IsReady())
                 {
-                    if (IsDeviceValid(device)
-                        && device.isActiveAndEnabled
-                        && device.IsReady())
-                    {
-                        try
-                        {
-                            device.LiveUpdate();
-                        }
-                        catch (Exception exception)
-                        {
-                            Debug.LogException(exception);
-                        }
-                    }
+                    device.InvokeLiveUpdate();
                 }
-            }
+            });
 
             m_Recorder.ApplyFrame();
         }
 
         /// <inheritdoc/>
-        public override void StartRecording()
+        protected override void OnStartRecording()
         {
-            if (!m_Recording)
-            {
-                m_Recording = true;
-                m_FirstFrameTime = null;
-                m_Recorder.Clear();
-                m_Recorder.FrameRate = GetTakeRecorder().FrameRate;
+            m_FirstFrameTime = null;
+            m_Recorder.Clear();
+            m_Recorder.FrameRate = TakeRecorder.FrameRate;
 
-                InvokeRecordingChanged();
-            }
+            ForeachDevice(d => d.InvokeStartRecording());
         }
 
         /// <inheritdoc/>
-        public override void StopRecording()
+        protected override void OnStopRecording()
         {
-            if (IsRecording())
-            {
-                m_Recording = false;
-
-                InvokeRecordingChanged();
-            }
+            ForeachDevice(d => d.InvokeStopRecording());
         }
 
-        void InvokeRecordingChanged()
+        void ForeachDevice(Action<LiveCaptureDevice> action)
         {
             foreach (var device in m_Devices)
             {
-                if (device is IMocapDevice source)
+                if (device is IMocapDevice)
                 {
-                    source.InvokeRecordingChanged();
+                    action?.Invoke(device);
                 }
             }
         }
@@ -191,7 +158,7 @@ namespace Unity.LiveCapture.Mocap
 
         void UpdateRecorder()
         {
-            if (IsRecording() && m_TimeSource is IMocapDevice source)
+            if (IsRecording && m_TimeSource is IMocapDevice source)
             {
                 var time = source.GetCurrentFrameTime();
 

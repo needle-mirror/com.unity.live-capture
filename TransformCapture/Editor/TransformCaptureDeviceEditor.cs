@@ -1,11 +1,12 @@
 using UnityEngine;
 using UnityEditor;
-using Unity.LiveCapture.Editor;
 
 namespace Unity.LiveCapture.TransformCapture
 {
+    using Editor = UnityEditor.Editor;
+
     [CustomEditor(typeof(TransformCaptureDevice))]
-    class TransformCaptureDeviceEditor : LiveCaptureDeviceEditor
+    class TransformCaptureDeviceEditor : Editor
     {
         static class Contents
         {
@@ -21,16 +22,14 @@ namespace Unity.LiveCapture.TransformCapture
         SerializedProperty m_AvatarMask;
         SerializedProperty m_Recorder;
 
-        protected override void OnEnable()
+        void OnEnable()
         {
-            base.OnEnable();
-
             m_Actor = serializedObject.FindProperty("m_Actor");
             m_AvatarMask = serializedObject.FindProperty("m_AvatarMask");
             m_Recorder = serializedObject.FindProperty("m_Recorder");
         }
 
-        protected override void OnDeviceGUI()
+        public override void OnInspectorGUI()
         {
             serializedObject.Update();
 

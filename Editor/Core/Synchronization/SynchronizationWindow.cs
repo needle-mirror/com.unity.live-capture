@@ -280,6 +280,11 @@ namespace Unity.LiveCapture.Editor
 
                 using (new EditorGUILayout.VerticalScope(GUILayout.MaxWidth(float.MaxValue)))
                 {
+                    if (m_Editor != null && m_Editor.target == null)
+                    {
+                        DestroyImmediate(m_Editor);
+                    }
+
                     Editor.CreateCachedEditor(m_Synchronizer, null, ref m_Editor);
 
                     if (m_Editor is SynchronizerEditor synchronizerEditor)

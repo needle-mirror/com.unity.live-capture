@@ -9,7 +9,7 @@ namespace Unity.LiveCapture
     [Serializable]
     public struct Slate : IEquatable<Slate>
     {
-        internal static Slate Empty => new Slate()
+        internal static readonly Slate Empty = new Slate()
         {
             ShotName = string.Empty,
             Description = string.Empty

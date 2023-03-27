@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Unity.LiveCapture
@@ -9,49 +10,61 @@ namespace Unity.LiveCapture
     [ExecuteAlways, DisallowMultipleComponent]
     public abstract class LiveCaptureDevice : MonoBehaviour
     {
-        TakeRecorder m_TakeRecorder;
-        ITakeRecorder m_TakeRecorderOverride;
-        Transform m_CachedParent;
+        [SerializeField, HideInInspector]
+        int m_SortingOrder;
 
-        /// <summary>
-        /// Gets the <see cref="ITakeRecorder"/> that operates this device.
-        /// </summary>
-        /// <returns>
-        /// The take recorder object reference.
-        /// </returns>
-        public ITakeRecorder GetTakeRecorder()
+        [SerializeField, HideInInspector]
+        bool m_IsLive = true;
+
+        internal int SortingOrder
         {
-            if (m_TakeRecorderOverride != null)
+            get => m_SortingOrder;
+            set
             {
-                return m_TakeRecorderOverride;
+                m_SortingOrder = value;
+                LiveCaptureDeviceManager.Instance.SetNeedsSorting();
             }
-
-            Validate();
-
-            return m_TakeRecorder;
         }
 
-        // Used for testing purposes.
-        internal void SetTakeRecorderOverride(ITakeRecorder takeRecorder)
+        internal bool IsLive
         {
-            m_TakeRecorderOverride = takeRecorder;
+            get => m_IsLive;
+            set => m_IsLive = value;
         }
 
         /// <summary>
-        /// The device calls this method when the device is about to get destroyed.
+        /// The recording state of the device.
+        /// </summary>
+        public bool IsRecording { get; private set; }
+
+        /// <summary>
+        /// The device calls this method when the device is about to get enabled.
         /// </summary>
         /// <remarks>
         /// If you override this method, call the base method in your implementation.
         /// </remarks>
-        protected virtual void OnDestroy()
+        protected virtual void OnEnable()
         {
-            Unregister();
+            LiveCaptureDeviceManager.Instance.Register(this);
+        }
+
+        /// <summary>
+        /// The device calls this method when the device is about to get disabled.	
+        /// </summary>	
+        /// <remarks>	
+        /// If you override this method, call the base method in your implementation.	
+        /// </remarks>
+        protected virtual void OnDisable()
+        {
+            InvokeStopRecording();
+
+            LiveCaptureDeviceManager.Instance.Unregister(this);
         }
 
         /// <summary>
         /// Updates the internal state of the device.
         /// </summary>
-        public abstract void UpdateDevice();
+        protected virtual void UpdateDevice() { }
 
         /// <summary>
         /// Override this method to update the device during live mode.
@@ -59,7 +72,7 @@ namespace Unity.LiveCapture
         /// <remarks>
         /// This method is called after the animation system execution and before the script's LateUpdate.
         /// </remarks>
-        public abstract void LiveUpdate();
+        protected virtual void LiveUpdate() { }
 
         /// <summary>
         /// Indicates whether a device is ready for recording.
@@ -70,22 +83,14 @@ namespace Unity.LiveCapture
         public abstract bool IsReady();
 
         /// <summary>
-        /// Checks if the device has started recording.
+        /// The device calls this method when a new recording started.
         /// </summary>
-        /// <returns>
-        /// true if the recording has started; otherwise, false.
-        /// </returns>
-        public abstract bool IsRecording();
+        protected virtual void OnStartRecording() { }
 
         /// <summary>
-        /// Starts a new recording.
+        /// The device calls this method when the ongoing recording stopped.
         /// </summary>
-        public abstract void StartRecording();
-
-        /// <summary>
-        /// Stops the current recording.
-        /// </summary>
-        public abstract void StopRecording();
+        protected virtual void OnStopRecording() { }
 
         /// <summary>
         /// Stores the recording into a take using a <see cref="ITakeBuilder"/>.
@@ -110,49 +115,65 @@ namespace Unity.LiveCapture
 #endif
         }
 
-        internal virtual void Update()
+        internal void InvokeUpdateDevice()
         {
-            Validate();
-        }
-
-        void Validate()
-        {
-            var parent = transform.parent;
-
-            if (m_CachedParent != parent)
+            try
             {
-                Unregister();
-
-                if (parent != null)
-                {
-                    m_TakeRecorder = parent.GetComponent<TakeRecorder>();
-                }
-                else
-                {
-                    m_TakeRecorder = null;
-                }
-
-                Register();
-
-                m_CachedParent = parent;
+                UpdateDevice();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
             }
         }
 
-        void Register()
+        internal void InvokeLiveUpdate()
         {
-            if (m_TakeRecorder != null)
+            try
             {
-                m_TakeRecorder.AddDevice(this);
+                LiveUpdate();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
             }
         }
 
-        void Unregister()
+        internal void InvokeStartRecording()
         {
-            if (m_TakeRecorder != null)
+            if (IsRecording || !isActiveAndEnabled || !IsLive || !IsReady())
             {
-                m_TakeRecorder.RemoveDevice(this);
-                m_TakeRecorder = null;
-                m_CachedParent = null;
+                return;
+            }
+
+            IsRecording = true;
+
+            try
+            {
+                OnStartRecording();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+            }
+        }
+
+        internal void InvokeStopRecording()
+        {
+            if (!IsRecording)
+            {
+                return;
+            }
+
+            IsRecording = false;
+
+            try
+            {
+                OnStopRecording();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
             }
         }
     }

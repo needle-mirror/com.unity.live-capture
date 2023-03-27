@@ -41,7 +41,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         }
 
         public VideoServerSettingsProvider(string path, SettingsScope scopes, IEnumerable<string> keywords = null)
-            : base(path, scopes, keywords) {}
+            : base(path, scopes, keywords) { }
 
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {

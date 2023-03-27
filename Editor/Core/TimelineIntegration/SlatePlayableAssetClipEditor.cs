@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEngine;
+using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using UnityEditor;
 using UnityEditor.Timeline;
@@ -10,9 +11,8 @@ namespace Unity.LiveCapture.Editor
     class ShotPlayableAssetClipEditor : ClipEditor
     {
         static readonly Color s_LockedColor = new Color(0.23f, 0.33f, 0.43f, 1f);
-        static readonly Color s_MarkerColor = new Color(1f, 0.65f,0f, 1f);
+        static readonly Color s_MarkerColor = new Color(1f, 0.65f, 0f, 1f);
         static readonly Color s_RecordColor = new Color(0.75f, 0.1f, 0.1f, 0.5f);
-        static readonly Color s_PlaybackColor = new Color(0.23f, 0.33f, 0.43f, 0.5f);
 
         public override ClipDrawOptions GetClipOptions(TimelineClip clip)
         {
@@ -33,8 +33,31 @@ namespace Unity.LiveCapture.Editor
 
         public override void DrawBackground(TimelineClip clip, ClipBackgroundRegion region)
         {
-            DoTakeRecorderBackground(clip, region);
+            if (TakeRecorder.Context == MasterTimelineContext.Instance)
+            {
+                if (TakeRecorder.IsRecording())
+                {
+                    DrawBackground(region.position, clip, s_RecordColor);
+                }
+                else if (TakeRecorder.Context.HasSelection())
+                {
+                    DrawBackground(region.position, clip, s_LockedColor);
+                }
+            }
+
             DoTakeContentMarkers(clip, region);
+        }
+
+        void DrawBackground(Rect position, TimelineClip clip, Color color)
+        {
+            var hierarchy = TimelineHierarchyContextUtility.FromTimelineNavigation();
+            var asset = clip.asset as PlayableAsset;
+            var index = MasterTimelineContext.Instance.IndexOf(hierarchy, asset);
+
+            if (index == MasterTimelineContext.Instance.Selection)
+            {
+                EditorGUI.DrawRect(position, color);
+            }
         }
 
         void DoTakeContentMarkers(TimelineClip clip, ClipBackgroundRegion region)
@@ -77,51 +100,6 @@ namespace Unity.LiveCapture.Editor
             }
         }
 
-        void DoTakeRecorderBackground(TimelineClip clip, ClipBackgroundRegion region)
-        {
-            var takeRecorder = TakeRecorder.Main;
-
-            if (takeRecorder == null)
-            {
-                return;
-            }
-
-            var lockedContext = takeRecorder.IsLocked()
-                ? takeRecorder.Context as PlayableAssetContext
-                : default(PlayableAssetContext);
-            var recordingContext = takeRecorder.RecordContext as PlayableAssetContext;
-            var playbackContext = takeRecorder.PlaybackContext as PlayableAssetContext;
-
-            if (recordingContext != null)
-            {
-                DrawContext(region.position, clip, recordingContext, s_RecordColor);
-            }
-
-            if (lockedContext != null
-                && !lockedContext.Equals(recordingContext))
-            {
-                DrawContext(region.position, clip, lockedContext, s_LockedColor);
-            }
-
-            if (playbackContext != null
-                && !playbackContext.Equals(recordingContext)
-                && !playbackContext.Equals(lockedContext))
-            {
-                DrawContext(region.position, clip, playbackContext, s_PlaybackColor);
-            }
-        }
-
-        void DrawContext(Rect position, TimelineClip clip, PlayableAssetContext context, Color color)
-        {
-            Debug.Assert(context != null);
-
-            if (clip.asset == context.GetClip().asset
-                && context.GetHierarchyContext().MatchesTimelineNavigation())
-            {
-                EditorGUI.DrawRect(position, color);
-            }
-        }
-
         public override void OnCreate(TimelineClip clip, TrackAsset track, TimelineClip clonedFrom)
         {
             var shotAsset = clip.asset as ShotPlayableAsset;
@@ -132,13 +110,10 @@ namespace Unity.LiveCapture.Editor
                 var assetPath = AssetDatabase.GetAssetPath(take);
 
                 shotAsset.Directory = Path.GetDirectoryName(assetPath);
-                shotAsset.Slate = new Slate()
-                {
-                    SceneNumber = take.SceneNumber,
-                    ShotName = take.ShotName,
-                    TakeNumber = take.TakeNumber + 1,
-                    Description = string.Empty
-                };
+                shotAsset.SceneNumber = take.SceneNumber;
+                shotAsset.ShotName = take.ShotName;
+                shotAsset.TakeNumber = take.TakeNumber + 1;
+                shotAsset.Description = string.Empty;
 
                 clip.displayName = take.ShotName;
 

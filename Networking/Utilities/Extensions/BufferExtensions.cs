@@ -45,7 +45,7 @@ namespace Unity.LiveCapture.Networking
         {
             var size = SizeOfCache<T>.Size;
 
-            fixed(byte* ptr = &buffer[offset])
+            fixed (byte* ptr = &buffer[offset])
             {
                 UnsafeUtility.MemClear(ptr, size);
 
@@ -76,7 +76,7 @@ namespace Unity.LiveCapture.Networking
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe T ReadStruct<T>(this byte[] buffer, int offset = 0) where T : struct
         {
-            fixed(byte* ptr = &buffer[offset])
+            fixed (byte* ptr = &buffer[offset])
             {
                 if (typeof(T).IsEnum || UnsafeUtility.IsBlittable<T>())
                 {
@@ -107,7 +107,7 @@ namespace Unity.LiveCapture.Networking
         {
             nextOffset = offset + SizeOfCache<T>.Size;
 
-            fixed(byte* ptr = &buffer[offset])
+            fixed (byte* ptr = &buffer[offset])
             {
                 if (typeof(T).IsEnum || UnsafeUtility.IsBlittable<T>())
                 {

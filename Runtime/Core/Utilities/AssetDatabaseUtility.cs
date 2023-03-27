@@ -91,6 +91,16 @@ namespace Unity.LiveCapture
         }
 
         /// <summary>
+        /// Returns the path of the asset associated with a given GUID.
+        /// </summary>
+        /// <param name="guid">The GUID.</param>
+        /// <returns>The path of the asset associated with the given GUID.</returns>
+        public static string GUIDToAssetPath(Guid guid)
+        {
+            return AssetDatabase.GUIDToAssetPath(guid.ToString("N"));
+        }
+
+        /// <summary>
         /// Returns the asset associated with a given SerializableGuid.
         /// </summary>
         /// <typeparam name="T">Type of the asset to load.</typeparam>

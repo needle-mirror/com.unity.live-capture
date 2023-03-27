@@ -103,7 +103,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified Lens are equal; otherwise, false.
         /// </returns>
-        public static bool operator==(Lens a, Lens b)
+        public static bool operator ==(Lens a, Lens b)
         {
             return a.Equals(b);
         }
@@ -116,7 +116,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>
         /// true if the specified Lenses are different; otherwise, false.
         /// </returns>
-        public static bool operator!=(Lens a, Lens b)
+        public static bool operator !=(Lens a, Lens b)
         {
             return !(a == b);
         }

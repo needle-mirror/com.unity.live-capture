@@ -12,7 +12,7 @@ namespace Unity.LiveCapture.VirtualCamera
     /// <summary>
     /// Map between Camera and FrameLines components.
     /// </summary>
-    class FrameLinesMap : ComponentMap<Camera, FrameLines> {}
+    class FrameLinesMap : ComponentMap<Camera, FrameLines> { }
 
     /// <summary>
     /// A Component that displays frame lines which helps visualize the gate crop of the sensor

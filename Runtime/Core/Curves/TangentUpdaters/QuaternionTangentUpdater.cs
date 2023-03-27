@@ -57,6 +57,6 @@ namespace Unity.LiveCapture
 
     class QuaternionTangentUpdater : TangentUpdater<Keyframe<Quaternion>>
     {
-        public QuaternionTangentUpdater() : base(QuaternionTangentUpdaterImpl.Instance) {}
+        public QuaternionTangentUpdater() : base(QuaternionTangentUpdaterImpl.Instance) { }
     }
 }

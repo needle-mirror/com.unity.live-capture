@@ -581,7 +581,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
             var locationNames = FaceBlendShapePose.Shapes.Select(s => s.ToString()).ToArray();
             var meshBlendShapes = BlendShapeUtility.GetBlendShapeNames(mesh);
 
-            foreach (var(indexA, indexB) in BlendShapeUtility.FindMatches(locationNames, meshBlendShapes, m_ShapeMatchTolerance.floatValue))
+            foreach (var (indexA, indexB) in BlendShapeUtility.FindMatches(locationNames, meshBlendShapes, m_ShapeMatchTolerance.floatValue))
             {
                 var binding = bindings.GetArrayElementAtIndex(bindings.arraySize++);
 

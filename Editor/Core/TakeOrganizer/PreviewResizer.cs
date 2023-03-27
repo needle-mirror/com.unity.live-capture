@@ -51,7 +51,7 @@ namespace Unity.LiveCapture.Editor
             {
                 height = height < 50f ? headerHeight : 100f;
             }
-            
+
             target.parent.style.height = height;
         }
 

@@ -138,8 +138,8 @@ namespace Unity.LiveCapture.Networking.Protocols
                     // if the buffers have different lengths, then trivially they can't have identical contents
                     if (m_LastBuffer >= 0 && lastBuffer.Length == tempBuffer.Length)
                     {
-                        fixed(void* lastPtr = &lastBuffer.GetBuffer()[0])
-                        fixed(void* tempPtr = &tempBuffer.GetBuffer()[0])
+                        fixed (void* lastPtr = &lastBuffer.GetBuffer()[0])
+                        fixed (void* tempPtr = &tempBuffer.GetBuffer()[0])
                         {
                             // if the message is the same, we don't send anything
                             if (UnsafeUtility.MemCmp(lastPtr, tempPtr, tempBuffer.Length) == 0)

@@ -24,6 +24,6 @@ namespace Unity.LiveCapture
 
     class FloatTangentUpdater : TangentUpdater<Keyframe>
     {
-        public FloatTangentUpdater() : base(FloatTangentUpdaterImpl.Instance) {}
+        public FloatTangentUpdater() : base(FloatTangentUpdaterImpl.Instance) { }
     }
 }

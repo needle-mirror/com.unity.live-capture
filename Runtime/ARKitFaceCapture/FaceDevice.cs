@@ -136,22 +136,19 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// <summary>
         /// The device calls this method when the recording state has changed.
         /// </summary>
-        protected override void OnRecordingChanged()
+        protected override void OnStartRecording()
         {
-            if (IsRecording())
+            base.OnStartRecording();
+
+            m_Recorder.FrameRate = TakeRecorder.FrameRate;
+            m_Recorder.Channels = m_Channels;
+            m_Recorder.OnReset = () =>
             {
-                var frameRate = GetTakeRecorder().FrameRate;
+                m_Recorder.Record(ref m_Pose);
+            };
+            m_Recorder.Prepare();
 
-                m_Recorder.FrameRate = frameRate;
-                m_Recorder.Channels = m_Channels;
-                m_Recorder.OnReset = () =>
-                {
-                    m_Recorder.Record(ref m_Pose);
-                };
-                m_Recorder.Prepare();
-
-                m_LastRecordTime = null;
-            }
+            m_LastRecordTime = null;
         }
 
         /// <summary>
@@ -217,13 +214,13 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         }
 
         /// <inheritdoc/>
-        public override void UpdateDevice()
+        protected override void UpdateDevice()
         {
             UpdateClient();
         }
 
         /// <inheritdoc/>
-        public override void LiveUpdate()
+        protected override void LiveUpdate()
         {
             Debug.Assert(m_Actor != null, "Actor is null");
 
@@ -294,7 +291,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
 
         void Record(ref FacePose pose, FrameTimeWithRate time)
         {
-            if (IsRecording())
+            if (IsRecording)
             {
                 m_Recorder.Channels = m_Channels;
                 m_Recorder.Update(time.ToSeconds());

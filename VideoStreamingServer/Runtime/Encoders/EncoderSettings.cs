@@ -65,7 +65,7 @@ namespace Unity.LiveCapture.VideoStreaming.Server
             }
         }
 
-        public static bool operator==(EncoderSettings a, EncoderSettings b) => a.Equals(b);
-        public static bool operator!=(EncoderSettings a, EncoderSettings b) => !a.Equals(b);
+        public static bool operator ==(EncoderSettings a, EncoderSettings b) => a.Equals(b);
+        public static bool operator !=(EncoderSettings a, EncoderSettings b) => !a.Equals(b);
     }
 }

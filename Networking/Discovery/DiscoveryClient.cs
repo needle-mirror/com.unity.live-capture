@@ -62,8 +62,8 @@ namespace Unity.LiveCapture.Networking.Discovery
         /// <returns>True if the client has started successfully, false otherwise.</returns>
         public bool Start(string productName, bool discoverLocal = false)
         {
-            while (m_UpdatedServers.TryDequeue(out _)) {}
-            while (m_LostServers.TryDequeue(out _)) {}
+            while (m_UpdatedServers.TryDequeue(out _)) { }
+            while (m_LostServers.TryDequeue(out _)) { }
             m_Servers.Clear();
 
             m_ProductName = productName;

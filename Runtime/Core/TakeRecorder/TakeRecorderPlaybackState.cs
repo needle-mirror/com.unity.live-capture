@@ -63,7 +63,7 @@ namespace Unity.LiveCapture
                 return;
             }
 
-            if(m_Context.GetTime() >= m_PlaybackEnd)
+            if (m_Context.GetTime() >= m_PlaybackEnd)
             {
                 Stop();
             }
@@ -80,7 +80,8 @@ namespace Unity.LiveCapture
             {
                 m_Mode = TakeRecorderPlaybackMode.None;
             }
-            else if (m_Mode == TakeRecorderPlaybackMode.Contents && m_Context.Take == null)
+            else if (m_Mode == TakeRecorderPlaybackMode.Contents
+                && m_Context.GetSelectedShot() is Shot shot && shot.Take == null)
             {
                 m_Mode = TakeRecorderPlaybackMode.Context;
             }
@@ -96,13 +97,14 @@ namespace Unity.LiveCapture
             var start = 0d;
             var end = m_Context.GetDuration();
 
-            if (m_Mode == TakeRecorderPlaybackMode.Contents)
+            if (m_Mode == TakeRecorderPlaybackMode.Contents
+                && m_Context.GetSelectedShot() is Shot shot)
             {
-                var take = m_Context.Take;
+                var take = shot.Take;
 
                 if (take != null && take.TryGetContentRange(out var rangeStart, out var rangeEnd))
                 {
-                    var timeOffset = m_Context.GetTimeOffset();
+                    var timeOffset = shot.TimeOffset;
 
                     start = rangeStart - timeOffset;
                     end = rangeEnd - timeOffset;

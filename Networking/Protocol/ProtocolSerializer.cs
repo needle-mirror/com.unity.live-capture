@@ -308,7 +308,7 @@ namespace Unity.LiveCapture.Networking.Protocols
 
         static unsafe int HashString(string str)
         {
-            fixed(char* chPtr = str)
+            fixed (char* chPtr = str)
             {
                 var num1 = 352654597;
                 var num2 = num1;
