@@ -2,7 +2,7 @@
 
 The Shot Player component manages the playback of shots stored in a [Shot Library](ref-asset-shot-library.md) asset.
 
-The component prepares the PlayableDirector found in the same game object with the Timeline asset of the selected take. You can then review the take by playing the PlayableDirector or by using the Timeline window.
+The component prepares the PlayableDirector found in the same GameObject with the Timeline asset of the selected take. You can then review the take by playing the PlayableDirector or by using the Timeline window.
 
 It also integrates with the [Take Recorder window](ref-window-take-recorder.md), by selecting the **Shot Library** mode and picking the desired Shot Player component from the dropdown list.
 

@@ -1,14 +1,32 @@
 # Shot Library
 
-Shot Library is an asset that stores shot definitions. They are a convenient way to preconfigure sets of shots to use with the [Shot Player](ref-component-shot-player.md).
+A Shot Library is an asset that stores shot definitions.
+
+Use Shot Libraries to preconfigure sets of shots to use with the [Shot Player](ref-component-shot-player.md). This enables the automatic use of preconfigured properties when recording new takes.
+
+* To create a new Shot Library, from the Unity Editor menu, select **Assets > Create > Live Capture > Shot Library**.
+* To create a [Shot Player](ref-component-shot-player.md) and preview takes from a Shot Library, drag and drop the Shot Library asset to the Scene Hierarchy.
 
 ![Shot Library asset](images/ref-asset-shot-library.png)
 
-## Creating a Shot Library
+## Shots
 
-1. Go to **Assets > Create > Live Capture > Shot Library** to create a new shot library.
-2. Click the **+** button to create a new shot.
-3. Enter the slate information of the shot: **Scene Number**, **Shot Name**, **Take Number** and **Description**. These will be automatically used when recording new takes.
-4. Define the output **Directory**. All recorded takes will be stored in that directory.
-5. Pick the selected take from the **Takes** list. The list will show the available takes in the output directory.
-6. Drag and drop the asset to the scene to create a [Shot Player](ref-component-shot-player.md) and start previewing recorded takes.
+The list of shots stored in the Shot Library.
+
+* Use the list management buttons at the right to add, remove, search, and reorder shots in the list.
+* Select a shot in the list to display its properties below.
+
+## Shot Properties
+
+All properties of the shot currently selected in the **Shots** list.
+
+| Property | Description |
+|:---|:---|
+| **Scene Number** | The number of the cinematic scene for which you record the shots. |
+| **Shot Name** | The name of the shot. |
+| **Take Number** | The take index of the shot. |
+| **Description** | The description of the shot. |
+| **Directory** | The project folder to save the recorded takes to.<br />To change the path, type in the field or use the folder button at the right. |
+| **Takes** | The list of recorded takes currently available in the directory. |
+| **Iteration Base** | The take to play and iterate on in a recording session. |
+| **Take** | The current take selected in the **Takes** list. |

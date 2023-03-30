@@ -5,7 +5,7 @@ using Cinemachine;
 using Cinemachine.PostFX;
 using CinemachineCamera = Cinemachine.CinemachineVirtualCamera;
 #else
-using Unity.Cinemachine
+using Unity.Cinemachine;
 #endif
 using UnityEngine;
 using UnityEngine.Assertions;
