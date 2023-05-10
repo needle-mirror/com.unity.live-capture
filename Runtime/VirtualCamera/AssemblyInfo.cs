@@ -10,7 +10,6 @@ using System.Runtime.CompilerServices;
 // Internal access needed for testing
 [assembly: InternalsVisibleTo("Unity.LiveCapture.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.Tests.Editor.Pipelines")]
-[assembly: InternalsVisibleTo("Unity.LiveCapture.tests.Editor.Pipelines.Legacy")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.Tests.Editor.Pipelines.Urp")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.Tests.Editor.Pipelines.UrpWithCinemachine")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.Tests.Editor.Pipelines.Hdrp")]

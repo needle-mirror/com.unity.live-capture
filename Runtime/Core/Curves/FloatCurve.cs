@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace Unity.LiveCapture
@@ -21,15 +20,6 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public string RelativePath { get; }
-
-        /// <inheritdoc/>
-        public string PropertyName { get; }
-
-        /// <inheritdoc/>
-        public Type BindingType { get; }
-
-        /// <inheritdoc/>
         public FrameRate FrameRate
         {
             get => m_Sampler.FrameRate;
@@ -41,21 +31,8 @@ namespace Unity.LiveCapture
         /// </summary>
         internal AnimationCurve AnimationCurve => m_Curve;
 
-        /// <summary>
-        /// Constructs an instance of FloatCurve.
-        /// </summary>
-        /// <param name="relativePath"> Path to the game object this curve applies to.</param>
-        /// <param name="propertyName"> The name or path to the property being animated.</param>
-        /// <param name="bindingType"> The class type of the component that is animated.</param>
-        public FloatCurve(string relativePath, string propertyName, Type bindingType)
-        {
-            RelativePath = relativePath;
-            PropertyName = propertyName;
-            BindingType = bindingType;
-        }
-
         /// <inheritdoc/>
-        public void AddKey(double time, float value)
+        public void AddKey(double time, in float value)
         {
             m_Sampler.Add((float)time, value);
 
@@ -80,7 +57,7 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public void SetToAnimationClip(AnimationClip clip)
+        public void SetToAnimationClip(PropertyBinding binding, AnimationClip clip)
         {
             Flush();
 
@@ -89,7 +66,7 @@ namespace Unity.LiveCapture
                 return;
             }
 
-            clip.SetCurve(RelativePath, BindingType, PropertyName, m_Curve);
+            clip.SetCurve(binding.RelativePath, binding.Type, binding.PropertyName, m_Curve);
         }
 
         void Flush()
@@ -117,13 +94,8 @@ namespace Unity.LiveCapture
 
             while (m_Reducer.MoveNext())
             {
-                AddKey(m_Curve, m_Reducer.Current);
+                m_Curve.AddKey(m_Reducer.Current);
             }
-        }
-
-        internal static void AddKey(AnimationCurve curve, Keyframe keyframe)
-        {
-            curve.AddKey(keyframe);
         }
     }
 }

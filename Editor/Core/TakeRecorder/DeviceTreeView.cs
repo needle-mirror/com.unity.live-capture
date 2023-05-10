@@ -171,10 +171,11 @@ namespace Unity.LiveCapture.Editor
 
         static class Contents
         {
+            static readonly string k_IconPath = "Packages/com.unity.live-capture/Editor/Core/Icons";
             public static readonly GUIContent EnableToggleContent = EditorGUIUtility.TrTextContent("", "Toggle the enabled state of the device.");
-            public static readonly GUIContent DeviceReadyMixed = EditorGUIUtility.TrIconContent("winbtn_mac_min");
-            public static readonly GUIContent DeviceReadyIcon = EditorGUIUtility.TrIconContent("winbtn_mac_max");
-            public static readonly GUIContent DeviceNotReadyIcon = EditorGUIUtility.TrIconContent("winbtn_mac_close");
+            public static readonly GUIContent DeviceReadyMixed = EditorGUIUtility.TrIconContent($"{k_IconPath}/winbtn_mac_min.png");
+            public static readonly GUIContent DeviceReadyIcon = EditorGUIUtility.TrIconContent($"{k_IconPath}/winbtn_mac_max.png");
+            public static readonly GUIContent DeviceNotReadyIcon = EditorGUIUtility.TrIconContent($"{k_IconPath}/winbtn_mac_close.png");
             public static readonly GUIStyle draggingHandle = "RL DragHandle";
             public static readonly string UndoEnableDevice = L10n.Tr("Set Enabled");
         }
@@ -205,7 +206,10 @@ namespace Unity.LiveCapture.Editor
 
             SetupParentsAndChildrenFromDepths(root, items);
 
-            SelectedDevices = IdsToDeviceArray(GetSelection());
+            var selection = GetSelection().ToList();
+            // Remove any selection that is no longer valid
+            selection.RemoveAll(id => FindItem(id, root) == null);
+            SetSelection(selection, TreeViewSelectionOptions.FireSelectionChanged);
 
             return root;
         }

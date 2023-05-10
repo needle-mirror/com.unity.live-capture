@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Unity.LiveCapture.CompanionApp.Editor")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.ARKitFaceCapture.Editor")]
+[assembly: InternalsVisibleTo("Unity.LiveCapture.Cameras.Editor")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.VirtualCamera.Editor")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.Tentacle.Editor")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.Ltc.Editor")]

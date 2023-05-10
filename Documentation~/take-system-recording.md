@@ -1,6 +1,6 @@
 # Recording and playback from the Unity Editor
 
->**Important:** Before you start, you must [set up the Take Recorder](ref-window-take-recorder.md) and [connect a companion app](setup-connecting.md).
+>**Important:** Before you start, you must [set up the Take Recorder](ref-window-take-recorder.md) and [connect a companion app](connection-device.md).
 
 ## Record a take
 

@@ -58,7 +58,7 @@ namespace Unity.LiveCapture.VirtualCamera
                 AspectRatioLinesEnabled = true,
                 CenterMarkerEnabled = true,
                 GateMaskOpacity = 1f,
-                AspectRatio = Settings.k_DefaultAspectRatio,
+                AspectRatio = AspectRatioConsts.k_DefaultAspectRatio,
                 AspectLineType = LineType.Corner,
                 AspectLineColor = Color.cyan,
                 AspectLineWidth = 3,
@@ -72,7 +72,7 @@ namespace Unity.LiveCapture.VirtualCamera
             GateMaskOpacity = Mathf.Clamp01(GateMaskOpacity);
             AspectFillOpacity = Mathf.Clamp01(AspectFillOpacity);
             AspectLineWidth = Mathf.Clamp(AspectLineWidth, 1, 10);
-            AspectRatio = Mathf.Max(Settings.k_MinAspectRatio, AspectRatio);
+            AspectRatio = Mathf.Max(AspectRatioConsts.k_MinAspectRatio, AspectRatio);
         }
 
         public bool Equals(FrameLinesSettings other)

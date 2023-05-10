@@ -1,9 +1,10 @@
 {
   "name": "com.unity.live-capture",
   "displayName": "Live Capture",
-  "version": "4.0.0-pre.4",
-  "unity": "2021.3",
-  "description": "Use the Live Capture package to connect to the Unity Virtual Camera and Unity Face Capture companion apps to capture and record camera motion and face performances.",
+  "version": "4.0.0-pre.5",
+  "unity": "2022.2",
+  "unityRelease": "17f1",
+  "description": "Capture data from physical devices to animate characters and cameras in real time within the Editor. Record the animations in the form of takes and iterate on the recordings. Genlock and synchronize devices for frame and timecode accuracy.",
   "keywords": [
     "virtual production",
     "virtual camera",
@@ -26,15 +27,15 @@
     }
   ],
   "_upm": {
-    "changelog": "### Fixed\n- Compilation error when having Cinemachine 3.X and Live Capture in a URP project"
+    "changelog": "### Added\n- Static method TimedDataBuffer.Create<T>(...) to create instances of ITimedDataBuffer<T>.\n- LiveStream, a class that manages a collection of properties that can be recorded into a clip while animating the actor in the scene.\n- LiveStreamCaptureDevice, a capture device that manages a LiveStream.\n- LiveStreamPostProcessors, a base component that post-processes the stream managed by a LiveStreamCaptureDevice.\n- CameraTrackingDevice, a base capture device for implementing camera trackers.\n- SharedVolumeProfile, a component that manages an instance of VolumeProfile shared across multiple other components.\n- DepthOfField, a component that manages the depth of field effect.\n- LensDistortionBrownConrady, a component that manages the lens distortion effect based on the Brown-Conrady distortion model.\n- Overscan, a component to add overscan to a camera. Overscan is the process of rendering a larger image than the final output resolution and then cropping the image to the desired resolution.\n\n### Changed\n- Simplified the ICurve interface.\n- CircularBuffer<T> is no longer public.\n- TimedDataSource is no longer generic.\n- Introduced ITimedDataBuffer and ITimedDataBuffer<T> interfaces that replace TimedDataBuffer<T>.\n- The protected method MocapDevice<T>.GetInterpolator() replaces the MocapDevice<T>.Interpolator public property.\n- Restored video streaming on Apple silicon.\n- The minimum required Unity Editor version is now 2022.2.17f1.\n\n### Fixed\n- Live Capture icons that were missing in Unity Editor 2023.1 are now back.\n- Improved Face Capture HDRP sample scene which was overexposed and took time to adjust lighting.\n- Make sure the FrameLines component forces gate-fit mode to \"Fill\" when the camera is not using physical camera mode.\n- The Take Recorder window was still showing the device inspector when the device was disabled.\n- Takes couldn't be loaded in a TakeRecorderTrack when other tracks had invalid playables (for example an AnimationTrack's clip with no animation clip set).\n\n### Removed\n- Removed compatibility for features that require Legacy Render Pipeline."
   },
   "upmCi": {
-    "footprint": "5a4af835496fda64c40f34fde940081c3256ee1c"
+    "footprint": "6f0a61f2415e11ca442b4d8fd894519ef65de0fc"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.live-capture@4.0/manual/index.html",
   "repository": {
     "url": "https://github.com/Unity-Technologies/VirtualProduction.git",
     "type": "git",
-    "revision": "22d4f4041f111349d635dd658c8bd4c1e5c48b68"
+    "revision": "50322645fa22cdb5838b41bdcc58c581d81c58b6"
   }
 }

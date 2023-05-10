@@ -1,4 +1,4 @@
-#if HDRP_10_2_OR_NEWER
+#if HDRP_14_0_OR_NEWER
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;

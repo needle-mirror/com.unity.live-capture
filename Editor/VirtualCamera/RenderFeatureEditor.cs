@@ -1,4 +1,4 @@
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
 using System;
 using UnityEditor;
 using UnityEngine;

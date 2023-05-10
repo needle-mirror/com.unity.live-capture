@@ -1,8 +1,10 @@
-#if HDRP_10_2_OR_NEWER
+#if HDRP_14_0_OR_NEWER
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
+using Unity.LiveCapture.Cameras;
+using DepthOfFieldHdrp = UnityEngine.Rendering.HighDefinition.DepthOfField;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
@@ -13,7 +15,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         [SerializeField, HideInInspector]
         VolumeProfile m_Profile;
-        DepthOfField m_DepthOfField;
+        DepthOfFieldHdrp m_DepthOfField;
 
         /// <summary>
         /// The GameObject to add the Volume to.
@@ -52,7 +54,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
             volume.profile = m_Profile;
 
-            m_DepthOfField = VolumeComponentUtility.GetOrAddVolumeComponent<DepthOfField>(m_Profile);
+            m_DepthOfField = VolumeComponentUtility.GetOrAddVolumeComponent<DepthOfFieldHdrp>(m_Profile);
             VolumeComponentUtility.UpdateParameterIfNeeded(m_DepthOfField.focusMode, DepthOfFieldMode.UsePhysicalCamera);
         }
 
@@ -86,18 +88,6 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         public void SetPhysicalCameraProperties(Lens lens, LensIntrinsics intrinsics, CameraBody cameraBody)
         {
-#if !HDRP_14_0_OR_NEWER
-            if (Camera.TryGetComponent<HDAdditionalCameraData>(out var data))
-            {
-                data.physicalParameters.aperture = lens.Aperture;
-                data.physicalParameters.iso = cameraBody.Iso;
-                data.physicalParameters.shutterSpeed = cameraBody.ShutterSpeed;
-                data.physicalParameters.anamorphism = intrinsics.Anamorphism;
-                data.physicalParameters.curvature = intrinsics.Curvature;
-                data.physicalParameters.barrelClipping = intrinsics.BarrelClipping;
-                data.physicalParameters.bladeCount = intrinsics.BladeCount;
-            }
-#endif
         }
     }
 }

@@ -25,7 +25,7 @@ The Timecode Synchronizer is [a tool in the Unity Editor](#timecode-synchronizer
 
 ## Supported data sources
 
-* Any [supported mobile device](index.md#install-app) with Bluetooth enabled and one of the Live Capture companion apps installed:
+* Any supported mobile device with Bluetooth enabled and one of the Live Capture companion apps installed:
   * [Unity Virtual Camera](virtual-camera.md)
   * [Unity Face Capture](face-capture.md)
 

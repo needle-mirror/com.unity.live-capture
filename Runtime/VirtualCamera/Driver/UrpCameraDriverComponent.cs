@@ -1,9 +1,11 @@
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
 using System;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using Unity.LiveCapture.Cameras;
+using DepthOfFieldUrp = UnityEngine.Rendering.Universal.DepthOfField;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
@@ -16,7 +18,7 @@ namespace Unity.LiveCapture.VirtualCamera
         bool m_UseHighQualityDepthOfField;
         [SerializeField, HideInInspector]
         VolumeProfile m_Profile;
-        DepthOfField m_DepthOfField;
+        DepthOfFieldUrp m_DepthOfField;
 
         public Camera Camera { get; set; }
 
@@ -55,7 +57,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
             volume.profile = m_Profile;
 
-            m_DepthOfField = VolumeComponentUtility.GetOrAddVolumeComponent<DepthOfField>(m_Profile);
+            m_DepthOfField = VolumeComponentUtility.GetOrAddVolumeComponent<DepthOfFieldUrp>(m_Profile);
             VolumeComponentUtility.UpdateParameterIfNeeded(m_DepthOfField.mode, DepthOfFieldMode.Bokeh);
             VolumeComponentUtility.UpdateParameterIfNeeded(m_DepthOfField.bladeCurvature, 1);
         }

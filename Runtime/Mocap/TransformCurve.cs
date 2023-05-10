@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace Unity.LiveCapture.Mocap
@@ -6,23 +5,13 @@ namespace Unity.LiveCapture.Mocap
     /// <summary>
     /// Use this class to bake <see cref="Transform"/> keyframes into a take.
     /// </summary>
-    class TransformCurve : ICurve<Transform>
+    class TransformCurve
     {
-        static readonly Type k_TransformType = typeof(Transform);
-        const string kPropertyName = "Transform";
+        readonly Vector3Curve m_Position = new Vector3Curve();
+        readonly Vector3Curve m_Scale = new Vector3Curve();
+        readonly EulerCurve m_Rotation = new EulerCurve();
 
-        readonly Vector3Curve m_Position;
-        readonly Vector3Curve m_Scale;
-        readonly EulerCurve m_Rotation;
-
-        /// <inheritdoc/>
-        public string RelativePath { get; }
-
-        /// <inheritdoc/>
-        public string PropertyName => kPropertyName;
-
-        /// <inheritdoc/>
-        public Type BindingType => k_TransformType;
+        public string RelativePath { get; internal set; }
 
         /// <inheritdoc/>
         public FrameRate FrameRate
@@ -44,18 +33,6 @@ namespace Unity.LiveCapture.Mocap
         public TransformCurve(string relativePath)
         {
             RelativePath = relativePath;
-
-            m_Position = new Vector3Curve(relativePath, "m_LocalPosition", k_TransformType);
-            m_Scale = new Vector3Curve(relativePath, "m_LocalScale", k_TransformType);
-            m_Rotation = new EulerCurve(relativePath, "m_LocalEulerAngles", k_TransformType);
-        }
-
-        /// <inheritdoc/>
-        public void AddKey(double time, Transform value)
-        {
-            m_Position.AddKey(time, value.localPosition);
-            m_Rotation.AddKey(time, value.localRotation);
-            m_Scale.AddKey(time, value.localScale);
         }
 
         /// <summary>
@@ -95,13 +72,13 @@ namespace Unity.LiveCapture.Mocap
         public void SetToAnimationClip(AnimationClip clip)
         {
             if (!m_Position.IsEmpty())
-                m_Position.SetToAnimationClip(clip);
+                m_Position.SetToAnimationClip(new PropertyBinding(RelativePath, "m_LocalPosition", typeof(Transform)), clip);
 
             if (!m_Rotation.IsEmpty())
-                m_Rotation.SetToAnimationClip(clip);
+                m_Rotation.SetToAnimationClip(new PropertyBinding(RelativePath, "m_LocalEuler", typeof(Transform)), clip);
 
             if (!m_Scale.IsEmpty())
-                m_Scale.SetToAnimationClip(clip);
+                m_Scale.SetToAnimationClip(new PropertyBinding(RelativePath, "m_LocalScale", typeof(Transform)), clip);
         }
     }
 }

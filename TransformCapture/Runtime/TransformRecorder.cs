@@ -15,6 +15,7 @@ namespace Unity.LiveCapture.TransformCapture
         float m_RotationError = 0.5f;
 
         Transform[] m_Transforms;
+        string[] m_Paths;
         Vector3Curve[] m_PositionCurves;
         EulerCurve[] m_RotationCurves;
 
@@ -63,8 +64,10 @@ namespace Unity.LiveCapture.TransformCapture
                 if (transform == null)
                     continue;
 
-                m_PositionCurves[i].SetToAnimationClip(animationClip);
-                m_RotationCurves[i].SetToAnimationClip(animationClip);
+                m_PositionCurves[i].SetToAnimationClip(
+                    new PropertyBinding(m_Paths[i], "m_LocalPosition", typeof(Transform)), animationClip);
+                m_RotationCurves[i].SetToAnimationClip(
+                    new PropertyBinding(m_Paths[i], "m_LocalEuler", typeof(Transform)), animationClip);
             }
         }
 
@@ -90,15 +93,16 @@ namespace Unity.LiveCapture.TransformCapture
 
         void PrepareRootTransform(Animator animator, FrameRate frameRate)
         {
+            m_Paths = new string[1] { string.Empty };
             m_Transforms = new Transform[1];
             m_PositionCurves = new Vector3Curve[1];
             m_RotationCurves = new EulerCurve[1];
 
             m_Transforms[0] = animator.transform;
-            m_PositionCurves[0] = new Vector3Curve(string.Empty, "m_LocalPosition", typeof(Transform));
+            m_PositionCurves[0] = new Vector3Curve();
             m_PositionCurves[0].FrameRate = frameRate;
             m_PositionCurves[0].MaxError = PositionError / 100f;
-            m_RotationCurves[0] = new EulerCurve(string.Empty, "m_LocalEuler", typeof(Transform));
+            m_RotationCurves[0] = new EulerCurve();
             m_RotationCurves[0].FrameRate = frameRate;
             m_RotationCurves[0].MaxError = RotationError;
         }
@@ -109,6 +113,7 @@ namespace Unity.LiveCapture.TransformCapture
 
             var transformCount = avatarMask.transformCount;
 
+            m_Paths = new string[transformCount];
             m_Transforms = new Transform[transformCount];
             m_PositionCurves = new Vector3Curve[transformCount];
             m_RotationCurves = new EulerCurve[transformCount];
@@ -118,14 +123,16 @@ namespace Unity.LiveCapture.TransformCapture
                 var path = avatarMask.GetTransformPath(i);
                 var active = avatarMask.GetTransformActive(i);
 
+                m_Paths[i] = path;
+
                 if (!active)
                     continue;
 
                 m_Transforms[i] = animator.transform.Find(path);
-                m_PositionCurves[i] = new Vector3Curve(path, "m_LocalPosition", typeof(Transform));
+                m_PositionCurves[i] = new Vector3Curve();
                 m_PositionCurves[i].FrameRate = frameRate;
                 m_PositionCurves[i].MaxError = PositionError / 100f;
-                m_RotationCurves[i] = new EulerCurve(path, "m_LocalEuler", typeof(Transform));
+                m_RotationCurves[i] = new EulerCurve();
                 m_RotationCurves[i].FrameRate = frameRate;
                 m_RotationCurves[i].MaxError = RotationError;
 

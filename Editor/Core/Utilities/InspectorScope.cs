@@ -10,6 +10,7 @@ namespace Unity.LiveCapture.Editor
         bool m_Disposed;
         bool m_HierarchyMode;
         float m_LabelWidth;
+        bool m_WideMode;
 
         public InspectorScope(float width, bool fullWidth = false)
         {
@@ -22,6 +23,7 @@ namespace Unity.LiveCapture.Editor
 
             m_HierarchyMode = EditorGUIUtility.hierarchyMode;
             m_LabelWidth = EditorGUIUtility.labelWidth;
+            m_WideMode = EditorGUIUtility.wideMode;
 
             // EditorGUIUtility.labelWidth uses this formula then using hierarchyMode,
             // only that IMGUIContainer fails to setup a correct contextWidth;
@@ -33,6 +35,7 @@ namespace Unity.LiveCapture.Editor
             // that use that property by setting it to the container's width.
             EditorGUIUtilityInternal.CurrentViewWidth = width;
             EditorGUILayout.BeginVertical(style);
+            EditorGUIUtility.wideMode = true;
         }
 
         public void Dispose()
@@ -42,6 +45,7 @@ namespace Unity.LiveCapture.Editor
                 EditorGUILayout.EndVertical();
                 EditorGUIUtility.labelWidth = m_LabelWidth;
                 EditorGUIUtility.hierarchyMode = m_HierarchyMode;
+                EditorGUIUtility.wideMode = m_WideMode;
                 EditorGUIUtilityInternal.CurrentViewWidth = -1f;
 
                 m_Disposed = true;

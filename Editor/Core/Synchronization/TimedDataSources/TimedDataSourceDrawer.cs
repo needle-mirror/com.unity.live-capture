@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Unity.LiveCapture.Editor.TimedDataSources
 {
-    [CustomPropertyDrawer(typeof(TimedDataSource<>), true)]
+    [CustomPropertyDrawer(typeof(TimedDataSource), true)]
     class TimedDataSourceDrawer : PropertyDrawer
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)

@@ -1,10 +1,7 @@
-#if URP_10_2_OR_NEWER || HDRP_10_2_OR_NEWER
-#define USING_SCRIPTABLE_RENDER_PIPELINE
-#endif
 using UnityEditor;
 using UnityEngine;
 using Unity.LiveCapture.Editor;
-#if USING_SCRIPTABLE_RENDER_PIPELINE
+#if SRP_CORE_14_0_OR_NEWER
 using UnityEngine.Rendering;
 #endif
 
@@ -16,7 +13,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
     [CanEditMultipleObjects]
     class CinemachineCameraDriverEditor : Editor
     {
-#if USING_SCRIPTABLE_RENDER_PIPELINE
+#if SRP_CORE_14_0_OR_NEWER
         static class SRPContents
         {
             public static readonly GUIContent UpgradeVolume = EditorGUIUtility.TrTextContentWithIcon(
@@ -45,7 +42,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
         void DoMigrationGUI()
         {
-#if USING_SCRIPTABLE_RENDER_PIPELINE
+#if SRP_CORE_14_0_OR_NEWER
             var hasVolume = false;
             var hasCollider = false;
 

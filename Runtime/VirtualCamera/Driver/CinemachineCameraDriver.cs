@@ -1,10 +1,10 @@
 using UnityEngine;
-#if VP_CINEMACHINE_2_4_0
-#if !CINEMACHINE_3_0_0_OR_NEWER
+#if CINEMACHINE_2_4_OR_NEWER
+#if CINEMACHINE_3_0_0_OR_NEWER
+using Unity.Cinemachine ;
+#else
 using Cinemachine ;
 using CinemachineCamera = Cinemachine.CinemachineVirtualCamera;
-#else
-using Unity.Cinemachine ;
 #endif
 #endif
 
@@ -14,14 +14,14 @@ namespace Unity.LiveCapture.VirtualCamera
     [HelpURL(Documentation.baseURL + "ref-component-cinemachine-camera-driver" + Documentation.endURL)]
     class CinemachineCameraDriver : BaseCameraDriver, ICustomDamping
     {
-#if VP_CINEMACHINE_2_4_0
+#if CINEMACHINE_2_4_OR_NEWER
         [SerializeField, Tooltip("Cinemachine camera driver component.")]
         CinemachineDriverComponent m_CinemachineComponent = new CinemachineDriverComponent();
-#if HDRP_10_2_OR_NEWER
+#if HDRP_14_0_OR_NEWER
         [SerializeField, Tooltip("High Definition Render Pipeline camera driver component.")]
         HdrpCinemachineCameraDriverComponent m_HdrpCinemachineComponent = new HdrpCinemachineCameraDriverComponent();
 #endif
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
         [SerializeField, Tooltip("Universal Render Pipeline camera driver component.")]
         UrpCinemachineCameraDriverComponent m_UrpComponent = new UrpCinemachineCameraDriverComponent();
 #endif
@@ -46,10 +46,10 @@ namespace Unity.LiveCapture.VirtualCamera
                 m_Impl = new CompositeCameraDriverImpl(new ICameraDriverComponent[]
                 {
                     m_CinemachineComponent,
-#if HDRP_10_2_OR_NEWER
+#if HDRP_14_0_OR_NEWER
                     m_HdrpCinemachineComponent,
 #endif
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
                     m_UrpComponent,
 #endif
                 });
@@ -74,10 +74,10 @@ namespace Unity.LiveCapture.VirtualCamera
 
         void Validate()
         {
-#if HDRP_10_2_OR_NEWER
+#if HDRP_14_0_OR_NEWER
             m_HdrpCinemachineComponent.CinemachineVirtualCamera = CinemachineVirtualCamera;
 #endif
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
             m_UrpComponent.CinemachineVirtualCamera = CinemachineVirtualCamera;
 #endif
         }
@@ -87,10 +87,10 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         public override Camera GetCamera()
         {
-#if !CINEMACHINE_3_0_0_OR_NEWER
-            var brain = CinemachineCore.Instance.FindPotentialTargetBrain(CinemachineVirtualCamera);
+#if CINEMACHINE_3_0_0_OR_NEWER
+            var brain = CinemachineCore.FindPotentialTargetBrain(CinemachineVirtualCamera);
 #else
-             var brain = CinemachineCore.FindPotentialTargetBrain(CinemachineVirtualCamera);
+            var brain = CinemachineCore.Instance.FindPotentialTargetBrain(CinemachineVirtualCamera);
 #endif
             if (brain != null)
                 return brain.OutputCamera;
@@ -122,7 +122,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <inheritdoc/>
         public void SetDamping(Damping damping)
         {
-#if VP_CINEMACHINE_2_4_0
+#if CINEMACHINE_2_4_OR_NEWER
             m_CinemachineComponent.SetDamping(damping);
 #endif
         }

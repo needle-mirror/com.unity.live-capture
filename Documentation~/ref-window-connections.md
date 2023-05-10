@@ -18,7 +18,7 @@ Use the **Configure Firewall** button to automatically set up a dedicated inboun
 >* This feature is only available on Windows.
 >* The button appears only if the Unity Editor detects that your firewall is not optimally configured for Live Capture.
 
-See [how to setup your network on Windows](setup-network.md) if you encounter connection issues.
+See [how to setup your network on Windows](connection-network.md) if you encounter connection issues.
 
 ### Companion App Server
 

@@ -1,8 +1,7 @@
 using System;
 using UnityEditor;
-using UnityEngine;
 
-namespace Unity.LiveCapture.VirtualCamera.Editor
+namespace Unity.LiveCapture.Editor
 {
     class ShowMixedValuesScope : IDisposable
     {

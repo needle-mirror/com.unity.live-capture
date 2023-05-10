@@ -138,6 +138,7 @@ namespace Unity.LiveCapture
 
         static bool FindCircularDependencies(Playable playable, Playable target, TimelineAsset timeline, ref int count)
         {
+            Debug.Assert(playable.IsValid());
             Debug.Assert(target.IsValid());
             Debug.Assert(timeline != null);
 
@@ -164,6 +165,11 @@ namespace Unity.LiveCapture
             for (var i = 0; i < playable.GetInputCount(); ++i)
             {
                 var input = playable.GetInput(i);
+
+                if (!input.IsValid())
+                {
+                    continue;
+                }
 
                 if (FindCircularDependencies(input, target, timeline, ref count))
                 {

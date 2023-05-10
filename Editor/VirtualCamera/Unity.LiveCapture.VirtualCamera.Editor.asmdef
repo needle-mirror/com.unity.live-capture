@@ -29,14 +29,14 @@
     "defineConstraints": [],
     "versionDefines": [
         {
-            "name": "com.unity.render-pipelines.high-definition",
-            "expression": "10.2.2",
-            "define": "HDRP_10_2_OR_NEWER"
+            "name": "com.unity.render-pipelines.core",
+            "expression": "14.0.0",
+            "define": "SRP_CORE_14_0_OR_NEWER"
         },
         {
-            "name": "com.unity.cinemachine",
-            "expression": "2.4.0-preview.6",
-            "define": "VP_CINEMACHINE_2_4_0"
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "14.0.0",
+            "define": "HDRP_14_0_OR_NEWER"
         },
         {
             "name": "com.unity.cinemachine",
@@ -45,8 +45,13 @@
         },
         {
             "name": "com.unity.render-pipelines.universal",
-            "expression": "10.2.2",
-            "define": "URP_10_2_OR_NEWER"
+            "expression": "14.0.0",
+            "define": "URP_14_0_OR_NEWER"
+        },
+        {
+            "name": "com.unity.cinemachine",
+            "expression": "2.4.0-preview.6",
+            "define": "CINEMACHINE_2_4_OR_NEWER"
         }
     ],
     "noEngineReferences": false

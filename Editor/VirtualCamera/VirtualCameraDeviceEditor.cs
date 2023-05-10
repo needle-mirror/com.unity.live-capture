@@ -23,7 +23,6 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             public static GUIContent Settings = EditorGUIUtility.TrTextContent("Settings", "The settings of the device.");
             public static GUIContent AnchorSettings = EditorGUIUtility.TrTextContent("Anchor Settings", "The anchor settings of the device.");
             public static GUIContent Recorder = EditorGUIUtility.TrTextContent("Keyframe Reduction", "Parameters to reduce redundant keyframes in the recorded animations. Higher values reduce the file size but might affect the curve accuracy.");
-            public static string VideoNotCompatible = L10n.Tr("Video streaming not supported on Apple silicon.");
             public static GUIContent VideoSettingsButton = EditorGUIUtility.TrTextContent("Open Video Settings", "Open the settings of the video server.");
             public static string Deleted = L10n.Tr("(deleted)");
             public static GUIContent Snapshots = EditorGUIUtility.TrTextContent("Snapshots", "The snapshots taken using this device.");
@@ -67,7 +66,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         static readonly (GUIContent label, Func<UnityEngine.Object> createActorFunc)[] k_ActorCreateMenuItems =
         {
             (Contents.CreateVirtualCameraActor, CreateVirtualCameraActor),
-#if VP_CINEMACHINE_2_4_0
+#if CINEMACHINE_2_4_OR_NEWER
             (Contents.CreateCinemachineCameraActor, CreateCinemachineCameraActor)
 #endif
         };
@@ -77,10 +76,10 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
             return GetActorComponent(VirtualCameraCreatorUtilities.CreateVirtualCameraActorInternal());
         }
 
-#if VP_CINEMACHINE_2_4_0
+#if CINEMACHINE_2_4_OR_NEWER
         static VirtualCameraActor CreateCinemachineCameraActor()
         {
-            return GetActorComponent(VirtualCameraCreatorUtilities.CreateCinemachineCameraActorInternal());
+            return GetActorComponent(VirtualCameraCreatorUtilitiesCM.CreateCinemachineCameraActorInternal());
         }
 
 #endif
@@ -163,11 +162,6 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
                 DoChannelsGUI(m_Channels);
                 DoLensAssetField();
 
-                if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
-                {
-                    EditorGUILayout.HelpBox(Contents.VideoNotCompatible, MessageType.Warning);
-                }
-
                 if (GUILayout.Button(Contents.VideoSettingsButton))
                 {
                     VideoServerSettingsProvider.Open();
@@ -204,7 +198,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
                 serializedObject.ApplyModifiedProperties();
 
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
                 if (m_Device.Settings.FocusPlane)
                 {
                     RenderFeatureEditor<FocusPlaneRenderer, VirtualCameraScriptableRenderFeature>.OnInspectorGUI();

@@ -88,17 +88,12 @@ namespace Unity.LiveCapture.VirtualCamera
             descriptor.FocusDistance = metadata.Lens.FocusDistance;
             descriptor.Aperture = metadata.Lens.Aperture;
             descriptor.SensorSize = metadata.CameraBody.SensorSize;
-            descriptor.SensorPresetName = SensorPresetCacheProxy.GetSensorSizeName(metadata.CameraBody.SensorSize);
+            descriptor.SensorPresetName = SensorPresetsCacheProxy.GetSensorSizeName(metadata.CameraBody.SensorSize);
             descriptor.Iso = metadata.CameraBody.Iso;
             descriptor.ShutterSpeed = metadata.CameraBody.ShutterSpeed;
             descriptor.AspectRatio = metadata.CropAspect;
 #endif
             return descriptor;
         }
-    }
-
-    static class SensorPresetCacheProxy
-    {
-        public static Func<Vector2, string> GetSensorSizeName = x => String.Empty;
     }
 }

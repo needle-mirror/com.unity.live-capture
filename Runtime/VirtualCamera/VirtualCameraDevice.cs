@@ -353,7 +353,6 @@ namespace Unity.LiveCapture.VirtualCamera
             m_Processor.Validate();
 
             RefreshRig();
-            UpdateOverlaysIfNeeded(m_Settings);
 
             m_Processor.AddLensKeyframe(m_Processor.CurrentTime, m_Lens);
         }
@@ -375,10 +374,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         void UpdateOverlaysIfNeeded(Settings settings)
         {
-            if (m_FocusPlaneRenderer != null)
-            {
-                m_FocusPlaneRenderer.enabled = settings.FocusPlane;
-            }
+            m_FocusPlaneRenderer.enabled = settings.FocusPlane;
 
             var currentCamera = GetCamera();
             if (currentCamera != null && FrameLinesMap.Instance.TryGetInstance(currentCamera, out var frameLines))
@@ -584,17 +580,14 @@ namespace Unity.LiveCapture.VirtualCamera
             m_SnapshotLibrary.RemoveAt(index);
         }
 
-        void Awake()
-        {
-            m_FocusPlaneRenderer = GetComponent<FocusPlaneRenderer>();
-        }
-
         /// <summary>
         /// This function is called when the object becomes enabled and active.
         /// </summary>
         protected override void OnEnable()
         {
             base.OnEnable();
+
+            m_FocusPlaneRenderer = GetComponent<FocusPlaneRenderer>();
 
             TimedDataSourceManager.Instance.EnsureIdIsValid(ref m_Guid);
             TimedDataSourceManager.Instance.Register(this);

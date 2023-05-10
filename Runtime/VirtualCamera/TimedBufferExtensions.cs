@@ -1,3 +1,6 @@
+using System;
+using System.Diagnostics.CodeAnalysis;
+
 namespace Unity.LiveCapture.VirtualCamera
 {
     static class TimedBufferExtensions
@@ -10,28 +13,38 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <typeparam name="T">The type of element contained in the collection.</typeparam>
         /// <returns>The element latest element. <see langword="null"/> if the buffer is empty or there
         /// are no elements before the cutoff.</returns>
-        public static T? GetLatest<T>(this TimedDataBuffer<T> buffer, FrameTime cutoff) where T : struct
+        public static T? GetLatest<T>([NotNull] this ITimedDataBuffer<T> buffer, FrameTime cutoff) where T : struct
         {
             // LINQ equivalent:
             // return buffer
             //     .TakeWhile(x => x.frameTime <= cutoff)
             //     .LastOrDefault().value;
 
-            if (buffer.Count == 0 || cutoff < buffer.PeekFront().frameTime)
+            if (buffer == null)
+            {
+                throw new ArgumentNullException(nameof(buffer));
+            }
+
+            if (buffer.Count == 0)
             {
                 return null;
             }
 
-            int i = 0;
-            var (frameTime, value) = buffer[i];
-            while (frameTime <= cutoff)
+            T? result = null;
+
+            foreach (var (frameTime, value) in buffer)
             {
-                value = buffer[i++].value;
-                if (i >= buffer.Count) break;
-                frameTime = buffer[i].frameTime;
+                if (frameTime <= cutoff)
+                {
+                    result = value;
+                }
+                else
+                {
+                    break;
+                }
             }
 
-            return value;
+            return result;
         }
     }
 }

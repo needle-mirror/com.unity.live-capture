@@ -11,15 +11,28 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     {
         ICurve[] m_Curves =
         {
-            new FaceBlendShapeCurves(string.Empty, FaceActor.PropertyNames.BlendShapes, typeof(FaceActor)),
-            new Vector3Curve(string.Empty, FaceActor.PropertyNames.HeadPosition, typeof(FaceActor)),
-            new EulerCurve(string.Empty, FaceActor.PropertyNames.HeadOrientation, typeof(FaceActor)),
-            new EulerCurve(string.Empty, FaceActor.PropertyNames.LeftEyeOrientation, typeof(FaceActor)),
-            new EulerCurve(string.Empty, FaceActor.PropertyNames.RightEyeOrientation, typeof(FaceActor)),
-            new BooleanCurve(string.Empty, FaceActor.PropertyNames.BlendShapesEnabled, typeof(FaceActor)),
-            new BooleanCurve(string.Empty, FaceActor.PropertyNames.HeadPositionEnabled, typeof(FaceActor)),
-            new BooleanCurve(string.Empty, FaceActor.PropertyNames.HeadOrientationEnabled, typeof(FaceActor)),
-            new BooleanCurve(string.Empty, FaceActor.PropertyNames.EyeOrientationEnabled, typeof(FaceActor)),
+            new FaceBlendShapeCurves(),
+            new Vector3Curve(),
+            new EulerCurve(),
+            new EulerCurve(),
+            new EulerCurve(),
+            new BooleanCurve(),
+            new BooleanCurve(),
+            new BooleanCurve(),
+            new BooleanCurve(),
+        };
+
+        PropertyBinding[] m_Bindings =
+        {
+            new PropertyBinding(string.Empty, FaceActor.PropertyNames.BlendShapes, typeof(FaceActor)),
+            new PropertyBinding(string.Empty, FaceActor.PropertyNames.HeadPosition, typeof(FaceActor)),
+            new PropertyBinding(string.Empty, FaceActor.PropertyNames.HeadOrientation, typeof(FaceActor)),
+            new PropertyBinding(string.Empty, FaceActor.PropertyNames.LeftEyeOrientation, typeof(FaceActor)),
+            new PropertyBinding(string.Empty, FaceActor.PropertyNames.RightEyeOrientation, typeof(FaceActor)),
+            new PropertyBinding(string.Empty, FaceActor.PropertyNames.BlendShapesEnabled, typeof(FaceActor)),
+            new PropertyBinding(string.Empty, FaceActor.PropertyNames.HeadPositionEnabled, typeof(FaceActor)),
+            new PropertyBinding(string.Empty, FaceActor.PropertyNames.HeadOrientationEnabled, typeof(FaceActor)),
+            new PropertyBinding(string.Empty, FaceActor.PropertyNames.EyeOrientationEnabled, typeof(FaceActor)),
         };
 
         [SerializeField]
@@ -169,7 +182,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         {
             if (Channels.HasFlag(FaceChannelFlags.BlendShapes))
             {
-                (GetCurve<FaceBlendShapePose>(0) as FaceBlendShapeCurves).AddKey(ElapsedTime, ref sample.BlendShapes);
+                (GetCurve<FaceBlendShapePose>(0) as FaceBlendShapeCurves).AddKey(ElapsedTime, sample.BlendShapes);
             }
             if (Channels.HasFlag(FaceChannelFlags.HeadPosition))
             {
@@ -201,15 +214,15 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         {
             var animationClip = new AnimationClip();
 
-            foreach (var curve in m_Curves)
+            for (var i = 0; i < m_Curves.Length; ++i)
             {
-                curve.SetToAnimationClip(animationClip);
+                m_Curves[i].SetToAnimationClip(m_Bindings[i], animationClip);
             }
 
             return animationClip;
         }
 
-        ICurve<T> GetCurve<T>(int index)
+        ICurve<T> GetCurve<T>(int index) where T : struct
         {
             return m_Curves[index] as ICurve<T>;
         }

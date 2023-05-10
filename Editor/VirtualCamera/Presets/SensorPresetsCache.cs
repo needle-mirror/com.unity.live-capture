@@ -32,7 +32,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
         static SensorPresetsCache()
         {
             Undo.postprocessModifications += PostprocessModifications;
-            SensorPresetCacheProxy.GetSensorSizeName = GetSensorSizeName;
+            SensorPresetsCacheProxy.GetSensorSizeName = GetSensorSizeName;
 
             UpdateCache();
         }

@@ -1,6 +1,7 @@
 using System;
 using UnityEditor;
 using UnityEngine;
+using Unity.LiveCapture.Editor;
 
 namespace Unity.LiveCapture.VirtualCamera.Editor
 {

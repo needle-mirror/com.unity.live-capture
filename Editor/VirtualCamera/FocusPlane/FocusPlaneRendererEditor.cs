@@ -26,7 +26,7 @@ namespace Unity.LiveCapture.VirtualCamera.Editor
 
             serializedObject.ApplyModifiedProperties();
 
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
             RenderFeatureEditor<FocusPlaneRenderer, VirtualCameraScriptableRenderFeature>.OnInspectorGUI();
 #endif
         }

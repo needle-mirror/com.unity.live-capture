@@ -1,6 +1,5 @@
 using UnityEngine;
-
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
 using UnityEngine.Rendering.Universal;
 #endif
 
@@ -16,7 +15,7 @@ namespace Unity.LiveCapture.Rendering
     {
         internal static readonly IRenderPipelineBridge s_Instance = new RenderPipelineBridgeDefaultImpl();
 
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
         /// <inheritdoc/>
         public T RequestRenderFeature<T>() where T : ScriptableRendererFeature
         {
@@ -31,7 +30,6 @@ namespace Unity.LiveCapture.Rendering
             Error();
             return false;
         }
-
 #endif
 
         static void Error()

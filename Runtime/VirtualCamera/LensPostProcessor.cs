@@ -30,10 +30,10 @@ namespace Unity.LiveCapture.VirtualCamera
         float m_FocalLengthVelocity;
         float m_ApertureVelocity;
 
-        TimedDataBuffer<InputSample> m_InputKeyframes = new TimedDataBuffer<InputSample>(k_KeyframeBufferFrameRate, k_MinBufferSize);
-        TimedDataBuffer<float> m_FocusDistanceKeyframes = new TimedDataBuffer<float>(k_KeyframeBufferFrameRate, k_MinBufferSize);
-        TimedDataBuffer<float> m_FocalLengthKeyframes = new TimedDataBuffer<float>(k_KeyframeBufferFrameRate, k_MinBufferSize);
-        TimedDataBuffer<float> m_ApertureKeyframes = new TimedDataBuffer<float>(k_KeyframeBufferFrameRate, k_MinBufferSize);
+        ITimedDataBuffer<InputSample> m_InputKeyframes = TimedDataBuffer.Create<InputSample>(frameRate: k_KeyframeBufferFrameRate);
+        ITimedDataBuffer<float> m_FocusDistanceKeyframes = TimedDataBuffer.Create<float>(frameRate: k_KeyframeBufferFrameRate);
+        ITimedDataBuffer<float> m_FocalLengthKeyframes = TimedDataBuffer.Create<float>(frameRate: k_KeyframeBufferFrameRate);
+        ITimedDataBuffer<float> m_ApertureKeyframes = TimedDataBuffer.Create<float>(frameRate: k_KeyframeBufferFrameRate);
 
         public int TimeShiftTolerance
         {
@@ -67,10 +67,10 @@ namespace Unity.LiveCapture.VirtualCamera
         public void Validate()
         {
             m_BufferSize = Math.Max(MinBufferSize, m_BufferSize);
-            m_InputKeyframes.SetCapacity(m_BufferSize);
-            m_FocalLengthKeyframes.SetCapacity(m_BufferSize);
-            m_FocusDistanceKeyframes.SetCapacity(m_BufferSize);
-            m_ApertureKeyframes.SetCapacity(m_BufferSize);
+            m_InputKeyframes.Capacity = m_BufferSize;
+            m_FocalLengthKeyframes.Capacity = m_BufferSize;
+            m_FocusDistanceKeyframes.Capacity = m_BufferSize;
+            m_ApertureKeyframes.Capacity = m_BufferSize;
         }
 
         public void MarkRigNeedsInitialize()
@@ -128,7 +128,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         public FrameRate GetBufferFrameRate()
         {
-            return m_InputKeyframes.GetFrameRate();
+            return m_InputKeyframes.FrameRate;
         }
 
         public bool TryGetBufferRange(out FrameTime oldestSample, out FrameTime newestSample)
@@ -138,7 +138,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
         public TimedSampleStatus GetStatusAt(FrameTime frameTime)
         {
-            return m_InputKeyframes.TryGetSample(frameTime, out var _);
+            return m_InputKeyframes.GetStatus(frameTime);
         }
 
         public IEnumerable<(double time, Pose? pose, Lens? lens)> ProcessTo(FrameTime frameTime)

@@ -17,6 +17,7 @@ namespace Unity.LiveCapture.Mocap.Editor
 
         static class Contents
         {
+            static readonly string k_IconPath = "Packages/com.unity.live-capture/Editor/Core/Icons";
             public static readonly GUIContent Animator = EditorGUIUtility.TrTextContent("Animator", "The Animator component to animate.");
             public static readonly GUIContent TimecodeSource = EditorGUIUtility.TrTextContent("Timecode Source", "The Mocap Device to read timecode from.");
             public static readonly GUIContent EnableToggle = EditorGUIUtility.TrTextContent("", "Enable or disable the source.");
@@ -28,8 +29,8 @@ namespace Unity.LiveCapture.Mocap.Editor
             public static readonly string SourceGameObjectName = L10n.Tr("Mocap Devices");
             public static readonly string UndoCreateDevice = L10n.Tr("Create Mocap Device");
             public static readonly string UndoEnableDevice = L10n.Tr("Set Enabled");
-            public static readonly GUIContent SourceConnectedIcon = EditorGUIUtility.TrIconContent("winbtn_mac_max");
-            public static readonly GUIContent SourceNotConnectedIcon = EditorGUIUtility.TrIconContent("winbtn_mac_close");
+            public static readonly GUIContent SourceConnectedIcon = EditorGUIUtility.TrIconContent($"{k_IconPath}/winbtn_mac_max.png");
+            public static readonly GUIContent SourceNotConnectedIcon = EditorGUIUtility.TrIconContent($"{k_IconPath}/winbtn_mac_close.png");
         }
 
         MocapGroup m_Device;

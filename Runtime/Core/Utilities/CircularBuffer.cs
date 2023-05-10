@@ -9,7 +9,7 @@ namespace Unity.LiveCapture
     /// A queue-like data structure that allows read-only access to all values in the queue.
     /// </summary>
     /// <typeparam name="T">The type of data stored in the buffer.</typeparam>
-    public class CircularBuffer<T> : IReadOnlyList<T>
+    class CircularBuffer<T> : IReadOnlyList<T>
     {
         T[] m_Data;
         int m_StartIndex = 0;
@@ -21,24 +21,28 @@ namespace Unity.LiveCapture
         public int Count => (m_Data.Length + m_EndIndex - m_StartIndex) % m_Data.Length;
 
         /// <summary>
-        /// Gets the maximum number of elements which can be stored in the collection.
+        /// The maximum number of elements which can be stored in the collection.
         /// </summary>
-        public int Capacity => m_Data.Length - 1;
+        /// <remarks>If the new size is smaller than the current <see cref="Count"/>, elements are truncated from the front.</remarks>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown if the capacity is not greater than zero.</exception>
+        public int Capacity
+        {
+            get => m_Data.Length - 1;
+            set => SetCapacity(value);
+        }
 
         /// <summary>
         /// A callback invoked for each element that is discarded from the buffer.
         /// </summary>
-        public Action<T> ElementDiscarded { get; set; }
+        public event Action<T> ElementDiscarded;
 
         /// <summary>
         /// Constructs a new <see cref="CircularBuffer{T}"/> instance with an initial capacity.
         /// </summary>
         /// <param name="capacity">The maximum number of elements which can be stored in the collection.</param>
-        /// <param name="elementDiscarded">A callback invoked for each element that is discarded from the buffer.</param>
-        public CircularBuffer(int capacity, Action<T> elementDiscarded = null)
+        public CircularBuffer(int capacity)
         {
-            ElementDiscarded = elementDiscarded;
-            SetCapacity(capacity);
+            Capacity = capacity;
         }
 
         /// <inheritdoc cref="PushBack"/>
@@ -199,13 +203,7 @@ namespace Unity.LiveCapture
             m_EndIndex = 0;
         }
 
-        /// <summary>
-        /// Sets the <see cref="Capacity"/> of the circular buffer.
-        /// </summary>
-        /// <remarks>If the new size is smaller than the current <see cref="Count"/>, elements will be truncated from the front.</remarks>
-        /// <param name="capacity">The desired capacity of the collection.</param>
-        /// <exception cref="ArgumentOutOfRangeException">Thrown if the capacity is not greater than zero.</exception>
-        public void SetCapacity(int capacity)
+        void SetCapacity(int capacity)
         {
             if (capacity <= 0)
             {
@@ -305,16 +303,13 @@ namespace Unity.LiveCapture
 
         void OnValueDiscarded(in T value)
         {
-            if (ElementDiscarded != null)
+            try
             {
-                try
-                {
-                    ElementDiscarded.Invoke(value);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogException(e);
-                }
+                ElementDiscarded?.Invoke(value);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
             }
         }
     }

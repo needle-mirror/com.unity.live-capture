@@ -2,11 +2,11 @@ using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-#if HDRP_10_2_OR_NEWER
+#if HDRP_14_0_OR_NEWER
 using UnityEngine.Rendering.HighDefinition;
 
 #endif
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
 using UnityEngine.Rendering.Universal;
 #endif
 
@@ -30,13 +30,13 @@ namespace Unity.LiveCapture.VirtualCamera.Raycasting
         /// </remarks>
         public GraphicsRaycaster()
         {
-#if HDRP_10_2_OR_NEWER
+#if HDRP_14_0_OR_NEWER
             if (GraphicsSettings.renderPipelineAsset is HDRenderPipelineAsset)
             {
                 m_Impl = new HighDefinitionRaycasterImpl();
             }
 #endif
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
             if (GraphicsSettings.renderPipelineAsset is UniversalRenderPipelineAsset)
             {
                 m_Impl = new UniversalRaycasterImpl();

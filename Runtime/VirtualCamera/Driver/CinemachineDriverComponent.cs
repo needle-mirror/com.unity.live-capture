@@ -1,12 +1,12 @@
-#if VP_CINEMACHINE_2_4_0
+#if CINEMACHINE_2_4_OR_NEWER
 using System;
 using UnityEngine;
-#if !CINEMACHINE_3_0_0_OR_NEWER
+#if CINEMACHINE_3_0_0_OR_NEWER
+using Unity.Cinemachine;
+#else
 using Cinemachine ;
 using CinemachineCamera = Cinemachine.CinemachineVirtualCamera;
 using CinemachineFollow = Cinemachine.CinemachineTransposer;
-#else
-using Unity.Cinemachine;
 #endif
 
 namespace Unity.LiveCapture.VirtualCamera
@@ -126,10 +126,10 @@ namespace Unity.LiveCapture.VirtualCamera
             // lens.SensorSize will be overwritten by Cinemachine so no point in assigning it here.
             // See `LensSettings.SnapshotCameraReadOnlyProperties`
 
-#if !CINEMACHINE_3_0_0_OR_NEWER
-            var brain = CinemachineCore.Instance.FindPotentialTargetBrain(CinemachineVirtualCamera);
+#if CINEMACHINE_3_0_0_OR_NEWER
+            var brain = CinemachineCore.FindPotentialTargetBrain(CinemachineVirtualCamera);
 #else
-             var brain = CinemachineCore.FindPotentialTargetBrain(CinemachineVirtualCamera);
+            var brain = CinemachineCore.Instance.FindPotentialTargetBrain(CinemachineVirtualCamera);
 #endif
             if (brain != null)
             {

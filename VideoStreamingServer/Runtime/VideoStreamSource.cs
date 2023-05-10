@@ -1,4 +1,4 @@
-#if URP_10_2_OR_NEWER || HDRP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER || HDRP_14_0_OR_NEWER
 #define USING_SCRIPTABLE_RENDER_PIPELINE
 #endif
 
@@ -9,10 +9,10 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
 using UnityEngine.Rendering.Universal;
 #endif
-#if HDRP_10_2_OR_NEWER
+#if HDRP_14_0_OR_NEWER
 using UnityEngine.Rendering.HighDefinition;
 #endif
 

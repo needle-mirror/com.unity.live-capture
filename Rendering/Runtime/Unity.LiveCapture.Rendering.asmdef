@@ -16,13 +16,13 @@
     "versionDefines": [
         {
             "name": "com.unity.render-pipelines.high-definition",
-            "expression": "10.2.2",
-            "define": "HDRP_10_2_OR_NEWER"
+            "expression": "14.0.0",
+            "define": "HDRP_14_0_OR_NEWER"
         },
         {
             "name": "com.unity.render-pipelines.universal",
-            "expression": "10.2.2",
-            "define": "URP_10_2_OR_NEWER"
+            "expression": "14.0.0",
+            "define": "URP_14_0_OR_NEWER"
         }
     ],
     "noEngineReferences": false

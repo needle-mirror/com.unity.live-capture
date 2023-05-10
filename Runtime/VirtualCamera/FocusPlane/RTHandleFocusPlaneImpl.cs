@@ -1,4 +1,4 @@
-#if SRP_CORE_10_2_OR_NEWER
+#if SRP_CORE_14_0_OR_NEWER
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;

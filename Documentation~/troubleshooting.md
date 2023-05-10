@@ -16,21 +16,21 @@
 <br /><br />
 
 3. In the Unity Editor, make sure you have:  
-  * Created a [connection server](setup-connecting.md) in the Connections window.
+  * Created a [connection server](connection-device.md) in the Connections window.
   * Started the server by clicking **Start** in this window.
 <br /><br />
 
 4. On **Windows** only:
 
   * If you're connected to a trusted private WiFi network such as a home or company network:
-    * In Windows settings, verify that your WiFi network profile is [set to Private](setup-network.md#private-wi-fi-network-setup).
+    * In Windows settings, verify that your WiFi network profile is [set to Private](connection-network.md#private-wi-fi-network-setup).
     * In the Unity Editor, in the Connections window, if you see a "Firewall is not configured" warning, select **Configure Firewall**.
-    * If you're using a 3rd party software instead of the default Windows Defender firewall, you need to manually [configure a firewall rule](setup-network.md#manual-firewall-rule-configuration) in this 3rd party software.
+    * If you're using a 3rd party software instead of the default Windows Defender firewall, you need to manually [configure a firewall rule](connection-network.md#manual-firewall-rule-configuration) in this 3rd party software.
 <br /><br />
 
   * If you're connected to a public WiFi network, you have two options:
-    * Manually [configure a firewall rule](setup-network.md#manual-firewall-rule-configuration) for this public network (Unity's automatic firewall configuration has no effect on public network firewall settings), OR
-    * Switch your WiFi network profile to [Private](setup-network.md#private-wi-fi-network-setup).<br />**Warning:** This last solution has **security risks** if you can't fully trust the public network you're using.
+    * Manually [configure a firewall rule](connection-network.md#manual-firewall-rule-configuration) for this public network (Unity's automatic firewall configuration has no effect on public network firewall settings), OR
+    * Switch your WiFi network profile to [Private](connection-network.md#private-wi-fi-network-setup).<br />**Warning:** This last solution has **security risks** if you can't fully trust the public network you're using.
 <br /><br />
 
 5. If you still can't connect:

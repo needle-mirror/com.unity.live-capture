@@ -1,13 +1,12 @@
-using System;
 using UnityEngine;
 using UnityEditor;
 
-using UnityObject = UnityEngine.Object;
-
 namespace Unity.LiveCapture.VirtualCamera.Editor
 {
+    using Editor = UnityEditor.Editor;
+
     [CustomEditor(typeof(LensAsset))]
-    class LensAssetEditor : UnityEditor.Editor
+    class LensAssetEditor : Editor
     {
         static class Contents
         {

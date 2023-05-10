@@ -22,7 +22,7 @@ namespace Unity.LiveCapture.VirtualCamera
         [SerializeField]
         bool m_DepthOfField;
         [SerializeField, AspectRatio]
-        float m_CropAspect = Settings.k_DefaultAspectRatio;
+        float m_CropAspect = AspectRatioConsts.k_DefaultAspectRatio;
 
         [SerializeField]
         Vector3 m_LocalPosition;

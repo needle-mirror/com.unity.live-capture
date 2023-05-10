@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
 using UnityEngine.Rendering.Universal;
 #endif
 
@@ -15,7 +15,7 @@ namespace Unity.LiveCapture.Rendering.Editor
             RenderPipelineBridge.SetImplementation(new RenderPipelineBridgeImpl());
         }
 
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
         /// <inheritdoc/>
         public T RequestRenderFeature<T>() where T : ScriptableRendererFeature
         {

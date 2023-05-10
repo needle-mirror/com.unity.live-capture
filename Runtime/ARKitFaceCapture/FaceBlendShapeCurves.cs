@@ -25,15 +25,6 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         }
 
         /// <inheritdoc/>
-        public string RelativePath { get; }
-
-        /// <inheritdoc/>
-        public string PropertyName { get; }
-
-        /// <inheritdoc/>
-        public Type BindingType { get; }
-
-        /// <inheritdoc/>
         public FrameRate FrameRate
         {
             get => m_Curves[0].FrameRate;
@@ -49,29 +40,15 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         /// <summary>
         /// Creates a new <see cref="FaceBlendShapePose"/> instance.
         /// </summary>
-        /// <param name="relativePath">The path of the game object this curve applies to,
-        /// relative to the game object the actor component is attached to.</param>
-        /// <param name="propertyName">The name or path to the property that is animated.</param>
-        /// <param name="bindingType">The type of component this curve is applied to.</param>
-        public FaceBlendShapeCurves(string relativePath, string propertyName, Type bindingType)
+        public FaceBlendShapeCurves()
         {
-            RelativePath = relativePath;
-            PropertyName = propertyName;
-            BindingType = bindingType;
-
             m_Curves = FaceBlendShapePose.Shapes
-                .Select(shape => new FloatCurve(relativePath, $"{propertyName}.{shape}", bindingType))
+                .Select(shape => new FloatCurve())
                 .ToArray();
         }
 
         /// <inheritdoc/>
-        public void AddKey(double time, FaceBlendShapePose value)
-        {
-            AddKey(time, ref value);
-        }
-
-        /// <inheritdoc cref="AddKey(double,Unity.LiveCapture.ARKitFaceCapture.FaceBlendShapePose)"/>
-        public void AddKey(double time, ref FaceBlendShapePose value)
+        public void AddKey(double time, in FaceBlendShapePose value)
         {
             for (var i = 0; i < FaceBlendShapePose.ShapeCount; ++i)
             {
@@ -95,11 +72,15 @@ namespace Unity.LiveCapture.ARKitFaceCapture
         }
 
         /// <inheritdoc/>
-        public void SetToAnimationClip(AnimationClip clip)
+        public void SetToAnimationClip(PropertyBinding binding, AnimationClip clip)
         {
-            foreach (var curve in m_Curves)
+            var bindings = FaceBlendShapePose.Shapes
+                .Select(shape => new PropertyBinding(binding.RelativePath, $"{binding.PropertyName}.{shape}", binding.Type))
+                .ToArray();
+
+            for (var i = 0; i < FaceBlendShapePose.ShapeCount; ++i)
             {
-                curve.SetToAnimationClip(clip);
+                m_Curves[i].SetToAnimationClip(bindings[i], clip);
             }
         }
     }

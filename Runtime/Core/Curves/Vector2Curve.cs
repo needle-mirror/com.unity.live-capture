@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace Unity.LiveCapture
@@ -11,7 +10,11 @@ namespace Unity.LiveCapture
         Vector2Sampler m_Sampler = new Vector2Sampler();
         Vector2TangentUpdater m_TangentUpdater = new Vector2TangentUpdater();
         Vector2KeyframeReducer m_Reducer = new Vector2KeyframeReducer();
-        AnimationCurve[] m_Curves;
+        AnimationCurve[] m_Curves = new[]
+        {
+            new AnimationCurve(),
+            new AnimationCurve()
+        };
 
         /// <inheritdoc/>
         public float MaxError
@@ -21,39 +24,14 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public string RelativePath { get; }
-
-        /// <inheritdoc/>
-        public string PropertyName { get; }
-
-        /// <inheritdoc/>
-        public Type BindingType { get; }
-
-        /// <inheritdoc/>
         public FrameRate FrameRate
         {
             get => m_Sampler.FrameRate;
             set => m_Sampler.FrameRate = value;
         }
 
-        /// <summary>
-        /// Creates a new <see cref="Vector2Curve"/> instance.
-        /// </summary>
-        /// <param name="relativePath">The path of the game object this curve applies to,
-        /// relative to the game object the actor component is attached to.</param>
-        /// <param name="propertyName">The name or path to the property that is animated.</param>
-        /// <param name="bindingType">The type of component this curve is applied to.</param>
-        public Vector2Curve(string relativePath, string propertyName, Type bindingType)
-        {
-            RelativePath = relativePath;
-            PropertyName = propertyName;
-            BindingType = bindingType;
-
-            Reset();
-        }
-
         /// <inheritdoc/>
-        public void AddKey(double time, Vector2 value)
+        public void AddKey(double time, in Vector2 value)
         {
             m_Sampler.Add((float)time, value);
 
@@ -75,14 +53,14 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public void SetToAnimationClip(AnimationClip clip)
+        public void SetToAnimationClip(PropertyBinding binding, AnimationClip clip)
         {
             Flush();
 
             if (m_Curves[0].length > 0)
-                clip.SetCurve(RelativePath, BindingType, $"{PropertyName}.x", m_Curves[0]);
+                clip.SetCurve(binding.RelativePath, binding.Type, $"{binding.PropertyName}.x", m_Curves[0]);
             if (m_Curves[1].length > 0)
-                clip.SetCurve(RelativePath, BindingType, $"{PropertyName}.y", m_Curves[1]);
+                clip.SetCurve(binding.RelativePath, binding.Type, $"{binding.PropertyName}.y", m_Curves[1]);
         }
 
         void Reset()
@@ -130,7 +108,7 @@ namespace Unity.LiveCapture
             }
         }
 
-        void AddKey(Keyframe<Vector2> keyframe)
+        void AddKey(in Keyframe<Vector2> keyframe)
         {
             for (var i = 0; i < 2; ++i)
             {

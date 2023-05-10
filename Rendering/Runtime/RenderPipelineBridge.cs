@@ -1,6 +1,5 @@
 using UnityEngine;
-
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
 using UnityEngine.Rendering.Universal;
 #endif
 
@@ -22,7 +21,7 @@ namespace Unity.LiveCapture.Rendering
             s_Impl = impl;
         }
 
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
         /// <inheritdoc cref="IRenderPipelineBridge.RequestRenderFeature{T}"/>
         public static T RequestRenderFeature<T>() where T : ScriptableRendererFeature
         {

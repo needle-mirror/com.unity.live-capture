@@ -58,7 +58,7 @@ namespace Unity.LiveCapture
         {
             if (m_Buffer.Count == m_Buffer.Capacity)
             {
-                m_Buffer.SetCapacity(m_Buffer.Capacity * 2);
+                m_Buffer.Capacity = m_Buffer.Capacity * 2;
             }
 
             m_Buffer.Add(keyframe);

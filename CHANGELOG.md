@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.0.0-pre.5] - 2023-05-10
+
+### Added
+- Static method TimedDataBuffer.Create<T>(...) to create instances of ITimedDataBuffer<T>.
+- LiveStream, a class that manages a collection of properties that can be recorded into a clip while animating the actor in the scene.
+- LiveStreamCaptureDevice, a capture device that manages a LiveStream.
+- LiveStreamPostProcessors, a base component that post-processes the stream managed by a LiveStreamCaptureDevice.
+- CameraTrackingDevice, a base capture device for implementing camera trackers.
+- SharedVolumeProfile, a component that manages an instance of VolumeProfile shared across multiple other components.
+- DepthOfField, a component that manages the depth of field effect.
+- LensDistortionBrownConrady, a component that manages the lens distortion effect based on the Brown-Conrady distortion model.
+- Overscan, a component to add overscan to a camera. Overscan is the process of rendering a larger image than the final output resolution and then cropping the image to the desired resolution.
+
+### Changed
+- Simplified the ICurve interface.
+- CircularBuffer<T> is no longer public.
+- TimedDataSource is no longer generic.
+- Introduced ITimedDataBuffer and ITimedDataBuffer<T> interfaces that replace TimedDataBuffer<T>.
+- The protected method MocapDevice<T>.GetInterpolator() replaces the MocapDevice<T>.Interpolator public property.
+- Restored video streaming on Apple silicon.
+- The minimum required Unity Editor version is now 2022.2.17f1.
+
+### Fixed
+- Live Capture icons that were missing in Unity Editor 2023.1 are now back.
+- Improved Face Capture HDRP sample scene which was overexposed and took time to adjust lighting.
+- Make sure the FrameLines component forces gate-fit mode to "Fill" when the camera is not using physical camera mode.
+- The Take Recorder window was still showing the device inspector when the device was disabled.
+- Takes couldn't be loaded in a TakeRecorderTrack when other tracks had invalid playables (for example an AnimationTrack's clip with no animation clip set).
+
+### Removed
+- Removed compatibility for features that require Legacy Render Pipeline.
+
 ## [4.0.0-pre.4] - 2023-03-30
 
 ### Fixed
@@ -14,7 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - The Connection Window identifies (and warns about) interfaces of Public networks on Windows OS
 - Unique Take Recorder window to replace the Take Recorder component and help the selection and management of shots.
-- New ShotPlayer component and ShotLibrary asset to help the management of shots outside a Timeline context. 
+- New ShotPlayer component and ShotLibrary asset to help the management of shots outside a Timeline context.
 
 ### Changed
 - Users can now place capture device GameObjects anywhere in the Hierarchy.
@@ -88,7 +120,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - The Pause Playback button does not rewind time anymore.
 - Automatic firewall configuration on Windows now detects and removes rules that block the Unity Editor on private or domain networks.
-- Minimum required Unity version is now 2021.3. 
+- Minimum required Unity version is now 2021.3.
 
 ## [3.0.0-pre.6] - 2022-06-14
 
@@ -162,12 +194,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
   - Timecode synchronization
   - The client can select the Take to play, and edit its metadata.  
-  
+
 ### Changed
   - TakeRecorder improvements to better handle device status.
   - Instead of using AnimationJobs, the LiveCaptureDevice now uses LiveUpdate to set the actor's properties.
-  - Editor UI improvements 
-  
+  - Editor UI improvements
+
 ### Removed
   -  LiveCaptureDevice IsLive/SetLive API.
 
@@ -178,9 +210,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.0.1] - 2021-08-26
 
 ### Changed
-  - Minor update to the documentation 
+  - Minor update to the documentation
   - Unity minimum version is now 2020.3.16f1
-  
+
 ### Fixed
   - Shader related errors on Unity 2021.2
 
@@ -200,7 +232,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Help button in Video Server settings
   - "Create & Assign New Actor" button
   - New editor icons
-  
+
 ### Changed
   - Show reticle in manual mode.
   - Virtual Camera Actor can be positioned manually.
@@ -208,7 +240,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Damping related fields are grayed out when damping is disabled
   - Auto Horizon option is grayed out when roll is enabled
   - Improved network connectivity
-  - Blend shape values have sliders to modify them 
+  - Blend shape values have sliders to modify them
   - Faster focus change when distance goes from infinity to something smaller and damping is enabled
 
 ### Fixed
@@ -227,12 +259,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
   - [Face Capture] Audio and Video recording options.
   - Fill gate fit mode for frame lines.  
-  
+
 ### Changed
   - [Companion apps] Minimum iOS version is now 14.5.
   - Rename "Review" to "Playback".
   - Custom Pass Manager is not editable anymore.
-  - Networking memory allocations improvements. 
+  - Networking memory allocations improvements.
 
 ### Fixed
  - [Virtual Camera] It was easy to accidentally open the system menus or close the app.
@@ -268,11 +300,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Recording closes dialogs.
 - Reticle animation and click-through issue.
 - Flickering in the game view, especially when focus reticle was displayed.
-- Slider on mobile phone would sometimes open iOS notifications. 
+- Slider on mobile phone would sometimes open iOS notifications.
 - [Virtual Camera] Could not exit preview mode on the device when entered from the editor.
 - [Virtual Camera] Lens and rig settings were hidden by default.
-- Thumbnails were identical for different snapshots. 
-- Changing lenses intrinsics did not refresh the client. 
+- Thumbnails were identical for different snapshots.
+- Changing lenses intrinsics did not refresh the client.
 - Some properties could not be excluded from presets.
 - Error when adding a CinemachineCameraDriver.
 - App and servers connectivity issues on 2021.12.0a18 and above.
@@ -314,7 +346,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Non-linear scaling for focus distance slider.
 - Improved face samples.
 - Slate change logic.
- 
+
 ### Fixed
 - Crash when using NvEnc on some computers.
 - [Companion App] Server Scan no longer overriden by manually entered server address.
@@ -323,7 +355,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Video stream is no longer cropped on device.
 - Flicker when changing slate in timeline while live.
 - Fix error when removing a running server.
-- Lens properties not being recorded. 
+- Lens properties not being recorded.
 - Verbose video stream logs.
 - Jump when starting to record with joysticks.
 - Connection view error on phone.
@@ -347,9 +379,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Takes playback use the crop aspect used during recording.
 - New names for some camera movements and focus modes.
 - [Virtual Camera] iPhone UI.
- 
+
 ### Fixed
-- Bug where a take iteration longer than its parent base track would be shortened. 
+- Bug where a take iteration longer than its parent base track would be shortened.
 - Memory leaks on HDRP 10.2
 
 ## [1.0.0-exp.235] - 2021-04-22
@@ -398,14 +430,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - The TakeRecorder was not updated on creation until selection was changed.
 - When device was removed, the TakeRecorder was throwing an exception and list was in inconsistent state.
 - Package was not compiling if the optional inputsystem was not present.
-- Virtual Camera record button would not appear after upgrade. 
-- UX regressions around preview playback. 
+- Virtual Camera record button would not appear after upgrade.
+- UX regressions around preview playback.
 
 ## [0.3.9-preview.1] - 2021-02-12
 
 ### Added
 - Video streaming support for URP.
-- URP support for Film Format. 
+- URP support for Film Format.
 - Add the ability to change damping from the client.
 - Graphics Raycaster supports object picking.
 - Spatial Focus Mode support.
@@ -419,8 +451,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Rename the package to Live-Capture.
 - Reset versioning to a major in 0 because the package is still experimental.
 - Ergonomic tilt is sent to server on client initialization.
-- New UI to create a Companion App Server. 
-- Updated package minimum version to Unity 2020.2 and compatible with URP/HDRP 10. 
+- New UI to create a Companion App Server.
+- Updated package minimum version to Unity 2020.2 and compatible with URP/HDRP 10.
 
 ### Fixed
 - [Companion App] Issue where editing ergonomic tilt would set the pedestal space to global.  

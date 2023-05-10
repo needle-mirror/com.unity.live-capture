@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Assertions;
-#if HDRP_10_2_OR_NEWER
+#if HDRP_14_0_OR_NEWER
 using UnityEngine.Rendering.HighDefinition;
 
 #endif
@@ -35,19 +35,13 @@ namespace Unity.LiveCapture.VirtualCamera
         bool m_GeometryIsValid;
         readonly FrameLinesDrawer m_FrameLinesDrawer = new FrameLinesDrawer();
 
-        // Legacy render pipeline support.
-        CommandBuffer m_LegacyCommandBuffer;
-        bool m_AddedLegacyCommandBuffer;
-        bool m_UsingLegacyRenderPipeline;
-        bool m_LegacyCachedShouldRender;
-        Vector2 m_CameraPixelSize;
-
         // Caching so that we can update the geometry when needed.
         FrameLinesSettings m_CachedSettings;
         float m_CachedScreenAspect;
         float m_CachedGateAspect;
+        Vector2 m_CameraPixelSize;
 
-#if HDRP_10_2_OR_NEWER
+#if HDRP_14_0_OR_NEWER
         CustomPassManager.Handle<HdrpFrameLinesPass> m_CustomPassHandle;
 #endif
         /// <summary>
@@ -101,13 +95,6 @@ namespace Unity.LiveCapture.VirtualCamera
         /// <returns>True if the frame lines should render</returns>
         internal bool ShouldRender() => isActiveAndEnabled && m_GeometryIsValid;
 
-        void Awake()
-        {
-            m_UsingLegacyRenderPipeline = GraphicsSettings.renderPipelineAsset == null;
-            m_Camera = GetComponent<Camera>();
-            Validate();
-        }
-
         void Reset()
         {
             m_Settings = FrameLinesSettings.GetDefault();
@@ -116,11 +103,11 @@ namespace Unity.LiveCapture.VirtualCamera
         void OnValidate()
         {
             m_Settings.Validate();
-            Validate();
         }
 
         void OnEnable()
         {
+            m_Camera = GetComponent<Camera>();
             m_FrameLinesDrawer.Initialize();
 
             m_CachedSettings = m_Settings;
@@ -128,89 +115,20 @@ namespace Unity.LiveCapture.VirtualCamera
             // Force update
             m_CachedSettings.AspectFillOpacity = (m_CachedSettings.AspectFillOpacity + .5f) % 1f;
 
-            if (m_UsingLegacyRenderPipeline)
-            {
-                m_LegacyCommandBuffer = new CommandBuffer { name = k_ProfilingSamplerLabel };
-
-                AddLegacyCommandBufferIfNeeded();
-
-                m_LegacyCachedShouldRender = ShouldRender();
-                if (m_LegacyCachedShouldRender)
-                {
-                    Render(m_LegacyCommandBuffer);
-                }
-            }
-
-#if HDRP_10_2_OR_NEWER
+#if HDRP_14_0_OR_NEWER
             m_CustomPassHandle = new CustomPassManager.Handle<HdrpFrameLinesPass>(CustomPassInjectionPoint.AfterPostProcess);
             m_CustomPassHandle.GetPass().name = k_ProfilingSamplerLabel;
 #endif
-
-            Debug.Assert(m_Camera != null);
+            FrameLinesMap.Instance.AddUniqueInstance(m_Camera, this);
         }
 
         void OnDisable()
         {
-#if HDRP_10_2_OR_NEWER
+            FrameLinesMap.Instance.RemoveInstance(this);
+#if HDRP_14_0_OR_NEWER
             m_CustomPassHandle.Dispose();
 #endif
-
-            if (m_UsingLegacyRenderPipeline)
-            {
-                RemoveLegacyCommandBufferIfNeeded(true);
-                m_LegacyCommandBuffer.Dispose();
-                m_LegacyCommandBuffer = null;
-            }
-
             m_FrameLinesDrawer.Dispose();
-        }
-
-        void OnDestroy()
-        {
-            FrameLinesMap.Instance.RemoveInstance(this);
-        }
-
-        void Validate()
-        {
-            FrameLinesMap.Instance.RemoveInstance(this);
-
-            if (m_Camera != null)
-            {
-                FrameLinesMap.Instance.AddUniqueInstance(m_Camera, this);
-            }
-        }
-
-        void AddLegacyCommandBufferIfNeeded()
-        {
-            Assert.IsFalse(m_AddedLegacyCommandBuffer);
-
-            if (m_UsingLegacyRenderPipeline && m_Camera != null && m_LegacyCommandBuffer != null)
-            {
-                m_Camera.AddCommandBuffer(CameraEvent.AfterEverything, m_LegacyCommandBuffer);
-                m_AddedLegacyCommandBuffer = true;
-            }
-        }
-
-        void RemoveLegacyCommandBufferIfNeeded(bool disposing)
-        {
-            if (m_AddedLegacyCommandBuffer)
-            {
-                Assert.IsNotNull(m_LegacyCommandBuffer, $"{nameof(m_LegacyCommandBuffer)} disposed before being removed from the camera.");
-
-                if (m_Camera == null)
-                {
-                    if (disposing)
-                    {
-                        m_AddedLegacyCommandBuffer = false;
-                        return;
-                    }
-
-                    throw new InvalidOperationException($"{nameof(m_Camera)} disposed before command buffer was removed.");
-                }
-
-                m_Camera.RemoveCommandBuffer(CameraEvent.AfterEverything, m_LegacyCommandBuffer);
-                m_AddedLegacyCommandBuffer = false;
-            }
         }
 
         void LateUpdate()
@@ -220,8 +138,9 @@ namespace Unity.LiveCapture.VirtualCamera
 
         void UpdateCamera()
         {
-            m_Camera.gateFit = m_Settings.GateFit == GateFit.Overscan ? Camera.GateFitMode.Overscan : Camera.GateFitMode.Fill;
+            ValidateGateFit();
 
+            m_Camera.gateFit = m_Settings.GateFit == GateFit.Overscan ? Camera.GateFitMode.Overscan : Camera.GateFitMode.Fill;
             m_CameraPixelSize = new Vector2(m_Camera.pixelWidth, m_Camera.pixelHeight);
 
             var screenAspect = m_Camera.pixelWidth / (float)m_Camera.pixelHeight;
@@ -235,20 +154,13 @@ namespace Unity.LiveCapture.VirtualCamera
             {
                 geometryChanged = UpdateGeometryIfNeeded(gateAspect, screenAspect);
             }
+        }
 
-            if (m_UsingLegacyRenderPipeline)
-            {
-                var shouldRender = ShouldRender();
-                if (shouldRender != m_LegacyCachedShouldRender || geometryChanged)
-                {
-                    m_LegacyCachedShouldRender = shouldRender;
-                    m_LegacyCommandBuffer.Clear();
-                    if (m_LegacyCachedShouldRender)
-                    {
-                        Render(m_LegacyCommandBuffer);
-                    }
-                }
-            }
+        void ValidateGateFit()
+        {
+            m_Settings.GateFit = m_Camera.usePhysicalProperties
+                ? m_Settings.GateFit
+                : GateFit.Fill;
         }
 
         /// <summary>
@@ -335,12 +247,12 @@ namespace Unity.LiveCapture.VirtualCamera
                     {
                         var cropRect = Rect.MinMaxRect(-cropViewSize.x, -cropViewSize.y, cropViewSize.x, cropViewSize.y);
 
-                        m_FrameLinesDrawer.DrawBox(NdcToPixels(cropRect));
+                        m_FrameLinesDrawer.DrawBox(NdcToPixels(cropRect, m_CameraPixelSize));
                     }
                     else if (m_Settings.AspectLineType == FrameLinesSettings.LineType.Corner)
                     {
                         var cropRect = Rect.MinMaxRect(-cropViewSize.x, -cropViewSize.y, cropViewSize.x, cropViewSize.y);
-                        var pixelBox = NdcToPixels(cropRect);
+                        var pixelBox = NdcToPixels(cropRect, m_CameraPixelSize);
                         var extent = new Vector2(pixelBox.width * .1f, pixelBox.height * .1f);
 
                         m_FrameLinesDrawer.DrawCornerBox(pixelBox, extent);
@@ -388,24 +300,24 @@ namespace Unity.LiveCapture.VirtualCamera
             {
                 var dx = outerSize.x - innerSize.x;
 
-                m_FrameLinesDrawer.DrawRect(NdcToPixels(new Rect(-outerSize.x, -outerSize.y, dx, outerSize.y * 2))); // left
+                m_FrameLinesDrawer.DrawRect(NdcToPixels(new Rect(-outerSize.x, -outerSize.y, dx, outerSize.y * 2), m_CameraPixelSize)); // left
 
-                m_FrameLinesDrawer.DrawRect(NdcToPixels(new Rect(innerSize.x, -outerSize.y, dx, outerSize.y * 2))); // right
+                m_FrameLinesDrawer.DrawRect(NdcToPixels(new Rect(innerSize.x, -outerSize.y, dx, outerSize.y * 2), m_CameraPixelSize)); // right
             }
             else
             {
                 var dy = outerSize.y - innerSize.y;
 
-                m_FrameLinesDrawer.DrawRect(NdcToPixels(new Rect(-outerSize.x, -outerSize.y, outerSize.x * 2, dy))); // top
+                m_FrameLinesDrawer.DrawRect(NdcToPixels(new Rect(-outerSize.x, -outerSize.y, outerSize.x * 2, dy), m_CameraPixelSize)); // top
 
-                m_FrameLinesDrawer.DrawRect(NdcToPixels(new Rect(-outerSize.x, innerSize.y, outerSize.x * 2, dy))); // bottom
+                m_FrameLinesDrawer.DrawRect(NdcToPixels(new Rect(-outerSize.x, innerSize.y, outerSize.x * 2, dy), m_CameraPixelSize)); // bottom
             }
         }
 
-        Rect NdcToPixels(Rect value)
+        static Rect NdcToPixels(Rect value, Vector2 size)
         {
-            var pxMin = (value.min + Vector2.one) * .5f * m_CameraPixelSize;
-            var pxMax = (value.max + Vector2.one) * .5f * m_CameraPixelSize;
+            var pxMin = (value.min + Vector2.one) * .5f * size;
+            var pxMax = (value.max + Vector2.one) * .5f * size;
 
             return Rect.MinMaxRect(pxMin.x, pxMin.y, pxMax.x, pxMax.y);
         }

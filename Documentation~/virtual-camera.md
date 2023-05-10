@@ -10,11 +10,16 @@ Use the Unity Virtual Camera mobile app alongside the Unity Editor to drive a Un
 
 Review the detailed requirements and perform the necessary installations and environment setup:
 
-1. [Install the Live Capture package and the Unity Virtual Camera app](index.md#installation).
+1. [Install the Live Capture package](installation.md).
 
-2. [Make sure your network and your firewall are correctly set up](setup-network.md).
+2. Install the Unity Virtual Camera app:
+   | App name | Device requirements | Link |
+   |:---|:---|:---|
+   | **Unity Virtual Camera** | iPad or iPhone with:<br />• iOS 14.5 or higher<br />• ARKit capabilities (implied with the required iOS version)| [![Unity Virtual Camera](images/app-store-badge.png)](https://apps.apple.com/us/app/unity-virtual-camera/id1478175507) |
 
-3. [Connect the Virtual Camera app to the Unity Editor](setup-connecting.md).
+3. [Make sure your network and your firewall are correctly set up](connection-network.md).
+
+4. [Connect the Virtual Camera app to the Unity Editor](connection-device.md).
 
 ## In this documentation
 

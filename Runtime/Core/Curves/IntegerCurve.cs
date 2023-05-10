@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace Unity.LiveCapture
@@ -8,83 +7,94 @@ namespace Unity.LiveCapture
     /// </summary>
     public class IntegerCurve : ICurve<int>
     {
-        readonly FloatCurve m_Curve;
+        IntegerSampler m_Sampler = new IntegerSampler();
+        IntegerTangentUpdater m_TangentUpdater = new IntegerTangentUpdater();
+        IntegerKeyframeReducer m_Reducer = new IntegerKeyframeReducer();
+        AnimationCurve m_Curve = new AnimationCurve();
 
         /// <inheritdoc/>
-        public string RelativePath { get; }
-
-        /// <inheritdoc/>
-        public string PropertyName { get; }
-
-        /// <inheritdoc/>
-        public Type BindingType { get; }
+        public float MaxError
+        {
+            get => m_Reducer.MaxError;
+            set => m_Reducer.MaxError = value;
+        }
 
         /// <inheritdoc/>
         public FrameRate FrameRate
         {
-            get => m_Curve.FrameRate;
-            set => m_Curve.FrameRate = value;
+            get => m_Sampler.FrameRate;
+            set => m_Sampler.FrameRate = value;
         }
-
-        int m_FrameNumber;
 
         /// <summary>
-        /// Creates a new <see cref="IntegerCurve"/> instance.
+        /// The baked animation curve.
         /// </summary>
-        /// <param name="relativePath">The path of the game object this curve applies to,
-        /// relative to the game object the actor component is attached to.</param>
-        /// <param name="propertyName">The name or path to the property that is animated.</param>
-        /// <param name="bindingType">The type of component this curve is applied to.</param>
-        public IntegerCurve(string relativePath, string propertyName, Type bindingType)
-        {
-            RelativePath = relativePath;
-            PropertyName = propertyName;
-            BindingType = bindingType;
-
-            m_Curve = new FloatCurve(relativePath, propertyName, bindingType);
-        }
+        internal AnimationCurve AnimationCurve => m_Curve;
 
         /// <inheritdoc/>
-        public void AddKey(double time, int value)
+        public void AddKey(double time, in int value)
         {
-            m_Curve.AddKey(time, value);
+            m_Sampler.Add((float)time, value);
 
-            MakeConstant();
+            Sample();
         }
 
         /// <inheritdoc/>
         public bool IsEmpty()
         {
-            return m_Curve.IsEmpty();
+            return m_TangentUpdater.IsEmpty()
+                && m_Reducer.IsEmpty()
+                && m_Curve.length == 0;
         }
 
         /// <inheritdoc/>
         public void Clear()
         {
-            m_Curve.Clear();
-            m_FrameNumber = 0;
+            m_Sampler.Reset();
+            m_TangentUpdater.Reset();
+            m_Reducer.Reset();
+            m_Curve = new AnimationCurve();
         }
 
         /// <inheritdoc/>
-        public void SetToAnimationClip(AnimationClip clip)
+        public void SetToAnimationClip(PropertyBinding binding, AnimationClip clip)
         {
-            m_Curve.SetToAnimationClip(clip);
+            Flush();
+
+            if (m_Curve.length == 0)
+            {
+                return;
+            }
+
+            clip.SetCurve(binding.RelativePath, binding.Type, binding.PropertyName, m_Curve);
         }
 
-        void MakeConstant()
+        void Flush()
         {
-            var frameCount = m_Curve.AnimationCurve.length;
+            m_Sampler.Flush();
+            m_TangentUpdater.Flush();
+            m_Reducer.Flush();
 
-            for (var i = m_FrameNumber; i < frameCount; ++i)
+            Sample();
+        }
+
+        void Sample()
+        {
+            while (m_Sampler.MoveNext())
             {
-                var keyframe = m_Curve.AnimationCurve[i];
+                var sample = m_Sampler.Current;
 
-                keyframe.inTangent = float.PositiveInfinity;
-                keyframe.outTangent = float.PositiveInfinity;
+                m_TangentUpdater.Add(new Keyframe(sample.Time, sample.Value));
+            }
 
-                m_Curve.AnimationCurve.MoveKey(i, keyframe);
+            while (m_TangentUpdater.MoveNext())
+            {
+                m_Reducer.Add(m_TangentUpdater.Current);
+            }
 
-                ++m_FrameNumber;
+            while (m_Reducer.MoveNext())
+            {
+                m_Curve.AddKey(m_Reducer.Current);
             }
         }
     }

@@ -1,29 +1,40 @@
-#if HDRP_10_2_OR_NEWER
+#if HDRP_14_0_OR_NEWER
 using System;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
 
 namespace Unity.LiveCapture.Rendering.Editor
 {
     static class HDRPEditorUtilities
     {
-        static HDRenderPipelineAsset GetAsset()
+        const string k_HDRenderPipelineGlobalSettings = "UnityEngine.Rendering.HighDefinition.HDRenderPipelineGlobalSettings";
+        const string k_Assembly = "Unity.RenderPipelines.HighDefinition.Runtime";
+
+        static Type s_SettingsAssetType;
+        static PropertyInfo s_InstanceProperty;
+
+        static HDRPEditorUtilities()
         {
-            var asset = default(HDRenderPipelineAsset);
-            var hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
+            s_SettingsAssetType = Type.GetType($"{k_HDRenderPipelineGlobalSettings}, {k_Assembly}");
+            s_InstanceProperty = s_SettingsAssetType.GetProperty("instance", BindingFlags.Public | BindingFlags.Static);
+        }
 
-            // Can return null on domain reload
-            if (hdPipeline != null)
-            {
-                var assetField = typeof(HDRenderPipeline).GetField("m_Asset", BindingFlags.NonPublic | BindingFlags.Instance);
+        /// <summary>
+        /// Checks if a post effect is present in the HDRP Settings.
+        /// </summary>
+        /// <remarks>
+        /// Method used in tests.
+        /// </remarks>
+        internal static bool ValidateReflection()
+        {
+            return s_SettingsAssetType != null && s_InstanceProperty != null;
+        }
 
-                asset = assetField.GetValue(hdPipeline) as HDRenderPipelineAsset;
-            }
-
-            return asset;
+        static ScriptableObject GetAsset()
+        {
+            return s_InstanceProperty.GetValue(null) as ScriptableObject;
         }
 
         /// <summary>

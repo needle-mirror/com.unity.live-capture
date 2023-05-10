@@ -11,8 +11,13 @@ namespace Unity.LiveCapture
         Vector3Sampler m_Sampler = new Vector3Sampler();
         Vector3TangentUpdater m_TangentUpdater = new Vector3TangentUpdater();
         EulerKeyframeReducer m_Reducer = new EulerKeyframeReducer();
-        AnimationCurve[] m_Curves;
         Vector3? m_EulerAngles;
+        AnimationCurve[] m_Curves = new[]
+        {
+            new AnimationCurve(),
+            new AnimationCurve(),
+            new AnimationCurve()
+        };
 
         /// <inheritdoc/>
         public float MaxError
@@ -22,39 +27,14 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public string RelativePath { get; }
-
-        /// <inheritdoc/>
-        public string PropertyName { get; }
-
-        /// <inheritdoc/>
-        public Type BindingType { get; }
-
-        /// <inheritdoc/>
         public FrameRate FrameRate
         {
             get => m_Sampler.FrameRate;
             set => m_Sampler.FrameRate = value;
         }
 
-        /// <summary>
-        /// Creates a new <see cref="EulerCurve"/> instance.
-        /// </summary>
-        /// <param name="relativePath">The path of the game object this curve applies to,
-        /// relative to the game object the actor component is attached to.</param>
-        /// <param name="propertyName">The name or path to the property that is animated.</param>
-        /// <param name="bindingType">The type of component this curve is applied to.</param>
-        public EulerCurve(string relativePath, string propertyName, Type bindingType)
-        {
-            RelativePath = relativePath;
-            PropertyName = propertyName;
-            BindingType = bindingType;
-
-            Reset();
-        }
-
         /// <inheritdoc/>
-        public void AddKey(double time, Quaternion value)
+        public void AddKey(double time, in Quaternion value)
         {
             if (m_EulerAngles.HasValue)
                 m_EulerAngles = MathUtility.ClosestEuler(value, m_EulerAngles.Value);
@@ -82,16 +62,16 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc/>
-        public void SetToAnimationClip(AnimationClip clip)
+        public void SetToAnimationClip(PropertyBinding binding, AnimationClip clip)
         {
             Flush();
 
             if (m_Curves[0].length > 0)
-                clip.SetCurve(RelativePath, BindingType, $"{PropertyName}.x", m_Curves[0]);
+                clip.SetCurve(binding.RelativePath, binding.Type, $"{binding.PropertyName}.x", m_Curves[0]);
             if (m_Curves[1].length > 0)
-                clip.SetCurve(RelativePath, BindingType, $"{PropertyName}.y", m_Curves[1]);
+                clip.SetCurve(binding.RelativePath, binding.Type, $"{binding.PropertyName}.y", m_Curves[1]);
             if (m_Curves[2].length > 0)
-                clip.SetCurve(RelativePath, BindingType, $"{PropertyName}.z", m_Curves[2]);
+                clip.SetCurve(binding.RelativePath, binding.Type, $"{binding.PropertyName}.z", m_Curves[2]);
         }
 
         void Reset()

@@ -6,51 +6,6 @@ using UnityEngine.Serialization;
 namespace Unity.LiveCapture.VirtualCamera
 {
     /// <summary>
-    /// The techniques which can be used to determine focus distance for a virtual camera.
-    /// </summary>
-    enum FocusMode : byte
-    {
-        /// <summary>
-        /// Everything is in focus.
-        /// </summary>
-        /// <remarks>Depth of Field is disabled.</remarks>
-        [Description("Everything is in focus.")]
-        Clear = 0,
-        /// <summary>
-        /// The focus distance is manually set by tapping the screen or manipulating the dial.
-        /// </summary>
-        [Description("The focus distance is manually set by tapping the screen or manipulating the dial.")]
-        Manual = 1,
-        /// <summary>
-        /// The focus adjusts to keep in focus the 3D point under a movable screen-space reticle.
-        /// </summary>
-        [Description("The focus adjusts to keep in focus the 3D point under a movable screen-space reticle.")]
-        ReticleAF = 2,
-        /// <summary>
-        /// The focus adjusts to match a scene object's distance to the camera.
-        /// </summary>
-        [Description("The focus adjusts to match a scene object's distance to the camera.")]
-        TrackingAF = 3,
-    }
-
-    /// <summary>
-    /// The gate fit modes available for a virtual camera.
-    /// </summary>
-    public enum GateFit : byte
-    {
-        /// <summary>
-        /// The sensor gate fits completely inside the resolution gate.
-        /// </summary>
-        [Description("The sensor gate fits completely inside the resolution gate.")]
-        Fill = 0,
-        /// <summary>
-        /// The render frame fits completely inside the resolution gate.
-        /// </summary>
-        [Description("The render frame fits completely inside the resolution gate.")]
-        Overscan = 1,
-    }
-
-    /// <summary>
     /// A struct that contains the settings of a virtual camera.
     /// </summary>
     [Serializable]
@@ -59,8 +14,6 @@ namespace Unity.LiveCapture.VirtualCamera
     {
         internal const float k_MaxDamping = 1;
         internal const float k_MaxAbsFocusDistanceOffset = 0.3048f; // 12 inches
-        internal const float k_MinAspectRatio = 0.3f;
-        internal const float k_DefaultAspectRatio = 1.77f;
 
         /// <summary>
         /// The default CameraState.
@@ -74,7 +27,7 @@ namespace Unity.LiveCapture.VirtualCamera
             JoystickSensitivity = Vector3.one,
             PedestalSpace = Space.World,
             MotionSpace = Space.Self,
-            AspectRatio = k_DefaultAspectRatio,
+            AspectRatio = AspectRatioConsts.k_DefaultAspectRatio,
             GateFit = GateFit.Fill
         };
 
@@ -253,7 +206,7 @@ namespace Unity.LiveCapture.VirtualCamera
         /// </summary>
         public void Validate()
         {
-            AspectRatio = Mathf.Max(k_MinAspectRatio, AspectRatio);
+            AspectRatio = Mathf.Max(AspectRatioConsts.k_MinAspectRatio, AspectRatio);
             FocusDistanceOffset = Mathf.Clamp(FocusDistanceOffset, -k_MaxAbsFocusDistanceOffset, k_MaxAbsFocusDistanceOffset);
             FocusDistanceDamping = Mathf.Clamp(FocusDistanceDamping, 0, k_MaxDamping);
             FocalLengthDamping = Mathf.Clamp(FocalLengthDamping, 0, k_MaxDamping);

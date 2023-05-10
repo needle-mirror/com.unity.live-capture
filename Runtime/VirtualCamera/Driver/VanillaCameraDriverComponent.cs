@@ -28,7 +28,6 @@ namespace Unity.LiveCapture.VirtualCamera
             Camera.sensorSize = cameraBody.SensorSize;
             Camera.lensShift = intrinsics.LensShift;
             Camera.focalLength = lens.FocalLength;
-#if UNITY_2022_2_OR_NEWER
             Camera.aperture = lens.Aperture;
             Camera.iso = cameraBody.Iso;
             Camera.shutterSpeed = cameraBody.ShutterSpeed;
@@ -36,7 +35,6 @@ namespace Unity.LiveCapture.VirtualCamera
             Camera.curvature = intrinsics.Curvature;
             Camera.barrelClipping = intrinsics.BarrelClipping;
             Camera.bladeCount = intrinsics.BladeCount;
-#endif
         }
     }
 }

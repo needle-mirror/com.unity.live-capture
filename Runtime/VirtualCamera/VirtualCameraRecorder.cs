@@ -8,23 +8,44 @@ namespace Unity.LiveCapture.VirtualCamera
     {
         ICurve[] m_Curves =
         {
-            new Vector3Curve(string.Empty, "m_LocalPosition", typeof(VirtualCameraActor)),
-            new EulerCurve(string.Empty, "m_LocalEulerAngles", typeof(VirtualCameraActor)),
-            new FloatCurve(string.Empty, "m_Lens.m_FocalLength", typeof(VirtualCameraActor)),
-            new FloatCurve(string.Empty, "m_Lens.m_FocusDistance", typeof(VirtualCameraActor)),
-            new FloatCurve(string.Empty, "m_Lens.m_Aperture", typeof(VirtualCameraActor)),
-            new BooleanCurve(string.Empty, "m_DepthOfField", typeof(VirtualCameraActor)),
-            new Vector2Curve(string.Empty, "m_LensIntrinsics.m_FocalLengthRange", typeof(VirtualCameraActor)),
-            new FloatCurve(string.Empty, "m_LensIntrinsics.m_CloseFocusDistance", typeof(VirtualCameraActor)),
-            new Vector2Curve(string.Empty, "m_LensIntrinsics.m_ApertureRange", typeof(VirtualCameraActor)),
-            new Vector2Curve(string.Empty, "m_LensIntrinsics.m_LensShift", typeof(VirtualCameraActor)),
-            new IntegerCurve(string.Empty, "m_LensIntrinsics.m_BladeCount", typeof(VirtualCameraActor)),
-            new Vector2Curve(string.Empty, "m_LensIntrinsics.m_Curvature", typeof(VirtualCameraActor)),
-            new FloatCurve(string.Empty, "m_LensIntrinsics.m_BarrelClipping", typeof(VirtualCameraActor)),
-            new FloatCurve(string.Empty, "m_LensIntrinsics.m_Anamorphism", typeof(VirtualCameraActor)),
-            new FloatCurve(string.Empty, "m_CropAspect", typeof(VirtualCameraActor)),
-            new BooleanCurve(string.Empty, "m_LocalPositionEnabled", typeof(VirtualCameraActor)),
-            new BooleanCurve(string.Empty, "m_LocalEulerAnglesEnabled", typeof(VirtualCameraActor)),
+            new Vector3Curve(),
+            new EulerCurve(),
+            new FloatCurve(),
+            new FloatCurve(),
+            new FloatCurve(),
+            new BooleanCurve(),
+            new Vector2Curve(),
+            new FloatCurve(),
+            new Vector2Curve(),
+            new Vector2Curve(),
+            new IntegerCurve(),
+            new Vector2Curve(),
+            new FloatCurve(),
+            new FloatCurve(),
+            new FloatCurve(),
+            new BooleanCurve(),
+            new BooleanCurve(),
+        };
+
+        PropertyBinding[] m_Bindings =
+        {
+            new PropertyBinding(string.Empty, "m_LocalPosition", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_LocalEulerAngles", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_Lens.m_FocalLength", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_Lens.m_FocusDistance", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_Lens.m_Aperture", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_DepthOfField", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_LensIntrinsics.m_FocalLengthRange", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_LensIntrinsics.m_CloseFocusDistance", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_LensIntrinsics.m_ApertureRange", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_LensIntrinsics.m_LensShift", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_LensIntrinsics.m_BladeCount", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_LensIntrinsics.m_Curvature", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_LensIntrinsics.m_BarrelClipping", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_LensIntrinsics.m_Anamorphism", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_CropAspect", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_LocalPositionEnabled", typeof(VirtualCameraActor)),
+            new PropertyBinding(string.Empty, "m_LocalEulerAnglesEnabled", typeof(VirtualCameraActor)),
         };
 
         [SerializeField]
@@ -284,15 +305,15 @@ namespace Unity.LiveCapture.VirtualCamera
         {
             var animationClip = new AnimationClip();
 
-            foreach (var curve in m_Curves)
+            for (var i = 0; i < m_Curves.Length; ++i)
             {
-                curve.SetToAnimationClip(animationClip);
+                m_Curves[i].SetToAnimationClip(m_Bindings[i], animationClip);
             }
 
             return animationClip;
         }
 
-        ICurve<T> GetCurve<T>(int index)
+        ICurve<T> GetCurve<T>(int index) where T : struct
         {
             return m_Curves[index] as ICurve<T>;
         }

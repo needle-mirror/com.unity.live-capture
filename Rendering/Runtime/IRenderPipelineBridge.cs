@@ -1,4 +1,4 @@
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
 using UnityEngine.Rendering.Universal;
 #endif
 
@@ -6,7 +6,7 @@ namespace Unity.LiveCapture.Rendering
 {
     interface IRenderPipelineBridge
     {
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
         /// <summary>
         /// Returns a reference to a render feature and adds this reference it if not already present.
         /// </summary>

@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 
 // Internal access needed by other runtime assemblies to access utilities
+[assembly: InternalsVisibleTo("Unity.LiveCapture.Cameras")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.CompanionApp")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.ARKitFaceCapture")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.VirtualCamera")]

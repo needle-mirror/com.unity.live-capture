@@ -17,27 +17,14 @@ namespace Unity.LiveCapture.ARKitFaceCapture
     [HelpURL(Documentation.baseURL + "ref-component-arkit-face-device" + Documentation.endURL)]
     public class FaceDevice : CompanionAppDevice<IFaceClient>
     {
-        [Serializable]
-        sealed class TimedDataSource : TimedDataSource<FacePose>
+        class Interpolator : IInterpolator<FacePose>
         {
-            class SampleInterpolator : IInterpolator<FacePose>
+            public static Interpolator Instance { get; } = new Interpolator();
+
+            public FacePose Interpolate(in FacePose a, in FacePose b, float t)
             {
-                public static SampleInterpolator Instance { get; } = new SampleInterpolator();
-
-                /// <inheritdoc />
-                public FacePose Interpolate(in FacePose a, in FacePose b, float t)
-                {
-                    FacePose.Interpolate(a, b, t, out var result);
-                    return result;
-                }
-            }
-
-            /// <inheritdoc />
-            public override void Enable()
-            {
-                Interpolator = SampleInterpolator.Instance;
-
-                base.Enable();
+                FacePose.Interpolate(a, b, t, out var result);
+                return result;
             }
         }
 
@@ -97,7 +84,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             base.OnEnable();
 
             m_SyncBuffer.FramePresented += PresentAt;
-            m_SyncBuffer.Enable();
+            m_SyncBuffer.Enable(TimedDataBuffer.Create<FacePose>(Interpolator.Instance));
         }
 
         /// <summary>
@@ -269,13 +256,21 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             Refresh();
         }
 
-        void PresentAt(FacePose value, FrameTimeWithRate time)
+        void PresentAt(FrameTimeWithRate frameTime)
+        {
+            if (m_SyncBuffer.TryGetSample<FacePose>(frameTime.Time, out var frame) != TimedSampleStatus.DataMissing)
+            {
+                PresentAt(frame, frameTime);
+            }
+        }
+
+        void PresentAt(in FacePose value, FrameTimeWithRate time)
         {
             m_SynchronizedPose = value;
 
             if (m_LastRecordTime != null)
             {
-                foreach (var sample in m_SyncBuffer.GetSamplesInRange(m_LastRecordTime.Value.Time, time.Time))
+                foreach (var sample in m_SyncBuffer.GetSamplesInRange<FacePose>(m_LastRecordTime.Value.Time, time.Time))
                 {
                     var sampleValue = sample.value;
                     var sampleTime = new FrameTimeWithRate(m_SyncBuffer.FrameRate, sample.time);
@@ -285,7 +280,7 @@ namespace Unity.LiveCapture.ARKitFaceCapture
             }
             else
             {
-                Record(ref value, time);
+                Record(ref m_SynchronizedPose, time);
             }
         }
 

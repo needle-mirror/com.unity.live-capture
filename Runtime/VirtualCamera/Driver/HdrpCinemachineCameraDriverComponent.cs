@@ -1,15 +1,17 @@
-#if HDRP_10_2_OR_NEWER && VP_CINEMACHINE_2_4_0
+#if HDRP_14_0_OR_NEWER && CINEMACHINE_2_4_OR_NEWER
 using System;
-#if !CINEMACHINE_3_0_0_OR_NEWER
+#if CINEMACHINE_3_0_0_OR_NEWER
+using Unity.Cinemachine;
+#else
 using Cinemachine;
 using CinemachineCamera = Cinemachine.CinemachineVirtualCamera;
 using Cinemachine.PostFX;
-#else
-using Unity.Cinemachine;
 #endif
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
+using Unity.LiveCapture.Cameras;
+using DepthOfFieldHdrp = UnityEngine.Rendering.HighDefinition.DepthOfField;
 
 namespace Unity.LiveCapture.VirtualCamera
 {
@@ -22,7 +24,7 @@ namespace Unity.LiveCapture.VirtualCamera
         CinemachineVolumeSettings m_Volume;
         [SerializeField, HideInInspector]
         VolumeProfile m_Profile;
-        DepthOfField m_DepthOfField;
+        DepthOfFieldHdrp m_DepthOfField;
 
         /// <summary>
         /// The Cinemachine virtual camera driven by this component.
@@ -35,7 +37,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
             if (CinemachineVirtualCamera != null)
             {
-                m_Volume = VolumeComponentUtility.GetOrAddVolumeSettings(CinemachineVirtualCamera);
+                m_Volume = VolumeComponentUtilityCM.GetOrAddVolumeSettings(CinemachineVirtualCamera);
 
                 // Profile instances will end up being shared when duplicating objects through serialization.
                 // We have to invalidate the profile when we don't know who created it.
@@ -54,7 +56,7 @@ namespace Unity.LiveCapture.VirtualCamera
 
             if (m_DepthOfField == null)
             {
-                m_DepthOfField = VolumeComponentUtility.GetOrAddVolumeComponent<DepthOfField>(m_Profile);
+                m_DepthOfField = VolumeComponentUtility.GetOrAddVolumeComponent<DepthOfFieldHdrp>(m_Profile);
 
                 VolumeComponentUtility.UpdateParameterIfNeeded(m_DepthOfField.focusMode, DepthOfFieldMode.UsePhysicalCamera);
             }

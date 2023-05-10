@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace Unity.LiveCapture
@@ -8,21 +7,6 @@ namespace Unity.LiveCapture
     /// </summary>
     public interface ICurve
     {
-        /// <summary>
-        /// The transform path of the object that is animated.
-        /// </summary>
-        string RelativePath { get; }
-
-        /// <summary>
-        /// The name of the property to be animated.
-        /// </summary>
-        string PropertyName { get; }
-
-        /// <summary>
-        /// The type of the property to be animated.
-        /// </summary>
-        Type BindingType { get; }
-
         /// <summary>
         /// The sampling rate in Hz.
         /// </summary>
@@ -42,22 +26,23 @@ namespace Unity.LiveCapture
         /// <summary>
         /// Sets the curve to the given animation clip.
         /// </summary>
+        /// <param name="binding">The binding to use for animation.</param>
         /// <param name="clip">The animation clip to set the curve to.</param>
-        void SetToAnimationClip(AnimationClip clip);
+        void SetToAnimationClip(PropertyBinding binding, AnimationClip clip);
     }
 
     /// <summary>
     /// Represents an animation curve that stores keyframes of generic value.
     /// </summary>
     /// <typeparam name="T">The type of data to store in the curve.</typeparam>
-    public interface ICurve<in T> : ICurve
+    public interface ICurve<T> : ICurve where T : struct
     {
         /// <summary>
         /// Adds a keyframe to the curve.
         /// </summary>
         /// <param name="time">The time in seconds to insert the keyframe at.</param>
         /// <param name="value">The keyframe value.</param>
-        void AddKey(double time, T value);
+        void AddKey(double time, in T value);
     }
 
     /// <summary>

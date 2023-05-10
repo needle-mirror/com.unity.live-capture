@@ -1,6 +1,6 @@
 # Record takes from the Face Capture app
 
->**Important:** Before you start, you must [set up the Take System](take-system.md) and [connect the Face Capture app](setup-connecting.md).
+>**Important:** Before you start, you must [set up the Take System](take-system.md) and [connect the Face Capture app](connection-device.md).
 
 The Face Capture app only allows you to record face performance takes. To play back the takes, you must [use the Unity Editor](take-system-recording.md).
 

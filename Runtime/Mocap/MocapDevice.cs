@@ -19,11 +19,6 @@ namespace Unity.LiveCapture.Mocap
     /// <typeparam name="T">The type of data the device uses each frame to pose the actor.</typeparam>
     public abstract class MocapDevice<T> : LiveCaptureDevice, IMocapDevice
     {
-        [Serializable]
-        class TimedDataSource : TimedDataSource<T>
-        {
-        }
-
         [SerializeField]
         Animator m_Animator;
         [SerializeField]
@@ -61,15 +56,6 @@ namespace Unity.LiveCapture.Mocap
         }
 
         /// <summary>
-        /// The interpolator to use when presenting values between frame samples.
-        /// </summary>
-        protected IInterpolator<T> Interpolator
-        {
-            get => m_SyncBuffer.Interpolator;
-            set => m_SyncBuffer.Interpolator = value;
-        }
-
-        /// <summary>
         /// The synchronized data buffer.
         /// </summary>
         public ITimedDataSource SyncBuffer => m_SyncBuffer;
@@ -94,7 +80,7 @@ namespace Unity.LiveCapture.Mocap
             Validate();
 
             m_SyncBuffer.FramePresented += PresentAt;
-            m_SyncBuffer.Enable();
+            m_SyncBuffer.Enable(TimedDataBuffer.Create<T>(GetInterpolator()));
 
             RegisterLiveProperties();
         }
@@ -137,6 +123,12 @@ namespace Unity.LiveCapture.Mocap
                 m_Recorder.ApplyFrame();
             }
         }
+
+        /// <summary>
+        /// Returns the interpolator to use when presenting values between frame samples.
+        /// </summary>
+        /// <returns>The interpolator to use when presenting values between frame samples.</returns>
+        protected virtual IInterpolator<T> GetInterpolator() => null;
 
         /// <summary>
         /// Process a new frame of data.
@@ -226,6 +218,14 @@ namespace Unity.LiveCapture.Mocap
                 Animator,
                 m_Recorder.Bake(),
                 alignTime: m_FirstFrameTime);
+        }
+
+        void PresentAt(FrameTimeWithRate frameTime)
+        {
+            if (m_SyncBuffer.TryGetSample<T>(frameTime.Time, out var frame) != TimedSampleStatus.DataMissing)
+            {
+                PresentAt(frame, frameTime);
+            }
         }
 
         void PresentAt(T frame, FrameTimeWithRate time)

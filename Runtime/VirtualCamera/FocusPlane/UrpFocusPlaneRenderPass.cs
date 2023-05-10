@@ -1,4 +1,4 @@
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -12,7 +12,6 @@ namespace Unity.LiveCapture.VirtualCamera
     /// We find ourselves supporting both RenderTexture and RTHandle,
     /// as URP migrated to RTHandle at v13.1.2
     /// </remarks>
-#if URP_13_1_2_OR_NEWER
     class UrpFocusPlaneRenderPass : ScriptableRenderPass
     {
         public RTHandle Source;
@@ -42,29 +41,5 @@ namespace Unity.LiveCapture.VirtualCamera
             }
         }
     }
-#else
-    class UrpFocusPlaneRenderPass : ScriptableRenderPass
-    {
-        public RenderTargetIdentifier Source;
-
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-        {
-            var camera = renderingData.cameraData.camera;
-            if (camera.cameraType == CameraType.SceneView)
-                return;
-
-            if (FocusPlaneMap.Instance.TryGetInstance(camera, out var focusPlane))
-            {
-                if (focusPlane.isActiveAndEnabled && focusPlane.TryGetRenderTarget(out RenderTexture target))
-                {
-                    CommandBuffer cmd = CommandBufferPool.Get(FocusPlaneConsts.RenderProfilingSamplerLabel);
-                    Blit(cmd, Source, target, focusPlane.RenderMaterial);
-                    context.ExecuteCommandBuffer(cmd);
-                    CommandBufferPool.Release(cmd);
-                }
-            }
-        }
-    }
-#endif
 }
 #endif

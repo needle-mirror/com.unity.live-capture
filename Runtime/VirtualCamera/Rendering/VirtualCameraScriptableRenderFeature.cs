@@ -1,4 +1,4 @@
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -42,20 +42,17 @@ namespace Unity.LiveCapture.VirtualCamera
                 if (focusPlane.isActiveAndEnabled)
                 {
                     focusPlane.AllocateTargetIfNeeded(camera.pixelWidth, camera.pixelHeight);
-#if !URP_13_1_2_OR_NEWER
-                    m_UrpFocusPlaneRenderPass.Source = renderer.cameraColorTarget;
-#endif
+
                     renderer.EnqueuePass(m_UrpFocusPlaneRenderPass);
                     renderer.EnqueuePass(m_UrpFocusPlaneComposePass);
                 }
             }
         }
-#if URP_13_1_2_OR_NEWER
+
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
         {
             m_UrpFocusPlaneRenderPass.Source = renderer.cameraColorTargetHandle;
         }
-#endif
     }
 }
 #endif

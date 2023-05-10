@@ -5,8 +5,8 @@ This page gives the instructions to add a Timecode Synchronizer to a pre-configu
 ## Scenario assumptions and requirements
 
 This scenario assumes that you have already:
-* Installed the [Live Capture package](index.md#install-package) and any of the available [companion apps](index.md#install-app) on one or multiple mobile devices.
-* [Connected](setup-connecting.md) all mobile devices to the Unity Editor.
+* Installed the [Live Capture package](installation.md) and any of the available companion apps on one or multiple mobile devices.
+* [Connected](connection-device.md) all mobile devices to the Unity Editor.
 * Set up a Take Recorder and created the necessary elements to get all companion apps ready for recording takes (see instructions for [Virtual Camera](virtual-camera-getting-started.md) and/or [Face Capture](face-capture-getting-started.md))
 
 In addition, this scenario specifically requires:

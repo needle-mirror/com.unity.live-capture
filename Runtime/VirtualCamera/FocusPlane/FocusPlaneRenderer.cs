@@ -3,12 +3,12 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 
-#if HDRP_10_2_OR_NEWER
+#if HDRP_14_0_OR_NEWER
 using UnityEngine.Rendering.HighDefinition;
 
 #endif
 
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
 using UnityEngine.Rendering.Universal;
 #endif
 
@@ -146,14 +146,14 @@ namespace Unity.LiveCapture.VirtualCamera
                 return;
             }
 
-#if HDRP_10_2_OR_NEWER
+#if HDRP_14_0_OR_NEWER
             if (GraphicsSettings.renderPipelineAsset is HDRenderPipelineAsset)
             {
                 m_Impl = new HdrpFocusPlaneImpl(m_ComposeMaterial);
             }
 #endif
 
-#if URP_10_2_OR_NEWER
+#if URP_14_0_OR_NEWER
             if (GraphicsSettings.renderPipelineAsset is UniversalRenderPipelineAsset)
             {
                 m_Impl = new UrpFocusPlaneImpl(m_ComposeMaterial);

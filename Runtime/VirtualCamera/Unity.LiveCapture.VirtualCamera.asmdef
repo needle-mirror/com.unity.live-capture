@@ -5,6 +5,7 @@
         "Cinemachine",
         "Unity.Cinemachine",
         "Unity.LiveCapture",
+        "Unity.LiveCapture.Cameras",
         "Unity.LiveCapture.Networking",
         "Unity.LiveCapture.CompanionApp",
         "Unity.LiveCapture.Rendering",
@@ -13,7 +14,6 @@
         "Unity.RenderPipelines.HighDefinition.Runtime",
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.TextMeshPro",
-        "Unity.Postprocessing.Runtime",
         "Unity.Timeline"
     ],
     "includePlatforms": [],
@@ -27,7 +27,7 @@
         {
             "name": "com.unity.cinemachine",
             "expression": "2.4.0-preview.6",
-            "define": "VP_CINEMACHINE_2_4_0"
+            "define": "CINEMACHINE_2_4_OR_NEWER"
         },
         {
             "name": "com.unity.cinemachine",
@@ -41,18 +41,8 @@
         },
         {
             "name": "com.unity.render-pipelines.core",
-            "expression": "10.2.2",
-            "define": "SRP_CORE_10_2_OR_NEWER"
-        },
-        {
-            "name": "com.unity.render-pipelines.high-definition",
-            "expression": "10.2.2",
-            "define": "HDRP_10_2_OR_NEWER"
-        },
-        {
-            "name": "com.unity.render-pipelines.high-definition",
-            "expression": "12.0.0",
-            "define": "HDRP_12_0_OR_NEWER"
+            "expression": "14.0.0",
+            "define": "SRP_CORE_14_0_OR_NEWER"
         },
         {
             "name": "com.unity.render-pipelines.high-definition",
@@ -61,18 +51,8 @@
         },
         {
             "name": "com.unity.render-pipelines.universal",
-            "expression": "10.2.2",
-            "define": "URP_10_2_OR_NEWER"
-        },
-        {
-            "name": "com.unity.render-pipelines.universal",
-            "expression": "13.1.2",
-            "define": "URP_13_1_2_OR_NEWER"
-        },
-        {
-            "name": "com.unity.postprocessing",
-            "expression": "3.0.3",
-            "define": "PP_3_0_3_OR_NEWER"
+            "expression": "14.0.0",
+            "define": "URP_14_0_OR_NEWER"
         }
     ],
     "noEngineReferences": false

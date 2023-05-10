@@ -8,9 +8,8 @@ namespace Unity.LiveCapture
     /// <summary>
     /// A base class that implements the default behaviour for a <see cref="ITimedDataSource"/>.
     /// </summary>
-    /// <typeparam name="T">The type used to store the data for a frame.</typeparam>
     [Serializable]
-    public abstract class TimedDataSource<T> : ITimedDataSource
+    public class TimedDataSource : ITimedDataSource
     {
         [SerializeField, HideInInspector]
         Object m_Object;
@@ -23,9 +22,7 @@ namespace Unity.LiveCapture
         [SerializeField]
         bool m_IsSynchronized;
 
-        FrameRate m_FrameRate = StandardFrameRate.FPS_60_00;
-        TimedDataBuffer<T> m_Buffer;
-        IInterpolator<T> m_Interpolator;
+        ITimedDataBuffer m_Buffer;
         ISynchronizer m_Synchronizer;
 
         /// <inheritdoc/>
@@ -37,13 +34,12 @@ namespace Unity.LiveCapture
         /// <inheritdoc/>
         public FrameRate FrameRate
         {
-            get => m_FrameRate;
+            get => m_Buffer?.FrameRate ?? default;
             set
             {
-                if (m_FrameRate != value)
+                if (m_Buffer != null)
                 {
-                    m_FrameRate = value;
-                    m_Buffer?.SetFrameRate(value);
+                    m_Buffer.FrameRate = value;
                 }
             }
         }
@@ -54,19 +50,20 @@ namespace Unity.LiveCapture
             get => m_BufferSize;
             set
             {
-                if (m_BufferSize != value)
+                m_BufferSize = value;
+
+                if (m_Buffer != null)
                 {
-                    m_BufferSize = value;
-                    m_Buffer?.SetCapacity(value);
+                    m_Buffer.Capacity = value;
                 }
             }
         }
 
         /// <inheritdoc/>
-        public virtual int? MaxBufferSize => null;
+        public int? MaxBufferSize { get; set; }
 
         /// <inheritdoc/>
-        public virtual int? MinBufferSize => null;
+        public int? MinBufferSize { get; set; }
 
         /// <inheritdoc/>
         public FrameTime Offset
@@ -110,38 +107,18 @@ namespace Unity.LiveCapture
         /// An event invoked when this source presents a synchronized frame.
         /// </summary>
         /// <remarks>
-        /// This will only invoked when <see cref="IsSynchronized"/> is <see langword="true"/>.
-        /// * The first parameter is the sample value for the presented frame.
-        /// * The second parameter is the sample time for the presented frame.
+        /// This method is only invoked when <see cref="IsSynchronized"/> is <see langword="true"/>.
+        /// * The parameter is the sample time for the presented frame.
         /// </remarks>
-        public event Action<T, FrameTimeWithRate> FramePresented;
-
-        /// <summary>
-        /// The interpolator to use when presenting values between frame samples.
-        /// </summary>
-        public IInterpolator<T> Interpolator
-        {
-            get => m_Interpolator;
-            set
-            {
-                if (m_Interpolator != value)
-                {
-                    m_Interpolator = value;
-
-                    if (m_Buffer != null)
-                    {
-                        m_Buffer.Interpolator = value;
-                    }
-                }
-            }
-        }
+        public event Action<FrameTimeWithRate> FramePresented;
 
         /// <summary>
         /// Activates the data source.
         /// </summary>
-        public virtual void Enable()
+        /// <param name="buffer">The buffer to use for storing frame samples.</param>
+        public void Enable(ITimedDataBuffer buffer)
         {
-            if (Enabled)
+            if (Enabled || buffer == null)
             {
                 return;
             }
@@ -149,16 +126,14 @@ namespace Unity.LiveCapture
             TimedDataSourceManager.Instance.EnsureIdIsValid(ref m_Guid);
             TimedDataSourceManager.Instance.Register(this);
 
-            m_Buffer = new TimedDataBuffer<T>(m_FrameRate, m_BufferSize)
-            {
-                Interpolator = Interpolator,
-            };
+            m_Buffer = buffer;
+            m_Buffer.Capacity = m_BufferSize;
         }
 
         /// <summary>
         /// Deactivates the data source.
         /// </summary>
-        public virtual void Disable()
+        public void Disable()
         {
             if (!Enabled)
             {
@@ -188,11 +163,11 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc cref="TimedDataBuffer{T}.TryGetSample"/>
-        public TimedSampleStatus TryGetSample(FrameTime frame, out T value)
+        public TimedSampleStatus TryGetSample<T>(FrameTime frame, out T value)
         {
-            if (m_Buffer != null)
+            if (m_Buffer is TimedDataBuffer<T> buffer)
             {
-                return m_Buffer.TryGetSample(frame - m_Offset, out value);
+                return buffer.TryGetSample(frame - m_Offset, out value);
             }
 
             value = default;
@@ -200,11 +175,11 @@ namespace Unity.LiveCapture
         }
 
         /// <inheritdoc cref="TimedDataBuffer{T}.GetSamplesInRange"/>
-        public IEnumerable<(FrameTime time, T value)> GetSamplesInRange(FrameTime from, FrameTime to)
+        public IEnumerable<(FrameTime time, T value)> GetSamplesInRange<T>(FrameTime from, FrameTime to)
         {
-            if (m_Buffer != null)
+            if (m_Buffer is TimedDataBuffer<T> buffer)
             {
-                foreach (var sample in m_Buffer.GetSamplesInRange(from - m_Offset, to - m_Offset))
+                foreach (var sample in buffer.GetSamplesInRange(from - m_Offset, to - m_Offset))
                 {
                     yield return (sample.time + m_Offset, sample.value);
                 }
@@ -216,14 +191,19 @@ namespace Unity.LiveCapture
         {
             Debug.Assert(IsSynchronized, "Attempted to call PresentAt() when data source is not being synchronized.");
 
-            var localPresentTime = presentTime.Remap(m_FrameRate);
-            var status = TryGetSample(localPresentTime.Time, out var frame);
+            if (m_Buffer == null)
+            {
+                return TimedSampleStatus.DataMissing;
+            }
+
+            var localPresentTime = presentTime.Remap(FrameRate);
+            var status = m_Buffer.GetStatus(localPresentTime.Time - m_Offset);
 
             if (status != TimedSampleStatus.DataMissing)
             {
                 try
                 {
-                    FramePresented?.Invoke(frame, localPresentTime);
+                    FramePresented?.Invoke(localPresentTime);
                 }
                 catch (Exception e)
                 {
@@ -245,12 +225,16 @@ namespace Unity.LiveCapture
         /// <summary>
         /// Adds a new data sample to the buffer.
         /// </summary>
+        /// <typeparam name="T">The datatype of the sample.</typeparam>
         /// <param name="value">The sample value to add.</param>
         /// <param name="time">The time of the sample.</param>
         /// <seealso cref="AddSampleWithGeneratedTime"/>
-        public void AddSample(in T value, in FrameTimeWithRate time)
+        public void AddSample<T>(in T value, in FrameTimeWithRate time)
         {
-            m_Buffer?.Add(value, time);
+            if (m_Buffer is ITimedDataBuffer<T> buffer)
+            {
+                buffer.Add(value, time);
+            }
         }
 
         /// <summary>
@@ -262,30 +246,31 @@ namespace Unity.LiveCapture
         /// the synchronizer's presentation time. This should usually be called once per frame. When called multiple times
         /// in a single frame, the new value will overwrite any previous values submitted for the current frame.
         /// </remarks>
+        /// <typeparam name="T">The datatype of the sample.</typeparam>
         /// <param name="value">The sample value to add.</param>
         /// <returns>The generated sample time.</returns>
         /// <seealso cref="AddSample"/>
-        public FrameTimeWithRate AddSampleWithGeneratedTime(in T value)
+        public FrameTimeWithRate AddSampleWithGeneratedTime<T>(in T value)
         {
-            if (m_Buffer == null)
-            {
-                return default;
-            }
+            var time = default(FrameTimeWithRate);
 
-            if (m_Synchronizer != null)
+            if (m_Buffer is TimedDataBuffer<T> buffer)
             {
-                var presentTime = m_Synchronizer.PresentTime;
+                var presentTime = m_Synchronizer?.PresentTime;
 
                 if (presentTime != null && presentTime.Value.Rate == FrameRate)
                 {
-                    m_Buffer.Add(value, presentTime.Value);
-                    return presentTime.Value;
+                    time = presentTime.Value;
                 }
+                else
+                {
+                    time = GenerateFrameTime(FrameRate);
+                }
+
+                buffer.Add(value, time);
             }
 
-            var generatedTime = GenerateFrameTime(m_FrameRate);
-            m_Buffer.Add(value, generatedTime);
-            return generatedTime;
+            return time;
         }
 
         /// <summary>
