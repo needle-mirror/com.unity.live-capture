@@ -24,7 +24,7 @@
 
 3. Tap the folder button at the bottom left to select and play another take you recorded previously.
 
-## Related topics
+## Additional resources
 
 * [Virtual Camera app recording/playback controls](virtual-camera-app-ui-recplay.md)
 * [Pre-recording countdown setup](virtual-camera-app-ui-settings.md#recording-countdown)

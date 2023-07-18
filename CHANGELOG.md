@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2023-07-18
+
+### Changed
+- Restructured the whole documentation to improve navigation between the main concepts and setup tasks.
+- Added conceptual information about data capture process and the required chain of elements to set up.
+- Consolidated the Connection setup section and added a Capture Device and Actor setup section.
+- Completed the Take recording section with base information about Shot management in Timeline and Shot Library. 
+- Reformatted the Get Started sections about Virtual Camera and Face Capture companion apps as functional tutorials.
+
+### Fixed
+
+- Add an argument to LiveStreamCaptureDeviceEditor.DrawDefaultLiveStreamInspector to fix the feature that checks the required components for the camera tracking.
+- LiveStream.Properties now uses a Dictionary instead of an IEnumerable to avoid type casting and boxing issues.
+
 ## [4.0.0-pre.5] - 2023-05-10
 
 ### Added
@@ -32,6 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Make sure the FrameLines component forces gate-fit mode to "Fill" when the camera is not using physical camera mode.
 - The Take Recorder window was still showing the device inspector when the device was disabled.
 - Takes couldn't be loaded in a TakeRecorderTrack when other tracks had invalid playables (for example an AnimationTrack's clip with no animation clip set).
+- Use the newly exposed "GraphicsSettings.GetSettingsForRenderPipeline()" API instead of reflection.
 
 ### Removed
 - Removed compatibility for features that require Legacy Render Pipeline.

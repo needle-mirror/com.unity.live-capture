@@ -35,11 +35,16 @@ namespace Unity.LiveCapture.Editor
         /// <summary>
         /// Makes a custom inspector GUI for <see cref="LiveStreamCaptureDevice"/>.
         /// </summary>
-        protected void DrawDefaultLiveStreamInspector()
+        /// <param name="root">The root transform of the live stream.</param>
+        protected void DrawDefaultLiveStreamInspector(Transform root = null)
         {
             var device = target as LiveStreamCaptureDevice;
             var stream = device.Stream;
-            var root = stream.Root;
+
+            if (root == null)
+            {
+                root = stream.Root;
+            }
 
             if (root == null)
             {
@@ -110,7 +115,13 @@ namespace Unity.LiveCapture.Editor
         /// <returns>An enumeration of component types to be added at the root transform.</returns>
         protected virtual IEnumerable<Type> GetRequiredComponents() => Array.Empty<Type>();
 
-        static void AddRequiredComponents(IEnumerable<(Transform target, Type type)> requiredComponents)
+        /// <summary>
+        /// The components will be added to the targets.
+        /// </summary>
+        /// <param name="requiredComponents">
+        /// An enumeration of pairs which are the transform and the required component.
+        /// </param>
+        internal static void AddRequiredComponents(IEnumerable<(Transform target, Type type)> requiredComponents)
         {
             Undo.SetCurrentGroupName(Contents.UndoAddCompoents);
 

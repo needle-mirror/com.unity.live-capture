@@ -300,7 +300,11 @@ namespace Unity.LiveCapture.VirtualCamera
             if (m_Actor == null)
             {
                 VirtualCameraActor validActor = null;
+#if UNITY_2023_1_OR_NEWER
+                var actors = FindObjectsByType<VirtualCameraActor>(FindObjectsSortMode.None);
+#else
                 var actors = FindObjectsOfType(typeof(VirtualCameraActor));
+#endif
 
                 foreach (var instance in actors)
                 {

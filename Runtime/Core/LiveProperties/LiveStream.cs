@@ -16,7 +16,7 @@ namespace Unity.LiveCapture
         Dictionary<PropertyBinding, LivePropertyHandle> m_Handles = new Dictionary<PropertyBinding, LivePropertyHandle>();
         Dictionary<LivePropertyHandle, ILiveProperty> m_Properties = new Dictionary<LivePropertyHandle, ILiveProperty>();
 
-        internal IEnumerable<ILiveProperty> Properties => m_Properties.Values;
+        internal Dictionary<LivePropertyHandle, ILiveProperty>.ValueCollection Properties => m_Properties.Values;
 
         /// <summary>
         /// The frame-rate to use for recording.

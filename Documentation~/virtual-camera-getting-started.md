@@ -1,59 +1,58 @@
-# Getting started
+# Get started with the Virtual Camera
 
-### Tracking tips
+Install, connect and set up all elements to drive a Unity camera from the Virtual Camera app.
 
-* AR camera tracking involves image analysis, which requires a clear image. Patterned surfaces are best.
+>**Note:** To get visible results from this setup, use a Scene that includes enough elements to look at through the camera.
 
-* Tracking quality is reduced when the camera can’t see details, such as when the camera is pointed at a blank wall or the scene is too dark.
+## Installation
 
-* Walk around the environment a bit before trying to record a performance.
+1. [Install the Live Capture package](installation.md).
 
-## Optimal editor layout
+2. Install the Unity Virtual Camera app:
+   | App name | Device requirements | Link |
+   |:---|:---|:---|
+   | **Unity Virtual Camera** | iPad or iPhone with:<br />• iOS 14.5 or higher<br />• ARKit capabilities (implied with the required iOS version)| [![Unity Virtual Camera](images/app-store-badge.png)](https://apps.apple.com/us/app/unity-virtual-camera/id1478175507) |
 
-There is a performance cost for every editor window that is visible. To prevent hitching, use a [custom editor layout](https://docs.unity3d.com/Manual/CustomizingYourWorkspace.html) when capturing data from the device. The layout should only have a **Game View** and a **Connections** window visible.
+## Connect the app to the Unity Editor
 
-![image](images/optimal-editor-layout.png)
+1. Make sure to correctly [set up your local network and firewall](connection-network.md).
 
-## Setting up the Take Recorder
+2. Open the [Connections window](ref-window-connections.md): from the Unity Editor main menu, select **Window** > **Live Capture** > **Connections**.
 
-1. Create a new GameObject with a **Take Recorder** component by going to **Menu > GameObject > Live Capture > Take Recorder**.
-3. Set the shot name using the **Shot** field in the **Take Recorder** component.
-3. Select an output directory using the **Directory** field in the **Take Recorder** component.
+3. Create a Connection of type **Companion app Server** and enable it.
 
-## Setting up a scene with the Virtual Camera
+4. From the Virtual Camera app, [enable the connection](connection-device.md#companion-app-connection) to the created server.
 
-### Using the basic Virtual Camera Actor
+## Create a Virtual Camera Actor
 
-A setup that uses the **Camera** component.
-1. Disable any active cameras in the scene.
-2. Add the **Virtual Camera Actor** by going to **Menu > GameObject > Create > Live Capture > Camera > Virtual Camera Actor**.
+1. From the Hierarchy, disable any active cameras in the Scene.
 
-### Using the Cinemachine Camera Actor
+2. From the Editor main menu, select **GameObject** > **Live Capture** > **Camera** > **Virtual Camera Actor**.
 
-Currently **Cinemachine** is used to drive special camera settings and camera position and aim damping.
+  A new GameObject containing a Camera component and a Virtual Camera Actor component, among others, should appear in the Hierarchy. This is the camera you're going to drive from the Virtual Camera app.
 
-1. Add the **Cinemachine Camera Actor** by going to **Menu > Assets > Create > Live Capture > Camera > Cinemachine Camera Actor**.
+>**Note:** You can create a Cinemachine Camera Actor if you're using the Cinemachine package as a camera system in your Scene.
 
-### Creating a Virtual Camera Device
+## Create a Virtual Camera Device
 
-1. In the **Take Recorder** component, click on the **+** button from the **Capture Devices** list.
-2. Select **Virtual Camera Device** to create a child GameObject with a **Virtual Camera Device** component.
-3. In the newly created **VirtualCameraDevice** component, set a **Virtual Camera Actor** into the **Actor** field.
-4. In the same **VirtualCameraDevice** component, select a connected client from the **Client Device** dropdown.
+1. Open the [Take Recorder window](ref-window-take-recorder.md): **Window** > **Live Capture** > **Take Recorder**.
 
-You are now ready to record Takes with your **Companion App**.
+2. In the **Capture Devices** section, click on the **+** (plus) button and select **Virtual Camera Device**.
 
-## Render pipeline compatibility
+3. In the Take Recorder window's right pane:
+    * Select the **Client Device** you previously connected to the Unity Editor.
+    * Set the **Actor** target field to the Virtual Camera Actor you previously created.
 
-| **Feature**         | **Built-in Render Pipeline** | **Universal Render Pipeline (URP)** | **High Definition Render Pipeline (HDRP)** |
-| ------------------- | ---------------------------- | ----------------------------------- | ------------------------------------------ |
-| **Depth Of Field**  | Yes (1, 2)                    | Yes (2)                             | Yes                                        |
-| **Film Format**     | Yes                           | Yes                                 | Yes                                        |
-| **Focus Plane**     | Yes                           | Yes                                 | Yes                                        |
-| **Video Streaming** | Yes                           | Yes                                 | Yes                                        |
+## Test the Virtual Camera
 
+1. In the Editor, in the Take Recorder window, make sure the Live mode is enabled.  
+   ![Take Recorder Window](images/ref-window-take-recorder-live.png)
 
-**Notes**:
+2. Move your mobile device around.
 
-1. Depends on the Post-Processing Stack V2. The feature will only be activated if `com.unity.postprocessing` is installed.
-2. At the moment Depth Of Field is only supported when using the basic Virtual Camera Actor (as opposed to the Cinemachine variant).
+   The app screen and the Editor Game view should show the content of your Scene through the Unity Camera you're driving and reflect the movements you apply to your mobile device.
+
+## Additional resources
+
+* [Virtual Camera app interface reference](virtual-camera-app-ui.md)
+* [Virtual Camera workflows](virtual-camera-workflow.md)

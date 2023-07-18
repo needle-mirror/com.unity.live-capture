@@ -1,6 +1,6 @@
 # Connections window
 
-The Connections window allows you to manage local network and connection settings to allow you to connect client apps with the Unity Editor.
+The Connections window allows you to create [Connections](data-capture-process.md#connection) and manage local network settings for communication between [Client Devices](data-capture-process.md#client-device) and the Unity Editor.
 
 To open this window, from the Unity Editor main menu, select **Window** > **Live Capture** > **Connections**.
 

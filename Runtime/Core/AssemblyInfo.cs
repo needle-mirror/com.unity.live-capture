@@ -12,6 +12,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.FaceCaptureClient.Runtime")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.Mocap")]
 [assembly: InternalsVisibleTo("Unity.LiveCapture.TransformCapture")]
+[assembly: InternalsVisibleTo("Unity.LiveCapture.Stype")]
 
 // Internal access needed for editor scripts
 [assembly: InternalsVisibleTo("Unity.LiveCapture.Editor")]

@@ -2,38 +2,17 @@
 
 Use the Unity Virtual Camera mobile app alongside the Unity Editor to drive a Unity camera from your iPad or iPhone and record camera movement, rotation, focus, zoom, and more to achieve a handheld look-and-feel.
 
-[View detailed feature list](virtual-camera-features.md)
-
 > **Important:** The Unity Virtual Camera app is a companion app, which means it requires the Unity Editor to function, as opposed to a standalone app.
-
-## Before you start
-
-Review the detailed requirements and perform the necessary installations and environment setup:
-
-1. [Install the Live Capture package](installation.md).
-
-2. Install the Unity Virtual Camera app:
-   | App name | Device requirements | Link |
-   |:---|:---|:---|
-   | **Unity Virtual Camera** | iPad or iPhone with:<br />• iOS 14.5 or higher<br />• ARKit capabilities (implied with the required iOS version)| [![Unity Virtual Camera](images/app-store-badge.png)](https://apps.apple.com/us/app/unity-virtual-camera/id1478175507) |
-
-3. [Make sure your network and your firewall are correctly set up](connection-network.md).
-
-4. [Connect the Virtual Camera app to the Unity Editor](connection-device.md).
 
 ## In this documentation
 
-* How to get started with a [basic setup](virtual-camera-getting-started.md) in your current Unity project to try out the Unity Virtual Camera functionality.
-
-* Overview of the Unity Virtual Camera [app interface](virtual-camera-app-ui.md).
-
-* General guidelines to achieve some basic [workflow tasks](virtual-camera-workflow.md) with Unity Virtual Camera.
-
-* How to manage Virtual Camera [lenses](virtual-camera-lenses.md).
-
-* How to use [Snapshots](virtual-camera-snapshots.md).
-
-* UI reference about Virtual Camera functional elements used in the Unity Editor: [components](virtual-camera-components.md), [presets](virtual-camera-presets.md), and [Video Server preferences](ref-user-preferences-video-server.md).
+| Section | Description |
+| :--- | :--- |
+| [Virtual Camera features](virtual-camera-features.md) | Get a list of the Virtual Camera supported features. |
+| [Get started with the Virtual Camera](virtual-camera-getting-started.md) | Install, connect and set up all elements to drive a Unity camera from the Virtual Camera app. |
+| [Workflows](virtual-camera-workflow.md) | General guidelines to achieve some basic tasks with the Unity Virtual Camera. |
+| [App interface reference](virtual-camera-app-ui.md) | Get the description of all the Virtual Camera app interface elements. |
+| [Unity Editor Settings](virtual-camera-editor-settings.md) | Get the description of all Unity Editor functional elements related to Virtual Camera data capture: components, assets, presets, project settings and user preferences. |
 
 ## Additional resources
 

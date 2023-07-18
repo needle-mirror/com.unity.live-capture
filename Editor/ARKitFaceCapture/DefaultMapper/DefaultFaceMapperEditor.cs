@@ -156,7 +156,11 @@ namespace Unity.LiveCapture.ARKitFaceCapture.DefaultMapper.Editor
             // when the configuration has changed, any cached data for this mapping must be invalidated
             if (changeCheck.changed)
             {
+#if UNITY_2023_1_OR_NEWER
+                foreach (var actor in FindObjectsByType<FaceActor>(FindObjectsSortMode.None))
+#else
                 foreach (var actor in FindObjectsOfType<FaceActor>())
+#endif
                 {
                     if (actor.Mapper == target)
                         actor.ClearCache();

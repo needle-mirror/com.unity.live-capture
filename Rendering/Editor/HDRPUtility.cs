@@ -3,6 +3,7 @@ using System;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
 
 namespace Unity.LiveCapture.Rendering.Editor
@@ -12,8 +13,10 @@ namespace Unity.LiveCapture.Rendering.Editor
         const string k_HDRenderPipelineGlobalSettings = "UnityEngine.Rendering.HighDefinition.HDRenderPipelineGlobalSettings";
         const string k_Assembly = "Unity.RenderPipelines.HighDefinition.Runtime";
 
+#if !UNITY_2023_2_OR_NEWER
         static Type s_SettingsAssetType;
         static PropertyInfo s_InstanceProperty;
+
 
         static HDRPEditorUtilities()
         {
@@ -31,10 +34,14 @@ namespace Unity.LiveCapture.Rendering.Editor
         {
             return s_SettingsAssetType != null && s_InstanceProperty != null;
         }
-
+#endif
         static ScriptableObject GetAsset()
         {
+#if !UNITY_2023_2_OR_NEWER
             return s_InstanceProperty.GetValue(null) as ScriptableObject;
+#else
+            return GraphicsSettings.GetSettingsForRenderPipeline<HDRenderPipeline>();
+#endif
         }
 
         /// <summary>

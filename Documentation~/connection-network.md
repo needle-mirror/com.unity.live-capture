@@ -1,6 +1,6 @@
 # Set up your network and firewall
 
-To enable a proper connection of the hardware capture devices with the Unity Editor:
+To enable a proper connection between the [Client Devices](data-capture-process.md#client-device) and the Unity Editor:
 
 * Make sure the devices and Unity Editor workstation have access to the **same network**.
 

@@ -13,7 +13,7 @@ namespace Unity.LiveCapture
     /// The synchronizer update takes place immediately following Update, before
     /// the animation system update.
     /// </remarks>
-    struct SynchronizerUpdate
+    internal struct SynchronizerUpdate
     {
     }
 

@@ -47,3 +47,15 @@
 * [**Snapshots** system](virtual-camera-snapshots.md) to capture the current state of your Virtual Camera and reuse it later. This includes, for example, the position of the camera in the Scene, and other metadata such as the lens information.
 
   >**Note:** The Snapshots feature is only available from the Virtual Camera Device in the Unity Editor. There is currently no interface to manage Snapshots from the Virtual Camera app.
+
+## Render pipeline compatibility
+
+  | **Feature** | **Built-in Render Pipeline** | **Universal Render Pipeline (URP)** | **High Definition Render Pipeline (HDRP)** |
+  | :--- | :--- | :--- | :--- |
+  | **Depth Of Field**  | Yes (1, 2)  | Yes (2) | Yes |
+  | **Film Format** | Yes | Yes | Yes |
+  | **Focus Plane** | Yes | Yes | Yes |
+  | **Video Streaming** | Yes | Yes | Yes |
+
+_(1) To benefit from this feature, you need to have the [Post-Processing Stack V2](https://docs.unity3d.com/Packages/com.unity.postprocessing@latest) package installed.<br />
+(2) Only supported when using a basic Virtual Camera Actor (i.e. not with Cinemachine)._

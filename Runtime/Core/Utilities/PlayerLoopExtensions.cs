@@ -7,7 +7,7 @@ namespace Unity.LiveCapture
     /// <summary>
     /// A class that contains extension methods used to modify the player loop.
     /// </summary>
-    static class PlayerLoopExtensions
+    internal static class PlayerLoopExtensions
     {
         /// <summary>
         /// Adds an update callback to the specified subsystem.

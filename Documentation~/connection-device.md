@@ -1,6 +1,8 @@
-# Connect a physical device with the Editor
+# Connect a Client Device to the Editor
 
-## Create a Connection in the Editor
+Enable network connection between a [Client Device](data-capture-process.md#client-device) and the Unity Editor.
+
+## Create a Connection
 
 1. In the editor, open the **Connections** window: select **Menu** > **Window** > **Live Capture** > **Connections**.
 
@@ -9,19 +11,22 @@
 3. Select the newly created Connection.
 
 4. Set the **Port** if necessary.  
-   **Note:** Only one Unity project using Live Capture can use a given port at a time. If the port is already in use by another program, including other Unity instances, a message should appear, prompting you to select a free port.
+   **Note:** Only one Unity project using Live Capture can use a given port at a time. If the port is already in use by another program, including other Unity instances, a message appears, prompting you to select a free port.
 
 5. Enable the Connection using its toggle button.
 
-6. Connect to the Editor from the physical device or app.
+6. Connect to the Editor from the Client Device.
 
-7. In the Unity Editor, verify you are connected: the device name should appear in the **Connections** window under the **Connected devices** section.
+7. In the Unity Editor, verify you are connected: the device name must appear in the **Connections** window under the **Connected devices** section.
 
 8.  Select **Auto Start on Play** to have the server automatically start when entering Play Mode.
 
 ## Companion app connection
 
-How to connect a companion app such as the Virtual Camera or Face Capture app to the Unity Editor.
+To connect the Virtual Camera app or the Face Capture app to the Unity Editor:
+
+1. In the Unity Editor, create a connection of type **Companion App Server** and enable it.
+2. In the app launch screen, connect to the created server either with server discovery or manually.
 
 ### Connection with server discovery
 

@@ -80,7 +80,11 @@ namespace Unity.LiveCapture.Networking.Protocols
                     var textureName = stream.ReadString();
                     var metadata = stream.ReadString();
 
+#if UNITY_2023_2_OR_NEWER
+                    if (SystemInfo.IsFormatSupported(description.GraphicsFormat, GraphicsFormatUsage.Sample))
+#else
                     if (SystemInfo.IsFormatSupported(description.GraphicsFormat, FormatUsage.Sample))
+#endif
                     {
                         var texture = new Texture2D(
                             description.Width,
